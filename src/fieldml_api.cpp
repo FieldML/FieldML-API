@@ -494,6 +494,10 @@ FmlObjectHandle Fieldml_GetDomainComponentEnsemble( FmlHandle handle, FmlObjectH
         ContinuousDomain *continuousDomain = (ContinuousDomain*)object;
         return continuousDomain->componentDomain;
     }
+    else if( object->type == FHT_ENSEMBLE_DOMAIN )
+    {
+        return FML_INVALID_HANDLE;
+    }
 
     handle->setRegionError( FML_ERR_INVALID_OBJECT );  
     return FML_INVALID_HANDLE;
