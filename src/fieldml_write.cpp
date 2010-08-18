@@ -44,7 +44,6 @@
 
 #include "string_const.h"
 #include "fieldml_write.h"
-#include "fieldml_structs.h"
 #include "fieldml_api.h"
 
 using namespace std;
@@ -104,13 +103,13 @@ static int writeMarkup( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHand
     int i, count;
     
     count = Fieldml_GetMarkupCount( handle, object );
-    if( count == 0 )
+    if( count <= 0 )
     {
         return 0;
     }
 
     xmlTextWriterStartElement( writer, MARKUP_TAG );
-    
+
     for( i = 1; i <= count; i++ )
     {
         const char *attribute = Fieldml_GetMarkupAttribute( handle, object, i );
@@ -502,7 +501,7 @@ static int writeAggregate( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectH
             {
                 continue;
             }
-            writeIntTableEntry( writer, element, Fieldml_GetObjectName( handle, object ) );
+            writeIntTableEntry( writer, element, Fieldml_GetObjectName( handle, evaluator ) );
         }
 
         xmlTextWriterEndElement( writer );
