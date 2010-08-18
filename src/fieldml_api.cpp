@@ -401,7 +401,7 @@ int Fieldml_GetMarkupCount( FmlHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlObject *object = handle->getObject( objectHandle );
 
-    if( object != NULL )
+    if( object == NULL )
     {
         return -1;
     }
