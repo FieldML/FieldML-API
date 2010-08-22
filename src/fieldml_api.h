@@ -115,7 +115,7 @@ enum DataFileType
 };
 
 
-typedef enum DataDescriptionType
+enum DataDescriptionType
 {
     DESCRIPTION_UNKNOWN,
     DESCRIPTION_SEMIDENSE,
@@ -172,6 +172,9 @@ typedef class FieldmlRegion *FmlHandle;
  API
 
 */
+
+#ifdef __cplusplus
+extern "C" {
 
 /**
  *      Parses the given XML file, and returns a handle to the parsed data. This
@@ -830,5 +833,8 @@ int Fieldml_WriteDoubleSlice( FmlHandle handle, FmlWriterHandle writer, int *ind
  * Closes the given raw data writer.
  */
 int Fieldml_CloseWriter( FmlHandle handle, FmlWriterHandle writer );
+
+}
+#endif // __cplusplus
 
 #endif // H_FIELDML_API

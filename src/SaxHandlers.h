@@ -76,21 +76,21 @@ public:
 class ObjectListHandler
 {
 public:
-    virtual void onObjectListEntry( FmlObjectHandle handle, int listId ) = NULL;
+    virtual void onObjectListEntry( FmlObjectHandle handle, int listId ) = 0;
 };
 
 
 class CharacterBufferHandler
 {
 public:
-    virtual void onCharacterBuffer( const char *buffer, int count, int id ) = NULL;
+    virtual void onCharacterBuffer( const char *buffer, int count, int id ) = 0;
 };
 
 
 class IntObjectMapHandler
 {
 public:
-    virtual void onIntObjectMapEntry( int key, FmlObjectHandle value, int mapId ) = NULL;
+    virtual void onIntObjectMapEntry( int key, FmlObjectHandle value, int mapId ) = 0;
 };
 
 
@@ -103,9 +103,9 @@ public:
 
     virtual ~SaxHandler();
 
-    virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes ) = NULL;
+    virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes ) = 0;
 
-    virtual SaxHandler *getParent() = NULL;
+    virtual SaxHandler *getParent() = 0;
     
     virtual void onCharacters( const xmlChar *xmlChars, int count );
 };
@@ -180,7 +180,7 @@ public:
 
     FieldmlObjectSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName );
 
-    virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes ) = NULL;
+    virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes ) = 0;
 
     virtual RegionSaxHandler *getParent();
 
@@ -300,7 +300,7 @@ public:
 
     ObjectMemberSaxHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName );
 
-    virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes ) = NULL;
+    virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes ) = 0;
 
     virtual FieldmlObjectSaxHandler *getParent();
 };

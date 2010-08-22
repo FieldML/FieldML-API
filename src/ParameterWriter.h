@@ -58,8 +58,8 @@ protected:
 public:
     static ParameterWriter *create( FmlHandle handle, Parameters *parameters, bool append );
 
-    virtual int writeIntSlice( int *indexBuffer, int *valueBuffer ) = NULL;
-    virtual int writeDoubleSlice( int *indexBuffer, double *valueBuffer ) = NULL;
+    virtual int writeIntSlice( int *indexBuffer, int *valueBuffer ) = 0;
+    virtual int writeDoubleSlice( int *indexBuffer, double *valueBuffer ) = 0;
     
     ~ParameterWriter();
 };

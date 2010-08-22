@@ -39,6 +39,8 @@
  *
  */
 
+#include <string.h>
+
 #include <libxml/SAX.h>
 #include <libxml/globals.h>
 #include <libxml/xmlerror.h>
@@ -509,14 +511,9 @@ int main( int argc, char **argv )
     {
         return 1;
     }
-    
     testRead( argv[1] );
-    
     testWrite( argv[1] );
-    
     testMisc();
-
     testStream();
-    
     return 0;
 }

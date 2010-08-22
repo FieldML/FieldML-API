@@ -38,6 +38,8 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  */
+#include <string.h>
+
 #include "string_const.h"
 
 using namespace std;
@@ -193,7 +195,7 @@ const string getDirectory( const string filename )
     }
     else
     {
-        return string( 0, index );
+        return string( filename, 0, index );
     }
 }
 

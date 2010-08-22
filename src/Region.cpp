@@ -512,7 +512,7 @@ FmlObjectHandle FieldmlRegion::addObject( FieldmlObject *object )
     }
     
     logError( "Handle collision. Cannot replace", object->name, oldObject->name );
-    fprintf( stderr, "Handle collision. Cannot replace %s:%d with %s:%d\n", object->name, object->type, oldObject->name, oldObject->type );
+    fprintf( stderr, "Handle collision. Cannot replace %s:%d with %s:%d\n", object->name.c_str(), object->type, oldObject->name.c_str(), oldObject->type );
     delete object;
     
     return FML_INVALID_HANDLE;

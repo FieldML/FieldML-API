@@ -39,6 +39,8 @@
  *
  */
 
+#include <stdio.h>
+
 #include <string>
 
 #include "fieldml_api.h"

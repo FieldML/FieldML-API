@@ -39,6 +39,8 @@
  *
  */
 
+#include <string.h>
+
 #include "fieldml_api.h"
 #include "fieldml_sax.h"
 #include "fieldml_structs.h"

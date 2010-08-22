@@ -61,7 +61,7 @@ class FieldmlRegion
     
     std::string root;
     
-    std::vector<const std::string> errors;
+    std::vector<std::string> errors;
     
     std::vector<FieldmlObject*> objects;
     

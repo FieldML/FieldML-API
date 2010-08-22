@@ -54,7 +54,7 @@ protected:
     int bufferPos;
     bool isEof;
 
-    virtual int loadBuffer() = NULL;
+    virtual int loadBuffer() = 0;
     
     FieldmlInputStream();
 public:

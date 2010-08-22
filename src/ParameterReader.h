@@ -59,8 +59,8 @@ protected:
 public:
     static ParameterReader *create( FmlHandle handle, Parameters *parameters );
 
-    virtual bool readIntSlice( int *indexBuffer, int *valueBuffer ) = NULL;
-    virtual bool readDoubleSlice( int *indexBuffer, double *valueBuffer ) = NULL;
+    virtual bool readIntSlice( int *indexBuffer, int *valueBuffer ) = 0;
+    virtual bool readDoubleSlice( int *indexBuffer, double *valueBuffer ) = 0;
     
     ~ParameterReader();
 };

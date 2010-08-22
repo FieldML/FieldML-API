@@ -40,6 +40,8 @@
  */
 
 
+#include <string.h>
+
 #include "SaxHandlers.h"
 
 #include "string_const.h"

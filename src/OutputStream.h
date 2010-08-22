@@ -51,9 +51,9 @@ class FieldmlOutputStream
 protected:
     FieldmlOutputStream();
 public:
-    virtual int writeInt( int value ) = NULL;
-    virtual int writeDouble( double value ) = NULL;
-    virtual int writeNewline() = NULL;
+    virtual int writeInt( int value ) = 0;
+    virtual int writeDouble( double value ) = 0;
+    virtual int writeNewline() = 0;
     ~FieldmlOutputStream();
     
     static FieldmlOutputStream *create( const std::string filename, bool append );

@@ -39,6 +39,8 @@
  *
  */
 
+#include <string.h>
+
 #include <libxml/encoding.h>
 #include <libxml/xmlwriter.h>
 
