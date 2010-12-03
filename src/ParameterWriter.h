@@ -56,7 +56,7 @@ protected:
     ParameterWriter( FmlOutputStream stream, DataFileType streamFormat );
 
 public:
-    static ParameterWriter *create( FmlHandle handle, Parameters *parameters, bool append );
+    static ParameterWriter *create( FmlHandle handle, ParameterEvaluator *parameters, bool append );
 
     virtual int writeIntSlice( int *indexBuffer, int *valueBuffer ) = 0;
     virtual int writeDoubleSlice( int *indexBuffer, double *valueBuffer ) = 0;

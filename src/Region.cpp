@@ -54,7 +54,7 @@ using namespace std;
 //========================================================================
 
 const int INVALID_REGION_HANDLE = -2;
-const int VIRTUAL_REGION_HANDLE = -1; //For derived objects, e.g. mesh domain xi and element domains.
+const int VIRTUAL_REGION_HANDLE = -1; //For derived objects, e.g. mesh type xi and element types.
 const int LIBRARY_REGION_HANDLE = 0;
 const int FILE_REGION_HANDLE = 1;
 
@@ -106,52 +106,40 @@ static void setRegionHandle( FieldmlRegion *region, FmlObjectHandle handle, int 
 }
 
 
-static FmlObjectHandle addEnsembleDomain( FieldmlRegion *region, int regionHandle, const string name, int count, int isComponentDomain )
+static FmlObjectHandle addEnsembleType( FieldmlRegion *region, int regionHandle, const string name, int count, int isComponentType )
 {
-    int handle;
+    int handle = Fieldml_CreateEnsembleType( region, name.c_str(), isComponentType ? 1 : 0 );
 
-    if( isComponentDomain )
-    {
-        handle = Fieldml_CreateComponentEnsembleDomain( region, name.c_str() );
-    }
-    else
-    {
-        handle = Fieldml_CreateEnsembleDomain( region, name.c_str(), FML_INVALID_HANDLE );
-    }
     Fieldml_SetContiguousBoundsCount( region, handle, count );
     setRegionHandle( region, handle, regionHandle );
+
+    const string vName = name + ".variable";
+    int variableHandle = Fieldml_CreateAbstractEvaluator( region, vName.c_str(), handle );
+    setRegionHandle( region, variableHandle, regionHandle );
     
     return handle;
 }
 
 
-static FmlObjectHandle addContinuousDomain( FieldmlRegion *region, int regionHandle, const string name, FmlObjectHandle componentHandle )
+static FmlObjectHandle addContinuousType( FieldmlRegion *region, int regionHandle, const string name, FmlObjectHandle componentHandle )
 {
-    int handle;
-
-    handle = Fieldml_CreateContinuousDomain( region, name.c_str(), componentHandle );
+    int handle = Fieldml_CreateContinuousType( region, name.c_str(), componentHandle );
     setRegionHandle( region, handle, regionHandle );
+
+    const string vName = name + ".variable";
+    int variableHandle = Fieldml_CreateAbstractEvaluator( region, vName.c_str(), handle );
+    setRegionHandle( region, variableHandle, regionHandle );
     
     return handle;
 }
 
 
-static FmlObjectHandle addEvaluator( FieldmlRegion *region, int regionHandle, const string name, FmlObjectHandle domainHandle )
+static FmlObjectHandle addEvaluator( FieldmlRegion *region, int regionHandle, const string name, FmlObjectHandle typeHandle )
 {
     FieldmlObject *object;
     int handle;
-    int type;
     
-    type = Fieldml_GetObjectType( region, domainHandle );
-    
-    if( type == FHT_ENSEMBLE_DOMAIN )
-    {
-        object = new FieldmlObject( name, regionHandle, FHT_REMOTE_ENSEMBLE_EVALUATOR );
-    }
-    else if( type == FHT_CONTINUOUS_DOMAIN )
-    {
-        object = new FieldmlObject( name, regionHandle, FHT_REMOTE_CONTINUOUS_EVALUATOR );
-    }
+    object = new Evaluator( name, regionHandle, FHT_REMOTE_EVALUATOR, typeHandle );
 
     handle = region->addObject( object );
     setRegionHandle( region, handle, regionHandle );
@@ -162,162 +150,161 @@ static FmlObjectHandle addEvaluator( FieldmlRegion *region, int regionHandle, co
 
 
 
-static void addLibraryDomains( FieldmlRegion *region )
+static void addLibraryTypes( FieldmlRegion *region )
 {
     FmlObjectHandle handle;
     int i;
 
-    handle = addEnsembleDomain( region, LIBRARY_REGION_HANDLE, "library.ensemble.generic.1d", 1, 1 );
-    addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.real.1d", handle );
+    addContinuousType( region, LIBRARY_REGION_HANDLE, "library.real.1d", FML_INVALID_HANDLE );
 
-    handle = addEnsembleDomain( region, LIBRARY_REGION_HANDLE, "library.ensemble.generic.2d", 2, 1 );
-    addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.real.2d", handle );
+    handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.ensemble.generic.2d", 2, 1 );
+    addContinuousType( region, LIBRARY_REGION_HANDLE, "library.real.2d", handle );
 
-    handle = addEnsembleDomain( region, LIBRARY_REGION_HANDLE, "library.ensemble.generic.3d", 3, 1 );
-    addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.real.3d", handle );
+    handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.ensemble.generic.3d", 3, 1 );
+    addContinuousType( region, LIBRARY_REGION_HANDLE, "library.real.3d", handle );
     
-    handle = addEnsembleDomain( region, LIBRARY_REGION_HANDLE, "library.ensemble.xi.1d", 1, 1 );
-    handle = addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.xi.1d", handle );
+    handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.ensemble.xi.1d", 1, 1 );
+    handle = addContinuousType( region, LIBRARY_REGION_HANDLE, "library.xi.1d", handle );
     addMarkup( region, handle, "xi", "true" );
 
-    handle = addEnsembleDomain( region, LIBRARY_REGION_HANDLE, "library.ensemble.xi.2d", 2, 1 );
-    handle = addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.xi.2d", handle );
+    handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.ensemble.xi.2d", 2, 1 );
+    handle = addContinuousType( region, LIBRARY_REGION_HANDLE, "library.xi.2d", handle );
     addMarkup( region, handle, "xi", "true" );
 
-    handle = addEnsembleDomain( region, LIBRARY_REGION_HANDLE, "library.ensemble.xi.3d", 3, 1 );
-    handle = addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.xi.3d", handle );
+    handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.ensemble.xi.3d", 3, 1 );
+    handle = addContinuousType( region, LIBRARY_REGION_HANDLE, "library.xi.3d", handle );
     addMarkup( region, handle, "xi", "true" );
 
-    handle = addEnsembleDomain( region, LIBRARY_REGION_HANDLE, "library.local_nodes.line.2", 2, 1 );
-    addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.parameters.linear_lagrange", handle ); 
-    handle = addEnsembleDomain( region, LIBRARY_REGION_HANDLE, "library.local_nodes.line.3", 3, 1 );
-    addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.parameters.quadratic_lagrange", handle ); 
+    handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.local_nodes.line.2", 2, 1 );
+    addContinuousType( region, LIBRARY_REGION_HANDLE, "library.parameters.linear_lagrange", handle ); 
+    handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.local_nodes.line.3", 3, 1 );
+    addContinuousType( region, LIBRARY_REGION_HANDLE, "library.parameters.quadratic_lagrange", handle ); 
 
     // 2x2 quad
-    handle = addEnsembleDomain( region, LIBRARY_REGION_HANDLE, "library.local_nodes.square.2x2", 4, 1 );
-    addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.parameters.bilinear_lagrange", handle );
+    handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.local_nodes.square.2x2", 4, 1 );
+    addContinuousType( region, LIBRARY_REGION_HANDLE, "library.parameters.bilinear_lagrange", handle );
 
     for( i = 0; i < 4; i++ )
     {
-        handle = addEnsembleDomain( region, LIBRARY_REGION_HANDLE, "library.local_nodes.square.2x2" + collapse2d[i], 3, 1 );
-        addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.parameters.bilinear_lagrange" + collapse2d[i], handle );
+        handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.local_nodes.square.2x2" + collapse2d[i], 3, 1 );
+        addContinuousType( region, LIBRARY_REGION_HANDLE, "library.parameters.bilinear_lagrange" + collapse2d[i], handle );
     }
     
     // 3x3 quad
-    handle = addEnsembleDomain( region, LIBRARY_REGION_HANDLE, "library.local_nodes.square.3x3", 9, 1 );
-    addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.parameters.biquadratic_lagrange", handle ); 
+    handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.local_nodes.square.3x3", 9, 1 );
+    addContinuousType( region, LIBRARY_REGION_HANDLE, "library.parameters.biquadratic_lagrange", handle ); 
 
     for( i = 0; i < 4; i++ )
     {
-        handle = addEnsembleDomain( region, LIBRARY_REGION_HANDLE, "library.local_nodes.square.3x3" + collapse2d[i], 7, 1 );
-        addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.parameters.biquadratic_lagrange" + collapse2d[i], handle );
+        handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.local_nodes.square.3x3" + collapse2d[i], 7, 1 );
+        addContinuousType( region, LIBRARY_REGION_HANDLE, "library.parameters.biquadratic_lagrange" + collapse2d[i], handle );
     }
 
     // 2x2x2 cube
-    handle = addEnsembleDomain( region, LIBRARY_REGION_HANDLE, "library.local_nodes.cube.2x2x2", 8, 1 );
-    addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.parameters.trilinear_lagrange", handle );
+    handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.local_nodes.cube.2x2x2", 8, 1 );
+    addContinuousType( region, LIBRARY_REGION_HANDLE, "library.parameters.trilinear_lagrange", handle );
 
     for( i = 0; i < 12; i++ )
     {
-        handle = addEnsembleDomain( region, LIBRARY_REGION_HANDLE, "library.local_nodes.cube.2x2x2" + collapse3d_wedge[i], 6, 1 );
-        addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.parameters.trilinear_lagrange" + collapse3d_wedge[i], handle );
+        handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.local_nodes.cube.2x2x2" + collapse3d_wedge[i], 6, 1 );
+        addContinuousType( region, LIBRARY_REGION_HANDLE, "library.parameters.trilinear_lagrange" + collapse3d_wedge[i], handle );
     }
 
     for( i = 0; i < 6; i++ )
     {
-        handle = addEnsembleDomain( region, LIBRARY_REGION_HANDLE, "library.local_nodes.cube.2x2x2" + collapse3d_pyramid[i], 5, 1 );
-        addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.parameters.trilinear_lagrange" + collapse3d_pyramid[i], handle );
+        handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.local_nodes.cube.2x2x2" + collapse3d_pyramid[i], 5, 1 );
+        addContinuousType( region, LIBRARY_REGION_HANDLE, "library.parameters.trilinear_lagrange" + collapse3d_pyramid[i], handle );
     }
 
     // 3x3x3 cube
-    handle = addEnsembleDomain( region, LIBRARY_REGION_HANDLE, "library.local_nodes.cube.3x3x3", 27, 1 );
-    addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.parameters.triquadratic_lagrange", handle ); 
+    handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.local_nodes.cube.3x3x3", 27, 1 );
+    addContinuousType( region, LIBRARY_REGION_HANDLE, "library.parameters.triquadratic_lagrange", handle ); 
 
     for( i = 0; i < 12; i++ )
     {
-        handle = addEnsembleDomain( region, LIBRARY_REGION_HANDLE, "library.local_nodes.cube.3x3x3" + collapse3d_wedge[i], 21, 1 );
-        addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.parameters.triquadratic_lagrange" + collapse3d_wedge[i], handle );
+        handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.local_nodes.cube.3x3x3" + collapse3d_wedge[i], 21, 1 );
+        addContinuousType( region, LIBRARY_REGION_HANDLE, "library.parameters.triquadratic_lagrange" + collapse3d_wedge[i], handle );
     }
 
     for( i = 0; i < 6; i++ )
     {
-        handle = addEnsembleDomain( region, LIBRARY_REGION_HANDLE, "library.local_nodes.cube.3x3x3" + collapse3d_pyramid[i], 19, 1 );
-        addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.parameters.triquadratic_lagrange" + collapse3d_pyramid[i], handle );
+        handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.local_nodes.cube.3x3x3" + collapse3d_pyramid[i], 19, 1 );
+        addContinuousType( region, LIBRARY_REGION_HANDLE, "library.parameters.triquadratic_lagrange" + collapse3d_pyramid[i], handle );
     }
 
-    handle = addEnsembleDomain( region, LIBRARY_REGION_HANDLE, "library.ensemble.rc.1d", 1, 1 );
-    addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.coordinates.rc.1d", handle );
-    addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.velocity.rc.1d", handle );
-    handle = addEnsembleDomain( region, LIBRARY_REGION_HANDLE, "library.ensemble.rc.2d", 2, 1 );
-    addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.coordinates.rc.2d", handle );
-    addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.velocity.rc.2d", handle );
-    handle = addEnsembleDomain( region, LIBRARY_REGION_HANDLE, "library.ensemble.rc.3d", 3, 1 );
-    addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.coordinates.rc.3d", handle );
-    addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.velocity.rc.3d", handle );
+    handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.ensemble.rc.1d", 1, 1 );
+    addContinuousType( region, LIBRARY_REGION_HANDLE, "library.coordinates.rc.1d", handle );
+    addContinuousType( region, LIBRARY_REGION_HANDLE, "library.velocity.rc.1d", handle );
+    handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.ensemble.rc.2d", 2, 1 );
+    addContinuousType( region, LIBRARY_REGION_HANDLE, "library.coordinates.rc.2d", handle );
+    addContinuousType( region, LIBRARY_REGION_HANDLE, "library.velocity.rc.2d", handle );
+    handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.ensemble.rc.3d", 3, 1 );
+    addContinuousType( region, LIBRARY_REGION_HANDLE, "library.coordinates.rc.3d", handle );
+    addContinuousType( region, LIBRARY_REGION_HANDLE, "library.velocity.rc.3d", handle );
 
-    addContinuousDomain( region, LIBRARY_REGION_HANDLE, "library.pressure", FML_INVALID_HANDLE );
+    addContinuousType( region, LIBRARY_REGION_HANDLE, "library.pressure", FML_INVALID_HANDLE );
 }
 
 
 static void addLibraryEvaluators( FieldmlRegion *region )
 {
-    FmlObjectHandle domainHandle;
+    FmlObjectHandle typeHandle;
     int i;
     
-    domainHandle = Fieldml_GetNamedObject( region, "library.real.1d" );
+    typeHandle = Fieldml_GetObjectByName( region, "library.real.1d" );
     
-    addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.linear_lagrange", domainHandle );
+    addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.linear_lagrange", typeHandle );
     
-    addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.bilinear_lagrange", domainHandle );
+    addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.bilinear_lagrange", typeHandle );
     for( i = 0; i < 4; i++ )
     {
-        addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.bilinear_lagrange" + collapse2d[i], domainHandle );
+        addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.bilinear_lagrange" + collapse2d[i], typeHandle );
     }
     
-    addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.trilinear_lagrange", domainHandle );
+    addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.trilinear_lagrange", typeHandle );
     for( i = 0; i < 12; i++ )
     {
-        addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.trilinear_lagrange" + collapse3d_wedge[i], domainHandle );
+        addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.trilinear_lagrange" + collapse3d_wedge[i], typeHandle );
     }
     for( i = 0; i < 6; i++ )
     {
-        addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.trilinear_lagrange" + collapse3d_pyramid[i], domainHandle );
+        addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.trilinear_lagrange" + collapse3d_pyramid[i], typeHandle );
     }
 
-    addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.quadratic_lagrange", domainHandle );
+    addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.quadratic_lagrange", typeHandle );
     
-    addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.biquadratic_lagrange", domainHandle );
+    addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.biquadratic_lagrange", typeHandle );
     for( i = 0; i < 4; i++ )
     {
-        addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.biquadratic_lagrange" + collapse2d[i], domainHandle );
+        addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.biquadratic_lagrange" + collapse2d[i], typeHandle );
     }
     
-    addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.triquadratic_lagrange", domainHandle );
+    addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.triquadratic_lagrange", typeHandle );
     for( i = 0; i < 12; i++ )
     {
-        addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.triquadratic_lagrange" + collapse3d_wedge[i], domainHandle );
+        addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.triquadratic_lagrange" + collapse3d_wedge[i], typeHandle );
     }
     for( i = 0; i < 6; i++ )
     {
-        addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.triquadratic_lagrange" + collapse3d_pyramid[i], domainHandle );
+        addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.triquadratic_lagrange" + collapse3d_pyramid[i], typeHandle );
     }
 
-    addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.cubic_lagrange", domainHandle );
+    addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.cubic_lagrange", typeHandle );
     
-    addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.bicubic_lagrange", domainHandle );
+    addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.bicubic_lagrange", typeHandle );
     for( i = 0; i < 4; i++ )
     {
-        addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.bicubic_lagrange" + collapse2d[i], domainHandle );
+        addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.bicubic_lagrange" + collapse2d[i], typeHandle );
     }
     
-    addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.tricubic_lagrange", domainHandle );
+    addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.tricubic_lagrange", typeHandle );
     for( i = 0; i < 12; i++ )
     {
-        addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.tricubic_lagrange" + collapse3d_wedge[i], domainHandle );
+        addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.tricubic_lagrange" + collapse3d_wedge[i], typeHandle );
     }
     for( i = 0; i < 6; i++ )
     {
-        addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.tricubic_lagrange" + collapse3d_pyramid[i], domainHandle );
+        addEvaluator( region, LIBRARY_REGION_HANDLE, "library.fem.tricubic_lagrange" + collapse3d_pyramid[i], typeHandle );
     }
 }
 
@@ -327,7 +314,7 @@ FieldmlRegion::FieldmlRegion( const string _location, const string _name ) :
 {
     root = _location;
     
-    addLibraryDomains( this );
+    addLibraryTypes( this );
     
     addLibraryEvaluators( this );
 }
@@ -350,27 +337,15 @@ void FieldmlRegion::finalize()
     {
         object = objects[i];
         
-        if( ( object->type == FHT_UNKNOWN_CONTINUOUS_DOMAIN ) || ( object->type == FHT_UNKNOWN_CONTINUOUS_SOURCE ) )
+        if( object->type == FHT_UNKNOWN_TYPE )
         {
-            newObject = new FieldmlObject( object->name, object->regionHandle, FHT_REMOTE_CONTINUOUS_DOMAIN );
+            newObject = new FieldmlObject( object->name, object->regionHandle, FHT_REMOTE_TYPE );
             objects[i] = newObject;
             delete object;
         }
-        else if( ( object->type == FHT_UNKNOWN_ENSEMBLE_DOMAIN ) || ( object->type == FHT_UNKNOWN_ENSEMBLE_SOURCE ) )
+        else if( object->type == FHT_UNKNOWN_EVALUATOR )
         {
-            newObject = new FieldmlObject( object->name, object->regionHandle, FHT_REMOTE_ENSEMBLE_DOMAIN );
-            objects[i] = newObject;
-            delete object;
-        }
-        else if( object->type == FHT_UNKNOWN_CONTINUOUS_EVALUATOR )
-        {
-            newObject = new FieldmlObject( object->name, object->regionHandle, FHT_REMOTE_CONTINUOUS_EVALUATOR );
-            objects[i] = newObject;
-            delete object;
-        }
-        else if( object->type == FHT_UNKNOWN_ENSEMBLE_EVALUATOR )
-        {
-            newObject = new FieldmlObject( object->name, object->regionHandle, FHT_REMOTE_ENSEMBLE_EVALUATOR );
+            newObject = new FieldmlObject( object->name, object->regionHandle, FHT_REMOTE_EVALUATOR );
             objects[i] = newObject;
             delete object;
         }
@@ -431,7 +406,7 @@ FmlObjectHandle FieldmlRegion::addObject( FieldmlObject *object )
 {
     int doSwitch;
     FieldmlObject *oldObject;
-    FmlObjectHandle handle = Fieldml_GetNamedObject( this, object->name.c_str() );
+    FmlObjectHandle handle = Fieldml_GetObjectByName( this, object->name.c_str() );
     
     if( handle == FML_INVALID_HANDLE )
     {
@@ -448,56 +423,27 @@ FmlObjectHandle FieldmlRegion::addObject( FieldmlObject *object )
     {
         // Do nothing. Virtual objects should never replace non-virtual ones.
     }
-    if( oldObject->type == FHT_UNKNOWN_ENSEMBLE_DOMAIN )
+    if( oldObject->type == FHT_UNKNOWN_TYPE )
     {
-        if( object->type == FHT_ENSEMBLE_DOMAIN )
+        if( object->type == FHT_ENSEMBLE_TYPE )
         {
             doSwitch = 1;
         }
     }
-    else if( oldObject->type == FHT_UNKNOWN_CONTINUOUS_DOMAIN )
+    else if( oldObject->type == FHT_UNKNOWN_TYPE )
     {
-        if( object->type == FHT_CONTINUOUS_DOMAIN )
+        if( object->type == FHT_CONTINUOUS_TYPE )
         {
             doSwitch = 1;
         }
     }
-    else if( oldObject->type == FHT_UNKNOWN_ENSEMBLE_SOURCE )
+    else if( oldObject->type == FHT_UNKNOWN_EVALUATOR )
     {
-        if( ( object->type == FHT_ENSEMBLE_DOMAIN ) ||
-            ( object->type == FHT_ENSEMBLE_PARAMETERS ) ||
-            ( object->type == FHT_ENSEMBLE_VARIABLE ) )
-        {
-            doSwitch = 1;
-        }
-    }
-    else if( oldObject->type == FHT_UNKNOWN_CONTINUOUS_SOURCE )
-    {
-        if( ( object->type == FHT_CONTINUOUS_DOMAIN ) ||
-            ( object->type == FHT_CONTINUOUS_PIECEWISE ) ||
-            ( object->type == FHT_CONTINUOUS_REFERENCE ) ||
-            ( object->type == FHT_CONTINUOUS_AGGREGATE ) ||
-            ( object->type == FHT_CONTINUOUS_PARAMETERS ) ||
-            ( object->type == FHT_CONTINUOUS_VARIABLE ) )
-        {
-            doSwitch = 1;
-        }
-    }
-    else if( oldObject->type == FHT_UNKNOWN_CONTINUOUS_EVALUATOR )
-    {
-        if( ( object->type == FHT_CONTINUOUS_PIECEWISE ) ||
-            ( object->type == FHT_CONTINUOUS_REFERENCE ) ||
-            ( object->type == FHT_CONTINUOUS_AGGREGATE ) ||
-            ( object->type == FHT_CONTINUOUS_PARAMETERS ) ||
-            ( object->type == FHT_CONTINUOUS_VARIABLE ) )
-        {
-            doSwitch = 1;
-        }
-    }
-    else if( oldObject->type == FHT_UNKNOWN_ENSEMBLE_EVALUATOR )
-    {
-        if( ( object->type == FHT_ENSEMBLE_PARAMETERS ) ||
-            ( object->type == FHT_ENSEMBLE_VARIABLE ) )
+        if( ( object->type == FHT_PIECEWISE_EVALUATOR ) ||
+            ( object->type == FHT_REFERENCE_EVALUATOR ) ||
+            ( object->type == FHT_AGGREGATE_EVALUATOR ) ||
+            ( object->type == FHT_PARAMETER_EVALUATOR ) ||
+            ( object->type == FHT_ABSTRACT_EVALUATOR ) )
         {
             doSwitch = 1;
         }

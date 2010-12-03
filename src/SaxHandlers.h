@@ -188,51 +188,61 @@ public:
 };
 
 
-class ContinuousDomainSaxHandler :
+class ContinuousTypeSaxHandler :
     public FieldmlObjectSaxHandler
 {
 public:
-    ContinuousDomainSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
+    ContinuousTypeSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
 };
 
 
-class EnsembleDomainSaxHandler :
+class EnsembleTypeSaxHandler :
     public FieldmlObjectSaxHandler
 {
 public:
-    EnsembleDomainSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
+    EnsembleTypeSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
 };
 
 
-class MeshDomainSaxHandler :
+class MeshTypeSaxHandler :
     public FieldmlObjectSaxHandler
 {
 public:
-    MeshDomainSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
+    MeshTypeSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
 };
 
 
-class ContinuousReferenceSaxHandler :
+class AbstractEvaluatorSaxHandler :
     public FieldmlObjectSaxHandler
 {
 public:
-    ContinuousReferenceSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
+    AbstractEvaluatorSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
 };
 
 
-class EnsembleParametersSaxHandler :
+class ReferenceEvaluatorSaxHandler :
     public FieldmlObjectSaxHandler
 {
 public:
-        EnsembleParametersSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
+    ReferenceEvaluatorSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
+
+    virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
+};
+
+
+class ParametersSaxHandler :
+    public FieldmlObjectSaxHandler
+{
+public:
+        ParametersSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
 
         virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
 };
@@ -248,31 +258,11 @@ public:
 };
 
 
-class ContinuousVariableSaxHandler :
-    public FieldmlObjectSaxHandler
-{
-public:
-    ContinuousVariableSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
-
-    virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
-};
-
-
-class EnsembleVariableSaxHandler :
-    public FieldmlObjectSaxHandler
-{
-public:
-    EnsembleVariableSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
-
-    virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
-};
-
-
-class ContinuousPiecewiseSaxHandler :
+class PiecewiseEvaluatorSaxHandler :
     public FieldmlObjectSaxHandler, IntObjectMapHandler
 {
 public:
-    ContinuousPiecewiseSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
+    PiecewiseEvaluatorSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
 
@@ -280,11 +270,11 @@ public:
 };
 
 
-class ContinuousAggregateSaxHandler :
+class AggregateEvaluatorSaxHandler :
     public FieldmlObjectSaxHandler, IntObjectMapHandler
 {
 public:
-    ContinuousAggregateSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
+    AggregateEvaluatorSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
 
@@ -336,11 +326,21 @@ public:
 };
 
 
-class AliasesSaxHandler :
+class BindsSaxHandler :
     public ObjectMemberSaxHandler
 {
 public:
-    AliasesSaxHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
+    BindsSaxHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
+
+    virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
+};
+
+
+class VariablesSaxHandler :
+    public ObjectMemberSaxHandler
+{
+public:
+    VariablesSaxHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
 };
@@ -427,13 +427,14 @@ class IntObjectMapSaxHandler :
     public SaxHandler
 {
 private:
+    const xmlChar * entryTagName;
     const FmlHandle region;
     IntObjectMapHandler * const handler;
     const int mapId;
     SaxHandler *parent;
 
 public:
-    IntObjectMapSaxHandler( SaxHandler *_parent, const xmlChar *elementName, FmlHandle _region, IntObjectMapHandler *_handler, int _mapId );
+    IntObjectMapSaxHandler( SaxHandler *_parent, const xmlChar *elementName, const xmlChar * _entryTagName, FmlHandle _region, IntObjectMapHandler *_handler, int _mapId );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
     

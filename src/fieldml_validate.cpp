@@ -43,16 +43,16 @@
 #include "fieldml_structs.h"
 #include "Region.h"
 
-int validateEnsembleDomain( FieldmlRegion *region, EnsembleDomain *ensembleDomain )
+int validateEnsembleType( FieldmlRegion *region, EnsembleType *ensembleType )
 {
-    if( ensembleDomain->bounds->boundsType == BOUNDS_UNKNOWN )
+    if( ensembleType->bounds->boundsType == BOUNDS_UNKNOWN )
     {
-        region->logError( "EnsembleDomain has no bounds", ensembleDomain->name );
+        region->logError( "EnsembleType has no bounds", ensembleType->name );
         return FML_ERR_INCOMPLETE_OBJECT;
     }
-    else if( ensembleDomain->bounds->boundsType == BOUNDS_DISCRETE_CONTIGUOUS )
+    else if( ensembleType->bounds->boundsType == BOUNDS_DISCRETE_CONTIGUOUS )
     {
-        ContiguousBounds *bounds = (ContiguousBounds*)ensembleDomain->bounds;
+        ContiguousBounds *bounds = (ContiguousBounds*)ensembleType->bounds;
         if( bounds->count <= 0 )
         {
             return FML_ERR_MISCONFIGURED_OBJECT;
@@ -66,8 +66,8 @@ int validateFieldmlObject( FieldmlRegion *region, FieldmlObject *object )
 {
     switch( object->type )
     {
-    case FHT_ENSEMBLE_DOMAIN:
-        return validateEnsembleDomain( region, (EnsembleDomain*)object );
+    case FHT_ENSEMBLE_TYPE:
+        return validateEnsembleType( region, (EnsembleType*)object );
     default:
         return FML_ERR_NO_ERROR;
     }

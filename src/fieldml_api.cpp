@@ -39,6 +39,8 @@
  *
  */
 
+#include <algorithm>
+
 #include <string.h>
 
 #include "fieldml_api.h"
@@ -70,14 +72,14 @@ static SimpleMap<int, FmlObjectHandle> *getEvaluatorMap( FmlHandle handle, FmlOb
         return NULL;
     }
 
-    if( object->type == FHT_CONTINUOUS_AGGREGATE )
+    if( object->type == FHT_AGGREGATE_EVALUATOR )
     {
-        ContinuousAggregate *aggregate = (ContinuousAggregate *)object;
+        AggregateEvaluator *aggregate = (AggregateEvaluator *)object;
         return &aggregate->evaluators;
     }
-    else if( object->type == FHT_CONTINUOUS_PIECEWISE )
+    else if( object->type == FHT_PIECEWISE_EVALUATOR )
     {
-        ContinuousPiecewise *piecewise = (ContinuousPiecewise *)object;
+        PiecewiseEvaluator *piecewise = (PiecewiseEvaluator *)object;
         return &piecewise->evaluators;
     }
     else
@@ -88,7 +90,7 @@ static SimpleMap<int, FmlObjectHandle> *getEvaluatorMap( FmlHandle handle, FmlOb
 }
 
 
-static SimpleMap<FmlObjectHandle, FmlObjectHandle> *getAliasMap( FmlHandle handle, FmlObjectHandle objectHandle )
+static SimpleMap<FmlObjectHandle, FmlObjectHandle> *getBindMap( FmlHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlObject *object = handle->getObject( objectHandle );
 
@@ -97,26 +99,66 @@ static SimpleMap<FmlObjectHandle, FmlObjectHandle> *getAliasMap( FmlHandle handl
         return NULL;
     }
 
-    if( object->type == FHT_CONTINUOUS_AGGREGATE )
+    if( object->type == FHT_AGGREGATE_EVALUATOR )
     {
-        ContinuousAggregate *aggregate = (ContinuousAggregate *)object;
-        return &aggregate->aliases;
+        AggregateEvaluator *aggregate = (AggregateEvaluator *)object;
+        return &aggregate->binds;
     }
-    else if( object->type == FHT_CONTINUOUS_PIECEWISE )
+    else if( object->type == FHT_PIECEWISE_EVALUATOR )
     {
-        ContinuousPiecewise *piecewise = (ContinuousPiecewise *)object;
-        return &piecewise->aliases;
+        PiecewiseEvaluator *piecewise = (PiecewiseEvaluator *)object;
+        return &piecewise->binds;
     }
-    else if( object->type == FHT_CONTINUOUS_REFERENCE )
+    else if( object->type == FHT_REFERENCE_EVALUATOR )
     {
-        ContinuousReference *reference = (ContinuousReference *)object;
-        return &reference->aliases;
+        ReferenceEvaluator *reference = (ReferenceEvaluator *)object;
+        return &reference->binds;
     }
     else
     {
         handle->setRegionError( FML_ERR_INVALID_OBJECT );
         return NULL;
     }
+}
+
+
+static std::vector<FmlObjectHandle> *getVariableList( FmlHandle handle, FmlObjectHandle objectHandle )
+{
+    FieldmlObject *object = handle->getObject( objectHandle );
+
+    if( object == NULL )
+    {
+        return NULL;
+    }
+
+    if( object->type == FHT_REFERENCE_EVALUATOR )
+    {
+        ReferenceEvaluator *referenceEvaluator = (ReferenceEvaluator *)object;
+        return &referenceEvaluator->variables;
+    }
+    if( object->type == FHT_AGGREGATE_EVALUATOR )
+    {
+        AggregateEvaluator *aggregateEvaluator = (AggregateEvaluator *)object;
+        return &aggregateEvaluator->variables;
+    }
+    if( object->type == FHT_PARAMETER_EVALUATOR )
+    {
+        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
+        return &parameterEvaluator->variables;
+    }
+    if( object->type == FHT_ABSTRACT_EVALUATOR )
+    {
+        AbstractEvaluator *abstractEvaluator = (AbstractEvaluator *)object;
+        return &abstractEvaluator->variables;
+    }
+    if( object->type == FHT_PIECEWISE_EVALUATOR )
+    {
+        PiecewiseEvaluator *piecewiseEvaluator = (PiecewiseEvaluator *)object;
+        return &piecewiseEvaluator->variables;
+    }
+
+    handle->setRegionError( FML_ERR_INVALID_OBJECT );
+    return NULL;
 }
 
 
@@ -129,10 +171,10 @@ static SimpleMap<int, string> *getShapeMap( FmlHandle handle, FmlObjectHandle ob
         return NULL;
     }
 
-    if( object->type == FHT_MESH_DOMAIN )
+    if( object->type == FHT_MESH_TYPE )
     {
-        MeshDomain *meshDomain = (MeshDomain*)object;
-        return &meshDomain->shapes;
+        MeshType *meshType = (MeshType*)object;
+        return &meshType->shapes;
     }
 
     handle->setRegionError( FML_ERR_INVALID_OBJECT );
@@ -149,10 +191,10 @@ static SimpleMap<FmlObjectHandle, FmlObjectHandle> *getConnectivityMap( FmlHandl
         return NULL;
     }
 
-    if( object->type == FHT_MESH_DOMAIN )
+    if( object->type == FHT_MESH_TYPE )
     {
-        MeshDomain *meshDomain = (MeshDomain*)object;
-        return &meshDomain->connectivity;
+        MeshType *meshType = (MeshType*)object;
+        return &meshType->connectivity;
     }
 
     handle->setRegionError( FML_ERR_INVALID_OBJECT );
@@ -169,13 +211,13 @@ static SemidenseDataDescription *getSemidenseDataDescription( FmlHandle handle, 
         return NULL;
     }
 
-    if( ( object->type == FHT_CONTINUOUS_PARAMETERS ) || ( object->type == FHT_ENSEMBLE_PARAMETERS ) )
+    if( object->type == FHT_PARAMETER_EVALUATOR )
     {
-        Parameters *parameters = (Parameters *)object;
+        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
         
-        if( parameters->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
+        if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
         {
-            return (SemidenseDataDescription *)parameters->dataDescription;
+            return (SemidenseDataDescription *)parameterEvaluator->dataDescription;
         }
     }
 
@@ -283,6 +325,12 @@ int Fieldml_SetDebug( FmlHandle handle, const int debug )
 }
 
 
+int Fieldml_GetLastError( FmlHandle handle )
+{
+    return handle->getLastError();
+}
+
+
 int Fieldml_WriteFile( FmlHandle handle, const char *filename )
 {
     handle->setRegionError( FML_ERR_NO_ERROR );
@@ -367,7 +415,7 @@ FmlObjectHandle Fieldml_GetObject( FmlHandle handle, FieldmlHandleType type, int
 }
 
 
-FmlObjectHandle Fieldml_GetNamedObject( FmlHandle handle, const char * name )
+FmlObjectHandle Fieldml_GetObjectByName( FmlHandle handle, const char * name )
 {
     return handle->getNamedHandle( name );
 }
@@ -482,7 +530,7 @@ int Fieldml_CopyMarkupAttributeValue( FmlHandle handle, FmlObjectHandle objectHa
 }
 
 
-FmlObjectHandle Fieldml_GetDomainComponentEnsemble( FmlHandle handle, FmlObjectHandle objectHandle )
+FmlObjectHandle Fieldml_GetTypeComponentEnsemble( FmlHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlObject *object = handle->getObject( objectHandle );
 
@@ -491,12 +539,12 @@ FmlObjectHandle Fieldml_GetDomainComponentEnsemble( FmlHandle handle, FmlObjectH
         return FML_INVALID_HANDLE;
     }
 
-    if( object->type == FHT_CONTINUOUS_DOMAIN )
+    if( object->type == FHT_CONTINUOUS_TYPE )
     {
-        ContinuousDomain *continuousDomain = (ContinuousDomain*)object;
-        return continuousDomain->componentDomain;
+        ContinuousType *continuousType = (ContinuousType*)object;
+        return continuousType->componentType;
     }
-    else if( object->type == FHT_ENSEMBLE_DOMAIN )
+    else if( object->type == FHT_ENSEMBLE_TYPE )
     {
         return FML_INVALID_HANDLE;
     }
@@ -506,11 +554,11 @@ FmlObjectHandle Fieldml_GetDomainComponentEnsemble( FmlHandle handle, FmlObjectH
 }
 
 
-int Fieldml_GetDomainComponentCount( FmlHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetTypeComponentCount( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FmlObjectHandle componentDomainHandle = Fieldml_GetDomainComponentEnsemble( handle, objectHandle );
+    FmlObjectHandle componentTypeHandle = Fieldml_GetTypeComponentEnsemble( handle, objectHandle );
     
-    if( componentDomainHandle == FML_INVALID_HANDLE )
+    if( componentTypeHandle == FML_INVALID_HANDLE )
     {
         if( handle->getLastError() == FML_ERR_NO_ERROR )
         {
@@ -519,11 +567,11 @@ int Fieldml_GetDomainComponentCount( FmlHandle handle, FmlObjectHandle objectHan
         return -1;
     }
     
-    return Fieldml_GetEnsembleDomainElementCount( handle, componentDomainHandle );
+    return Fieldml_GetEnsembleTypeElementCount( handle, componentTypeHandle );
 }
 
 
-DomainBoundsType Fieldml_GetDomainBoundsType( FmlHandle handle, FmlObjectHandle objectHandle )
+TypeBoundsType Fieldml_GetBoundsType( FmlHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlObject *object = handle->getObject( objectHandle );
 
@@ -532,10 +580,10 @@ DomainBoundsType Fieldml_GetDomainBoundsType( FmlHandle handle, FmlObjectHandle 
         return BOUNDS_UNKNOWN;
     }
 
-    if( object->type == FHT_ENSEMBLE_DOMAIN )
+    if( object->type == FHT_ENSEMBLE_TYPE )
     {
-        EnsembleDomain *ensembleDomain = (EnsembleDomain*)object;
-        return ensembleDomain->bounds->boundsType;
+        EnsembleType *ensembleType = (EnsembleType*)object;
+        return ensembleType->bounds->boundsType;
     }
     
     handle->setRegionError( FML_ERR_INVALID_OBJECT );  
@@ -543,7 +591,7 @@ DomainBoundsType Fieldml_GetDomainBoundsType( FmlHandle handle, FmlObjectHandle 
 }
 
 
-int Fieldml_GetEnsembleDomainElementCount( FmlHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetEnsembleTypeElementCount( FmlHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlObject *object = handle->getObject( objectHandle );
 
@@ -552,12 +600,12 @@ int Fieldml_GetEnsembleDomainElementCount( FmlHandle handle, FmlObjectHandle obj
         return -1;
     }
 
-    if( object->type == FHT_ENSEMBLE_DOMAIN )
+    if( object->type == FHT_ENSEMBLE_TYPE )
     {
-        EnsembleDomain *ensembleDomain = (EnsembleDomain*)object;
-        if( ensembleDomain->bounds->boundsType == BOUNDS_DISCRETE_CONTIGUOUS )
+        EnsembleType *ensembleType = (EnsembleType*)object;
+        if( ensembleType->bounds->boundsType == BOUNDS_DISCRETE_CONTIGUOUS )
         {
-            ContiguousBounds *contiguous = (ContiguousBounds *)ensembleDomain->bounds;
+            ContiguousBounds *contiguous = (ContiguousBounds *)ensembleType->bounds;
             return contiguous->count;
         }
         
@@ -570,7 +618,7 @@ int Fieldml_GetEnsembleDomainElementCount( FmlHandle handle, FmlObjectHandle obj
 }
 
 
-int Fieldml_IsEnsembleComponentDomain( FmlHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_IsEnsembleComponentType( FmlHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlObject *object = handle->getObject( objectHandle );
 
@@ -578,10 +626,11 @@ int Fieldml_IsEnsembleComponentDomain( FmlHandle handle, FmlObjectHandle objectH
     {
         return -1;
     }
-    if( object->type == FHT_ENSEMBLE_DOMAIN )
+    
+    if( object->type == FHT_ENSEMBLE_TYPE )
     {
-        EnsembleDomain *ensembleDomain = (EnsembleDomain*)object;
-        return ensembleDomain->isComponentEnsemble;
+        EnsembleType *ensembleType = (EnsembleType*)object;
+        return ensembleType->isComponentEnsemble;
     }
 
     handle->setRegionError( FML_ERR_INVALID_OBJECT );  
@@ -598,12 +647,12 @@ int Fieldml_GetContiguousBoundsCount( FmlHandle handle, FmlObjectHandle objectHa
         return -1;
     }
     
-    if( object->type == FHT_ENSEMBLE_DOMAIN )
+    if( object->type == FHT_ENSEMBLE_TYPE )
     {
-        EnsembleDomain *ensembleDomain = (EnsembleDomain*)object;
-        if( ensembleDomain->bounds->boundsType == BOUNDS_DISCRETE_CONTIGUOUS )
+        EnsembleType *ensembleType = (EnsembleType*)object;
+        if( ensembleType->bounds->boundsType == BOUNDS_DISCRETE_CONTIGUOUS )
         {
-            ContiguousBounds *contiguous = (ContiguousBounds *)ensembleDomain->bounds;
+            ContiguousBounds *contiguous = (ContiguousBounds *)ensembleType->bounds;
             handle->setRegionError( FML_ERR_NO_ERROR );  
             return contiguous->count;
         }
@@ -611,19 +660,19 @@ int Fieldml_GetContiguousBoundsCount( FmlHandle handle, FmlObjectHandle objectHa
         handle->setRegionError( FML_ERR_INVALID_OBJECT );  
         return -1;
     }
-    else if( object->type == FHT_MESH_DOMAIN )
+    else if( object->type == FHT_MESH_TYPE )
     {
-        MeshDomain *meshDomain = (MeshDomain*)object;
+        MeshType *meshType = (MeshType*)object;
         FieldmlObject *subObject;
         
-        subObject = handle->getObject( meshDomain->elementDomain );
+        subObject = handle->getObject( meshType->elementType );
         
-        if( ( subObject == NULL ) || ( subObject->type != FHT_ENSEMBLE_DOMAIN ) )
+        if( ( subObject == NULL ) || ( subObject->type != FHT_ENSEMBLE_TYPE ) )
         {
             return handle->setRegionError( FML_ERR_MISCONFIGURED_OBJECT );
         }
         
-        return Fieldml_GetContiguousBoundsCount( handle, meshDomain->elementDomain );
+        return Fieldml_GetContiguousBoundsCount( handle, meshType->elementType );
     }
     else
     {
@@ -649,30 +698,30 @@ int Fieldml_SetContiguousBoundsCount( FmlHandle handle, FmlObjectHandle objectHa
         return handle->setRegionError( FML_ERR_ACCESS_VIOLATION );
     }
     
-    if( object->type == FHT_ENSEMBLE_DOMAIN )
+    if( object->type == FHT_ENSEMBLE_TYPE )
     {
-        EnsembleDomain *ensembleDomain = (EnsembleDomain*)object;
-        delete ensembleDomain->bounds;
-        ensembleDomain->bounds = new ContiguousBounds( count );
+        EnsembleType *ensembleType = (EnsembleType*)object;
+        delete ensembleType->bounds;
+        ensembleType->bounds = new ContiguousBounds( count );
         
         return handle->getLastError();
     }
-    else if( object->type == FHT_MESH_DOMAIN )
+    else if( object->type == FHT_MESH_TYPE )
     {
-        MeshDomain *meshDomain = (MeshDomain*)object;
+        MeshType *meshType = (MeshType*)object;
 
         FieldmlObject *subObject;
         
-        subObject = handle->getObject( meshDomain->elementDomain );
+        subObject = handle->getObject( meshType->elementType );
         
-        if( ( subObject == NULL ) || ( subObject->type != FHT_ENSEMBLE_DOMAIN ) )
+        if( ( subObject == NULL ) || ( subObject->type != FHT_ENSEMBLE_TYPE ) )
         {
             return handle->setRegionError( FML_ERR_MISCONFIGURED_OBJECT );
         }
         
-        EnsembleDomain *ensembleDomain = (EnsembleDomain*)subObject;
-        delete ensembleDomain->bounds;
-        ensembleDomain->bounds = new ContiguousBounds( count );
+        EnsembleType *ensembleType = (EnsembleType*)subObject;
+        delete ensembleType->bounds;
+        ensembleType->bounds = new ContiguousBounds( count );
         
         return handle->getLastError();
     }
@@ -681,7 +730,7 @@ int Fieldml_SetContiguousBoundsCount( FmlHandle handle, FmlObjectHandle objectHa
 }
 
 
-FmlObjectHandle Fieldml_GetMeshElementDomain( FmlHandle handle, FmlObjectHandle objectHandle )
+FmlObjectHandle Fieldml_GetMeshElementType( FmlHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlObject *object = handle->getObject( objectHandle );
 
@@ -689,10 +738,10 @@ FmlObjectHandle Fieldml_GetMeshElementDomain( FmlHandle handle, FmlObjectHandle 
     {
         return FML_INVALID_HANDLE;
     }
-    if( object->type == FHT_MESH_DOMAIN ) 
+    if( object->type == FHT_MESH_TYPE ) 
     {
-        MeshDomain *meshDomain = (MeshDomain *)object;
-        return meshDomain->elementDomain;
+        MeshType *meshType = (MeshType *)object;
+        return meshType->elementType;
     }
     
     handle->setRegionError( FML_ERR_INVALID_OBJECT );  
@@ -730,7 +779,7 @@ int Fieldml_GetMeshConnectivityCount( FmlHandle handle, FmlObjectHandle objectHa
 }
 
 
-FmlObjectHandle Fieldml_GetMeshConnectivityDomain( FmlHandle handle, FmlObjectHandle objectHandle, int index )
+FmlObjectHandle Fieldml_GetMeshConnectivityType( FmlHandle handle, FmlObjectHandle objectHandle, int index )
 {
     SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getConnectivityMap( handle, objectHandle );
     if( map == NULL )
@@ -754,7 +803,7 @@ FmlObjectHandle Fieldml_GetMeshConnectivitySource( FmlHandle handle, FmlObjectHa
 }
 
 
-FmlObjectHandle Fieldml_GetMeshXiDomain( FmlHandle handle, FmlObjectHandle objectHandle )
+FmlObjectHandle Fieldml_GetMeshXiType( FmlHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlObject *object = handle->getObject( objectHandle );
 
@@ -762,10 +811,29 @@ FmlObjectHandle Fieldml_GetMeshXiDomain( FmlHandle handle, FmlObjectHandle objec
     {
         return FML_INVALID_HANDLE;
     }
-    if( object->type == FHT_MESH_DOMAIN ) 
+    if( object->type == FHT_MESH_TYPE ) 
     {
-        MeshDomain *meshDomain = (MeshDomain *)object;
-        return meshDomain->xiDomain;
+        MeshType *meshType = (MeshType *)object;
+        return meshType->xiType;
+    }
+    
+    handle->setRegionError( FML_ERR_INVALID_OBJECT );  
+    return FML_INVALID_HANDLE;
+}
+
+
+FmlObjectHandle Fieldml_GetMeshXiComponentType( FmlHandle handle, FmlObjectHandle objectHandle )
+{
+    FieldmlObject *object = handle->getObject( objectHandle );
+
+    if( object == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+    if( object->type == FHT_MESH_TYPE ) 
+    {
+        MeshType *meshType = (MeshType *)object;
+        return Fieldml_GetTypeComponentEnsemble( handle, meshType->xiType );
     }
     
     handle->setRegionError( FML_ERR_INVALID_OBJECT );  
@@ -819,7 +887,7 @@ int Fieldml_GetObjectInt( FmlHandle handle, FmlObjectHandle objectHandle )
 }
 
 
-FmlObjectHandle Fieldml_GetValueDomain( FmlHandle handle, FmlObjectHandle objectHandle )
+FmlObjectHandle Fieldml_GetValueType( FmlHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlObject *object = handle->getObject( objectHandle );
 
@@ -828,71 +896,59 @@ FmlObjectHandle Fieldml_GetValueDomain( FmlHandle handle, FmlObjectHandle object
         return FML_INVALID_HANDLE;
     }
 
-    handle->setRegionError( FML_ERR_NO_ERROR );  
-    if( ( object->type == FHT_ENSEMBLE_PARAMETERS ) || ( object->type == FHT_CONTINUOUS_PARAMETERS ) ) 
+    handle->setRegionError( FML_ERR_NO_ERROR );
+    
+    if( object->type == FHT_PARAMETER_EVALUATOR ) 
     {
-        Parameters *parameters = (Parameters *)object;
-        return parameters->valueDomain;
+        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
+        return parameterEvaluator->valueType;
     }
-    else if( object->type == FHT_CONTINUOUS_REFERENCE )
+    else if( object->type == FHT_REFERENCE_EVALUATOR )
     {
-        ContinuousReference *continuousReference = (ContinuousReference *)object;
-        return continuousReference->valueDomain;
+        ReferenceEvaluator *referenceEvaluator = (ReferenceEvaluator *)object;
+        return referenceEvaluator->valueType;
     }
-    else if( object->type == FHT_CONTINUOUS_AGGREGATE )
+    else if( object->type == FHT_AGGREGATE_EVALUATOR )
     {
-        ContinuousAggregate *aggregate = (ContinuousAggregate *)object;
-        return aggregate->valueDomain;
+        AggregateEvaluator *aggregate = (AggregateEvaluator *)object;
+        return aggregate->valueType;
     }
-    else if( object->type == FHT_CONTINUOUS_PIECEWISE )
+    else if( object->type == FHT_PIECEWISE_EVALUATOR )
     {
-        ContinuousPiecewise *piecewise = (ContinuousPiecewise *)object;
-        return piecewise->valueDomain;
+        PiecewiseEvaluator *piecewise = (PiecewiseEvaluator *)object;
+        return piecewise->valueType;
     }
-    else if( ( object->type == FHT_CONTINUOUS_VARIABLE ) || ( object->type == FHT_ENSEMBLE_VARIABLE ) )
+    else if( object->type == FHT_ABSTRACT_EVALUATOR )
     {
-        Variable *variable = (Variable *)object;
-        return variable->valueDomain;
+        AbstractEvaluator *abstractEvaluator = (AbstractEvaluator *)object;
+        return abstractEvaluator->valueType;
+    }
+    else if( object->type == FHT_REMOTE_EVALUATOR )
+    {
+        Evaluator *evaluator = (Evaluator *)object;
+        return evaluator->valueType;
     }
 
-    handle->setRegionError( FML_ERR_INVALID_OBJECT );  
+    handle->setRegionError( FML_ERR_INVALID_OBJECT );
     return FML_INVALID_HANDLE;
 }
 
 
-FmlObjectHandle Fieldml_CreateEnsembleVariable( FmlHandle handle, const char *name, FmlObjectHandle valueDomain )
+FmlObjectHandle Fieldml_CreateAbstractEvaluator( FmlHandle handle, const char *name, FmlObjectHandle valueType )
 {
-    Variable *variable = new Variable( name, FILE_REGION_HANDLE, valueDomain, true );
+    AbstractEvaluator *abstractEvaluator = new AbstractEvaluator( name, FILE_REGION_HANDLE, valueType );
     
     handle->setRegionError( FML_ERR_NO_ERROR );
-    return handle->addObject( variable );
+    return handle->addObject( abstractEvaluator );
 }
 
 
-FmlObjectHandle Fieldml_CreateContinuousVariable( FmlHandle handle, const char *name, FmlObjectHandle valueDomain )
+FmlObjectHandle Fieldml_CreateParametersEvaluator( FmlHandle handle, const char *name, FmlObjectHandle valueType )
 {
-    Variable *variable = new Variable( name, FILE_REGION_HANDLE, valueDomain, false );
+    ParameterEvaluator *parameterEvaluator = new ParameterEvaluator( name, FILE_REGION_HANDLE, valueType );
     
     handle->setRegionError( FML_ERR_NO_ERROR );
-    return handle->addObject( variable );
-}
-
-
-FmlObjectHandle Fieldml_CreateEnsembleParameters( FmlHandle handle, const char *name, FmlObjectHandle valueDomain )
-{
-    Parameters *parameters = new Parameters( name, FILE_REGION_HANDLE, valueDomain, true );
-    
-    handle->setRegionError( FML_ERR_NO_ERROR );
-    return handle->addObject( parameters );
-}
-
-
-FmlObjectHandle Fieldml_CreateContinuousParameters( FmlHandle handle, const char *name, FmlObjectHandle valueDomain )
-{
-    Parameters *parameters = new Parameters( name, FILE_REGION_HANDLE, valueDomain, false );
-    
-    handle->setRegionError( FML_ERR_NO_ERROR );
-    return handle->addObject( parameters );
+    return handle->addObject( parameterEvaluator );
 }
 
 
@@ -905,18 +961,18 @@ int Fieldml_SetParameterDataDescription( FmlHandle handle, FmlObjectHandle objec
         return handle->getLastError();
     }
 
-    if( ( object->type == FHT_ENSEMBLE_PARAMETERS ) || ( object->type == FHT_CONTINUOUS_PARAMETERS ) ) 
+    if( object->type == FHT_PARAMETER_EVALUATOR )
     {
-        Parameters *parameters = (Parameters *)object;
-        if( parameters->dataDescription->descriptionType != DESCRIPTION_UNKNOWN )
+        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
+        if( parameterEvaluator->dataDescription->descriptionType != DESCRIPTION_UNKNOWN )
         {
             return handle->setRegionError( FML_ERR_ACCESS_VIOLATION );
         }
 
         if( description == DESCRIPTION_SEMIDENSE )
         {
-            delete parameters->dataDescription;
-            parameters->dataDescription = new SemidenseDataDescription();
+            delete parameterEvaluator->dataDescription;
+            parameterEvaluator->dataDescription = new SemidenseDataDescription();
             return handle->getLastError();
         }
         else
@@ -937,10 +993,10 @@ DataDescriptionType Fieldml_GetParameterDataDescription( FmlHandle handle, FmlOb
         return DESCRIPTION_UNKNOWN;
     }
 
-    if( ( object->type == FHT_ENSEMBLE_PARAMETERS ) || ( object->type == FHT_CONTINUOUS_PARAMETERS ) ) 
+    if( object->type == FHT_PARAMETER_EVALUATOR )
     {
-        Parameters *parameters = (Parameters *)object;
-        return parameters->dataDescription->descriptionType;
+        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
+        return parameterEvaluator->dataDescription->descriptionType;
     }
 
     handle->setRegionError( FML_ERR_INVALID_OBJECT );
@@ -1110,7 +1166,7 @@ DataFileType Fieldml_GetParameterDataFileType( FmlHandle handle, FmlObjectHandle
 }
 
 
-int Fieldml_AddSemidenseIndex( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle, int isSparse )
+int Fieldml_AddSemidenseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle, int isSparse )
 {
     SemidenseDataDescription *semidense = getSemidenseDataDescription( handle, objectHandle );
     if( semidense == NULL )
@@ -1150,7 +1206,7 @@ int Fieldml_GetSemidenseIndexCount( FmlHandle handle, FmlObjectHandle objectHand
 }
 
 
-FmlObjectHandle Fieldml_GetSemidenseIndex( FmlHandle handle, FmlObjectHandle objectHandle, int index, int isSparse )
+FmlObjectHandle Fieldml_GetSemidenseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int index, int isSparse )
 {
     SemidenseDataDescription *semidense = getSemidenseDataDescription( handle, objectHandle );
     if( semidense == NULL )
@@ -1177,8 +1233,8 @@ int Fieldml_SetSwizzle( FmlHandle handle, FmlObjectHandle objectHandle, const in
         return handle->getLastError();
     }
     
-    FmlObjectHandle ensembleHandle = Fieldml_GetSemidenseIndex( handle, objectHandle, 1, 0 );
-    int ensembleCount = Fieldml_GetEnsembleDomainElementCount( handle, ensembleHandle );
+    FmlObjectHandle ensembleHandle = Fieldml_GetSemidenseIndexEvaluator( handle, objectHandle, 1, 0 );
+    int ensembleCount = Fieldml_GetEnsembleTypeElementCount( handle, ensembleHandle );
     
     if( ensembleCount != count )
     {
@@ -1245,21 +1301,21 @@ int Fieldml_CopySwizzleData( FmlHandle handle, FmlObjectHandle objectHandle, int
 }
 
 
-FmlObjectHandle Fieldml_CreateContinuousPiecewise( FmlHandle handle, const char * name, FmlObjectHandle indexHandle, FmlObjectHandle valueDomain )
+FmlObjectHandle Fieldml_CreatePiecewiseEvaluator( FmlHandle handle, const char * name, FmlObjectHandle valueType )
 {
-    ContinuousPiecewise *continuousPiecewise = new ContinuousPiecewise( name, FILE_REGION_HANDLE, indexHandle, valueDomain );
+    PiecewiseEvaluator *piecewiseEvaluator = new PiecewiseEvaluator( name, FILE_REGION_HANDLE, valueType );
     
     handle->setRegionError( FML_ERR_NO_ERROR );
-    return handle->addObject( continuousPiecewise );
+    return handle->addObject( piecewiseEvaluator );
 }
 
 
-FmlObjectHandle Fieldml_CreateContinuousAggregate( FmlHandle handle, const char * name, FmlObjectHandle valueDomain )
+FmlObjectHandle Fieldml_CreateAggregateEvaluator( FmlHandle handle, const char * name, FmlObjectHandle valueType )
 {
-    ContinuousAggregate *continuousAggregate = new ContinuousAggregate( name, FILE_REGION_HANDLE, valueDomain );
+    AggregateEvaluator *aggregateEvaluator = new AggregateEvaluator( name, FILE_REGION_HANDLE, valueType );
     
     handle->setRegionError( FML_ERR_NO_ERROR );
-    return handle->addObject( continuousAggregate );
+    return handle->addObject( aggregateEvaluator );
 }
 
 
@@ -1273,7 +1329,7 @@ int Fieldml_SetDefaultEvaluator( FmlHandle handle, FmlObjectHandle objectHandle,
         return handle->getLastError();
     }
 
-    if( object->type == FHT_CONTINUOUS_PIECEWISE )
+    if( ( object->type == FHT_PIECEWISE_EVALUATOR ) || ( object->type == FHT_AGGREGATE_EVALUATOR ) )
     {
         map->setDefault( evaluator );
         return handle->getLastError();
@@ -1295,7 +1351,7 @@ int Fieldml_GetDefaultEvaluator( FmlHandle handle, FmlObjectHandle objectHandle 
         return FML_INVALID_HANDLE;
     }
 
-    if( object->type == FHT_CONTINUOUS_PIECEWISE )
+    if( ( object->type == FHT_PIECEWISE_EVALUATOR ) || ( object->type == FHT_AGGREGATE_EVALUATOR ) )
     {
         return map->getDefault();
     }
@@ -1372,12 +1428,14 @@ FmlObjectHandle Fieldml_GetElementEvaluator( FmlHandle handle, FmlObjectHandle o
 }
 
 
-FmlObjectHandle Fieldml_CreateContinuousReference( FmlHandle handle, const char * name, FmlObjectHandle remoteEvaluator, FmlObjectHandle valueDomain )
+FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlHandle handle, const char * name, FmlObjectHandle remoteEvaluator )
 {
-    ContinuousReference *continuousReference = new ContinuousReference( name, FILE_REGION_HANDLE, remoteEvaluator, valueDomain );
+    FmlObjectHandle valueType = Fieldml_GetValueType( handle, remoteEvaluator );
+
+    ReferenceEvaluator *referenceEvaluator = new ReferenceEvaluator( name, FILE_REGION_HANDLE, remoteEvaluator, valueType );
     
     handle->setRegionError( FML_ERR_NO_ERROR );
-    return handle->addObject( continuousReference );
+    return handle->addObject( referenceEvaluator );
 }
 
 
@@ -1390,21 +1448,67 @@ FmlObjectHandle Fieldml_GetReferenceRemoteEvaluator( FmlHandle handle, FmlObject
         return FML_INVALID_HANDLE;
     }
 
-    if( object->type == FHT_CONTINUOUS_REFERENCE )
+    if( object->type == FHT_REFERENCE_EVALUATOR )
     {
-        ContinuousReference *continuousReference = (ContinuousReference *)object;
-        return continuousReference->remoteEvaluator;
+        ReferenceEvaluator *referenceEvaluator = (ReferenceEvaluator *)object;
+        return referenceEvaluator->remoteEvaluator;
     }
-    
     
     handle->setRegionError( FML_ERR_INVALID_OBJECT );
     return FML_INVALID_HANDLE;
 }
 
 
-int Fieldml_GetAliasCount( FmlHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetVariableCount( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getAliasMap( handle, objectHandle );
+    vector<FmlObjectHandle> *variables = getVariableList( handle, objectHandle );
+    if( variables == NULL )
+    {
+        return -1;
+    }
+    
+    return variables->size();
+}
+
+
+FmlObjectHandle Fieldml_GetVariable( FmlHandle handle, FmlObjectHandle objectHandle, int variableIndex )
+{
+    vector<FmlObjectHandle> *variables = getVariableList( handle, objectHandle );
+    if( variables == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+    
+    if( ( variableIndex < 1 ) || ( variableIndex > variables->size() ) )
+    {
+        handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        return FML_INVALID_HANDLE;
+    }
+    
+    return variables->at( variableIndex - 1 );
+}
+
+
+int Fieldml_AddVariable( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle evaluatorHandle )
+{
+    vector<FmlObjectHandle> *variables = getVariableList( handle, objectHandle );
+    if( variables == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+    
+    if( std::find( variables->begin(), variables->end(), evaluatorHandle ) == variables->end() )
+    {
+        variables->push_back( evaluatorHandle );
+    }
+
+    return handle->getLastError();
+}
+
+
+int Fieldml_GetBindCount( FmlHandle handle, FmlObjectHandle objectHandle )
+{
+    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getBindMap( handle, objectHandle );
     if( map == NULL )
     {
         return -1;
@@ -1414,9 +1518,9 @@ int Fieldml_GetAliasCount( FmlHandle handle, FmlObjectHandle objectHandle )
 }
 
 
-FmlObjectHandle Fieldml_GetAliasLocal( FmlHandle handle, FmlObjectHandle objectHandle, int index )
+FmlObjectHandle Fieldml_GetBindVariable( FmlHandle handle, FmlObjectHandle objectHandle, int index )
 {
-    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getAliasMap( handle, objectHandle );
+    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getBindMap( handle, objectHandle );
     if( map == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -1426,9 +1530,9 @@ FmlObjectHandle Fieldml_GetAliasLocal( FmlHandle handle, FmlObjectHandle objectH
 }
 
 
-FmlObjectHandle Fieldml_GetAliasRemote( FmlHandle handle, FmlObjectHandle objectHandle, int index )
+FmlObjectHandle Fieldml_GetBindEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int index )
 {
-    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getAliasMap( handle, objectHandle );
+    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getBindMap( handle, objectHandle );
     if( map == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -1438,9 +1542,9 @@ FmlObjectHandle Fieldml_GetAliasRemote( FmlHandle handle, FmlObjectHandle object
 }
 
 
-FmlObjectHandle Fieldml_GetAliasByRemote( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle remoteHandle )
+FmlObjectHandle Fieldml_GetBindByVariable( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle variableHandle )
 {
-    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getAliasMap( handle, objectHandle );
+    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getBindMap( handle, objectHandle );
     if( map == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -1448,7 +1552,7 @@ FmlObjectHandle Fieldml_GetAliasByRemote( FmlHandle handle, FmlObjectHandle obje
 
     for( int i = 0; i < map->size(); i++ )
     {
-        if( map->getKey( i ) == remoteHandle )
+        if( map->getKey( i ) == variableHandle )
         {
             return map->getValue( i );
         }
@@ -1458,15 +1562,15 @@ FmlObjectHandle Fieldml_GetAliasByRemote( FmlHandle handle, FmlObjectHandle obje
 }
 
 
-int Fieldml_SetAlias( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle remoteDomain, FmlObjectHandle localSource )
+int Fieldml_SetBind( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle remoteType, FmlObjectHandle localSource )
 {
-    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getAliasMap( handle, objectHandle );
+    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getBindMap( handle, objectHandle );
     if( map == NULL )
     {
         return handle->getLastError();
     }
     
-    map->set( remoteDomain, localSource );
+    map->set( remoteType, localSource );
     return handle->getLastError();
 }
 
@@ -1481,18 +1585,18 @@ int Fieldml_GetIndexCount( FmlHandle handle, FmlObjectHandle objectHandle )
         return -1;
     }
     
-    if( object->type == FHT_CONTINUOUS_PIECEWISE )
+    if( object->type == FHT_PIECEWISE_EVALUATOR )
     {
         return 1;
     }
-    else if( ( object->type == FHT_CONTINUOUS_PARAMETERS ) || ( object->type == FHT_ENSEMBLE_PARAMETERS ) )
+    else if( object->type == FHT_PARAMETER_EVALUATOR )
     {
         int count1, count2;
         
-        Parameters *parameters = (Parameters *)object;
-        if( parameters->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
+        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
+        if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
         {
-            SemidenseDataDescription *semidense = (SemidenseDataDescription *)parameters->dataDescription;
+            SemidenseDataDescription *semidense = (SemidenseDataDescription *)parameterEvaluator->dataDescription;
             count1 = semidense->sparseIndexes.size();
             count2 = semidense->denseIndexes.size();
             return count1 + count2;
@@ -1507,7 +1611,87 @@ int Fieldml_GetIndexCount( FmlHandle handle, FmlObjectHandle objectHandle )
 }
 
 
-FmlObjectHandle Fieldml_GetIndexDomain( FmlHandle handle, FmlObjectHandle objectHandle, int index )
+int Fieldml_SetIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int index, FmlObjectHandle evaluatorHandle )
+{
+    FieldmlObject *object = handle->getObject( objectHandle );
+
+    if( object == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+    
+    if( object->type == FHT_PIECEWISE_EVALUATOR )
+    {
+        PiecewiseEvaluator *piecewise = (PiecewiseEvaluator*)object;
+
+        if( index == 1 )
+        {
+            piecewise->indexEvaluator = evaluatorHandle;
+            return handle->getLastError();
+        }
+        else
+        {
+            handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+            return FML_INVALID_HANDLE;
+        }
+    }
+    else if( object->type == FHT_AGGREGATE_EVALUATOR )
+    {
+        AggregateEvaluator *aggregate = (AggregateEvaluator*)object;
+
+        if( index == 1 )
+        {
+            aggregate->indexEvaluator = evaluatorHandle;
+            return handle->getLastError();
+        }
+        else
+        {
+            handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+            return FML_INVALID_HANDLE;
+        }
+    }
+    else if( object->type == FHT_PARAMETER_EVALUATOR )
+    {
+        int count;
+        
+        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
+        if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
+        {
+            SemidenseDataDescription *semidense = (SemidenseDataDescription *)parameterEvaluator->dataDescription;
+            count = semidense->sparseIndexes.size();
+            
+            if( index <= count )
+            {
+                semidense->sparseIndexes[index - 1] = evaluatorHandle;
+                return handle->getLastError();
+            }
+
+            index -= count;
+            count = semidense->denseIndexes.size();
+
+            if( index <= count )
+            {
+                semidense->denseIndexes[index - 1] = evaluatorHandle;
+                return handle->getLastError();
+            }
+            
+            handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        }
+        else
+        {
+            handle->setRegionError( FML_ERR_UNSUPPORTED );
+        }
+    }
+    else
+    {
+        handle->setRegionError( FML_ERR_INVALID_OBJECT );
+    }
+
+    return handle->getLastError();
+}
+
+
+FmlObjectHandle Fieldml_GetIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int index )
 {
     FieldmlObject *object = handle->getObject( objectHandle );
 
@@ -1522,26 +1706,38 @@ FmlObjectHandle Fieldml_GetIndexDomain( FmlHandle handle, FmlObjectHandle object
         return FML_INVALID_HANDLE;
     }
     
-    if( object->type == FHT_CONTINUOUS_PIECEWISE )
+    if( object->type == FHT_PIECEWISE_EVALUATOR )
     {
-        ContinuousPiecewise *piecewise = (ContinuousPiecewise*)object;
+        PiecewiseEvaluator *piecewise = (PiecewiseEvaluator*)object;
 
         if( index == 1 )
         {
-            return piecewise->indexDomain;
+            return piecewise->indexEvaluator;
         }
         
         handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
     }
-    else if( ( object->type == FHT_CONTINUOUS_PARAMETERS ) || ( object->type == FHT_ENSEMBLE_PARAMETERS ) )
+    else if( object->type == FHT_AGGREGATE_EVALUATOR )
+    {
+        AggregateEvaluator *aggregate = (AggregateEvaluator*)object;
+
+        if( index == 1 )
+        {
+            return aggregate->indexEvaluator;
+        }
+        
+        handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        return FML_INVALID_HANDLE;
+    }
+    else if( object->type == FHT_PARAMETER_EVALUATOR )
     {
         int count;
         
-        Parameters *parameters = (Parameters *)object;
-        if( parameters->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
+        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
+        if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
         {
-            SemidenseDataDescription *semidense = (SemidenseDataDescription *)parameters->dataDescription;
+            SemidenseDataDescription *semidense = (SemidenseDataDescription *)parameterEvaluator->dataDescription;
             count = semidense->sparseIndexes.size();
             
             if( index <= count )
@@ -1571,62 +1767,47 @@ FmlObjectHandle Fieldml_GetIndexDomain( FmlHandle handle, FmlObjectHandle object
 }
 
 
-FmlObjectHandle Fieldml_CreateContinuousDomain( FmlHandle handle, const char * name, FmlObjectHandle componentHandle )
+FmlObjectHandle Fieldml_CreateContinuousType( FmlHandle handle, const char * name, FmlObjectHandle componentDescriptionHandle )
 {
-    if( ( componentHandle != FML_INVALID_HANDLE ) &&
-        ( Fieldml_GetObjectType( handle, componentHandle ) != FHT_ENSEMBLE_DOMAIN ) )
+    if( ( componentDescriptionHandle != FML_INVALID_HANDLE ) &&
+        ( Fieldml_GetObjectType( handle, componentDescriptionHandle ) != FHT_ENSEMBLE_TYPE ) )
     {
         handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
     }
     
-    if( componentHandle != FML_INVALID_HANDLE )
+    if( componentDescriptionHandle != FML_INVALID_HANDLE )
     {
-        if( Fieldml_IsEnsembleComponentDomain( handle, componentHandle ) != 1 )
+        if( Fieldml_IsEnsembleComponentType( handle, componentDescriptionHandle ) != 1 )
         {
             handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
             return FML_INVALID_HANDLE;
         }
     }
 
-    ContinuousDomain *continuousDomain = new ContinuousDomain( name, FILE_REGION_HANDLE, componentHandle );
+    ContinuousType *continuousType = new ContinuousType( name, FILE_REGION_HANDLE, componentDescriptionHandle );
     
     handle->setRegionError( FML_ERR_NO_ERROR );
-    return handle->addObject( continuousDomain );
+    return handle->addObject( continuousType );
 }
 
 
-FmlObjectHandle Fieldml_CreateEnsembleDomain( FmlHandle handle, const char * name, FmlObjectHandle componentHandle )
+FmlObjectHandle Fieldml_CreateEnsembleType( FmlHandle handle, const char * name, const int isComponentType )
 {
-    if( componentHandle != FML_INVALID_HANDLE )
-    {
-        handle->setRegionError( FML_ERR_UNSUPPORTED );
-        return FML_INVALID_HANDLE;
-    }
-
-    EnsembleDomain *ensembleDomain = new EnsembleDomain( name, FILE_REGION_HANDLE, false );
+    EnsembleType *ensembleType = new EnsembleType( name, FILE_REGION_HANDLE, isComponentType == 1 );
     
     handle->setRegionError( FML_ERR_NO_ERROR );
-    return handle->addObject( ensembleDomain );
+    return handle->addObject( ensembleType );
 }
 
 
-FmlObjectHandle Fieldml_CreateComponentEnsembleDomain( FmlHandle handle, const char * name )
-{
-    EnsembleDomain *ensembleDomain = new EnsembleDomain( name, FILE_REGION_HANDLE, true );
-    
-    handle->setRegionError( FML_ERR_NO_ERROR );
-    return handle->addObject( ensembleDomain );
-}
-
-
-FmlObjectHandle Fieldml_CreateMeshDomain( FmlHandle handle, const char * name, FmlObjectHandle xiEnsemble )
+FmlObjectHandle Fieldml_CreateMeshType( FmlHandle handle, const char * name, FmlObjectHandle xiEnsembleDescription )
 {
     FmlObjectHandle xiHandle, elementHandle;
     string subName;
 
-    if( ( xiEnsemble == FML_INVALID_HANDLE ) ||
-        ( Fieldml_GetObjectType( handle, xiEnsemble ) != FHT_ENSEMBLE_DOMAIN ) )
+    if( ( xiEnsembleDescription == FML_INVALID_HANDLE ) ||
+        ( Fieldml_GetObjectType( handle, xiEnsembleDescription ) != FHT_ENSEMBLE_TYPE ) )
     {
         handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
@@ -1634,7 +1815,7 @@ FmlObjectHandle Fieldml_CreateMeshDomain( FmlHandle handle, const char * name, F
 
     subName = name;
     subName += ".xi";
-    if( Fieldml_GetNamedObject( handle, subName.c_str() ) != FML_INVALID_HANDLE )
+    if( Fieldml_GetObjectByName( handle, subName.c_str() ) != FML_INVALID_HANDLE )
     {
         handle->setRegionError( FML_ERR_INVALID_PARAMETER_2 );
         return FML_INVALID_HANDLE;
@@ -1642,7 +1823,7 @@ FmlObjectHandle Fieldml_CreateMeshDomain( FmlHandle handle, const char * name, F
 
     subName = name;
     subName += ".elements";
-    if( Fieldml_GetNamedObject( handle, subName.c_str() ) != FML_INVALID_HANDLE )
+    if( Fieldml_GetObjectByName( handle, subName.c_str() ) != FML_INVALID_HANDLE )
     {
         handle->setRegionError( FML_ERR_INVALID_PARAMETER_2 );
         return FML_INVALID_HANDLE;
@@ -1650,19 +1831,19 @@ FmlObjectHandle Fieldml_CreateMeshDomain( FmlHandle handle, const char * name, F
     
     subName = name;
     subName += ".xi";
-    ContinuousDomain *xiObject = new ContinuousDomain( subName.c_str(), VIRTUAL_REGION_HANDLE, xiEnsemble );
+    ContinuousType *xiObject = new ContinuousType( subName.c_str(), VIRTUAL_REGION_HANDLE, xiEnsembleDescription );
     xiHandle = handle->addObject( xiObject );
     
     subName = name;
     subName += ".elements";
-    EnsembleDomain *elementObject = new EnsembleDomain( subName.c_str(), VIRTUAL_REGION_HANDLE, false );
+    EnsembleType *elementObject = new EnsembleType( subName.c_str(), VIRTUAL_REGION_HANDLE, false );
     elementHandle = handle->addObject( elementObject );
     
-    MeshDomain *meshDomain = new MeshDomain( name, FILE_REGION_HANDLE, xiHandle, elementHandle );
+    MeshType *meshType = new MeshType( name, FILE_REGION_HANDLE, xiHandle, elementHandle );
 
     handle->setRegionError( FML_ERR_NO_ERROR );
 
-    return handle->addObject( meshDomain );
+    return handle->addObject( meshType );
 }
 
 
@@ -1710,7 +1891,7 @@ int Fieldml_SetMeshElementShape( FmlHandle handle, FmlObjectHandle objectHandle,
 }
 
 
-int Fieldml_SetMeshConnectivity( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle evaluator, FmlObjectHandle pointDomain )
+int Fieldml_SetMeshConnectivity( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle evaluator, FmlObjectHandle pointType )
 {
     SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getConnectivityMap( handle, objectHandle );
     if( map == NULL )
@@ -1718,18 +1899,18 @@ int Fieldml_SetMeshConnectivity( FmlHandle handle, FmlObjectHandle objectHandle,
         return handle->getLastError();
     }
 
-    if( ( pointDomain == FML_INVALID_HANDLE ) || ( evaluator == FML_INVALID_HANDLE ) )
+    if( ( pointType == FML_INVALID_HANDLE ) || ( evaluator == FML_INVALID_HANDLE ) )
     {
         // This could be use to 'un-set' a connectivity.
         return handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
     }
     
-    if( Fieldml_GetObjectType( handle, pointDomain ) != FHT_ENSEMBLE_DOMAIN )
+    if( Fieldml_GetObjectType( handle, pointType ) != FHT_ENSEMBLE_TYPE )
     {
         return handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
     }
     
-    map->set( evaluator, pointDomain );
+    map->set( evaluator, pointType );
     return handle->getLastError();
 }
 
@@ -1744,13 +1925,13 @@ FmlReaderHandle Fieldml_OpenReader( FmlHandle handle, FmlObjectHandle objectHand
     }
 
     FieldmlObject *object = handle->getObject( objectHandle );
-    Parameters *parameters = (Parameters *)object;
+    ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
 
     ParameterReader *reader = NULL;
     if( ( semidense->dataLocation->locationType == LOCATION_FILE ) ||
         ( semidense->dataLocation->locationType == LOCATION_INLINE ) )
     {
-        reader = ParameterReader::create( handle, parameters );
+        reader = ParameterReader::create( handle, parameterEvaluator );
     }
     else
     {
@@ -1814,13 +1995,13 @@ FmlWriterHandle Fieldml_OpenWriter( FmlHandle handle, FmlObjectHandle objectHand
     }
 
     FieldmlObject *object = handle->getObject( objectHandle );
-    Parameters *parameters = (Parameters *)object;
+    ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
 
     ParameterWriter *writer = NULL;
     if( ( semidense->dataLocation->locationType == LOCATION_FILE ) )
 //        ( semidense->dataLocation->locationType == LOCATION_INLINE ) ) TODO
     {
-        writer = ParameterWriter::create( handle, parameters, ( append == 1 ));
+        writer = ParameterWriter::create( handle, parameterEvaluator, ( append == 1 ));
     }
     else
     {
@@ -1871,10 +2052,4 @@ int Fieldml_CloseWriter( FmlHandle handle, FmlWriterHandle writer )
     delete writer;
     
     return handle->setRegionError( FML_ERR_NO_ERROR );
-}
-
-
-int Fieldml_GetLastError( FmlHandle handle )
-{
-    return handle->getLastError();
 }

@@ -51,19 +51,19 @@ using namespace std;
 //
 //========================================================================
 
-DomainBounds::DomainBounds( DomainBoundsType _boundsType ) :
+TypeBounds::TypeBounds( TypeBoundsType _boundsType ) :
     boundsType( _boundsType )
 {
 }
 
 UnknownBounds::UnknownBounds() :
-    DomainBounds( BOUNDS_UNKNOWN )
+    TypeBounds( BOUNDS_UNKNOWN )
 {
 }
 
 
 ContiguousBounds::ContiguousBounds( const int _count ) :
-    DomainBounds( BOUNDS_DISCRETE_CONTIGUOUS ),
+    TypeBounds( BOUNDS_DISCRETE_CONTIGUOUS ),
     count( _count )
 {
 }
@@ -83,72 +83,73 @@ FieldmlObject::FieldmlObject( const string _name, int _regionHandle, FieldmlHand
     intValue = 0;
 }
 
-EnsembleDomain::EnsembleDomain( const string _name, int _region, bool _isComponentEnsemble ) :
-    FieldmlObject( _name, _region, FHT_ENSEMBLE_DOMAIN ),
+EnsembleType::EnsembleType( const string _name, int _region, bool _isComponentEnsemble ) :
+    FieldmlObject( _name, _region, FHT_ENSEMBLE_TYPE ),
     isComponentEnsemble( _isComponentEnsemble ),
     bounds( new UnknownBounds() )
 {
 }
 
 
-ContinuousDomain::ContinuousDomain( const string _name, int _region, FmlObjectHandle _componentDomain ) :
-    FieldmlObject( _name, _region, FHT_CONTINUOUS_DOMAIN ),
-    componentDomain( _componentDomain )
+ContinuousType::ContinuousType( const string _name, int _region, FmlObjectHandle _componentType ) :
+    FieldmlObject( _name, _region, FHT_CONTINUOUS_TYPE ),
+    componentType( _componentType )
 {
 }
 
 
-MeshDomain::MeshDomain( const string _name, int _region, FmlObjectHandle _xiDomain, FmlObjectHandle _elementDomain ) :
-    FieldmlObject( _name, _region, FHT_MESH_DOMAIN ),
-    xiDomain( _xiDomain ),
-    elementDomain( _elementDomain ),
+MeshType::MeshType( const string _name, int _region, FmlObjectHandle _xiType, FmlObjectHandle _elementType ) :
+    FieldmlObject( _name, _region, FHT_MESH_TYPE ),
+    xiType( _xiType ),
+    elementType( _elementType ),
     shapes(""),
     connectivity( FML_INVALID_HANDLE )
 {
 }
 
 
-Evaluator::Evaluator( const string _name, int _region, FieldmlHandleType _type, FmlObjectHandle _valueDomain ) :
+Evaluator::Evaluator( const string _name, int _region, FieldmlHandleType _type, FmlObjectHandle _valueType ) :
     FieldmlObject( _name, _region, _type ),
-    valueDomain( _valueDomain )
+    valueType( _valueType )
 {
 }
 
 
-ContinuousReference::ContinuousReference( const string _name, int _region, FmlObjectHandle _evaluator, FmlObjectHandle _valueDomain ) :
-    Evaluator( _name, _region, FHT_CONTINUOUS_REFERENCE, _valueDomain ),
+ReferenceEvaluator::ReferenceEvaluator( const string _name, int _region, FmlObjectHandle _evaluator, FmlObjectHandle _valueType ) :
+    Evaluator( _name, _region, FHT_REFERENCE_EVALUATOR, _valueType ),
     remoteEvaluator( _evaluator ),
-    aliases( FML_INVALID_HANDLE )
+    binds( FML_INVALID_HANDLE )
 {
 }
 
 
-Variable::Variable( const string _name, int _region, FmlObjectHandle _valueDomain, bool isEnsemble ) :
-    Evaluator( _name, _region, isEnsemble ? FHT_ENSEMBLE_VARIABLE : FHT_CONTINUOUS_VARIABLE, _valueDomain )
+AbstractEvaluator::AbstractEvaluator( const string _name, int _region, FmlObjectHandle _valueType ) :
+    Evaluator( _name, _region, FHT_ABSTRACT_EVALUATOR, _valueType )
 {
 }
 
 
-Parameters::Parameters( const string _name, int _region, FmlObjectHandle _valueDomain, bool isEnsemble ) :
-    Evaluator( _name, _region, isEnsemble ? FHT_ENSEMBLE_PARAMETERS : FHT_CONTINUOUS_PARAMETERS, _valueDomain ),
+ParameterEvaluator::ParameterEvaluator( const string _name, int _region, FmlObjectHandle _valueType ) :
+    Evaluator( _name, _region, FHT_PARAMETER_EVALUATOR, _valueType ),
     dataDescription( new UnknownDataDescription() )
 {
 }
 
 
-ContinuousPiecewise::ContinuousPiecewise( const string _name, int _region, FmlObjectHandle _indexDomain, FmlObjectHandle _valueDomain ) :
-    Evaluator( _name, _region, FHT_CONTINUOUS_PIECEWISE, _valueDomain ),
-    aliases( FML_INVALID_HANDLE ),
-    evaluators( FML_INVALID_HANDLE )
+PiecewiseEvaluator::PiecewiseEvaluator( const string _name, int _region, FmlObjectHandle _valueType ) :
+    Evaluator( _name, _region, FHT_PIECEWISE_EVALUATOR, _valueType ),
+    binds( FML_INVALID_HANDLE ),
+    evaluators( FML_INVALID_HANDLE ),
+    indexEvaluator( FML_INVALID_HANDLE )
 {
-    indexDomain = _indexDomain;
 }
 
 
-ContinuousAggregate::ContinuousAggregate( const string _name, int _region, FmlObjectHandle _valueDomain ) :
-    Evaluator( _name, _region, FHT_CONTINUOUS_AGGREGATE, _valueDomain ),
-    aliases( FML_INVALID_HANDLE ),
-    evaluators( FML_INVALID_HANDLE )
+AggregateEvaluator::AggregateEvaluator( const string _name, int _region, FmlObjectHandle _valueType ) :
+    Evaluator( _name, _region, FHT_AGGREGATE_EVALUATOR, _valueType ),
+    binds( FML_INVALID_HANDLE ),
+    evaluators( FML_INVALID_HANDLE ),
+    indexEvaluator( FML_INVALID_HANDLE )
 {
 }
 

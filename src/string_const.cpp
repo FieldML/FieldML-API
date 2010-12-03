@@ -53,47 +53,50 @@ const char NIX_PATH_SEP = '/';
 #define DEFAULT_SEP NIX_PATH_SEP
 #endif
 
-const char * const FML_VERSION_STRING                  = "0.2_alpha";
+const char * const FML_VERSION_STRING                  = "0.3_alpha";
 
 const xmlChar * const FIELDML_TAG                      = (const xmlChar* const)"fieldml";
 
 const xmlChar * const REGION_TAG                       = (const xmlChar* const)"Region";
 
-const xmlChar * const ENSEMBLE_DOMAIN_TAG              = (const xmlChar* const)"EnsembleDomain";
+const xmlChar * const ENSEMBLE_TYPE_TAG                = (const xmlChar* const)"EnsembleType";
 const xmlChar * const BOUNDS_TAG                       = (const xmlChar* const)"bounds";
 const xmlChar * const CONTIGUOUS_ENSEMBLE_BOUNDS_TAG   = (const xmlChar* const)"ContiguousEnsembleBounds";
 const xmlChar * const ARBITRARY_ENSEMBLE_BOUNDS_TAG    = (const xmlChar* const)"ArbitraryEnsembleBounds";
 
-const xmlChar * const CONTINUOUS_DOMAIN_TAG            = (const xmlChar* const)"ContinuousDomain";
+const xmlChar * const CONTINUOUS_TYPE_TAG              = (const xmlChar* const)"ContinuousType";
 
-const xmlChar * const MESH_DOMAIN_TAG                  = (const xmlChar* const)"MeshDomain";
+const xmlChar * const MESH_TYPE_TAG                    = (const xmlChar* const)"MeshType";
+const xmlChar * const MESH_XI_TAG                      = (const xmlChar* const)"xi";
 const xmlChar * const MESH_SHAPES_TAG                  = (const xmlChar* const)"shapes";
+const xmlChar * const MESH_SHAPE_TAG                   = (const xmlChar* const)"shape";
 const xmlChar * const MESH_CONNECTIVITY_TAG            = (const xmlChar* const)"pointConnectivity";
+const xmlChar * const MESH_CONNECTIVITY_ENTRY_TAG      = (const xmlChar* const)"connectivity";
 
-const xmlChar * const CONTINUOUS_REFERENCE_TAG         = (const xmlChar* const)"ContinuousReferenceEvaluator";
-const xmlChar * const ALIASES_TAG                      = (const xmlChar* const)"aliases";
+const xmlChar * const REFERENCE_EVALUATOR_TAG          = (const xmlChar* const)"ReferenceEvaluator";
+const xmlChar * const BINDS_TAG                        = (const xmlChar* const)"binds";
+const xmlChar * const BIND_TAG                         = (const xmlChar* const)"bind";
+const xmlChar * const BIND_INDEX_TAG                   = (const xmlChar* const)"bind_index";
 
-const xmlChar * const CONTINUOUS_VARIABLE_TAG          = (const xmlChar* const)"ContinuousVariableEvaluator";
+const xmlChar * const VARIABLES_TAG                    = (const xmlChar* const)"variables";
+const xmlChar * const VARIABLE_TAG                     = (const xmlChar* const)"variable";
 
-const xmlChar * const ENSEMBLE_VARIABLE_TAG            = (const xmlChar* const)"EnsembleVariableEvaluator";
+const xmlChar * const ABSTRACT_EVALUATOR_TAG           = (const xmlChar* const)"AbstractEvaluator";
 
-const xmlChar * const ENSEMBLE_PARAMETERS_TAG          = (const xmlChar* const)"EnsembleParameters";
-
-const xmlChar * const CONTINUOUS_PARAMETERS_TAG        = (const xmlChar* const)"ContinuousParameters";
+const xmlChar * const PARAMETER_EVALUATOR_TAG          = (const xmlChar* const)"ParametersEvaluator";
 const xmlChar * const SEMI_DENSE_DATA_TAG              = (const xmlChar* const)"SemidenseData";
 const xmlChar * const SPARSE_INDEXES_TAG               = (const xmlChar* const)"sparseIndexes";
 const xmlChar * const DENSE_INDEXES_TAG                = (const xmlChar* const)"denseIndexes";
 
-const xmlChar * const CONTINUOUS_PIECEWISE_TAG         = (const xmlChar* const)"ContinuousPiecewiseEvaluator";
+const xmlChar * const PIECEWISE_EVALUATOR_TAG          = (const xmlChar* const)"PiecewiseEvaluator";
 const xmlChar * const ELEMENT_EVALUATORS_TAG           = (const xmlChar* const)"elementEvaluators";
+const xmlChar * const ELEMENT_TAG                      = (const xmlChar* const)"element";
 
-const xmlChar * const CONTINUOUS_AGGREGATE_TAG         = (const xmlChar* const)"ContinuousAggregateEvaluator";
-const xmlChar * const SOURCE_FIELDS_TAG                = (const xmlChar* const)"sourceFields";
+const xmlChar * const AGGREGATE_EVALUATOR_TAG          = (const xmlChar* const)"AggregateEvaluator";
+const xmlChar * const COMPONENT_EVALUATORS_TAG         = (const xmlChar* const)"componentEvaluators";
+const xmlChar * const COMPONENT_TAG                    = (const xmlChar* const)"component";
 
 const xmlChar * const MARKUP_TAG                       = (const xmlChar* const)"markup";
-
-const xmlChar * const MAP_ENTRY_TAG                    = (const xmlChar* const)"SimpleMapEntry";
-const xmlChar * const MAP_DEFAULT                      = (const xmlChar* const)"SimpleMapDefault";
 
 const xmlChar * const ENTRY_TAG                        = (const xmlChar* const)"entry";
 
@@ -111,30 +114,32 @@ const xmlChar * const VERSION_ATTRIB                   = (const xmlChar* const)"
 
 const xmlChar * const NAME_ATTRIB                      = (const xmlChar* const)"name";
 
-const xmlChar * const COMPONENT_DOMAIN_ATTRIB          = (const xmlChar* const)"componentDomain";
+const xmlChar * const VARIABLE_ATTRIB                  = (const xmlChar* const)"variable";
+const xmlChar * const INDEX_NUMBER_ATTRIB              = (const xmlChar* const)"index_number";
+const xmlChar * const SOURCE_ATTRIB                    = (const xmlChar* const)"source";
 
-const xmlChar * const IS_COMPONENT_DOMAIN_ATTRIB       = (const xmlChar* const)"isComponentDomain";
+const xmlChar * const COMPONENT_ENSEMBLE_ATTRIB        = (const xmlChar* const)"componentEnsemble";
 
-const xmlChar * const VALUE_DOMAIN_ATTRIB              = (const xmlChar* const)"valueDomain";
+const xmlChar * const IS_COMPONENT_ENSEMBLE_ATTRIB     = (const xmlChar* const)"isComponentEnsemble";
+
+const xmlChar * const VALUE_TYPE_ATTRIB                = (const xmlChar* const)"valueType";
 
 const xmlChar * const KEY_ATTRIB                       = (const xmlChar* const)"key";
 const xmlChar * const VALUE_ATTRIB                     = (const xmlChar* const)"value";
 const xmlChar * const DEFAULT_ATTRIB                   = (const xmlChar* const)"default";
 
-const xmlChar *const VALUE_COUNT_ATTRIB                = (const xmlChar* const)"valueCount";
+const xmlChar * const VALUE_COUNT_ATTRIB                = (const xmlChar* const)"valueCount";
 
-const xmlChar *const XI_COMPONENT_DOMAIN_ATTRIB        = (const xmlChar* const)"xiComponentDomain";
+const xmlChar * const XI_COMPONENT_ATTRIB               = (const xmlChar* const)"xi_component";
 
-const xmlChar *const VALUE_SOURCE_ATTRIB               = (const xmlChar* const)"valueSource";
-const xmlChar *const VALUE_INDEXES_ATTRIB              = (const xmlChar* const)"valueIndexes";
+const xmlChar * const NUMBER_ATTRIB                     = (const xmlChar* const)"number";
+const xmlChar * const EVALUATOR_ATTRIB                  = (const xmlChar* const)"evaluator";
 
-const xmlChar *const EVALUATOR_ATTRIB                  = (const xmlChar* const)"evaluator";
+const xmlChar * const INDEX_EVALUATOR_ATTRIB            = (const xmlChar* const)"indexEvaluator";
 
-const xmlChar *const INDEX_DOMAIN_ATTRIB               = (const xmlChar* const)"indexDomain";
-
-const xmlChar *const FILE_ATTRIB                       = (const xmlChar* const)"file";
-const xmlChar *const TYPE_ATTRIB                       = (const xmlChar* const)"type";
-const xmlChar *const OFFSET_ATTRIB                     = (const xmlChar* const)"offset";
+const xmlChar * const FILE_ATTRIB                       = (const xmlChar* const)"file";
+const xmlChar * const TYPE_ATTRIB                       = (const xmlChar* const)"type";
+const xmlChar * const OFFSET_ATTRIB                     = (const xmlChar* const)"offset";
 
 const char * const STRING_TYPE_TEXT                 = "text";
 const char * const STRING_TYPE_LINES                = "lines";

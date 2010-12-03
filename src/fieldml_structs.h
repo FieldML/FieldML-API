@@ -54,18 +54,18 @@ extern const int LIBRARY_REGION_HANDLE;
 
 extern const int VIRTUAL_REGION_HANDLE;
 
-class DomainBounds
+class TypeBounds
 {
 public:
-    const DomainBoundsType boundsType;
+    const TypeBoundsType boundsType;
     
 protected:   
-    DomainBounds( DomainBoundsType _boundsType );
+    TypeBounds( TypeBoundsType _boundsType );
 };
 
 
 class UnknownBounds :
-    public DomainBounds
+    public TypeBounds
 {
 public:
     UnknownBounds();
@@ -73,7 +73,7 @@ public:
 
 
 class ContiguousBounds :
-    public DomainBounds
+    public TypeBounds
 {
 public:
     const int count;
@@ -96,39 +96,39 @@ public:
 };
 
 
-class EnsembleDomain :
+class EnsembleType :
     public FieldmlObject
 {
 public:
     const bool isComponentEnsemble;
 
-    DomainBounds *bounds;
+    TypeBounds *bounds;
     
-    EnsembleDomain( const std::string _name, int _regionHandle, bool _isComponentEnsemble );
+    EnsembleType( const std::string _name, int _regionHandle, bool _isComponentEnsemble );
 };
 
 
-class ContinuousDomain :
+class ContinuousType :
     public FieldmlObject
 {
 public:
-    const FmlObjectHandle componentDomain;
+    const FmlObjectHandle componentType;
     
-    ContinuousDomain( const std::string _name, int _regionHandle, FmlObjectHandle _componentDomain );
+    ContinuousType( const std::string _name, int _regionHandle, FmlObjectHandle _componentType );
 };
 
 
-class MeshDomain :
+class MeshType :
     public FieldmlObject
 {
 public:
-    const FmlObjectHandle xiDomain;
-    const FmlObjectHandle elementDomain;
+    const FmlObjectHandle xiType;
+    const FmlObjectHandle elementType;
     
     SimpleMap<int, std::string> shapes;
-    SimpleMap<int, int> connectivity;
+    SimpleMap<FmlObjectHandle, FmlObjectHandle> connectivity;
     
-    MeshDomain( const std::string _name, int _region, FmlObjectHandle _xiDomain, FmlObjectHandle _elementDomain );
+    MeshType( const std::string _name, int _region, FmlObjectHandle _xiType, FmlObjectHandle _elementType );
 };
 
 
@@ -136,54 +136,57 @@ class Evaluator :
     public FieldmlObject
 {
 public:
-    const FmlObjectHandle valueDomain;
-    
-protected:
-    Evaluator( const std::string _name, int _region, FieldmlHandleType _type, FmlObjectHandle _valueDomain );
+    const FmlObjectHandle valueType;
+
+    std::vector<FmlObjectHandle> variables;
+
+    Evaluator( const std::string _name, int _region, FieldmlHandleType _type, FmlObjectHandle _valueType );
 };
 
 
-class ContinuousReference :
+class ReferenceEvaluator :
     public Evaluator
 {
 public:
     const FmlObjectHandle remoteEvaluator;
 
-    SimpleMap<FmlObjectHandle, FmlObjectHandle> aliases;
+    SimpleMap<FmlObjectHandle, FmlObjectHandle> binds;
 
-    ContinuousReference( const std::string _name, int _region, FmlObjectHandle _evaluator, FmlObjectHandle _valueDomain );
+    ReferenceEvaluator( const std::string _name, int _region, FmlObjectHandle _evaluator, FmlObjectHandle _valueType );
 };
 
 
-class ContinuousPiecewise :
+class PiecewiseEvaluator :
     public Evaluator
 {
 public:
-    FmlObjectHandle indexDomain;
+    FmlObjectHandle indexEvaluator;
     
-    SimpleMap<FmlObjectHandle, FmlObjectHandle> aliases;
+    SimpleMap<FmlObjectHandle, FmlObjectHandle> binds;
     SimpleMap<int, FmlObjectHandle> evaluators;
     
-    ContinuousPiecewise( const std::string name, int region, FmlObjectHandle indexDomain, FmlObjectHandle valueDomain );
+    PiecewiseEvaluator( const std::string name, int region, FmlObjectHandle valueType );
 };
 
 
-class ContinuousAggregate :
+class AggregateEvaluator :
     public Evaluator
 {
 public:
-    SimpleMap<FmlObjectHandle, FmlObjectHandle> aliases;
+    SimpleMap<FmlObjectHandle, FmlObjectHandle> binds;
     SimpleMap<int, FmlObjectHandle> evaluators;
     
-    ContinuousAggregate( const std::string _name, int _region, FmlObjectHandle _valueDomain );
+    FmlObjectHandle indexEvaluator;
+    
+    AggregateEvaluator( const std::string _name, int _region, FmlObjectHandle _valueType );
 };
 
 
-class Variable :
+class AbstractEvaluator :
     public Evaluator
 {
 public:
-    Variable( const std::string name, int region, FmlObjectHandle _valueDomain, bool isEnsemble );
+    AbstractEvaluator( const std::string name, int region, FmlObjectHandle _valueType );
 };
 
 
@@ -262,13 +265,13 @@ public:
 };
 
 
-class Parameters :
+class ParameterEvaluator :
     public Evaluator
 {
 public:
     DataDescription *dataDescription;
     
-    Parameters( const std::string _name, int _region, FmlObjectHandle _valueDomain, bool isEnsemble );
+    ParameterEvaluator( const std::string _name, int _region, FmlObjectHandle _valueType );
 };
 
 int Fieldml_GetRegion( FmlHandle handle, FmlObjectHandle objectHandle );

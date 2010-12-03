@@ -99,7 +99,7 @@
 
 */
 
-enum DomainBoundsType
+enum TypeBoundsType
 {
     BOUNDS_UNKNOWN,              // EnsembleDomain bounds not yet known.
     BOUNDS_DISCRETE_CONTIGUOUS,  // Contiguous bounds (i.e. 1 ... N)
@@ -134,28 +134,21 @@ enum FieldmlHandleType
 {
     FHT_UNKNOWN,
     
-    FHT_ENSEMBLE_DOMAIN,
-    FHT_CONTINUOUS_DOMAIN,
-    FHT_MESH_DOMAIN,
-    FHT_CONTINUOUS_REFERENCE,
-    FHT_ENSEMBLE_PARAMETERS,
-    FHT_CONTINUOUS_PARAMETERS,
-    FHT_CONTINUOUS_PIECEWISE,
-    FHT_CONTINUOUS_AGGREGATE,
-    FHT_CONTINUOUS_VARIABLE,
-    FHT_ENSEMBLE_VARIABLE,
-    FHT_REMOTE_ENSEMBLE_DOMAIN,
-    FHT_REMOTE_CONTINUOUS_DOMAIN,
-    FHT_REMOTE_ENSEMBLE_EVALUATOR,
-    FHT_REMOTE_CONTINUOUS_EVALUATOR,
+    FHT_ENSEMBLE_TYPE,
+    FHT_CONTINUOUS_TYPE,
+    FHT_MESH_TYPE,
+    FHT_ABSTRACT_EVALUATOR,
+    FHT_REFERENCE_EVALUATOR,
+    FHT_PARAMETER_EVALUATOR,
+    FHT_PIECEWISE_EVALUATOR,
+    FHT_AGGREGATE_EVALUATOR,
+    FHT_REMOTE_TYPE,
+    FHT_REMOTE_EVALUATOR,
+    FHT_ELEMENT_SET,
     
     //These are stand-in types used to allow forward-declaration during parsing.
-    FHT_UNKNOWN_ENSEMBLE_DOMAIN,
-    FHT_UNKNOWN_CONTINUOUS_DOMAIN,
-    FHT_UNKNOWN_ENSEMBLE_EVALUATOR,
-    FHT_UNKNOWN_CONTINUOUS_EVALUATOR,
-    FHT_UNKNOWN_ENSEMBLE_SOURCE,
-    FHT_UNKNOWN_CONTINUOUS_SOURCE,
+    FHT_UNKNOWN_TYPE,
+    FHT_UNKNOWN_EVALUATOR
 };
 
 
@@ -264,7 +257,7 @@ FieldmlHandleType Fieldml_GetObjectType( FmlHandle handle, FmlObjectHandle objec
  *      Returns a handle to the object with the given name, or FML_INVALID_HANDLE if
  *      there is no such object.
  */
-FmlObjectHandle Fieldml_GetNamedObject( FmlHandle handle, const char * name );
+FmlObjectHandle Fieldml_GetObjectByName( FmlHandle handle, const char * name );
 
 
 /**
@@ -329,62 +322,58 @@ int Fieldml_ValidateObject( FmlHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- *      Returns the handle of the given domain's component ensemble.
+ *      Returns the handle of the given type's component ensemble.
  */
-FmlObjectHandle Fieldml_GetDomainComponentEnsemble( FmlHandle handle, FmlObjectHandle objectHandle );
+FmlObjectHandle Fieldml_GetTypeComponentEnsemble( FmlHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- * Helper function that returns the element count of the component domain of the
- * given domain.
+ * Helper function that returns the element count of the component type of the
+ * given type.
  */
-int Fieldml_GetDomainComponentCount( FmlHandle handle, FmlObjectHandle objectHandle );
+int Fieldml_GetTypeComponentCount( FmlHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- *      Creates an ensemble domain with the given name and component domain.
+ *      Creates an ensemble type with the given name.
  */
-FmlObjectHandle Fieldml_CreateEnsembleDomain( FmlHandle handle, const char * name, FmlObjectHandle componentHandle );
+FmlObjectHandle Fieldml_CreateEnsembleType( FmlHandle handle, const char * name, const int isComponentEnsemble );
 
 
 /**
- *  Creates an component ensemble domain with the given name.
- *      
- *  NOTE: A component ensemble domain is identical to an ensemble domain except that only component
- *  ensembles can be used when creating multi-component domains.     
+ *      Creates a continuous type with the given name and component ensemble.
  */
-FmlObjectHandle Fieldml_CreateComponentEnsembleDomain( FmlHandle handle, const char * name );
+FmlObjectHandle Fieldml_CreateContinuousType( FmlHandle handle, const char * name, FmlObjectHandle componentHandle );
+
+/**
+ *      Creates a mesh type with the given name, and with the given dimensionality.
+ *      Each mesh has its own unique element and xi type, which can be accessed by the relevant functions.
+ *      Because the xi and element types have a name based on the mesh name, care must be taken to ensure
+ *      that neither the mesh's name, nor it's element or xi type names are already in use. 
+ */
+FmlObjectHandle Fieldml_CreateMeshType( FmlHandle handle, const char * name, FmlObjectHandle xiComponentHandle );
 
 
 /**
- *      Creates a continuous domain with the given name and component domain.
+ *      Returns the handle of the given mesh type's xi type. This is a unique, n-dimensional
+ *      continuous type with the component type specified when the mesh was created. If the
+ *      mesh's name is "*", the xi type's name is "*.xi"
  */
-FmlObjectHandle Fieldml_CreateContinuousDomain( FmlHandle handle, const char * name, FmlObjectHandle componentHandle );
+FmlObjectHandle Fieldml_GetMeshXiType( FmlHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- *      Creates a mesh domain with the given name, and with a xi-space specified by the given ensemble.
- *      Each mesh has its own unique element and xi domain, which can be accessed by the relevant functions.
- *      Because the xi and element domains have a name based on the mesh name, care must be taken to ensure
- *      that neither the mesh's name, nor it's element or xi domain names are already in use. 
+ *      Returns the component handle of the given mesh type's xi type.
  */
-FmlObjectHandle Fieldml_CreateMeshDomain( FmlHandle handle, const char * name, FmlObjectHandle xiEnsemble );
+FmlObjectHandle Fieldml_GetMeshXiComponentType( FmlHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- *      Returns the handle of the given mesh domain's xi domain. This is a unique, n-dimensional
- *      continuous domain with the component domain specified when the mesh was created. If the
- *      mesh's name is "*", the xi domain's name is "*.xi"
- */
-FmlObjectHandle Fieldml_GetMeshXiDomain( FmlHandle handle, FmlObjectHandle objectHandle );
-
-
-/**
- *     Returns the handle of the given mesh domain's element domain. This is a unique ensemble
- *     domain whose bounds is specified by the user. If the mesh's name is "*", the element domain's
+ *     Returns the handle of the given mesh type's element type. This is a unique ensemble
+ *     type whose bounds is specified by the user. If the mesh's name is "*", the element type's
  *     name is "*.element"
  */
-FmlObjectHandle Fieldml_GetMeshElementDomain( FmlHandle handle, FmlObjectHandle objectHandle );
+FmlObjectHandle Fieldml_GetMeshElementType( FmlHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
@@ -417,7 +406,7 @@ int Fieldml_SetMeshElementShape( FmlHandle handle, FmlObjectHandle mesh, int ele
 
 
 /**
- *      Returns the number of connectivities specified for the given mesh domain. Each
+ *      Returns the number of connectivities specified for the given mesh type. Each
  *      connectivity links an ensemble evaluator with a corresponding ensemble point layout ensemble.
  *      
  *      NOTE: The point locations associated with each point layout ensemble are not yet specified.
@@ -426,9 +415,9 @@ int Fieldml_GetMeshConnectivityCount( FmlHandle handle, FmlObjectHandle objectHa
 
 
 /**
- *      Returns the domain of the nth connectivity for the given mesh. 
+ *      Returns the type of the nth connectivity for the given mesh. 
  */
-FmlObjectHandle Fieldml_GetMeshConnectivityDomain( FmlHandle handle, FmlObjectHandle objectHandle, int connectivityIndex );
+FmlObjectHandle Fieldml_GetMeshConnectivityType( FmlHandle handle, FmlObjectHandle objectHandle, int connectivityIndex );
 
 
 /*
@@ -437,97 +426,82 @@ FmlObjectHandle Fieldml_GetMeshConnectivityDomain( FmlHandle handle, FmlObjectHa
 FmlObjectHandle Fieldml_GetMeshConnectivitySource( FmlHandle handle, FmlObjectHandle objectHandle, int connectivityIndex );
 
 
-int Fieldml_SetMeshConnectivity( FmlHandle handle, FmlObjectHandle mesh, FmlObjectHandle evaluator, FmlObjectHandle pointDomain );
+int Fieldml_SetMeshConnectivity( FmlHandle handle, FmlObjectHandle mesh, FmlObjectHandle evaluator, FmlObjectHandle pointType );
 
 /**
-    Returns the bounds-type of the given domain.
+    Returns the bounds-type of the given type.
     
-    NOTE: Currently, only ensemble domains have explicit bounds.
+    NOTE: Currently, only ensemble types have explicit bounds.
     NOTE: Currently, only discrete contiguous bounds are supported.
  */
-DomainBoundsType Fieldml_GetDomainBoundsType( FmlHandle handle, FmlObjectHandle objectHandle );
+TypeBoundsType Fieldml_GetBoundsType( FmlHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- * Returns the number of elements in the given ensemble domain. 
+ * Returns the number of elements in the given ensemble type. 
  */
-int Fieldml_GetEnsembleDomainElementCount( FmlHandle handle, FmlObjectHandle objectHandle );
+int Fieldml_GetEnsembleTypeElementCount( FmlHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- * Returns 1 if the ensemble domain is a component domain, 0 if not, -1 on error.
+ * Returns 1 if the ensemble type is a component ensemble, 0 if not, -1 on error.
  */
-int Fieldml_IsEnsembleComponentDomain( FmlHandle handle, FmlObjectHandle objectHandle );
+int Fieldml_IsEnsembleComponentType( FmlHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- * Returns the names of the elements in the given ensemble domain. For now, the only supported element names are
+ * Returns the names of the elements in the given ensemble type. For now, the only supported element names are
  * positive integers.
  * 
  * NOTE: If the bounds are contiguous, the names will simply be 1, 2, 3... n. 
  */
-//NYI int Fieldml_GetEnsembleDomainElementNames( FmlHandle handle, FmlObjectHandle objectHandle, const int *array, int arrayLength );
+//NYI int Fieldml_GetEnsembleTypeElementNames( FmlHandle handle, FmlObjectHandle objectHandle, const int *array, int arrayLength );
 
 
 /**
- * Returns the number of elements in the given domains contiguous bounds.
- * Returns -1 if the domain does not have contiguous bounds.
+ * Returns the number of elements in the given types contiguous bounds.
+ * Returns -1 if the type does not have contiguous bounds.
  * 
- * For convenience, this function can be called on a mesh domain, in which case the
- * bounds of the mesh's element domain is returned.
+ * For convenience, this function can be called on a mesh type, in which case the
+ * bounds of the mesh's element type is returned.
  */
 int Fieldml_GetContiguousBoundsCount( FmlHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- * Sets the given ensemble domain to have contiguous bounds, with elements numbered from
+ * Sets the given ensemble type to have contiguous bounds, with elements numbered from
  * 1 to count.
  * 
- * For convenience, this function can be called on a mesh domain, in which case the
- * bounds of the mesh's element domain is set.
+ * For convenience, this function can be called on a mesh type, in which case the
+ * bounds of the mesh's element type is set.
  */
 int Fieldml_SetContiguousBoundsCount( FmlHandle handle, FmlObjectHandle objectHandle, int count );
 
 
+
+
+
+
 /**
-     Returns the value domain of the given evaluator.
+     Returns the value type of the given evaluator.
  */
-FmlObjectHandle Fieldml_GetValueDomain( FmlHandle handle, FmlObjectHandle objectHandle );
-
-
-
+FmlObjectHandle Fieldml_GetValueType( FmlHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- * Creates an ensemble-valued variable. A variable is a placeholder for an evaluator. Variables can be
- * aliased by evaluators, or even other variables.
+ * Creates a abstract evaluator. An abstract evaluator is a placeholder for a concrete evaluator, and
+ * can be bound just as concrete ones can.
  */
-FmlObjectHandle Fieldml_CreateEnsembleVariable( FmlHandle handle, const char *name, FmlObjectHandle valueDomain );
+FmlObjectHandle Fieldml_CreateAbstractEvaluator( FmlHandle handle, const char *name, FmlObjectHandle valueType );
 
 
 /**
- * Creates an continuous-valued variable. A variable is a placeholder for an evaluator. Variables can be
- * aliased by evaluators, or even other variables.
- */
-FmlObjectHandle Fieldml_CreateContinuousVariable( FmlHandle handle, const char *name, FmlObjectHandle valueDomain );
-
-
-/**
- * Creates an ensemble-valued parameter set. A parameter set contains a store of literal values, indexed by a set
- * of ensembles. The format and location of the store is intended to be very flexible, and include the ability
+ * Creates a new parameter set. A parameter set contains a store of literal values, indexed by a set
+ * of ensemble-valued evaluators. The format and location of the store is intended to be very flexible, and include the ability
  * to describe 3rd-party formats such as HDF5, and allow for locations that refer to inline data, as well as
  * files on the local filesystem, or over the network.
  */
-FmlObjectHandle Fieldml_CreateEnsembleParameters( FmlHandle handle, const char *name, FmlObjectHandle valueDomain );
-
-
-/**
- * Creates an continuous-valued parameter set. A parameter set contains a store of literal values, indexed by a set
- * of ensembles. The format and location of the store is intended to be very flexible, and include the ability
- * to describe 3rd-party formats such as HDF5, and allow for locations that refer to inline data, as well as
- * files on the local filesystem, or over the network.
- */
-FmlObjectHandle Fieldml_CreateContinuousParameters( FmlHandle handle, const char *name, FmlObjectHandle valueDomain );
+FmlObjectHandle Fieldml_CreateParametersEvaluator( FmlHandle handle, const char *name, FmlObjectHandle valueType );
 
 
 /**
@@ -612,22 +586,22 @@ DataDescriptionType Fieldml_GetParameterDataDescription( FmlHandle handle, FmlOb
 
 
 /**
- * Adds an index to the given parameter set's semidense data description.
+ * Adds an index evaluator to the given parameter set's semidense data description.
  */
-int Fieldml_AddSemidenseIndex( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle, int isSparse );
+int Fieldml_AddSemidenseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle, int isSparse );
 
 /**
- *   Returns the number of sparse or dense indexes of the semidense data store
+ *   Returns the number of sparse or dense index evaluators of the semidense data store
  *   associated with the given parameter evaluator.
  */
 int Fieldml_GetSemidenseIndexCount( FmlHandle handle, FmlObjectHandle objectHandle, int isSparse );
 
 
 /**
- *   Returns the handle of the nth sparse or dense index of the semidense data
+ *   Returns the handle of the nth sparse or dense index evaluator of the semidense data
  *   store associated with the given parameter evaluator.
  */
-FmlObjectHandle Fieldml_GetSemidenseIndex( FmlHandle handle, FmlObjectHandle objectHandle, int indexIndex, int isSparse );
+FmlObjectHandle Fieldml_GetSemidenseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int indexIndex, int isSparse );
 
 
 /**
@@ -650,26 +624,33 @@ int Fieldml_CopySwizzleData( FmlHandle handle, FmlObjectHandle objectHandle, int
 
 
 /**
- * Creates a new continuous piecewise evaluator, using the given index ensemble. Evaluators must all have the same
- * value domain as the piecewise itself. Piecewise evaluators need not be defined for all possible index values.
- * 
- * NOTE: Ensemble piecewise evaluators are not yet supported.
+ * Creates a new piecewise evaluator. Evaluators used by the piecewise evaluator
+ * must all have the same value type as the piecewise itself. Piecewise evaluators need not be defined for all
+ * possible index values.
  */
-FmlObjectHandle Fieldml_CreateContinuousPiecewise( FmlHandle handle, const char * name, FmlObjectHandle indexHandle, FmlObjectHandle valueDomain );
+FmlObjectHandle Fieldml_CreatePiecewiseEvaluator( FmlHandle handle, const char * name, FmlObjectHandle valueType );
 
 
 /**
- * Creates a new continuous aggregate evaluator. The aggregate's index is the value domain's component ensemble.
+ * Creates a new aggregate evaluator.
  * Evaluators must all be scalar continuous. The value is obtained by aggregating the scalar evaluators over the
  * value domain's component ensemble. There must be an entry for each index.
- * 
- * NOTE: Ensemble aggregate evaluators are not yet supported.
  */
-FmlObjectHandle Fieldml_CreateContinuousAggregate( FmlHandle handle, const char * name, FmlObjectHandle valueDomain );
+FmlObjectHandle Fieldml_CreateAggregateEvaluator( FmlHandle handle, const char * name, FmlObjectHandle valueType );
+
+
+/**
+ * Set the index evaluator for the given piecewise or aggregate evaluator.
+ * 
+ * The aggregate's index evaluator must have the same ensemble type as the component ensemble of its value type.
+ */
+int Fieldml_SetIndexEvaluator( FmlHandle handle, FmlObjectHandle valueType, int index, FmlObjectHandle indexHandle );
 
 
 /**
  * Sets the default evaluator for the given piecewise evaluator.
+ * 
+ * NOTE: There's probably a good reason for not allowing aggregate evaluators to have defaults.
  */
 int Fieldml_SetDefaultEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle evaluator );
 
@@ -681,7 +662,9 @@ int Fieldml_GetDefaultEvaluator( FmlHandle handle, FmlObjectHandle objectHandle 
 
 
 /**
- * Sets the evaluator on the given index for the given aggreate or piecewise evaluator.
+ * Sets the evaluator on the given index for the given aggregate or piecewise evaluator.
+ * 
+ * Setting the evaluator handle to FML_INVALID_HANDLE removes the index-evaluator association.
  */
 int Fieldml_SetEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int element, FmlObjectHandle evaluator );
 
@@ -719,27 +702,25 @@ FmlObjectHandle Fieldml_GetElementEvaluator( FmlHandle handle, FmlObjectHandle o
     
     NOTE: Only defined for piecewise and parameter evaluators.
     
-    NOTE: For piecewise evalutors, this is always one. For parameter evaluators,
+    NOTE: For piecewise evalutors, this is currently always one. For parameter evaluators,
     it depends on the data store.
  */
 int Fieldml_GetIndexCount( FmlHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- *  Returns the domain of the nth index used by the given evaluator.
+ *  Returns the evaluator of the nth index used by the given evaluator.
  *  
  *  NOTE: Only defined for piecewise and parameter evaluators.
  */
-FmlObjectHandle Fieldml_GetIndexDomain( FmlHandle handle, FmlObjectHandle objectHandle, int indexIndex );
+FmlObjectHandle Fieldml_GetIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int indexIndex );
 
 
 /**
- * Creates a continuous reference evaluator. Reference evaluators delegate their evaluation to another evaluator, and may alias
+ * Creates a reference evaluator. Reference evaluators delegate their evaluation to another evaluator, and may bind
  * domains and evaluators before doing so.
- * 
- * NOTE: Ensemble references are not yet supported.
  */
-FmlObjectHandle Fieldml_CreateContinuousReference( FmlHandle handle, const char * name, FmlObjectHandle remoteEvaluator, FmlObjectHandle valueDomain );
+FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlHandle handle, const char * name, FmlObjectHandle remoteEvaluator );
 
 
 /**
@@ -749,34 +730,90 @@ FmlObjectHandle Fieldml_GetReferenceRemoteEvaluator( FmlHandle handle, FmlObject
 
 
 /**
- * Adds an alias to the given reference evaluator. Domains in the remote evaluator may be aliased by domains, evaluators
- * or variables. Variables in the remote evaluator may be aliases by evaluators or variables. 
+ *  Returns the number of abstract evaluators used by the given evaluator. 
  */
-int Fieldml_SetAlias( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle remoteDomain, FmlObjectHandle localSource );
+int Fieldml_GetVariableCount( FmlHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- *  Returns the number of aliases used by the given evaluator. 
+ *  Returns the nth abstract evaluator used by the given evaluator. 
  */
-int Fieldml_GetAliasCount( FmlHandle handle, FmlObjectHandle objectHandle );
+FmlObjectHandle Fieldml_GetVariable( FmlHandle handle, FmlObjectHandle objectHandle, int bindIndex );
 
 
 /**
- *  Returns the local domain/evaulator used by the nth alias of the given evaluator. 
+ *  Returns the nth abstract evaluator used by the given evaluator. 
  */
-FmlObjectHandle Fieldml_GetAliasLocal( FmlHandle handle, FmlObjectHandle objectHandle, int aliasIndex );
+int Fieldml_AddVariable( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle evaluatorHandle );
 
 
 /**
- *  Returns the remote object used by the nth alias of the given evaluator. 
+ * Adds an bind to the given evaluator. Only abstract evaluators can be bound. 
  */
-FmlObjectHandle Fieldml_GetAliasRemote( FmlHandle handle, FmlObjectHandle objectHandle, int aliasIndex );
+int Fieldml_SetBind( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle unboundEvaluator, FmlObjectHandle evaluator );
 
 
 /**
- * Returns the alias of the given remote object.
+ *  Returns the number of bind used by the given evaluator. 
  */
-FmlObjectHandle Fieldml_GetAliasByRemote( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle remoteHandle );
+int Fieldml_GetBindCount( FmlHandle handle, FmlObjectHandle objectHandle );
+
+
+/**
+ *  Returns the evaulator used by the nth bind of the given evaluator. 
+ */
+FmlObjectHandle Fieldml_GetBindVariable( FmlHandle handle, FmlObjectHandle objectHandle, int bindIndex );
+
+
+/**
+ *  Returns the remote object used by the nth bind of the given evaluator. 
+ */
+FmlObjectHandle Fieldml_GetBindEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int bindIndex );
+
+
+/**
+ * Returns the abstract evaluator to which to given evaluator is bound to in the given evaluator.
+ */
+FmlObjectHandle Fieldml_GetBindByVariable( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle variableHandle );
+
+
+/**
+ * Create a new element set of the given ensemble type
+ */
+//TODO FmlObjectHandle Fieldml_CreateElementSet( FmlHandle handle, const char * name, FmlObjectHandle valueType );
+
+
+/**
+ * Add the given element indexes to the given element set
+ */
+//TODO int Fieldml_AddSetElements( FmlHandle handle, FmlObjectHandle setHandle, const int * indexes, const int indexCount );
+
+
+/**
+ * Add the given element indexes to the given element set
+ */
+//TODO int Fieldml_AddSetElementRange( FmlHandle handle, FmlObjectHandle setHandle, const int minIndex, const int maxIndex );
+
+
+/**
+ * Get the number of elements in the given element set
+ */
+//TODO int Fieldml_GetSetElementCount( FmlHandle handle, FmlObjectHandle setHandle );
+
+
+/**
+ * Get the nth element index from the given element set, or -1 on error.
+ */
+//TODO int Fieldml_GetSetElement( FmlHandle handle, FmlObjectHandle setHandle, const int index );
+
+
+/**
+ * Get n element indexes from the given offset
+ */
+//TODO int Fieldml_GetSetElements( FmlHandle handle, FmlObjectHandle setHandle, const int offset, int * indexes, const int count );
+
+
+
 
 
 /**

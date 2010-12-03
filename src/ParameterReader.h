@@ -57,7 +57,7 @@ protected:
     ParameterReader( FmlInputStream stream, DataFileType streamFormat );
 
 public:
-    static ParameterReader *create( FmlHandle handle, Parameters *parameters );
+    static ParameterReader *create( FmlHandle handle, ParameterEvaluator *parameters );
 
     virtual bool readIntSlice( int *indexBuffer, int *valueBuffer ) = 0;
     virtual bool readDoubleSlice( int *indexBuffer, double *valueBuffer ) = 0;

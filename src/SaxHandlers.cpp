@@ -119,7 +119,7 @@ static const int *intParserInts( const char *buffer )
 
 static FmlObjectHandle getOrCreateObjectHandle( FieldmlRegion *region, const char *name, FieldmlHandleType type )
 {
-    FmlObjectHandle handle = Fieldml_GetNamedObject( region, name );
+    FmlObjectHandle handle = Fieldml_GetObjectByName( region, name );
 
     if( handle == FML_INVALID_HANDLE )
     {
@@ -286,45 +286,38 @@ RegionSaxHandler::RegionSaxHandler( const xmlChar *elementName, FieldmlSaxHandle
 
 SaxHandler *RegionSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
-    if( xmlStrcmp( elementName, ENSEMBLE_DOMAIN_TAG ) == 0 )
+    if( xmlStrcmp( elementName, ENSEMBLE_TYPE_TAG ) == 0 )
     {
-        return new EnsembleDomainSaxHandler( this, elementName, attributes ); 
+        return new EnsembleTypeSaxHandler( this, elementName, attributes ); 
     }
-    if( xmlStrcmp( elementName, CONTINUOUS_DOMAIN_TAG ) == 0 )
+    if( xmlStrcmp( elementName, CONTINUOUS_TYPE_TAG ) == 0 )
     {
-        return new ContinuousDomainSaxHandler( this, elementName, attributes ); 
+        return new ContinuousTypeSaxHandler( this, elementName, attributes ); 
     }
-    if( xmlStrcmp( elementName, MESH_DOMAIN_TAG ) == 0 )
+    if( xmlStrcmp( elementName, MESH_TYPE_TAG ) == 0 )
     {
-        return new MeshDomainSaxHandler( this, elementName, attributes );
+        return new MeshTypeSaxHandler( this, elementName, attributes );
     }
-    if( xmlStrcmp( elementName, CONTINUOUS_REFERENCE_TAG ) == 0 )
+
+    if( xmlStrcmp( elementName, ABSTRACT_EVALUATOR_TAG ) == 0 )
     {
-        return new ContinuousReferenceSaxHandler( this, elementName, attributes );
+        return new AbstractEvaluatorSaxHandler( this, elementName, attributes );
     }
-    if( xmlStrcmp( elementName, ENSEMBLE_PARAMETERS_TAG ) == 0 )
+    if( xmlStrcmp( elementName, REFERENCE_EVALUATOR_TAG ) == 0 )
     {
-        return new EnsembleParametersSaxHandler( this, elementName, attributes );
+        return new ReferenceEvaluatorSaxHandler( this, elementName, attributes );
     }
-    if( xmlStrcmp( elementName, CONTINUOUS_PARAMETERS_TAG ) == 0 )
+    if( xmlStrcmp( elementName, PARAMETER_EVALUATOR_TAG ) == 0 )
     {
-        return new ContinuousParametersSaxHandler( this, elementName, attributes );
+        return new ParametersSaxHandler( this, elementName, attributes );
     }
-    if( xmlStrcmp( elementName, CONTINUOUS_VARIABLE_TAG ) == 0 )
+    if( xmlStrcmp( elementName, PIECEWISE_EVALUATOR_TAG ) == 0 )
     {
-        return new ContinuousVariableSaxHandler( this, elementName, attributes );
+        return new PiecewiseEvaluatorSaxHandler( this, elementName, attributes );
     }
-    if( xmlStrcmp( elementName, ENSEMBLE_VARIABLE_TAG ) == 0 )
+    if( xmlStrcmp( elementName, AGGREGATE_EVALUATOR_TAG ) == 0 )
     {
-        return new EnsembleVariableSaxHandler( this, elementName, attributes );
-    }
-    if( xmlStrcmp( elementName, CONTINUOUS_PIECEWISE_TAG ) == 0 )
-    {
-        return new ContinuousPiecewiseSaxHandler( this, elementName, attributes );
-    }
-    if( xmlStrcmp( elementName, CONTINUOUS_AGGREGATE_TAG ) == 0 )
-    {
-        return new ContinuousAggregateSaxHandler( this, elementName, attributes );
+        return new AggregateEvaluatorSaxHandler( this, elementName, attributes );
     }
 
     return this;
@@ -363,7 +356,7 @@ FmlHandle FieldmlObjectSaxHandler::getRegion()
 }
 
 
-ContinuousDomainSaxHandler::ContinuousDomainSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
+ContinuousTypeSaxHandler::ContinuousTypeSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
     FieldmlObjectSaxHandler( _parent, elementName )
 {
     handle = FML_INVALID_HANDLE;
@@ -371,23 +364,23 @@ ContinuousDomainSaxHandler::ContinuousDomainSaxHandler( RegionSaxHandler *_paren
     const char *name = attributes.getAttribute( NAME_ATTRIB );
     if( name == NULL )
     {
-        getRegion()->logError( "ContinuousDomain has no name" );
+        getRegion()->logError( "ContinuousType has no name" );
         return;
     }
 
-    FmlObjectHandle componentHandle = attributes.getObjectAttribute( getRegion(), COMPONENT_DOMAIN_ATTRIB, FHT_UNKNOWN_ENSEMBLE_DOMAIN );
+    FmlObjectHandle componentHandle = attributes.getObjectAttribute( getRegion(), COMPONENT_ENSEMBLE_ATTRIB, FHT_UNKNOWN_TYPE );
 
-    handle = Fieldml_CreateContinuousDomain( getRegion(), name, componentHandle );
+    handle = Fieldml_CreateContinuousType( getRegion(), name, componentHandle );
 }
 
 
-SaxHandler *ContinuousDomainSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
+SaxHandler *ContinuousTypeSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
     return this;
 }
 
 
-EnsembleDomainSaxHandler::EnsembleDomainSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
+EnsembleTypeSaxHandler::EnsembleTypeSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
     FieldmlObjectSaxHandler( _parent, elementName )
 {
     handle = FML_INVALID_HANDLE;
@@ -395,31 +388,17 @@ EnsembleDomainSaxHandler::EnsembleDomainSaxHandler( RegionSaxHandler *_parent, c
     const char *name = attributes.getAttribute( NAME_ATTRIB );
     if( name == NULL )
     {
-        getRegion()->logError( "EnsembleDomain has no name" );
+        getRegion()->logError( "EnsembleType has no name" );
         return;
     }
     
-    FmlObjectHandle componentHandle = attributes.getObjectAttribute( getRegion(), COMPONENT_DOMAIN_ATTRIB, FHT_UNKNOWN_ENSEMBLE_DOMAIN );
-    const bool isComponentEnsemble = attributes.getBooleanAttribute( IS_COMPONENT_DOMAIN_ATTRIB );
-    if( isComponentEnsemble )
-    {
-        if( componentHandle != FML_INVALID_HANDLE )
-        {
-            getRegion()->logError( "Component EnsembleDomain cannot be multi-component itself", name );
-        }
-        else
-        {
-            handle = Fieldml_CreateComponentEnsembleDomain( getRegion(), name );
-        }
-    }
-    else
-    {
-        handle = Fieldml_CreateEnsembleDomain( getRegion(), name, componentHandle );
-    }
+    const bool isComponentEnsemble = attributes.getBooleanAttribute( IS_COMPONENT_ENSEMBLE_ATTRIB );
+    
+    handle = Fieldml_CreateEnsembleType( getRegion(), name, isComponentEnsemble ? 1 : 0 );
 }
 
 
-SaxHandler *EnsembleDomainSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
+SaxHandler *EnsembleTypeSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
     if( xmlStrcmp( elementName, CONTIGUOUS_ENSEMBLE_BOUNDS_TAG ) == 0 )
     {
@@ -430,36 +409,32 @@ SaxHandler *EnsembleDomainSaxHandler::onElementStart( const xmlChar *elementName
 }
 
 
-MeshDomainSaxHandler::MeshDomainSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
+MeshTypeSaxHandler::MeshTypeSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
     FieldmlObjectSaxHandler( _parent, elementName )
 {
     const char *name = attributes.getAttribute( NAME_ATTRIB );
     if( name == NULL )
     {
-        getRegion()->logError( "MeshDomain has no name" );
+        getRegion()->logError( "MeshType has no name" );
+        return;
+    }
+
+    FmlObjectHandle xiComponent = attributes.getObjectAttribute( getRegion(), XI_COMPONENT_ATTRIB, FHT_UNKNOWN_TYPE );
+    if( xiComponent == FML_INVALID_HANDLE )
+    {
+        getRegion()->logError( "MeshType has no xi component", name );
         return;
     }
     
-    FmlObjectHandle xiHandle = attributes.getObjectAttribute( getRegion(), XI_COMPONENT_DOMAIN_ATTRIB, FHT_UNKNOWN_ENSEMBLE_DOMAIN );
-    if( xiHandle == FML_INVALID_HANDLE )
-    {
-        getRegion()->logError( "MeshDomain has no xi components", name );
-        return;
-    }
-
-    handle = Fieldml_CreateMeshDomain( getRegion(), name, xiHandle );
+    handle = Fieldml_CreateMeshType( getRegion(), name, xiComponent );
 }
 
 
-SaxHandler *MeshDomainSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
+SaxHandler *MeshTypeSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
     if( xmlStrcmp( elementName, MESH_SHAPES_TAG ) == 0 )
     {
         return new MeshShapesSaxHandler( this, elementName, attributes );
-    }
-    else if( xmlStrcmp( elementName, MESH_CONNECTIVITY_TAG ) == 0 )
-    {
-        return new MeshConnectivitySaxHandler( this, elementName, attributes );
     }
     else if( xmlStrcmp( elementName, CONTIGUOUS_ENSEMBLE_BOUNDS_TAG ) == 0 )
     {
@@ -470,46 +445,79 @@ SaxHandler *MeshDomainSaxHandler::onElementStart( const xmlChar *elementName, Sa
 }
 
 
-ContinuousReferenceSaxHandler::ContinuousReferenceSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
+AbstractEvaluatorSaxHandler::AbstractEvaluatorSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
     FieldmlObjectSaxHandler( _parent, elementName )
 {
     const char *name = attributes.getAttribute( NAME_ATTRIB );
     if( name == NULL )
     {
-        getRegion()->logError( "ContinuousReferenceEvaluator has no name" );
+        getRegion()->logError( "AbstractEvaluator has no name" );
         return;
     }
     
-    FmlObjectHandle remoteEvaluator = attributes.getObjectAttribute( getRegion(), EVALUATOR_ATTRIB, FHT_UNKNOWN_CONTINUOUS_EVALUATOR );
-    if( remoteEvaluator == FML_INVALID_HANDLE )
+    FmlObjectHandle valueType = attributes.getObjectAttribute( getRegion(), VALUE_TYPE_ATTRIB, FHT_UNKNOWN_TYPE );
+    if( valueType == FML_INVALID_HANDLE )
     {
-        getRegion()->logError( "ContinuousReferenceEvaluator has no remote evaluator", name );
+        getRegion()->logError( "AbstractEvaluator has no value type", name );
         return;
     }
     
-    FmlObjectHandle valueDomain = attributes.getObjectAttribute( getRegion(), VALUE_DOMAIN_ATTRIB, FHT_UNKNOWN_CONTINUOUS_DOMAIN );
-    if( valueDomain == FML_INVALID_HANDLE )
-    {
-        getRegion()->logError( "ContinuousReferenceEvaluator has no value domain", name );
-        return;
-    }
-
-    handle = Fieldml_CreateContinuousReference( getRegion(), name, remoteEvaluator, valueDomain );
+    handle = Fieldml_CreateAbstractEvaluator( getRegion(), name, valueType );
 }
 
 
-SaxHandler * ContinuousReferenceSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
+SaxHandler * AbstractEvaluatorSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
-    if( xmlStrcmp( elementName, ALIASES_TAG ) == 0 )
+    if( xmlStrcmp( elementName, VARIABLES_TAG ) == 0 )
     {
-        return new AliasesSaxHandler( this, elementName, attributes );
+        return new VariablesSaxHandler( this, elementName, attributes );
+    }
+    else if( xmlStrcmp( elementName, BINDS_TAG ) == 0 )
+    {
+//        return new BindsSaxHandler( this, elementName, attributes ); //TODO Add binds to abstract evaluators
     }
     
     return this;
 }
 
 
-EnsembleParametersSaxHandler::EnsembleParametersSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
+ReferenceEvaluatorSaxHandler::ReferenceEvaluatorSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
+    FieldmlObjectSaxHandler( _parent, elementName )
+{
+    const char *name = attributes.getAttribute( NAME_ATTRIB );
+    if( name == NULL )
+    {
+        getRegion()->logError( "ReferenceEvaluator has no name" );
+        return;
+    }
+    
+    FmlObjectHandle remoteEvaluator = attributes.getObjectAttribute( getRegion(), EVALUATOR_ATTRIB, FHT_UNKNOWN_EVALUATOR );
+    if( remoteEvaluator == FML_INVALID_HANDLE )
+    {
+        getRegion()->logError( "ReferenceEvaluator has no remote evaluator", name );
+        return;
+    }
+    
+    handle = Fieldml_CreateReferenceEvaluator( getRegion(), name, remoteEvaluator );
+}
+
+
+SaxHandler * ReferenceEvaluatorSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
+{
+    if( xmlStrcmp( elementName, VARIABLES_TAG ) == 0 )
+    {
+        return new VariablesSaxHandler( this, elementName, attributes );
+    }
+    else if( xmlStrcmp( elementName, BINDS_TAG ) == 0 )
+    {
+        return new BindsSaxHandler( this, elementName, attributes );
+    }
+    
+    return this;
+}
+
+
+ParametersSaxHandler::ParametersSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
     FieldmlObjectSaxHandler( _parent, elementName )
 {
     const char *name = attributes.getAttribute( NAME_ATTRIB );
@@ -519,170 +527,85 @@ EnsembleParametersSaxHandler::EnsembleParametersSaxHandler( RegionSaxHandler *_p
         return;
     }
 
-    FmlObjectHandle valueDomain = attributes.getObjectAttribute( getRegion(), VALUE_DOMAIN_ATTRIB, FHT_UNKNOWN_ENSEMBLE_DOMAIN );
-    if( valueDomain == FML_INVALID_HANDLE )
+    FmlObjectHandle valueType = attributes.getObjectAttribute( getRegion(), VALUE_TYPE_ATTRIB, FHT_UNKNOWN_TYPE );
+    if( valueType == FML_INVALID_HANDLE )
     {
-        getRegion()->logError( "EnsembleParameters has no value domain", name );
+        getRegion()->logError( "EnsembleParameters has no value type", name );
         return;
     }
 
-    handle = Fieldml_CreateEnsembleParameters( getRegion(), name, valueDomain );
+    handle = Fieldml_CreateParametersEvaluator( getRegion(), name, valueType );
 }
 
 
-SaxHandler * EnsembleParametersSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
+SaxHandler * ParametersSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
     if( xmlStrcmp( elementName, SEMI_DENSE_DATA_TAG ) == 0 )
     {
         return new SemidenseSaxHandler( this, elementName, attributes );
     }
-    
-    return this;
-}
-
-
-ContinuousParametersSaxHandler::ContinuousParametersSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
-    FieldmlObjectSaxHandler( _parent, elementName )
-{
-    const char *name = attributes.getAttribute( NAME_ATTRIB );
-    if( name == NULL )
+    else if( xmlStrcmp( elementName, VARIABLES_TAG ) == 0 )
     {
-        getRegion()->logError( "ContinuousParameters has no name" );
-        return;
-    }
-
-    FmlObjectHandle valueDomain = attributes.getObjectAttribute( getRegion(), VALUE_DOMAIN_ATTRIB, FHT_UNKNOWN_CONTINUOUS_DOMAIN );
-    if( valueDomain == FML_INVALID_HANDLE )
-    {
-        getRegion()->logError( "ContinuousParameters has no value domain", name );
-        return;
-    }
-
-    handle = Fieldml_CreateContinuousParameters( getRegion(), name, valueDomain );
-}
-
-
-SaxHandler * ContinuousParametersSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
-{
-    if( xmlStrcmp( elementName, SEMI_DENSE_DATA_TAG ) == 0 )
-    {
-        return new SemidenseSaxHandler( this, elementName, attributes );
+        return new VariablesSaxHandler( this, elementName, attributes );
     }
     
     return this;
 }
 
 
-ContinuousVariableSaxHandler::ContinuousVariableSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
+PiecewiseEvaluatorSaxHandler::PiecewiseEvaluatorSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
     FieldmlObjectSaxHandler( _parent, elementName )
 {
     const char *name = attributes.getAttribute( NAME_ATTRIB );
     if( name == NULL )
     {
-        getRegion()->logError( "ContinuousVariable has no name" );
+        getRegion()->logError( "PiecewiseEvaluator has no name" );
         return;
     }
 
-    FmlObjectHandle valueDomain = attributes.getObjectAttribute( getRegion(), VALUE_DOMAIN_ATTRIB, FHT_UNKNOWN_CONTINUOUS_DOMAIN );
-    if( valueDomain == FML_INVALID_HANDLE )
+    FmlObjectHandle valueType = attributes.getObjectAttribute( getRegion(), VALUE_TYPE_ATTRIB, FHT_UNKNOWN_TYPE );
+    if( valueType == FML_INVALID_HANDLE )
     {
-        getRegion()->logError( "ContinuousVariable has no value domain", name );
+        getRegion()->logError( "PiecewiseEvaluator has no value domain", name );
         return;
     }
 
-    handle = Fieldml_CreateContinuousVariable( getRegion(), name, valueDomain );
+    handle = Fieldml_CreatePiecewiseEvaluator( getRegion(), name, valueType );
 }
 
 
-SaxHandler * ContinuousVariableSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
-{
-    return this;
-}
-
-
-EnsembleVariableSaxHandler::EnsembleVariableSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
-    FieldmlObjectSaxHandler( _parent, elementName )
-{
-    const char *name = attributes.getAttribute( NAME_ATTRIB );
-    if( name == NULL )
-    {
-        getRegion()->logError( "EnsembleVariable has no name" );
-        return;
-    }
-
-    FmlObjectHandle valueDomain = attributes.getObjectAttribute( getRegion(), VALUE_DOMAIN_ATTRIB, FHT_UNKNOWN_ENSEMBLE_DOMAIN );
-    if( valueDomain == FML_INVALID_HANDLE )
-    {
-        getRegion()->logError( "EnsembleVariable has no value domain", name );
-        return;
-    }
-
-    handle = Fieldml_CreateEnsembleVariable( getRegion(), name, valueDomain );
-}
-
-
-SaxHandler * EnsembleVariableSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
-{
-    return this;
-}
-
-
-ContinuousPiecewiseSaxHandler::ContinuousPiecewiseSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
-    FieldmlObjectSaxHandler( _parent, elementName )
-{
-    const char *name = attributes.getAttribute( NAME_ATTRIB );
-    if( name == NULL )
-    {
-        getRegion()->logError( "ContinuousPiecewise has no name" );
-        return;
-    }
-
-    FmlObjectHandle valueDomain = attributes.getObjectAttribute( getRegion(), VALUE_DOMAIN_ATTRIB, FHT_UNKNOWN_CONTINUOUS_DOMAIN );
-    if( valueDomain == FML_INVALID_HANDLE )
-    {
-        getRegion()->logError( "ContinuousPiecewise has no value domain", name );
-        return;
-    }
-
-    FmlObjectHandle indexDomain = attributes.getObjectAttribute( getRegion(), INDEX_DOMAIN_ATTRIB, FHT_UNKNOWN_ENSEMBLE_DOMAIN );
-    if( indexDomain == FML_INVALID_HANDLE )
-    {
-        getRegion()->logError( "ContinuousPiecewise has no index domain", name );
-        return;
-    }
-    
-    handle = Fieldml_CreateContinuousPiecewise( getRegion(), name, indexDomain, valueDomain );
-}
-
-
-SaxHandler * ContinuousPiecewiseSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
+SaxHandler * PiecewiseEvaluatorSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
     if( xmlStrcmp( elementName, ELEMENT_EVALUATORS_TAG ) == 0 )
     {
-        FmlObjectHandle defaultHandle = attributes.getObjectAttribute( getRegion(), DEFAULT_ATTRIB, FHT_UNKNOWN_CONTINUOUS_EVALUATOR );
+        FmlObjectHandle defaultHandle = attributes.getObjectAttribute( getRegion(), DEFAULT_ATTRIB, FHT_UNKNOWN_EVALUATOR );
         if( defaultHandle != FML_INVALID_HANDLE )
         {
             Fieldml_SetDefaultEvaluator( getRegion(), handle, defaultHandle );
         }
-        return new IntObjectMapSaxHandler( this, elementName, getRegion(), this, 0 );
+        return new IntObjectMapSaxHandler( this, elementName, ELEMENT_TAG, getRegion(), this, 0 );
     }
-    else if( xmlStrcmp( elementName, ALIASES_TAG ) == 0 )
+    else if( xmlStrcmp( elementName, VARIABLES_TAG ) == 0 )
     {
-        return new AliasesSaxHandler( this, elementName, attributes );
+        return new VariablesSaxHandler( this, elementName, attributes );
+    }
+    else if( xmlStrcmp( elementName, BINDS_TAG ) == 0 )
+    {
+        return new BindsSaxHandler( this, elementName, attributes );
     }
     
     return this;
 }
 
 
-void ContinuousPiecewiseSaxHandler::onIntObjectMapEntry( int key, FmlObjectHandle value, int mapId )
+void PiecewiseEvaluatorSaxHandler::onIntObjectMapEntry( int key, FmlObjectHandle value, int mapId )
 {
     if( mapId == 0 )
     {
         if( ( key <= 0 ) || ( value == FML_INVALID_HANDLE ) )
         {
             const char * name =  Fieldml_GetObjectName( getRegion(), handle );
-            getRegion()->logError( "Malformed element evaluator for ContinuousPiecewise", name );
+            getRegion()->logError( "Malformed element evaluator for PiecewiseEvaluator", name );
         }
         else
         {
@@ -692,50 +615,59 @@ void ContinuousPiecewiseSaxHandler::onIntObjectMapEntry( int key, FmlObjectHandl
 }
 
 
-ContinuousAggregateSaxHandler::ContinuousAggregateSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
+AggregateEvaluatorSaxHandler::AggregateEvaluatorSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
     FieldmlObjectSaxHandler( _parent, elementName )
 {
     const char *name = attributes.getAttribute( NAME_ATTRIB );
     if( name == NULL )
     {
-        getRegion()->logError( "ContinuousAggregate has no name" );
+        getRegion()->logError( "AggregateEvaluator has no name" );
         return;
     }
 
-    FmlObjectHandle valueDomain = attributes.getObjectAttribute( getRegion(), VALUE_DOMAIN_ATTRIB, FHT_UNKNOWN_CONTINUOUS_DOMAIN );
-    if( valueDomain == FML_INVALID_HANDLE )
+    FmlObjectHandle valueType = attributes.getObjectAttribute( getRegion(), VALUE_TYPE_ATTRIB, FHT_UNKNOWN_TYPE );
+    if( valueType == FML_INVALID_HANDLE )
     {
-        getRegion()->logError( "ContinuousAggregate has no value domain", name );
+        getRegion()->logError( "AggregateEvaluator has no value domain", name );
         return;
     }
 
-    handle = Fieldml_CreateContinuousAggregate( getRegion(), name, valueDomain );
+    handle = Fieldml_CreateAggregateEvaluator( getRegion(), name, valueType );
 }
 
 
-SaxHandler * ContinuousAggregateSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
+SaxHandler * AggregateEvaluatorSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
-    if( xmlStrcmp( elementName, SOURCE_FIELDS_TAG ) == 0 )
+    if( xmlStrcmp( elementName, COMPONENT_EVALUATORS_TAG ) == 0 )
     {
-        return new IntObjectMapSaxHandler( this, elementName, getRegion(), this, 0 );
+        FmlObjectHandle defaultHandle = attributes.getObjectAttribute( getRegion(), DEFAULT_ATTRIB, FHT_UNKNOWN_EVALUATOR );
+        if( defaultHandle != FML_INVALID_HANDLE )
+        {
+            Fieldml_SetDefaultEvaluator( getRegion(), handle, defaultHandle );
+        }
+        return new IntObjectMapSaxHandler( this, elementName, COMPONENT_TAG, getRegion(), this, 0 );
     }
-    else if( xmlStrcmp( elementName, ALIASES_TAG ) == 0 )
+    else if( xmlStrcmp( elementName, VARIABLES_TAG ) == 0 )
     {
-        return new AliasesSaxHandler( this, elementName, attributes );
+        return new VariablesSaxHandler( this, elementName, attributes );
+    }
+    else if( xmlStrcmp( elementName, BINDS_TAG ) == 0 )
+    {
+        return new BindsSaxHandler( this, elementName, attributes );
     }
     
     return this;
 }
 
 
-void ContinuousAggregateSaxHandler::onIntObjectMapEntry( int key, FmlObjectHandle value, int mapId )
+void AggregateEvaluatorSaxHandler::onIntObjectMapEntry( int key, FmlObjectHandle value, int mapId )
 {
     if( mapId == 0 )
     {
         if( ( key <= 0 ) || ( value == FML_INVALID_HANDLE ) )
         {
             const char * name =  Fieldml_GetObjectName( getRegion(), handle );
-            getRegion()->logError( "Malformed element evaluator for ContinuousAggregate", name );
+            getRegion()->logError( "Malformed element evaluator for AggregateEvaluator", name );
         }
         else
         {
@@ -792,7 +724,7 @@ MeshShapesSaxHandler::MeshShapesSaxHandler( FieldmlObjectSaxHandler *_parent, co
 
 SaxHandler *MeshShapesSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
-    if( xmlStrcmp( elementName, MAP_ENTRY_TAG ) == 0 )
+    if( xmlStrcmp( elementName, MESH_SHAPE_TAG ) == 0 )
     {
         const char *element = attributes.getAttribute( KEY_ATTRIB );
         const char *shape = attributes.getAttribute( VALUE_ATTRIB );
@@ -819,44 +751,88 @@ MeshConnectivitySaxHandler::MeshConnectivitySaxHandler( FieldmlObjectSaxHandler 
 
 SaxHandler *MeshConnectivitySaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
-    if( xmlStrcmp( elementName, MAP_ENTRY_TAG ) == 0 )
+    if( xmlStrcmp( elementName, MESH_CONNECTIVITY_ENTRY_TAG ) == 0 )
     {
-        FmlObjectHandle domainHandle = attributes.getObjectAttribute( parent->getRegion(), VALUE_ATTRIB, FHT_UNKNOWN_ENSEMBLE_DOMAIN );
-        FmlObjectHandle fieldHandle = attributes.getObjectAttribute( parent->getRegion(), KEY_ATTRIB, FHT_UNKNOWN_ENSEMBLE_SOURCE );
-        if( ( domainHandle == FML_INVALID_HANDLE ) || ( fieldHandle == FML_INVALID_HANDLE ) )
+        FmlObjectHandle typeHandle = attributes.getObjectAttribute( parent->getRegion(), VALUE_ATTRIB, FHT_UNKNOWN_TYPE );
+        FmlObjectHandle fieldHandle = attributes.getObjectAttribute( parent->getRegion(), KEY_ATTRIB, FHT_UNKNOWN_EVALUATOR );
+        if( ( typeHandle == FML_INVALID_HANDLE ) || ( fieldHandle == FML_INVALID_HANDLE ) )
         {
             const char * name =  Fieldml_GetObjectName( parent->getRegion(), parent->handle );
             parent->getRegion()->logError( "MeshDomain has malformed connectivity entry", name );
             return this;
         }
         
-        Fieldml_SetMeshConnectivity( parent->getRegion(), parent->handle, fieldHandle, domainHandle );
+        Fieldml_SetMeshConnectivity( parent->getRegion(), parent->handle, fieldHandle, typeHandle );
     }
     
     return this;
 }
 
 
-AliasesSaxHandler::AliasesSaxHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
+VariablesSaxHandler::VariablesSaxHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
     ObjectMemberSaxHandler( _parent, elementName )
 {
 }
 
 
-SaxHandler *AliasesSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
+SaxHandler *VariablesSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
-    if( xmlStrcmp( elementName, MAP_ENTRY_TAG ) == 0 )
+    if( xmlStrcmp( elementName, VARIABLE_TAG ) == 0 )
     {
-        FmlObjectHandle localHandle = attributes.getObjectAttribute( parent->getRegion(), VALUE_ATTRIB, FHT_UNKNOWN_CONTINUOUS_SOURCE );
-        FmlObjectHandle remoteHandle = attributes.getObjectAttribute( parent->getRegion(), KEY_ATTRIB, FHT_UNKNOWN_CONTINUOUS_DOMAIN );
+        FmlObjectHandle variableHandle = attributes.getObjectAttribute( parent->getRegion(), NAME_ATTRIB, FHT_UNKNOWN_EVALUATOR );
+        if( variableHandle == FML_INVALID_HANDLE )
+        {
+            const char * name =  Fieldml_GetObjectName( parent->getRegion(), parent->handle );
+            parent->getRegion()->logError( "Evaluator has malformed variable", name );
+            return this;
+        }
+        Fieldml_AddVariable( parent->getRegion(), parent->handle, variableHandle );
+    }
+    
+    return this;
+}
+
+
+
+BindsSaxHandler::BindsSaxHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
+    ObjectMemberSaxHandler( _parent, elementName )
+{
+}
+
+
+SaxHandler *BindsSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
+{
+    if( xmlStrcmp( elementName, BIND_TAG ) == 0 )
+    {
+        FmlObjectHandle localHandle = attributes.getObjectAttribute( parent->getRegion(), VARIABLE_ATTRIB, FHT_UNKNOWN_EVALUATOR );
+        FmlObjectHandle remoteHandle = attributes.getObjectAttribute( parent->getRegion(), SOURCE_ATTRIB, FHT_UNKNOWN_EVALUATOR );
         if( ( remoteHandle == FML_INVALID_HANDLE ) || ( localHandle == FML_INVALID_HANDLE ) )
         {
             const char * name =  Fieldml_GetObjectName( parent->getRegion(), parent->handle );
-            parent->getRegion()->logError( "Evaluator has malformed alias", name );
+            parent->getRegion()->logError( "Evaluator has malformed bind", name );
             return this;
         }
 
-        Fieldml_SetAlias( parent->getRegion(), parent->handle, remoteHandle, localHandle );
+        Fieldml_SetBind( parent->getRegion(), parent->handle, remoteHandle, localHandle );
+    }
+    else if( xmlStrcmp( elementName, BIND_INDEX_TAG ) == 0 )
+    {
+        FmlObjectHandle indexHandle = attributes.getObjectAttribute( parent->getRegion(), VARIABLE_ATTRIB, FHT_UNKNOWN_EVALUATOR );
+        if( indexHandle == FML_INVALID_HANDLE )
+        {
+            const char * name =  Fieldml_GetObjectName( parent->getRegion(), parent->handle );
+            parent->getRegion()->logError( "Evaluator has malformed index bind", name );
+            return this;
+        }
+
+        const char *indexString = attributes.getAttribute( INDEX_NUMBER_ATTRIB );
+        int index = -1;
+        if( indexString != NULL )
+        {
+            index = atoi( indexString );
+        }
+
+        Fieldml_SetIndexEvaluator( parent->getRegion(), parent->handle, index, indexHandle );
     }
     
     return this;
@@ -931,7 +907,7 @@ void SemidenseSaxHandler::onObjectListEntry( FmlObjectHandle listEntry, int list
         }
         else
         {
-            Fieldml_AddSemidenseIndex( parent->getRegion(), parent->handle, listEntry, listId );
+            Fieldml_AddSemidenseIndexEvaluator( parent->getRegion(), parent->handle, listEntry, listId );
         }
     }
 }
@@ -1000,7 +976,7 @@ SaxHandler *ObjectListSaxHandler::onElementStart( const xmlChar *elementName, Sa
 {
     if( xmlStrcmp( elementName, ENTRY_TAG ) == 0 )
     {
-        FmlObjectHandle handle = attributes.getObjectAttribute( region, VALUE_ATTRIB, FHT_UNKNOWN_ENSEMBLE_DOMAIN);
+        FmlObjectHandle handle = attributes.getObjectAttribute( region, VALUE_ATTRIB, FHT_UNKNOWN_EVALUATOR );
         handler->onObjectListEntry( handle, listId );
     }
     
@@ -1089,8 +1065,9 @@ CharacterAccumulatorSaxHandler::~CharacterAccumulatorSaxHandler()
 }
 
 
-IntObjectMapSaxHandler::IntObjectMapSaxHandler( SaxHandler *_parent, const xmlChar *elementName, FmlHandle _region, IntObjectMapHandler *_handler, int _mapId ) :
+IntObjectMapSaxHandler::IntObjectMapSaxHandler( SaxHandler *_parent, const xmlChar *elementName, const xmlChar *_entryTagName, FmlHandle _region, IntObjectMapHandler *_handler, int _mapId ) :
     SaxHandler( elementName ),
+    entryTagName( _entryTagName ),
     region( _region ),
     parent( _parent ),
     handler( _handler ),
@@ -1101,16 +1078,16 @@ IntObjectMapSaxHandler::IntObjectMapSaxHandler( SaxHandler *_parent, const xmlCh
 
 SaxHandler *IntObjectMapSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
-    if( xmlStrcmp( elementName, MAP_ENTRY_TAG ) == 0 )
+    if( xmlStrcmp( elementName, entryTagName ) == 0 )
     {
-        const char *keyString = attributes.getAttribute( KEY_ATTRIB );
+        const char *keyString = attributes.getAttribute( NUMBER_ATTRIB );
         int key = -1;
         if( keyString != NULL )
         {
             key = atoi( keyString );
         }
-        //TODO FHT_UNKNOWN_CONTINUOUS_SOURCE should be specified in the construct, to allow for piecewise/aggregate ensemble evaluators.
-        FmlObjectHandle value = attributes.getObjectAttribute( region, VALUE_ATTRIB, FHT_UNKNOWN_CONTINUOUS_SOURCE );
+
+        FmlObjectHandle value = attributes.getObjectAttribute( region, EVALUATOR_ATTRIB, FHT_UNKNOWN_EVALUATOR );
         handler->onIntObjectMapEntry( key, value, mapId );
     }
     

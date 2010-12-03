@@ -82,7 +82,7 @@ SemidenseParameterWriter::SemidenseParameterWriter( FmlOutputStream streamHandle
 {
 }
 
-ParameterWriter *ParameterWriter::create( FmlHandle handle, Parameters *parameters, bool append )
+ParameterWriter *ParameterWriter::create( FmlHandle handle, ParameterEvaluator *parameters, bool append )
 {
     if( parameters->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
     {
@@ -95,13 +95,13 @@ ParameterWriter *ParameterWriter::create( FmlHandle handle, Parameters *paramete
         {
             valueCount = 1;
         }
-        else if( Fieldml_IsEnsembleComponentDomain( handle, semidense->denseIndexes[0] ) != 1 )
+        else if( Fieldml_IsEnsembleComponentType( handle, semidense->denseIndexes[0] ) != 1 )
         {
             valueCount = 1;
         }
         else
         {
-            valueCount = Fieldml_GetEnsembleDomainElementCount( handle, semidense->denseIndexes[0] );
+            valueCount = Fieldml_GetEnsembleTypeElementCount( handle, semidense->denseIndexes[0] );
             if( valueCount < 1 )
             {
                 handle->setRegionError( FML_ERR_MISCONFIGURED_OBJECT );
