@@ -309,6 +309,60 @@ static void addLibraryEvaluators( FieldmlRegion *region )
 }
 
 
+static FieldmlObject *resolveSubEvaluator( FieldmlRegion *region, FieldmlObject *object )
+{
+    int index;
+    
+    index = object->name.rfind( '.' );
+    
+    if( index == string::npos )
+    {
+        return NULL;
+    }
+    
+    string superName = object->name.substr( 0, index );
+    FmlObjectHandle handle = Fieldml_GetObjectByName( region, superName.c_str() );
+    if( handle == FML_INVALID_HANDLE )
+    {
+        return NULL;
+    }
+    
+    FmlObjectHandle superTypeHandle = Fieldml_GetValueType( region, handle );
+    if( superTypeHandle == FML_INVALID_HANDLE )
+    {
+        return NULL;
+    }
+    
+    FieldmlHandleType superType = Fieldml_GetObjectType( region, superTypeHandle );
+    if( superType != FHT_MESH_TYPE )
+    {
+        //Don't currently support any other kind of structured type
+        return NULL;
+    }
+    
+    string subName = object->name.substr( index + 1 );
+    FmlObjectHandle typeHandle = FML_INVALID_HANDLE;
+    
+    if( subName == "element" )
+    {
+        typeHandle = Fieldml_GetMeshElementType( region, superTypeHandle );
+
+    }
+    else if( subName == "xi" )
+    {
+        typeHandle = Fieldml_GetMeshElementType( region, superTypeHandle );
+    }
+    else
+    {
+        return NULL;
+    }
+
+    object = new Evaluator( object->name, object->regionHandle, FHT_REMOTE_EVALUATOR, typeHandle );
+    
+    return object;
+}
+
+
 FieldmlRegion::FieldmlRegion( const string _location, const string _name ) :
     name( _name )
 {
@@ -345,7 +399,11 @@ void FieldmlRegion::finalize()
         }
         else if( object->type == FHT_UNKNOWN_EVALUATOR )
         {
-            newObject = new FieldmlObject( object->name, object->regionHandle, FHT_REMOTE_EVALUATOR );
+            newObject = resolveSubEvaluator( this, object );
+            if( newObject == NULL )
+            {
+                newObject = new FieldmlObject( object->name, object->regionHandle, FHT_REMOTE_EVALUATOR );
+            }
             objects[i] = newObject;
             delete object;
         }

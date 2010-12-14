@@ -227,9 +227,7 @@ FieldmlInputStream *FieldmlInputStream::create( const string filename )
         return NULL;
     }
     
-    FieldmlInputStream *stream = new FileInputStream( file );
-    
-    return stream;
+    return new FileInputStream( file );
 }
 
 

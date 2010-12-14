@@ -632,6 +632,8 @@ int Fieldml_IsEnsembleComponentType( FmlHandle handle, FmlObjectHandle objectHan
         EnsembleType *ensembleType = (EnsembleType*)object;
         return ensembleType->isComponentEnsemble;
     }
+    
+    printf( "LOLWUT %s\n", Fieldml_GetObjectName( handle, objectHandle ) );
 
     handle->setRegionError( FML_ERR_INVALID_OBJECT );  
     return -1;
@@ -1216,12 +1218,22 @@ FmlObjectHandle Fieldml_GetSemidenseIndexEvaluator( FmlHandle handle, FmlObjectH
 
     if( isSparse )
     {
-        return semidense->sparseIndexes[index - 1];
+        if( ( index > 0 ) && ( index <= semidense->sparseIndexes.size() ) )
+        {
+            return semidense->sparseIndexes[index - 1];
+        }
     }
     else
     {
-        return semidense->denseIndexes[index - 1];
+        if( ( index > 0 ) && ( index <= semidense->denseIndexes.size() ) )
+        {
+            return semidense->denseIndexes[index - 1];
+        }
     }
+    
+    handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+    
+    return FML_INVALID_HANDLE;
 }
 
 
@@ -1942,7 +1954,7 @@ FmlReaderHandle Fieldml_OpenReader( FmlHandle handle, FmlObjectHandle objectHand
 }
 
 
-int Fieldml_ReadIntSlice( FmlHandle handle, FmlReaderHandle reader, int *indexBuffer, int *valueBuffer )
+int Fieldml_ReadIndexSet( FmlHandle handle, FmlReaderHandle reader, int *indexBuffer )
 {
     int err;
     
@@ -1951,24 +1963,31 @@ int Fieldml_ReadIntSlice( FmlHandle handle, FmlReaderHandle reader, int *indexBu
         return handle->setRegionError( FML_ERR_INVALID_OBJECT );
     }
 
-    err = reader->readIntSlice( indexBuffer, valueBuffer );
+    err = reader->readNextIndexSet( indexBuffer );
     
     return handle->setRegionError( err );
 }
 
 
-int Fieldml_ReadDoubleSlice( FmlHandle handle, FmlReaderHandle reader, int *indexBuffer, double *valueBuffer )
+int Fieldml_ReadIntValues( FmlHandle handle, FmlReaderHandle reader, int *valueBuffer, int bufferSize )
 {
-    int err;
-    
+    if( reader == NULL )
+    {
+        handle->setRegionError( FML_ERR_INVALID_OBJECT );
+    }
+
+    return reader->readIntValues( valueBuffer, bufferSize );
+}
+
+
+int Fieldml_ReadDoubleValues( FmlHandle handle, FmlReaderHandle reader, double *valueBuffer, int bufferSize )
+{
     if( reader == NULL )
     {
         return handle->setRegionError( FML_ERR_INVALID_OBJECT );
     }
 
-    err = reader->readDoubleSlice( indexBuffer, valueBuffer );
-    
-    return handle->setRegionError( err );
+    return reader->readDoubleValues( valueBuffer, bufferSize );
 }
 
 

@@ -51,19 +51,30 @@ class SemidenseParameterReader :
     public ParameterReader
 {
 private:
-    const int valueCount;
+    FmlHandle regionHandle;
+    int currentBlockCount;
+    const int sliceCount;
     const int* const swizzle;
     const int indexCount;
+    const int blockCount;
+    
+    bool gotFirstIndexSet;
+    int *intSliceBuffer;
+    double *doubleSliceBuffer;
+    
+    int readIntSlice( int *valueBuffer, const int offset );
+    int readDoubleSlice( double *valueBuffer, const int offset );
 
 protected:
     
 
 public:
-    SemidenseParameterReader( FmlInputStream streamHandle, DataFileType _dataType,
-        int offset, int indexCount, int valueCount, const int *swizzle );
+    SemidenseParameterReader( FmlHandle handle, FmlInputStream streamHandle, DataFileType _dataType,
+        int offset, int indexCount, int blockCount, int sliceCount, const int *swizzle );
 
-    bool readIntSlice( int *indexBuffer, int *valueBuffer );
-    bool readDoubleSlice( int *indexBuffer, double *valueBuffer );
+    int readNextIndexSet( int *indexValues );
+    int readIntValues( int *values, int count );
+    int readDoubleValues( double *value, int count ); 
 };
 
 ParameterReader::ParameterReader( FmlInputStream _stream, DataFileType _dataType ) :
@@ -73,13 +84,19 @@ ParameterReader::ParameterReader( FmlInputStream _stream, DataFileType _dataType
 }
     
     
-SemidenseParameterReader::SemidenseParameterReader( FmlInputStream streamHandle, DataFileType dataType, int offset,
-    int _indexCount, int _valueCount, const int *_swizzle ) :
+SemidenseParameterReader::SemidenseParameterReader( FmlHandle handle, FmlInputStream streamHandle, DataFileType dataType,
+    int offset, int _indexCount, int _blockCount, int _sliceCount, const int *_swizzle ) :
     ParameterReader( streamHandle, dataType ),
+    regionHandle( handle ),
     indexCount( _indexCount ),
-    valueCount( _valueCount ),
+    blockCount( _blockCount ),
+    sliceCount( _sliceCount ),
     swizzle( _swizzle )
 {
+    gotFirstIndexSet = false;
+    intSliceBuffer = NULL;
+    doubleSliceBuffer = NULL;
+    
     if( dataType == TYPE_LINES )
     {
         for( int i = 0; i < offset; i++ )
@@ -96,40 +113,52 @@ ParameterReader *ParameterReader::create( FmlHandle handle, ParameterEvaluator *
         SemidenseDataDescription *semidense = (SemidenseDataDescription *)parameters->dataDescription;
         
         int indexCount = semidense->sparseIndexes.size();
-        int valueCount;
+        int sliceCount;
+        int indexType;
+        int blockCount = 1;
+        
+        for (vector<FmlObjectHandle>::iterator i = semidense->denseIndexes.begin(); i != semidense->denseIndexes.end(); i++ )
+        {
+            indexType = Fieldml_GetValueType( handle, *i );
+            blockCount *= Fieldml_GetEnsembleTypeElementCount( handle, indexType );
+        }
         
         if( semidense->denseIndexes.size() == 0 )
         {
-            valueCount = 1;
-        }
-        else if( Fieldml_IsEnsembleComponentType( handle, semidense->denseIndexes[0] ) != 1 )
-        {
-            valueCount = 1;
+            sliceCount = 1;
         }
         else
         {
-            valueCount = Fieldml_GetEnsembleTypeElementCount( handle, semidense->denseIndexes[0] );
-            if( valueCount < 1 )
+            int innermostType = Fieldml_GetValueType( handle, semidense->denseIndexes[0] );
+            if( Fieldml_IsEnsembleComponentType( handle, innermostType ) != 1 )
             {
-                handle->setRegionError( FML_ERR_MISCONFIGURED_OBJECT );
-                return NULL;
+                sliceCount = 1;
+            }
+            else
+            {
+                sliceCount = Fieldml_GetEnsembleTypeElementCount( handle, innermostType );
+                if( sliceCount < 1 )
+                {
+                    handle->setRegionError( FML_ERR_MISCONFIGURED_OBJECT );
+                    return NULL;
+                }
             }
         }
 
-        if( ( semidense->swizzleCount > 0 ) && ( semidense->swizzleCount != valueCount ) )
+        if( ( semidense->swizzleCount > 0 ) && ( semidense->swizzleCount != sliceCount ) )
         {
             handle->setRegionError( FML_ERR_MISCONFIGURED_OBJECT );
             return NULL;
         }
         
-        FmlInputStream streamHandle;
+        FmlInputStream streamHandle = NULL;
         DataFileType dataType = TYPE_UNKNOWN;
         int offset = 0;
         if( semidense->dataLocation->locationType == LOCATION_FILE )
         {
             FileDataLocation *fileDataLocation = (FileDataLocation*)semidense->dataLocation;
             const string filename = makeFilename( handle->getRoot(), fileDataLocation->filename );
-            streamHandle = FieldmlInputStream::create( filename );
+            streamHandle = FieldmlInputStream::create( filename ); 
             dataType = fileDataLocation->fileType;
             offset = fileDataLocation->offset;
         }
@@ -153,7 +182,8 @@ ParameterReader *ParameterReader::create( FmlHandle handle, ParameterEvaluator *
         }
         
         handle->setRegionError( FML_ERR_NO_ERROR );
-        return new SemidenseParameterReader( streamHandle, dataType, offset, indexCount, valueCount, swizzle );
+
+        return new SemidenseParameterReader( handle, streamHandle, dataType, offset, indexCount, blockCount, sliceCount, swizzle );
     }
     else
     {
@@ -163,79 +193,170 @@ ParameterReader *ParameterReader::create( FmlHandle handle, ParameterEvaluator *
 }
 
 
-bool SemidenseParameterReader::readIntSlice( int *indexBuffer, int *valueBuffer )
+int SemidenseParameterReader::readNextIndexSet( int *indexValues )
 {
-    int i;
-    int *buffer = new int[valueCount];
-    
-    for( i = 0; i < indexCount; i++ )
+    if( indexCount == 0 )
     {
-        indexBuffer[i] = stream->readInt();
-    }
-    
-    for( i = 0; i < valueCount; i++ )
-    {
-        buffer[i] = stream->readInt();
-    }
-    
-    for( i = 0; i < valueCount; i++ )
-    {
-        if( swizzle != NULL )
+        if( gotFirstIndexSet )
         {
-            valueBuffer[i] = buffer[swizzle[i] - 1];
-        }
-        else
-        {
-            valueBuffer[i] = buffer[i];
+            return FML_ERR_IO_NO_DATA;
         }
     }
-    
-    delete[] buffer;
-    
-    if( dataType == TYPE_LINES )
+
+    gotFirstIndexSet = true;
+    for( int i = 0; i < indexCount; i++ )
     {
-        stream->skipLine();
+        indexValues[i] = stream->readInt();
     }
     
-    return stream->eof();
+    currentBlockCount = 0;
+  
+    if( stream->eof() )
+    {
+        return FML_ERR_IO_UNEXPECTED_EOF;
+    }
+    
+    return FML_ERR_NO_ERROR;
 }
 
 
-bool SemidenseParameterReader::readDoubleSlice( int *indexBuffer, double *valueBuffer )
+int SemidenseParameterReader::readIntSlice( int *valueBuffer, const int offset )
 {
-    int i;
-    double *buffer = new double[valueCount];
-    
-    for( i = 0; i < indexCount; i++ )
+    if( intSliceBuffer == NULL )
     {
-        indexBuffer[i] = stream->readInt();
+        intSliceBuffer = new int[sliceCount];
+    }
+
+    for( int i = 0; i < sliceCount; i++ )
+    {
+        intSliceBuffer[i] = stream->readInt();
     }
     
-    for( i = 0; i < valueCount; i++ )
-    {
-        buffer[i] = stream->readDouble();
-    }
-    
-    for( i = 0; i < valueCount; i++ )
+    for( int i = 0; i < sliceCount; i++ )
     {
         if( swizzle != NULL )
         {
-            valueBuffer[i] = buffer[swizzle[i] - 1];
+            valueBuffer[offset + i] = intSliceBuffer[swizzle[i] - 1];
         }
         else
         {
-            valueBuffer[i] = buffer[i];
+            valueBuffer[offset + i] = intSliceBuffer[i];
         }
     }
     
-    delete[] buffer;
+    if( stream->eof() )
+    {
+        return FML_ERR_IO_UNEXPECTED_EOF;
+    }
 
     if( dataType == TYPE_LINES )
     {
         stream->skipLine();
     }
+    
+    return FML_ERR_NO_ERROR;
+}
 
-    return stream->eof();
+
+int SemidenseParameterReader::readIntValues( int *valueBuffer, int count )
+{
+    if( count < sliceCount )
+    {
+        //The parameter number is for the corresponding API call, not this particular method.
+        regionHandle->setRegionError( FML_ERR_INVALID_PARAMETER_4 );
+        return -1;
+    }
+    
+    if( currentBlockCount + count > blockCount )
+    {
+        count = blockCount - currentBlockCount;
+    }
+    
+    int readCount = 0;
+    while( readCount < count )
+    {
+        int err = readIntSlice( valueBuffer, readCount );
+        
+        if( err != FML_ERR_NO_ERROR )
+        {
+            regionHandle->setRegionError( err );
+            return -1;
+        }
+        readCount += sliceCount;
+        currentBlockCount += sliceCount;
+    }
+    
+    return readCount;
+}
+
+
+int SemidenseParameterReader::readDoubleSlice( double *valueBuffer, const int offset )
+{
+    if( doubleSliceBuffer == NULL )
+    {
+        doubleSliceBuffer = new double[sliceCount];
+    }
+
+    for( int i = 0; i < sliceCount; i++ )
+    {
+        doubleSliceBuffer[i] = stream->readDouble();
+    }
+    
+    for( int i = 0; i < sliceCount; i++ )
+    {
+        if( swizzle != NULL )
+        {
+            valueBuffer[offset + i] = doubleSliceBuffer[swizzle[i] - 1];
+        }
+        else
+        {
+            valueBuffer[offset + i] = doubleSliceBuffer[i];
+        }
+    }
+    
+    if( stream->eof() )
+    {
+        return FML_ERR_IO_UNEXPECTED_EOF;
+    }
+
+    if( dataType == TYPE_LINES )
+    {
+        stream->skipLine();
+    }
+    
+    return FML_ERR_NO_ERROR;
+}
+
+
+int SemidenseParameterReader::readDoubleValues( double *valueBuffer, int count )
+{
+    if( count < sliceCount )
+    {
+        //The parameter number is for the corresponding API call, not this particular method.
+        regionHandle->setRegionError( FML_ERR_INVALID_PARAMETER_4 );
+        return -1;
+    }
+    
+    if( currentBlockCount + count > blockCount )
+    {
+        count = blockCount - currentBlockCount;
+    }
+    
+    int readCount = 0;
+    while( readCount < count )
+    {
+        int err = readDoubleSlice( valueBuffer, readCount );
+        
+        if( err != FML_ERR_NO_ERROR )
+        {
+            regionHandle->setRegionError( err );
+            return -1;
+        }
+        readCount += sliceCount;
+        currentBlockCount += sliceCount;
+    }
+    
+    return readCount;
 }
 
 

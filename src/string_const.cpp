@@ -188,7 +188,7 @@ const string getDirectory( const string filename )
     
     index = filename.rfind( NIX_PATH_SEP );
 #ifdef WIN32
-    if( filename.rfind( WIN_PATH_SEP ) > index )
+    if( ( filename.rfind( WIN_PATH_SEP ) > index ) || ( index == string::npos ) )
     {
         index = filename.rfind( WIN_PATH_SEP );
     }
@@ -200,7 +200,7 @@ const string getDirectory( const string filename )
     }
     else
     {
-        return string( filename, 0, index );
+        return filename.substr( 0, index );
     }
 }
 

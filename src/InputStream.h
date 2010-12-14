@@ -62,7 +62,7 @@ public:
     double readDouble();
     int skipLine();
     bool eof();
-    ~FieldmlInputStream();
+    virtual ~FieldmlInputStream();
     
     static FieldmlInputStream *create( const std::string filename );
     static FieldmlInputStream *create( const char *string );

@@ -91,6 +91,10 @@
 #define FML_ERR_INVALID_PARAMETER_7     1107
 #define FML_ERR_INVALID_PARAMETER_8     1108
 
+#define FML_ERR_IO_READ_ERR             1201
+#define FML_ERR_IO_UNEXPECTED_EOF       1202
+#define FML_ERR_IO_NO_DATA              1203
+
 #define FML_ERR_UNSUPPORTED             2000  //Used for operations that are valid, but not yet implemented.
 
 /*
@@ -823,19 +827,31 @@ FmlReaderHandle Fieldml_OpenReader( FmlHandle handle, FmlObjectHandle objectHand
 
 
 /**
- * Reads in a slice consisting of n index values, followed by m data values. n is the number of sparse indexes,
- * m is the product of the cardinalities of the dense indexes. Only valid for an ensemble parameters object using
- * DESCRIPTION_SEMIDENSE data.
+ * Read in the indexes corresponding to the next block of dense data. If there are no sparse indexes
+ * associated with this parameter set, this method can only be called once, and will leave the index
+ * buffer untouched.  Only valid for an ensemble parameters object using DESCRIPTION_SEMIDENSE data.
+ * 
+ * Returns an error code, or FML_ERR_NO_ERROR on success.
  */
-int Fieldml_ReadIntSlice( FmlHandle handle, FmlReaderHandle reader, int *indexBuffer, int *valueBuffer );
+int Fieldml_ReadIndexSet( FmlHandle handle, FmlReaderHandle reader, int *indexBuffer );
 
 
 /**
- * Reads in a slice consisting of n index values, followed by m data values. n is the number of sparse indexes,
- * m is the product of the cardinalities of the dense indexes. Only valid for an continuous parameters object using
- * DESCRIPTION_SEMIDENSE data.
+ * Reads in some values from the current block of dense data. If the first dense index's value type is a component
+ * ensemble, the buffer must be big enough to hold a complete set of values indexable by that component ensemble.
+ * 
+ * Returns the number of values read, or -1 on error.
  */
-int Fieldml_ReadDoubleSlice( FmlHandle handle, FmlReaderHandle reader, int *indexBuffer, double *valueBuffer );
+int Fieldml_ReadIntValues( FmlHandle handle, FmlReaderHandle reader, int *indexBuffer, int bufferSize );
+
+
+/**
+ * Reads in some values from the current block of dense data. If the first dense index's value type is a component
+ * ensemble, the buffer must be big enough to hold a complete set of values indexable by that component ensemble.
+ * 
+ * Returns the number of values read, or -1 on error.
+ */
+int Fieldml_ReadDoubleValues( FmlHandle handle, FmlReaderHandle reader, double *indexBuffer, int bufferSize );
 
 
 /**
