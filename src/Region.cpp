@@ -309,20 +309,30 @@ static void addLibraryEvaluators( FieldmlRegion *region )
 }
 
 
-static FieldmlObject *resolveSubEvaluator( FieldmlRegion *region, FieldmlObject *object )
+static FieldmlObject *resolveSubEvaluator( FieldmlRegion *region, string name, int regionHandle )
 {
     int index;
     
-    index = object->name.rfind( '.' );
+    index = name.rfind( '.' );
     
     if( index == string::npos )
     {
         return NULL;
     }
     
-    string superName = object->name.substr( 0, index );
+    string superName = name.substr( 0, index );
     FmlObjectHandle handle = Fieldml_GetObjectByName( region, superName.c_str() );
     if( handle == FML_INVALID_HANDLE )
+    {
+        return NULL;
+    }
+    
+    FieldmlHandleType superHandleType = Fieldml_GetObjectType( region, handle ); 
+    if( ( superHandleType != FHT_PIECEWISE_EVALUATOR ) &&
+        ( superHandleType != FHT_REFERENCE_EVALUATOR ) &&
+        ( superHandleType != FHT_AGGREGATE_EVALUATOR ) &&
+        ( superHandleType != FHT_PARAMETER_EVALUATOR ) &&
+        ( superHandleType != FHT_ABSTRACT_EVALUATOR ) )
     {
         return NULL;
     }
@@ -340,7 +350,7 @@ static FieldmlObject *resolveSubEvaluator( FieldmlRegion *region, FieldmlObject 
         return NULL;
     }
     
-    string subName = object->name.substr( index + 1 );
+    string subName = name.substr( index + 1 );
     FmlObjectHandle typeHandle = FML_INVALID_HANDLE;
     
     if( subName == "element" )
@@ -357,9 +367,7 @@ static FieldmlObject *resolveSubEvaluator( FieldmlRegion *region, FieldmlObject 
         return NULL;
     }
 
-    object = new Evaluator( object->name, object->regionHandle, FHT_REMOTE_EVALUATOR, typeHandle );
-    
-    return object;
+    return new Evaluator( name, regionHandle, FHT_REMOTE_EVALUATOR, typeHandle );
 }
 
 
@@ -399,7 +407,7 @@ void FieldmlRegion::finalize()
         }
         else if( object->type == FHT_UNKNOWN_EVALUATOR )
         {
-            newObject = resolveSubEvaluator( this, object );
+            newObject = resolveSubEvaluator( this, object->name, object->regionHandle );
             if( newObject == NULL )
             {
                 newObject = new FieldmlObject( object->name, object->regionHandle, FHT_REMOTE_EVALUATOR );
@@ -594,7 +602,7 @@ const int FieldmlRegion::getNthHandle( const FieldmlHandleType type, const int i
 
 const int FieldmlRegion::getNamedHandle( const string name )
 {
-    int count, i;
+    int count, i, handle;
     FieldmlObject *object;
 
     setRegionError( FML_ERR_NO_ERROR );  
@@ -608,8 +616,18 @@ const int FieldmlRegion::getNamedHandle( const string name )
             return i;
         }
     }
+    
+    object = resolveSubEvaluator( this, name, 0 );
+    if( object == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
 
-    return FML_INVALID_HANDLE;
+    objects.push_back( object );
+    handle = objects.size() - 1;
+    setRegionHandle( this, handle, 0 );
+    
+    return handle;
 }
 
 

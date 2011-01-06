@@ -267,7 +267,7 @@ int SemidenseParameterReader::readIntValues( int *valueBuffer, int count )
         return -1;
     }
     
-    if( currentBlockCount + count > blockCount )
+    if( currentBlockCount + count >= blockCount )
     {
         count = blockCount - currentBlockCount;
     }
@@ -337,7 +337,7 @@ int SemidenseParameterReader::readDoubleValues( double *valueBuffer, int count )
         return -1;
     }
     
-    if( currentBlockCount + count > blockCount )
+    if( currentBlockCount + count >= blockCount )
     {
         count = blockCount - currentBlockCount;
     }

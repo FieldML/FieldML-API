@@ -402,7 +402,7 @@ static int writePiecewiseEvaluator( xmlTextWriterPtr writer, FmlHandle handle, F
             {
                 continue;
             }
-            writeIntTableEntry( writer, ELEMENT_TAG, element, Fieldml_GetObjectName( handle, object ) );
+            writeIntTableEntry( writer, ELEMENT_TAG, element, Fieldml_GetObjectName( handle, evaluator ) );
         }
 
         xmlTextWriterEndElement( writer );

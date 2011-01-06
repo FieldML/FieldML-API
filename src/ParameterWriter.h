@@ -43,6 +43,7 @@
 #define H_PARAMETER_WRITER
 
 #include "OutputStream.h"
+
 #include "fieldml_structs.h"
 
 class ParameterWriter
@@ -58,8 +59,9 @@ protected:
 public:
     static ParameterWriter *create( FmlHandle handle, ParameterEvaluator *parameters, bool append );
 
-    virtual int writeIntSlice( int *indexBuffer, int *valueBuffer ) = 0;
-    virtual int writeDoubleSlice( int *indexBuffer, double *valueBuffer ) = 0;
+    virtual int writeNextIndexSet( int *indexBuffer ) = 0;
+    virtual int writeIntValues( int *values, int count ) = 0;
+    virtual int writeDoubleValues( double *values, int count ) = 0;
     
     ~ParameterWriter();
 };

@@ -94,6 +94,7 @@
 #define FML_ERR_IO_READ_ERR             1201
 #define FML_ERR_IO_UNEXPECTED_EOF       1202
 #define FML_ERR_IO_NO_DATA              1203
+#define FML_ERR_IO_UNEXPECTED_DATA      1204
 
 #define FML_ERR_UNSUPPORTED             2000  //Used for operations that are valid, but not yet implemented.
 
@@ -829,7 +830,7 @@ FmlReaderHandle Fieldml_OpenReader( FmlHandle handle, FmlObjectHandle objectHand
 /**
  * Read in the indexes corresponding to the next block of dense data. If there are no sparse indexes
  * associated with this parameter set, this method can only be called once, and will leave the index
- * buffer untouched.  Only valid for an ensemble parameters object using DESCRIPTION_SEMIDENSE data.
+ * buffer untouched. Only valid for a parameters object using DESCRIPTION_SEMIDENSE data.
  * 
  * Returns an error code, or FML_ERR_NO_ERROR on success.
  */
@@ -867,19 +868,31 @@ FmlWriterHandle Fieldml_OpenWriter( FmlHandle handle, FmlObjectHandle objectHand
 
 
 /**
- * Writes out a slice consisting of n index values, followed by m data values. n is the number of sparse indexes,
- * m is the product of the cardinalities of the dense indexes. Only valid for an ensemble parameters object using
- * DESCRIPTION_SEMIDENSE data.
+ * Write out the indexes corresponding to the next block of dense data. If there are no sparse indexes
+ * associated with this parameter set, this method can only be called once, and will do nothing.
+ * Only valid for a parameters object using DESCRIPTION_SEMIDENSE data.
+ * 
+ * Returns an error code, or FML_ERR_NO_ERROR on success.
  */
-int Fieldml_WriteIntSlice( FmlHandle handle, FmlWriterHandle writer, int *indexBuffer, int *valueBuffer );
+int Fieldml_WriteIndexSet( FmlHandle handle, FmlWriterHandle writer, int *indexBuffer );
 
 
 /**
- * Writes out a slice consisting of n index values, followed by m data values. n is the number of sparse indexes,
- * m is the product of the cardinalities of the dense indexes. Only valid for an continuous parameters object using
- * DESCRIPTION_SEMIDENSE data.
+ * Write out some values for the current block of dense data. If the first dense index's value type is a component
+ * ensemble, the buffer must be big enough to hold a complete set of values indexable by that component ensemble.
+ * 
+ * Returns the number of values written, or -1 on error.
  */
-int Fieldml_WriteDoubleSlice( FmlHandle handle, FmlWriterHandle writer, int *indexBuffer, double *valueBuffer );
+int Fieldml_WriteIntValues( FmlHandle handle, FmlWriterHandle writer, int *indexBuffer, int bufferSize );
+
+
+/**
+ * Write out some values from the current block of dense data. If the first dense index's value type is a component
+ * ensemble, the buffer must be big enough to hold a complete set of values indexable by that component ensemble.
+ * 
+ * Returns the number of values written, or -1 on error.
+ */
+int Fieldml_WriteDoubleValues( FmlHandle handle, FmlWriterHandle writer, double *indexBuffer, int bufferSize );
 
 
 /**

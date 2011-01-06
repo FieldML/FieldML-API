@@ -2017,8 +2017,8 @@ FmlWriterHandle Fieldml_OpenWriter( FmlHandle handle, FmlObjectHandle objectHand
     ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
 
     ParameterWriter *writer = NULL;
-    if( ( semidense->dataLocation->locationType == LOCATION_FILE ) )
-//        ( semidense->dataLocation->locationType == LOCATION_INLINE ) ) TODO
+    if( ( semidense->dataLocation->locationType == LOCATION_FILE ) ||
+        ( semidense->dataLocation->locationType == LOCATION_INLINE ) )
     {
         writer = ParameterWriter::create( handle, parameterEvaluator, ( append == 1 ));
     }
@@ -2031,7 +2031,7 @@ FmlWriterHandle Fieldml_OpenWriter( FmlHandle handle, FmlObjectHandle objectHand
 }
 
 
-int Fieldml_WriteIntSlice( FmlHandle handle, FmlWriterHandle writer, int *indexBuffer, int *valueBuffer )
+int Fieldml_WriteIndexSet( FmlHandle handle, FmlWriterHandle writer, int *indexBuffer )
 {
     int err;
     
@@ -2039,25 +2039,32 @@ int Fieldml_WriteIntSlice( FmlHandle handle, FmlWriterHandle writer, int *indexB
     {
         return handle->setRegionError( FML_ERR_INVALID_OBJECT );
     }
-    
-    err = writer->writeIntSlice( indexBuffer, valueBuffer );
+
+    err = writer->writeNextIndexSet( indexBuffer );
     
     return handle->setRegionError( err );
 }
 
 
-int Fieldml_WriteDoubleSlice( FmlHandle handle, FmlWriterHandle writer, int *indexBuffer, double *valueBuffer )
+int Fieldml_WriteIntValues( FmlHandle handle, FmlWriterHandle writer, int *valueBuffer, int valueCount )
 {
-    int err;
-    
+    if( writer == NULL )
+    {
+        handle->setRegionError( FML_ERR_INVALID_OBJECT );
+    }
+
+    return writer->writeIntValues( valueBuffer, valueCount );
+}
+
+
+int Fieldml_WriteDoubleValues( FmlHandle handle, FmlWriterHandle writer, double *valueBuffer, int valueCount )
+{
     if( writer == NULL )
     {
         return handle->setRegionError( FML_ERR_INVALID_OBJECT );
     }
 
-    err = writer->writeDoubleSlice( indexBuffer, valueBuffer );
-    
-    return handle->setRegionError( err );
+    return writer->writeDoubleValues( valueBuffer, valueCount );
 }
 
 
