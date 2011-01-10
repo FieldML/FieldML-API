@@ -87,6 +87,7 @@ const xmlChar * const PARAMETER_EVALUATOR_TAG          = (const xmlChar* const)"
 const xmlChar * const SEMI_DENSE_DATA_TAG              = (const xmlChar* const)"SemidenseData";
 const xmlChar * const SPARSE_INDEXES_TAG               = (const xmlChar* const)"sparseIndexes";
 const xmlChar * const DENSE_INDEXES_TAG                = (const xmlChar* const)"denseIndexes";
+const xmlChar * const INDEX_TAG                        = (const xmlChar* const)"index";
 
 const xmlChar * const PIECEWISE_EVALUATOR_TAG          = (const xmlChar* const)"PiecewiseEvaluator";
 const xmlChar * const ELEMENT_EVALUATORS_TAG           = (const xmlChar* const)"elementEvaluators";

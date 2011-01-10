@@ -83,14 +83,6 @@ static void writeStringTableEntry( xmlTextWriterPtr writer, const xmlChar *tagNa
 }
 
 
-static void writeListEntry( xmlTextWriterPtr writer, const char *value )
-{
-    xmlTextWriterStartElement( writer, ENTRY_TAG );
-    xmlTextWriterWriteAttribute( writer, VALUE_ATTRIB, (const xmlChar*)value );
-    xmlTextWriterEndElement( writer );
-}
-
-
 static void writeIntTableEntry( xmlTextWriterPtr writer, const xmlChar *tagName, int key, const char *value )
 {
     xmlTextWriterStartElement( writer, tagName );
@@ -435,7 +427,9 @@ static void writeSemidenseIndexes( xmlTextWriterPtr writer, FmlHandle handle, Fm
             {
                 continue;
             }
-            writeListEntry( writer, Fieldml_GetObjectName( handle, index ) );
+            xmlTextWriterStartElement( writer, INDEX_TAG );
+            xmlTextWriterWriteAttribute( writer, EVALUATOR_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, index ) );
+            xmlTextWriterEndElement( writer );
         }
 
         xmlTextWriterEndElement( writer );

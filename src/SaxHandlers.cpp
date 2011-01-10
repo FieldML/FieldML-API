@@ -974,9 +974,9 @@ ObjectListSaxHandler::ObjectListSaxHandler( SaxHandler *_parent, const xmlChar *
 
 SaxHandler *ObjectListSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
-    if( xmlStrcmp( elementName, ENTRY_TAG ) == 0 )
+    if( xmlStrcmp( elementName, INDEX_TAG ) == 0 )
     {
-        FmlObjectHandle handle = attributes.getObjectAttribute( region, VALUE_ATTRIB, FHT_UNKNOWN_EVALUATOR );
+        FmlObjectHandle handle = attributes.getObjectAttribute( region, EVALUATOR_ATTRIB, FHT_UNKNOWN_EVALUATOR );
         handler->onObjectListEntry( handle, listId );
     }
     
