@@ -297,11 +297,17 @@ int SemidenseParameterReader::readDoubleSlice( double *valueBuffer, const int of
         doubleSliceBuffer = new double[sliceCount];
     }
 
-    for( int i = 0; i < sliceCount; i++ )
+    int i = 0;
+    for( i = 0; i < sliceCount; i++ )
     {
         doubleSliceBuffer[i] = stream->readDouble();
     }
     
+    if( ( i != sliceCount ) && stream->eof() )
+    {
+        return FML_ERR_IO_UNEXPECTED_EOF;
+    }
+
     for( int i = 0; i < sliceCount; i++ )
     {
         if( swizzle != NULL )
@@ -314,11 +320,6 @@ int SemidenseParameterReader::readDoubleSlice( double *valueBuffer, const int of
         }
     }
     
-    if( stream->eof() )
-    {
-        return FML_ERR_IO_UNEXPECTED_EOF;
-    }
-
     if( dataType == TYPE_LINES )
     {
         stream->skipLine();

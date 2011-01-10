@@ -785,37 +785,37 @@ FmlObjectHandle Fieldml_GetBindByVariable( FmlHandle handle, FmlObjectHandle obj
 /**
  * Create a new element set of the given ensemble type
  */
-//TODO FmlObjectHandle Fieldml_CreateElementSet( FmlHandle handle, const char * name, FmlObjectHandle valueType );
+FmlObjectHandle Fieldml_CreateElementSet( FmlHandle handle, const char * name, FmlObjectHandle valueType );
 
 
 /**
  * Add the given element indexes to the given element set
  */
-//TODO int Fieldml_AddSetElements( FmlHandle handle, FmlObjectHandle setHandle, const int * indexes, const int indexCount );
+int Fieldml_AddElementEntries( FmlHandle handle, FmlObjectHandle setHandle, const int * elements, const int elementCount );
 
 
 /**
  * Add the given element indexes to the given element set
  */
-//TODO int Fieldml_AddSetElementRange( FmlHandle handle, FmlObjectHandle setHandle, const int minIndex, const int maxIndex );
+int Fieldml_AddElementRange( FmlHandle handle, FmlObjectHandle setHandle, const int minElement, const int maxElement );
 
 
 /**
  * Get the number of elements in the given element set
  */
-//TODO int Fieldml_GetSetElementCount( FmlHandle handle, FmlObjectHandle setHandle );
+int Fieldml_GetElementCount( FmlHandle handle, FmlObjectHandle setHandle );
 
 
 /**
  * Get the nth element index from the given element set, or -1 on error.
  */
-//TODO int Fieldml_GetSetElement( FmlHandle handle, FmlObjectHandle setHandle, const int index );
+int Fieldml_GetElementEntry( FmlHandle handle, FmlObjectHandle setHandle, const int firstIndex );
 
 
 /**
  * Get n element indexes from the given offset
  */
-//TODO int Fieldml_GetSetElements( FmlHandle handle, FmlObjectHandle setHandle, const int offset, int * indexes, const int count );
+int Fieldml_GetElementEntries( FmlHandle handle, FmlObjectHandle setHandle, const int firstIndex, int * elements, const int count );
 
 
 

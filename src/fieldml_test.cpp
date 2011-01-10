@@ -439,6 +439,8 @@ void testMisc()
     o3 = Fieldml_CreateParametersEvaluator( handle, "test.ensemble_parameters", o2 );
     Fieldml_SetParameterDataDescription( handle, o3, DESCRIPTION_SEMIDENSE );
     Fieldml_SetParameterDataLocation( handle, o3, LOCATION_INLINE );
+    
+    o1 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract", o1 );
     Fieldml_AddSemidenseIndexEvaluator( handle, o3, o1, 0 );
     
     Fieldml_AddParameterInlineData( handle, o3, "45.3 67.0 -12.8", 15 );
@@ -447,7 +449,7 @@ void testMisc()
 //    Fieldml_CloseWriter( handle, writer );
     
     reader = Fieldml_OpenReader( handle, o3 );
-    Fieldml_ReadDoubleSlice( handle, reader, dummy, readValues );
+    Fieldml_ReadDoubleValues( handle, reader, readValues, 3 );
     Fieldml_CloseReader( handle, reader );
     
     for( i = 0; i < 3; i++ )
@@ -471,6 +473,6 @@ int main( int argc, char **argv )
     testRead( argv[1] );
     testWrite( argv[1] );
     testMisc();
-    testStream();
+//    testStream();
     return 0;
 }

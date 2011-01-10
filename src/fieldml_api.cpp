@@ -633,8 +633,6 @@ int Fieldml_IsEnsembleComponentType( FmlHandle handle, FmlObjectHandle objectHan
         return ensembleType->isComponentEnsemble;
     }
     
-    printf( "LOLWUT %s\n", Fieldml_GetObjectName( handle, objectHandle ) );
-
     handle->setRegionError( FML_ERR_INVALID_OBJECT );  
     return -1;
 }
@@ -2078,4 +2076,175 @@ int Fieldml_CloseWriter( FmlHandle handle, FmlWriterHandle writer )
     delete writer;
     
     return handle->setRegionError( FML_ERR_NO_ERROR );
+}
+
+
+FmlObjectHandle Fieldml_CreateElementSet( FmlHandle handle, const char * name, FmlObjectHandle valueType )
+{
+    ElementSet *elementSet = new ElementSet( name, FILE_REGION_HANDLE );
+    
+    handle->setRegionError( FML_ERR_NO_ERROR );
+    return handle->addObject( elementSet );
+}
+
+
+int Fieldml_AddElementEntries( FmlHandle handle, FmlObjectHandle setHandle, const int * elements, const int elementCount )
+{
+    FieldmlObject *object = handle->getObject( setHandle );
+
+    if( object == NULL )
+    {
+        return handle->getLastError();
+    }
+
+    if( object->regionHandle != FILE_REGION_HANDLE )
+    {
+        return handle->setRegionError( FML_ERR_ACCESS_VIOLATION );
+    }
+    
+    if( object->type == FHT_ELEMENT_SET )
+    {
+        ElementSet *elementSet = (ElementSet*)object;
+        for( int i = 0; i < elementCount; i++ )
+        {
+            //TODO Check for duplicates (perhaps only on serialization)
+            elementSet->elements.push_back( elements[i] );
+        }
+        
+        return handle->getLastError();
+    }
+
+    return handle->setRegionError( FML_ERR_INVALID_OBJECT );
+}
+
+
+int Fieldml_AddElementRange( FmlHandle handle, FmlObjectHandle setHandle, const int minElement, const int maxElement )
+{
+    FieldmlObject *object = handle->getObject( setHandle );
+
+    if( object == NULL )
+    {
+        return handle->getLastError();
+    }
+
+    if( object->regionHandle != FILE_REGION_HANDLE )
+    {
+        return handle->setRegionError( FML_ERR_ACCESS_VIOLATION );
+    }
+    
+    if( object->type == FHT_ELEMENT_SET )
+    {
+        ElementSet *elementSet = (ElementSet*)object;
+        for( int i = minElement; i <= maxElement; i++ )
+        {
+            //TODO Check for duplicates (perhaps only on serialization)
+            elementSet->elements.push_back( i );
+        }
+        
+        return handle->getLastError();
+    }
+
+    return handle->setRegionError( FML_ERR_INVALID_OBJECT );
+}
+
+
+int Fieldml_GetElementCount( FmlHandle handle, FmlObjectHandle setHandle )
+{
+    FieldmlObject *object = handle->getObject( setHandle );
+
+    if( object == NULL )
+    {
+        return -1;
+    }
+
+    if( object->regionHandle != FILE_REGION_HANDLE )
+    {
+        handle->setRegionError( FML_ERR_ACCESS_VIOLATION );
+        return -1;
+    }
+    
+    if( object->type == FHT_ELEMENT_SET )
+    {
+        ElementSet *elementSet = (ElementSet*)object;
+        return elementSet->elements.size();
+    }
+
+    handle->setRegionError( FML_ERR_INVALID_OBJECT );
+    return -1;
+}
+
+
+int Fieldml_GetElementEntry( FmlHandle handle, FmlObjectHandle setHandle, const int index )
+{
+    FieldmlObject *object = handle->getObject( setHandle );
+
+    if( object == NULL )
+    {
+        return -1;
+    }
+
+    if( object->regionHandle != FILE_REGION_HANDLE )
+    {
+        handle->setRegionError( FML_ERR_ACCESS_VIOLATION );
+        return -1;
+    }
+    
+    if( object->type == FHT_ELEMENT_SET )
+    {
+        ElementSet *elementSet = (ElementSet*)object;
+        if( ( index < 1 ) || ( index > elementSet->elements.size() ) )
+        {
+            handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );  
+            return -1;
+        }
+            
+        return elementSet->elements[index - 1];
+    }
+
+    handle->setRegionError( FML_ERR_INVALID_OBJECT );
+    return -1;
+}
+
+
+int Fieldml_GetElementEntries( FmlHandle handle, FmlObjectHandle setHandle, const int firstIndex, int * elements, const int count )
+{
+    FieldmlObject *object = handle->getObject( setHandle );
+
+    if( object == NULL )
+    {
+        return -1;
+    }
+
+    if( object->regionHandle != FILE_REGION_HANDLE )
+    {
+        handle->setRegionError( FML_ERR_ACCESS_VIOLATION );
+        return -1;
+    }
+    
+    if( object->type == FHT_ELEMENT_SET )
+    {
+        ElementSet *elementSet = (ElementSet*)object;
+        int offset = firstIndex - 1;
+        if( ( offset < 0 ) || ( offset >= elementSet->elements.size() ) )
+        {
+            handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );  
+            return -1;
+        }
+
+        int actualCount = count;
+        if( offset + count > elementSet->elements.size() )
+        {
+            actualCount = elementSet->elements.size() - offset;
+        }
+        
+        for( int i = 0; i < actualCount; i++ )
+        {
+            elements[i] = elementSet->elements[offset + i];
+        }
+            
+        return actualCount;
+    }
+
+    handle->setRegionError( FML_ERR_INVALID_OBJECT );
+    return -1;
 }

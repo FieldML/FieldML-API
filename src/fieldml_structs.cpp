@@ -83,6 +83,13 @@ FieldmlObject::FieldmlObject( const string _name, int _regionHandle, FieldmlHand
     intValue = 0;
 }
 
+
+ElementSet::ElementSet( const string _name, int _region ) :
+    FieldmlObject( _name, _region, FHT_ELEMENT_SET )
+{
+}
+
+
 EnsembleType::EnsembleType( const string _name, int _region, bool _isComponentEnsemble ) :
     FieldmlObject( _name, _region, FHT_ENSEMBLE_TYPE ),
     isComponentEnsemble( _isComponentEnsemble ),

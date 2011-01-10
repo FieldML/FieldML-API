@@ -96,6 +96,16 @@ public:
 };
 
 
+class ElementSet :
+    public FieldmlObject
+{
+public:
+    std::vector<int> elements;
+    
+    ElementSet( const std::string _name, int _regionHandle );
+};
+
+
 class EnsembleType :
     public FieldmlObject
 {
