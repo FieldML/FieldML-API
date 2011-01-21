@@ -73,6 +73,9 @@ const xmlChar * const MESH_SHAPE_TAG                   = (const xmlChar* const)"
 const xmlChar * const MESH_CONNECTIVITY_TAG            = (const xmlChar* const)"pointConnectivity";
 const xmlChar * const MESH_CONNECTIVITY_ENTRY_TAG      = (const xmlChar* const)"connectivity";
 
+const xmlChar * const ELEMENT_SET_TAG                  = (const xmlChar* const)"ElementSet";
+const xmlChar * const ELEMENTS_TAG                     = (const xmlChar* const)"elements";
+
 const xmlChar * const REFERENCE_EVALUATOR_TAG          = (const xmlChar* const)"ReferenceEvaluator";
 const xmlChar * const BINDS_TAG                        = (const xmlChar* const)"binds";
 const xmlChar * const BIND_TAG                         = (const xmlChar* const)"bind";
@@ -135,6 +138,7 @@ const xmlChar * const XI_COMPONENT_ATTRIB               = (const xmlChar* const)
 
 const xmlChar * const NUMBER_ATTRIB                     = (const xmlChar* const)"number";
 const xmlChar * const EVALUATOR_ATTRIB                  = (const xmlChar* const)"evaluator";
+const xmlChar * const ELEMENT_SET_ATTRIB                = (const xmlChar* const)"element_set";
 
 const xmlChar * const INDEX_EVALUATOR_ATTRIB            = (const xmlChar* const)"indexEvaluator";
 

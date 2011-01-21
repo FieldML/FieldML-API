@@ -318,6 +318,15 @@ void testRead( const char * filename )
         fprintf( stdout, "  %d: %s\n", i, Fieldml_GetObjectName( handle, oHandle ) );
     }
 
+    count = Fieldml_GetObjectCount( handle, FHT_REMOTE_ELEMENT_SET );
+    fprintf( stdout, "External set: %d\n", count ); 
+    for( i = 1; i <= count; i++ )
+    {
+        oHandle = Fieldml_GetObject( handle, FHT_REMOTE_ELEMENT_SET, i );
+        
+        fprintf( stdout, "  %d: %s\n", i, Fieldml_GetObjectName( handle, oHandle ) );
+    }
+
     count = Fieldml_GetObjectCount( handle, FHT_REMOTE_EVALUATOR );
     fprintf( stdout, "External evaluator: %d\n", count ); 
     for( i = 1; i <= count; i++ )
@@ -441,7 +450,7 @@ void testMisc()
     Fieldml_SetParameterDataLocation( handle, o3, LOCATION_INLINE );
     
     o1 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract", o1 );
-    Fieldml_AddSemidenseIndexEvaluator( handle, o3, o1, 0 );
+    Fieldml_AddDenseIndexEvaluator( handle, o3, o1, FML_INVALID_HANDLE );
     
     Fieldml_AddParameterInlineData( handle, o3, "45.3 67.0 -12.8", 15 );
 //    writer = Fieldml_OpenWriter( handle, o3, 1 );

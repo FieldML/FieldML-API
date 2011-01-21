@@ -147,13 +147,15 @@ enum FieldmlHandleType
     FHT_PARAMETER_EVALUATOR,
     FHT_PIECEWISE_EVALUATOR,
     FHT_AGGREGATE_EVALUATOR,
+    FHT_ELEMENT_SET,
     FHT_REMOTE_TYPE,
     FHT_REMOTE_EVALUATOR,
-    FHT_ELEMENT_SET,
+    FHT_REMOTE_ELEMENT_SET,
     
     //These are stand-in types used to allow forward-declaration during parsing.
     FHT_UNKNOWN_TYPE,
-    FHT_UNKNOWN_EVALUATOR
+    FHT_UNKNOWN_EVALUATOR,
+    FHT_UNKNOWN_ELEMENT_SET
 };
 
 
@@ -593,7 +595,9 @@ DataDescriptionType Fieldml_GetParameterDataDescription( FmlHandle handle, FmlOb
 /**
  * Adds an index evaluator to the given parameter set's semidense data description.
  */
-int Fieldml_AddSemidenseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle, int isSparse );
+int Fieldml_AddDenseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle, FmlObjectHandle setHandle );
+
+int Fieldml_AddSparseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle );
 
 /**
  *   Returns the number of sparse or dense index evaluators of the semidense data store
@@ -650,6 +654,12 @@ FmlObjectHandle Fieldml_CreateAggregateEvaluator( FmlHandle handle, const char *
  * The aggregate's index evaluator must have the same ensemble type as the component ensemble of its value type.
  */
 int Fieldml_SetIndexEvaluator( FmlHandle handle, FmlObjectHandle valueType, int index, FmlObjectHandle indexHandle );
+
+
+int Fieldml_GetSemidenseIndexSet( FmlHandle handle, FmlObjectHandle parametersHandle, int index );
+
+
+int Fieldml_SetSemidenseIndexSet( FmlHandle handle, FmlObjectHandle parametersHandle, int index, FmlObjectHandle setHandle );
 
 
 /**

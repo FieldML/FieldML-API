@@ -84,9 +84,13 @@ FieldmlObject::FieldmlObject( const string _name, int _regionHandle, FieldmlHand
 }
 
 
-ElementSet::ElementSet( const string _name, int _region ) :
-    FieldmlObject( _name, _region, FHT_ELEMENT_SET )
+ElementSet::ElementSet( const string _name, int _region, FmlObjectHandle _valueType ) :
+    FieldmlObject( _name, _region, FHT_ELEMENT_SET ),
+    valueType( _valueType )
 {
+    maxElement = -1;
+    lastIndex = 0;
+    lastSetCount = 0;
 }
 
 

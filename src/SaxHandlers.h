@@ -73,13 +73,6 @@ public:
 };
 
 
-class ObjectListHandler
-{
-public:
-    virtual void onObjectListEntry( FmlObjectHandle handle, int listId ) = 0;
-};
-
-
 class CharacterBufferHandler
 {
 public:
@@ -218,6 +211,18 @@ public:
 };
 
 
+class ElementSetSaxHandler :
+    public FieldmlObjectSaxHandler, CharacterBufferHandler
+{
+public:
+    ElementSetSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
+
+    virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
+    
+    virtual void onCharacterBuffer( const char *buffer, int count, int id );
+};
+
+
 class AbstractEvaluatorSaxHandler :
     public FieldmlObjectSaxHandler
 {
@@ -347,7 +352,7 @@ public:
 
 
 class SemidenseSaxHandler :
-    public ObjectMemberSaxHandler, ObjectListHandler, CharacterBufferHandler
+    public ObjectMemberSaxHandler, CharacterBufferHandler
 {
 private:
     void onFileData( SaxAttributes &attributes );
@@ -357,23 +362,21 @@ public:
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
     
-    virtual void onObjectListEntry( FmlObjectHandle listEntry, int listId );
-
     virtual void onCharacterBuffer( const char *buffer, int count, int id );
 };
 
 
-class ObjectListSaxHandler :
+class IndexEvaluatorListSaxHandler :
     public SaxHandler
 {
 private:
     const FmlHandle region;
-    ObjectListHandler * const handler;
-    const int listId;
-    SaxHandler *parent;
+    SemidenseSaxHandler * const handler;
+    const int isSparse;
+    SemidenseSaxHandler *parent;
 
 public:
-    ObjectListSaxHandler( SaxHandler *_parent, const xmlChar *elementName, FmlHandle _region, ObjectListHandler *_handler, int _listId );
+    IndexEvaluatorListSaxHandler( SemidenseSaxHandler *_parent, const xmlChar *elementName, FmlHandle _region, SemidenseSaxHandler *_handler, int _listId );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
     

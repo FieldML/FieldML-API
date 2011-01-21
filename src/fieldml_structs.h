@@ -100,9 +100,16 @@ class ElementSet :
     public FieldmlObject
 {
 public:
-    std::vector<int> elements;
+    const FmlObjectHandle valueType;
+
+    //NOTE Can't use std::bitset, as the size cannot be set at compile-time.
+    //TODO Encapsulate all the relevant logic into a custom bitset class that wraps vector<bool>
+    std::vector<int> presentElements;
+    int maxElement;
+    int lastSetCount;
+    int lastIndex;
     
-    ElementSet( const std::string _name, int _regionHandle );
+    ElementSet( const std::string _name, int _regionHandle, FmlObjectHandle _valueType );
 };
 
 
@@ -265,6 +272,7 @@ class SemidenseDataDescription :
 public:
     std::vector<FmlObjectHandle> sparseIndexes;
     std::vector<FmlObjectHandle> denseIndexes;
+    std::vector<FmlObjectHandle> denseSets;
     
     const int *swizzle;
     int swizzleCount;

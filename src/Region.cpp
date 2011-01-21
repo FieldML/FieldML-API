@@ -405,6 +405,12 @@ void FieldmlRegion::finalize()
             objects[i] = newObject;
             delete object;
         }
+        else if( object->type == FHT_UNKNOWN_ELEMENT_SET )
+        {
+            newObject = new FieldmlObject( object->name, object->regionHandle, FHT_REMOTE_ELEMENT_SET );
+            objects[i] = newObject;
+            delete object;
+        }
         else if( object->type == FHT_UNKNOWN_EVALUATOR )
         {
             newObject = resolveSubEvaluator( this, object->name, object->regionHandle );

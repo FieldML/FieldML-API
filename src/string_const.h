@@ -72,6 +72,9 @@ extern const xmlChar * const MESH_SHAPE_TAG;
 extern const xmlChar * const MESH_CONNECTIVITY_TAG;
 extern const xmlChar * const MESH_CONNECTIVITY_ENTRY_TAG;
 
+extern const xmlChar * const ELEMENT_SET_TAG;
+extern const xmlChar * const ELEMENTS_TAG;
+
 extern const xmlChar * const REFERENCE_EVALUATOR_TAG;
 extern const xmlChar * const BINDS_TAG;
 extern const xmlChar * const BIND_TAG;
@@ -136,6 +139,7 @@ extern const xmlChar * const XI_COMPONENT_ATTRIB;
 
 extern const xmlChar * const NUMBER_ATTRIB;
 extern const xmlChar * const EVALUATOR_ATTRIB;
+extern const xmlChar * const ELEMENT_SET_ATTRIB;
 
 extern const xmlChar * const INDEX_EVALUATOR_ATTRIB;
 

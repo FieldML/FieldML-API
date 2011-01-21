@@ -928,6 +928,11 @@ FmlObjectHandle Fieldml_GetValueType( FmlHandle handle, FmlObjectHandle objectHa
         Evaluator *evaluator = (Evaluator *)object;
         return evaluator->valueType;
     }
+    else if( object->type == FHT_ELEMENT_SET )
+    {
+        ElementSet *set = (ElementSet *)object;
+        return set->valueType;
+    }
 
     handle->setRegionError( FML_ERR_INVALID_OBJECT );
     return FML_INVALID_HANDLE;
@@ -1166,7 +1171,7 @@ DataFileType Fieldml_GetParameterDataFileType( FmlHandle handle, FmlObjectHandle
 }
 
 
-int Fieldml_AddSemidenseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle, int isSparse )
+int Fieldml_AddDenseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle, FmlObjectHandle setHandle )
 {
     SemidenseDataDescription *semidense = getSemidenseDataDescription( handle, objectHandle );
     if( semidense == NULL )
@@ -1174,14 +1179,22 @@ int Fieldml_AddSemidenseIndexEvaluator( FmlHandle handle, FmlObjectHandle object
         return handle->getLastError();
     }
 
-    if( isSparse )
+    semidense->denseIndexes.push_back( indexHandle );
+    semidense->denseSets.push_back( setHandle );
+    
+    return handle->getLastError();
+}
+
+
+int Fieldml_AddSparseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle )
+{
+    SemidenseDataDescription *semidense = getSemidenseDataDescription( handle, objectHandle );
+    if( semidense == NULL )
     {
-        semidense->sparseIndexes.push_back( indexHandle );
+        return handle->getLastError();
     }
-    else
-    {
-        semidense->denseIndexes.push_back( indexHandle );
-    }
+
+    semidense->sparseIndexes.push_back( indexHandle );
     
     return handle->getLastError();
 }
@@ -1777,6 +1790,124 @@ FmlObjectHandle Fieldml_GetIndexEvaluator( FmlHandle handle, FmlObjectHandle obj
 }
 
 
+int Fieldml_GetSemidenseIndexSet( FmlHandle handle, FmlObjectHandle objectHandle, int index )
+{
+    FieldmlObject *object = handle->getObject( objectHandle );
+
+    if( object == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+    
+    if( index <= 0 )
+    {
+        handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        return FML_INVALID_HANDLE;
+    }
+    
+    if( object->type != FHT_PARAMETER_EVALUATOR )
+    {
+        handle->setRegionError( FML_ERR_INVALID_OBJECT );
+        return FML_INVALID_HANDLE;
+    }
+    
+    int count;
+    
+    ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
+    if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
+    {
+        SemidenseDataDescription *semidense = (SemidenseDataDescription *)parameterEvaluator->dataDescription;
+        count = semidense->sparseIndexes.size();
+        
+        if( index <= count )
+        {
+            handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+            return FML_INVALID_HANDLE;
+        }
+
+        index -= count;
+        count = semidense->denseIndexes.size();
+
+        if( index <= count )
+        {
+            return semidense->denseSets[index - 1];
+        }
+        
+        handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+    }
+    else
+    {
+        handle->setRegionError( FML_ERR_UNSUPPORTED );
+    }
+
+    return FML_INVALID_HANDLE;
+}
+
+
+
+
+int Fieldml_SetSemidenseIndexSet( FmlHandle handle, FmlObjectHandle objectHandle, int index, FmlObjectHandle setHandle )
+{
+    FieldmlObject *object = handle->getObject( objectHandle );
+
+    if( object == NULL )
+    {
+        return handle->getLastError();
+    }
+    
+    if( index <= 0 )
+    {
+        handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        return handle->getLastError();
+    }
+    
+    if( object->type != FHT_PARAMETER_EVALUATOR )
+    {
+        handle->setRegionError( FML_ERR_INVALID_OBJECT );
+        return handle->getLastError();
+    }
+    
+    FieldmlHandleType type = Fieldml_GetObjectType( handle, setHandle );
+    if( type != FHT_ELEMENT_SET )
+    {
+        handle->setRegionError( FML_ERR_INVALID_PARAMETER_4 );
+        return handle->getLastError();
+    }
+    
+    int count;
+    
+    ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
+    if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
+    {
+        SemidenseDataDescription *semidense = (SemidenseDataDescription *)parameterEvaluator->dataDescription;
+        count = semidense->sparseIndexes.size();
+        
+        if( index <= count )
+        {
+            handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+            return handle->getLastError();
+        }
+
+        index -= count;
+        count = semidense->denseIndexes.size();
+
+        if( index <= count )
+        {
+            semidense->denseSets[index - 1] = setHandle;
+            return FML_ERR_NO_ERROR;
+        }
+        
+        handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+    }
+    else
+    {
+        handle->setRegionError( FML_ERR_UNSUPPORTED );
+    }
+
+    return handle->getLastError();
+}
+
+
 FmlObjectHandle Fieldml_CreateContinuousType( FmlHandle handle, const char * name, FmlObjectHandle componentDescriptionHandle )
 {
     if( ( componentDescriptionHandle != FML_INVALID_HANDLE ) &&
@@ -2081,7 +2212,7 @@ int Fieldml_CloseWriter( FmlHandle handle, FmlWriterHandle writer )
 
 FmlObjectHandle Fieldml_CreateElementSet( FmlHandle handle, const char * name, FmlObjectHandle valueType )
 {
-    ElementSet *elementSet = new ElementSet( name, FILE_REGION_HANDLE );
+    ElementSet *elementSet = new ElementSet( name, FILE_REGION_HANDLE, valueType );
     
     handle->setRegionError( FML_ERR_NO_ERROR );
     return handle->addObject( elementSet );
@@ -2105,10 +2236,24 @@ int Fieldml_AddElementEntries( FmlHandle handle, FmlObjectHandle setHandle, cons
     if( object->type == FHT_ELEMENT_SET )
     {
         ElementSet *elementSet = (ElementSet*)object;
+        
         for( int i = 0; i < elementCount; i++ )
         {
-            //TODO Check for duplicates (perhaps only on serialization)
-            elementSet->elements.push_back( elements[i] );
+            if( elements[i] < 1 )
+            {
+                return handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+            }
+            if( elementSet->presentElements.size() <= elements[i] )
+            {
+                int count = elements[i] - elementSet->presentElements.size();
+                elementSet->presentElements.insert( elementSet->presentElements.end(), count + 1, false );
+            }
+
+            elementSet->presentElements[ elements[i] ] = true;
+            if( elements[i] > elementSet->maxElement )
+            {
+                elementSet->maxElement = elements[i];
+            }
         }
         
         return handle->getLastError();
@@ -2132,13 +2277,33 @@ int Fieldml_AddElementRange( FmlHandle handle, FmlObjectHandle setHandle, const 
         return handle->setRegionError( FML_ERR_ACCESS_VIOLATION );
     }
     
+    if( ( minElement < 1 ) || ( minElement > maxElement ) )
+    {
+        return handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+    }
+    
+    if( maxElement < 1 )
+    {
+        return handle->setRegionError( FML_ERR_INVALID_PARAMETER_4 );
+    }
+    
     if( object->type == FHT_ELEMENT_SET )
     {
         ElementSet *elementSet = (ElementSet*)object;
+
+        if( elementSet->presentElements.size() <= maxElement )
+        {
+            int count = maxElement - elementSet->presentElements.size();
+            elementSet->presentElements.insert( elementSet->presentElements.end(), count + 1, false );
+        }
+
         for( int i = minElement; i <= maxElement; i++ )
         {
-            //TODO Check for duplicates (perhaps only on serialization)
-            elementSet->elements.push_back( i );
+            elementSet->presentElements[ i ] = true;
+        }
+        if( maxElement > elementSet->maxElement )
+        {
+            elementSet->maxElement = maxElement;
         }
         
         return handle->getLastError();
@@ -2166,7 +2331,16 @@ int Fieldml_GetElementCount( FmlHandle handle, FmlObjectHandle setHandle )
     if( object->type == FHT_ELEMENT_SET )
     {
         ElementSet *elementSet = (ElementSet*)object;
-        return elementSet->elements.size();
+        int count = 0;
+        for( int i = 0; i <= elementSet->maxElement; i++ )
+        {
+            if( elementSet->presentElements[i] )
+            {
+                count++;
+            }
+        }
+        
+        return count;
     }
 
     handle->setRegionError( FML_ERR_INVALID_OBJECT );
@@ -2192,13 +2366,47 @@ int Fieldml_GetElementEntry( FmlHandle handle, FmlObjectHandle setHandle, const 
     if( object->type == FHT_ELEMENT_SET )
     {
         ElementSet *elementSet = (ElementSet*)object;
-        if( ( index < 1 ) || ( index > elementSet->elements.size() ) )
+
+        if( ( index < 1 ) || ( index > elementSet->presentElements.size() ) )
         {
             handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );  
             return -1;
         }
-            
-        return elementSet->elements[index - 1];
+
+        if( index == elementSet->lastSetCount )
+        {
+            return elementSet->lastIndex;
+        }
+        
+        if( index < elementSet->lastSetCount )
+        {
+            elementSet->lastSetCount = 0;
+            elementSet->lastIndex = 0;
+        }
+        
+        int setCount = index - elementSet->lastSetCount;
+        int testIndex = elementSet->lastIndex;
+        
+        //Look for the setCount'th set bit starting at the one after testIndex.
+        while( ( setCount > 0 ) && ( testIndex < elementSet->presentElements.size() ) )
+        {
+            testIndex++;
+            if( elementSet->presentElements[ testIndex ] )
+            {
+                setCount--;
+            }
+        }
+        
+        if( setCount > 0 )
+        {
+            handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );  
+            return -1;
+        }
+        
+        elementSet->lastSetCount = index;
+        elementSet->lastIndex = testIndex;
+        
+        return testIndex;
     }
 
     handle->setRegionError( FML_ERR_INVALID_OBJECT );
@@ -2223,25 +2431,29 @@ int Fieldml_GetElementEntries( FmlHandle handle, FmlObjectHandle setHandle, cons
     
     if( object->type == FHT_ELEMENT_SET )
     {
-        ElementSet *elementSet = (ElementSet*)object;
-        int offset = firstIndex - 1;
-        if( ( offset < 0 ) || ( offset >= elementSet->elements.size() ) )
+        if( count < 1 )
         {
-            handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );  
+            handle->setRegionError( FML_ERR_INVALID_PARAMETER_5 );  
             return -1;
         }
 
-        int actualCount = count;
-        if( offset + count > elementSet->elements.size() )
+        int actualCount = 0;
+        for( int i = 0; i < count; i++ )
         {
-            actualCount = elementSet->elements.size() - offset;
+            elements[i] = Fieldml_GetElementEntry( handle, setHandle, firstIndex + i );
+            if( elements[i] == -1 )
+            {
+                break;
+            }
+            actualCount++;
         }
         
-        for( int i = 0; i < actualCount; i++ )
+        if( actualCount == 0 )
         {
-            elements[i] = elementSet->elements[offset + i];
+            return -1;
         }
-            
+
+        handle->setRegionError( FML_ERR_NO_ERROR );
         return actualCount;
     }
 

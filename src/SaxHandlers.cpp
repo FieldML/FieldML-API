@@ -79,6 +79,11 @@ static int intParserCount( const char *buffer )
         }
     }
     
+    if( digits > 0 )
+    {
+        count++;
+    }
+    
     return count;
 }
 
@@ -90,10 +95,12 @@ static const int *intParserInts( const char *buffer )
     const char *p = buffer;
     int number = 0;
     int digits;
+    bool invert;
     char c;
     
     digits = 0;
     count = 0;
+    invert = false;
     while( *p != 0 )
     {
         c = *p++;
@@ -107,10 +114,21 @@ static const int *intParserInts( const char *buffer )
         
         if( digits > 0 )
         {
-            ints[count++] = number;
+            ints[count++] = invert ? -number : number;
             number = 0;
             digits = 0;
+            invert = false;
         }
+        
+        if( c == '-' )
+        {
+            invert = !invert;
+        }
+    }
+    
+    if( digits > 0 )
+    {
+        ints[count++] = invert ? -number : number;
     }
     
     return ints;
@@ -298,6 +316,11 @@ SaxHandler *RegionSaxHandler::onElementStart( const xmlChar *elementName, SaxAtt
     {
         return new MeshTypeSaxHandler( this, elementName, attributes );
     }
+    
+    if( xmlStrcmp( elementName, ELEMENT_SET_TAG ) == 0 )
+    {
+        return new ElementSetSaxHandler( this, elementName, attributes );
+    }
 
     if( xmlStrcmp( elementName, ABSTRACT_EVALUATOR_TAG ) == 0 )
     {
@@ -442,6 +465,71 @@ SaxHandler *MeshTypeSaxHandler::onElementStart( const xmlChar *elementName, SaxA
     }
     
     return this;
+}
+
+
+ElementSetSaxHandler::ElementSetSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
+    FieldmlObjectSaxHandler( _parent, elementName )
+{
+    const char *name = attributes.getAttribute( NAME_ATTRIB );
+    if( name == NULL )
+    {
+        getRegion()->logError( "ElementSet has no name" );
+        return;
+    }
+    
+    FmlObjectHandle valueType = attributes.getObjectAttribute( getRegion(), VALUE_TYPE_ATTRIB, FHT_UNKNOWN_TYPE );
+    if( valueType == FML_INVALID_HANDLE )
+    {
+        getRegion()->logError( "ElementSet has no value type", name );
+        return;
+    }
+    
+    handle = Fieldml_CreateElementSet( getRegion(), name, valueType );
+}
+
+
+SaxHandler *ElementSetSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
+{
+    if( xmlStrcmp( elementName, ELEMENTS_TAG ) == 0 )
+    {
+        return new CharacterAccumulatorSaxHandler( this, elementName, this, 0 );
+    }
+    
+    return this;
+}
+
+
+void ElementSetSaxHandler::onCharacterBuffer( const char *buffer, int count, int id )
+{
+    if( id == 0 )
+    {
+        //TODO This stuff should be streamed in directly from SAX
+        //NOTE Unholy hack. The string "1-5" arrives as a pair of ints ( 1, -5 ), which is then parsed as the range 1 - 5.
+        int intCount;
+        int singleElementCount = 0;
+        int *ints;
+        
+        intCount = intParserCount( buffer );
+        ints = (int*)intParserInts( buffer );
+        
+        for( int index = 0; index < intCount; index++ )
+        {
+            if( ( index < ( intCount - 1 ) ) && ( ints[index + 1] < 0 ) )
+            {
+                Fieldml_AddElementRange( getRegion(), handle, ints[index], -ints[index+1] );
+                index++;
+            }
+            else
+            {
+                ints[singleElementCount++] = ints[index];
+            }
+        }
+        
+        Fieldml_AddElementEntries( getRegion(), handle, ints, singleElementCount );
+        
+        delete[] ints;
+    }
 }
 
 
@@ -897,31 +985,15 @@ void SemidenseSaxHandler::onFileData( SaxAttributes &attributes )
 }
 
 
-void SemidenseSaxHandler::onObjectListEntry( FmlObjectHandle listEntry, int listId )
-{
-    if( ( listId == 0 ) || ( listId == 1 ) )
-    {
-        if( listEntry == FML_INVALID_HANDLE )
-        {
-            parent->getRegion()->logError( "Invalid index in semi dense data" );
-        }
-        else
-        {
-            Fieldml_AddSemidenseIndexEvaluator( parent->getRegion(), parent->handle, listEntry, listId );
-        }
-    }
-}
-
-
 SaxHandler *SemidenseSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
     if( xmlStrcmp( elementName, DENSE_INDEXES_TAG ) == 0 )
     {
-        return new ObjectListSaxHandler( this, elementName, parent->getRegion(), this, 0 );
+        return new IndexEvaluatorListSaxHandler( this, elementName, parent->getRegion(), this, 0 );
     }
     else if( xmlStrcmp( elementName, SPARSE_INDEXES_TAG ) == 0 )
     {
-        return new ObjectListSaxHandler( this, elementName, parent->getRegion(), this, 1 );
+        return new IndexEvaluatorListSaxHandler( this, elementName, parent->getRegion(), this, 1 );
     }
     else if( xmlStrcmp( elementName, INLINE_DATA_TAG ) == 0 )
     {
@@ -962,29 +1034,40 @@ void SemidenseSaxHandler::onCharacterBuffer( const char *buffer, int count, int 
 }
 
 
-ObjectListSaxHandler::ObjectListSaxHandler( SaxHandler *_parent, const xmlChar *elementName, FmlHandle _region, ObjectListHandler *_handler, int _listId ) :
+IndexEvaluatorListSaxHandler::IndexEvaluatorListSaxHandler( SemidenseSaxHandler *_parent, const xmlChar *elementName, FmlHandle _region, SemidenseSaxHandler *_handler, int _isSparse ) :
     SaxHandler( elementName ),
     parent( _parent ),
     region( _region ),
     handler( _handler ),
-    listId( _listId )
+    isSparse( _isSparse )
 {
 }
 
 
-SaxHandler *ObjectListSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
+SaxHandler *IndexEvaluatorListSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
     if( xmlStrcmp( elementName, INDEX_TAG ) == 0 )
     {
         FmlObjectHandle handle = attributes.getObjectAttribute( region, EVALUATOR_ATTRIB, FHT_UNKNOWN_EVALUATOR );
-        handler->onObjectListEntry( handle, listId );
+        FmlObjectHandle setHandle = attributes.getObjectAttribute( region, ELEMENT_SET_ATTRIB, FHT_UNKNOWN_ELEMENT_SET );        if( handle == FML_INVALID_HANDLE )
+        {
+            parent->parent->getRegion()->logError( "Invalid index in semi dense data" );
+        }
+        else if( isSparse )
+        {
+            Fieldml_AddSparseIndexEvaluator( parent->parent->getRegion(), parent->parent->handle, handle );
+        }
+        else
+        {
+            Fieldml_AddDenseIndexEvaluator( parent->parent->getRegion(), parent->parent->handle, handle, setHandle );
+        }
     }
     
     return this;
 }
 
 
-SaxHandler *ObjectListSaxHandler::getParent()
+SaxHandler *IndexEvaluatorListSaxHandler::getParent()
 {
     return parent;
 }

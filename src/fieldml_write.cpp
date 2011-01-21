@@ -325,6 +325,64 @@ static int writeMeshType( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHa
 }
 
 
+static int writeElementSet( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHandle object )
+{
+    xmlTextWriterStartElement( writer, ELEMENT_SET_TAG );
+    
+    writeObjectName( writer, NAME_ATTRIB, handle, object );
+    writeObjectName( writer, VALUE_TYPE_ATTRIB, handle, Fieldml_GetValueType( handle, object ) );
+
+    xmlTextWriterStartElement( writer, ELEMENTS_TAG );
+    
+    int elementCount = Fieldml_GetElementCount( handle, object );
+    
+    if( elementCount > 0 )
+    {
+        //TODO This is potentially very inefficient.
+        int lastElement = -1;
+        int rangeStart = -1;
+        int element;
+        for( int i = 1; i <= elementCount; i++ )
+        {
+            element = Fieldml_GetElementEntry( handle, object, i );
+            if( element != lastElement + 1 )
+            {
+                if( rangeStart != -1 )
+                {
+                    xmlTextWriterWriteFormatString( writer, "%d-%d ", rangeStart, lastElement );
+                    rangeStart = -1;
+                }
+                else if( lastElement != -1 )
+                {
+                    xmlTextWriterWriteFormatString( writer, "%d ", lastElement );
+                }
+            }
+            else if( rangeStart == -1 )
+            {
+                rangeStart = lastElement;
+            }
+            
+            lastElement = element;
+        }
+        
+        if( rangeStart == -1 )
+        {
+            xmlTextWriterWriteFormatString( writer, "%d", lastElement );
+        }
+        else
+        {
+            xmlTextWriterWriteFormatString( writer, "%d-%d", rangeStart, lastElement );
+        }
+    }
+
+    xmlTextWriterEndElement( writer );
+    
+    xmlTextWriterEndElement( writer );
+    
+    return 0;
+}
+
+
 static int writeAbstractEvaluator( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHandle object )
 {
     xmlTextWriterStartElement( writer, ABSTRACT_EVALUATOR_TAG );
@@ -429,6 +487,13 @@ static void writeSemidenseIndexes( xmlTextWriterPtr writer, FmlHandle handle, Fm
             }
             xmlTextWriterStartElement( writer, INDEX_TAG );
             xmlTextWriterWriteAttribute( writer, EVALUATOR_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, index ) );
+            
+            FmlObjectHandle set = Fieldml_GetSemidenseIndexSet( handle, object, i );
+            if( set != FML_INVALID_HANDLE )
+            {
+                xmlTextWriterWriteAttribute( writer, ELEMENT_SET_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, set ) );
+            }
+            
             xmlTextWriterEndElement( writer );
         }
 
@@ -567,6 +632,8 @@ static int writeFieldmlObject( xmlTextWriterPtr writer, FmlHandle handle, FmlObj
         return writeEnsembleType( writer, handle, object );
     case FHT_MESH_TYPE:
         return writeMeshType( writer, handle, object );
+    case FHT_ELEMENT_SET:
+        return writeElementSet( writer, handle, object );
     case FHT_ABSTRACT_EVALUATOR:
         return writeAbstractEvaluator( writer, handle, object );
     case FHT_REFERENCE_EVALUATOR:
