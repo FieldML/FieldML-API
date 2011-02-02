@@ -92,9 +92,9 @@ static void writeIntTableEntry( xmlTextWriterPtr writer, const xmlChar *tagName,
 }
 
 
-static void writeComponentEvaluator( xmlTextWriterPtr writer, int key, const char *value )
+static void writeComponentEvaluator( xmlTextWriterPtr writer, const xmlChar *tagName, int key, const char *value )
 {
-    xmlTextWriterStartElement( writer, COMPONENT_TAG );
+    xmlTextWriterStartElement( writer, tagName );
     xmlTextWriterWriteFormatAttribute( writer, NUMBER_ATTRIB, "%d", key );
     xmlTextWriterWriteAttribute( writer, EVALUATOR_ATTRIB, (const xmlChar*) value );
     xmlTextWriterEndElement( writer );
@@ -161,16 +161,16 @@ static int writeBinds( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHandl
     
     for( int i = 1; i <= count; i++ )
     {
-        int remote = Fieldml_GetBindEvaluator( handle, object, i );
-        int local =  Fieldml_GetBindVariable( handle, object, i );
-        if( ( remote == FML_INVALID_HANDLE ) || ( local == FML_INVALID_HANDLE ) )
+        int source = Fieldml_GetBindEvaluator( handle, object, i );
+        int variable =  Fieldml_GetBindVariable( handle, object, i );
+        if( ( source == FML_INVALID_HANDLE ) || ( variable == FML_INVALID_HANDLE ) )
         {
             continue;
         }
 
         xmlTextWriterStartElement( writer, BIND_TAG );
-        xmlTextWriterWriteAttribute( writer, VARIABLE_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, local ) );
-        xmlTextWriterWriteAttribute( writer, SOURCE_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, remote ) );
+        xmlTextWriterWriteAttribute( writer, VARIABLE_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, variable ) );
+        xmlTextWriterWriteAttribute( writer, SOURCE_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, source ) );
         xmlTextWriterEndElement( writer );
     }
     
@@ -406,7 +406,6 @@ static int writeReferenceEvaluator( xmlTextWriterPtr writer, FmlHandle handle, F
     
     writeObjectName( writer, NAME_ATTRIB, handle, object );
     writeObjectName( writer, EVALUATOR_ATTRIB, handle, Fieldml_GetReferenceRemoteEvaluator( handle, object ) );
-    writeObjectName( writer, VALUE_TYPE_ATTRIB, handle, Fieldml_GetValueType( handle, object ) );
 
     writeMarkup( writer, handle, object );
     
@@ -452,7 +451,7 @@ static int writePiecewiseEvaluator( xmlTextWriterPtr writer, FmlHandle handle, F
             {
                 continue;
             }
-            writeIntTableEntry( writer, ELEMENT_TAG, element, Fieldml_GetObjectName( handle, evaluator ) );
+            writeComponentEvaluator( writer, ELEMENT_TAG, element, Fieldml_GetObjectName( handle, evaluator ) );
         }
 
         xmlTextWriterEndElement( writer );
@@ -610,7 +609,7 @@ static int writeAggregateEvaluator( xmlTextWriterPtr writer, FmlHandle handle, F
             {
                 continue;
             }
-            writeComponentEvaluator( writer, element, Fieldml_GetObjectName( handle, evaluator ) );
+            writeComponentEvaluator( writer, COMPONENT_TAG, element, Fieldml_GetObjectName( handle, evaluator ) );
         }
 
         xmlTextWriterEndElement( writer );
@@ -671,7 +670,7 @@ int writeFieldmlFile( FmlHandle handle, const char *filename )
 
     xmlTextWriterStartElement( writer, FIELDML_TAG );
     xmlTextWriterWriteAttribute( writer, VERSION_ATTRIB, (const xmlChar*)FML_VERSION_STRING );
-    xmlTextWriterWriteAttribute( writer, (const xmlChar*)"xsi:noNamespaceSchemaLocation", (const xmlChar*)"Fieldml_0.2.xsd" );
+    xmlTextWriterWriteAttribute( writer, (const xmlChar*)"xsi:noNamespaceSchemaLocation", (const xmlChar*)"Fieldml_0.3.xsd" );
     xmlTextWriterWriteAttribute( writer, (const xmlChar*)"xmlns:xsi", (const xmlChar*)"http://www.w3.org/2001/XMLSchema-instance" );        
     xmlTextWriterStartElement( writer, REGION_TAG );
     

@@ -63,7 +63,7 @@ public:
     virtual int writeIntValues( int *values, int count ) = 0;
     virtual int writeDoubleValues( double *values, int count ) = 0;
     
-    ~ParameterWriter();
+    virtual ~ParameterWriter();
 };
 
 

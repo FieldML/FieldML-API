@@ -321,7 +321,7 @@ static FieldmlObject *resolveSubEvaluator( FieldmlRegion *region, string name, i
     }
     
     string superName = name.substr( 0, index );
-    FmlObjectHandle handle = Fieldml_GetObjectByName( region, superName.c_str() );
+    FmlObjectHandle handle = region->getNamedHandle( superName.c_str() );
     if( handle == FML_INVALID_HANDLE )
     {
         return NULL;
@@ -478,7 +478,7 @@ FmlObjectHandle FieldmlRegion::addObject( FieldmlObject *object )
 {
     int doSwitch;
     FieldmlObject *oldObject;
-    FmlObjectHandle handle = Fieldml_GetObjectByName( this, object->name.c_str() );
+    FmlObjectHandle handle = getNamedHandle( object->name.c_str() );
     
     if( handle == FML_INVALID_HANDLE )
     {

@@ -63,7 +63,7 @@ public:
     virtual int readIntValues( int *values, int count ) = 0;
     virtual int readDoubleValues( double *value, int count ) = 0; 
     
-    ~ParameterReader();
+    virtual ~ParameterReader();
 };
 
 

@@ -67,7 +67,7 @@ class FieldmlRegion
     
 public:
     FieldmlRegion( const std::string location, const std::string name );
-    ~FieldmlRegion();
+    virtual ~FieldmlRegion();
     
     FmlObjectHandle addObject( FieldmlObject *object );
 

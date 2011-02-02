@@ -54,7 +54,7 @@ public:
     virtual int writeInt( int value ) = 0;
     virtual int writeDouble( double value ) = 0;
     virtual int writeNewline() = 0;
-    ~FieldmlOutputStream();
+    virtual ~FieldmlOutputStream();
     
     static FieldmlOutputStream *create( const std::string filename, bool append );
 };

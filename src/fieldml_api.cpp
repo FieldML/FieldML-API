@@ -1549,7 +1549,7 @@ FmlObjectHandle Fieldml_GetBindVariable( FmlHandle handle, FmlObjectHandle objec
         return FML_INVALID_HANDLE;
     }
     
-    return map->getValue( index - 1 );
+    return map->getKey( index - 1 );
 }
 
 
@@ -1561,7 +1561,7 @@ FmlObjectHandle Fieldml_GetBindEvaluator( FmlHandle handle, FmlObjectHandle obje
         return FML_INVALID_HANDLE;
     }
     
-    return map->getKey( index - 1 );
+    return map->getValue( index - 1 );
 }
 
 
@@ -1585,7 +1585,7 @@ FmlObjectHandle Fieldml_GetBindByVariable( FmlHandle handle, FmlObjectHandle obj
 }
 
 
-int Fieldml_SetBind( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle remoteType, FmlObjectHandle localSource )
+int Fieldml_SetBind( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle variableHandle, FmlObjectHandle sourceHandle )
 {
     SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getBindMap( handle, objectHandle );
     if( map == NULL )
@@ -1593,7 +1593,7 @@ int Fieldml_SetBind( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHa
         return handle->getLastError();
     }
     
-    map->set( remoteType, localSource );
+    map->set( variableHandle, sourceHandle );
     return handle->getLastError();
 }
 

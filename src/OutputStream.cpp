@@ -64,7 +64,7 @@ public:
     int writeInt( int value );
     int writeDouble( double value );
     int writeNewline();
-    ~FileOutputStream();
+    virtual ~FileOutputStream();
 };
 
     

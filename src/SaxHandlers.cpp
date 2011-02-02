@@ -892,16 +892,16 @@ SaxHandler *BindsSaxHandler::onElementStart( const xmlChar *elementName, SaxAttr
 {
     if( xmlStrcmp( elementName, BIND_TAG ) == 0 )
     {
-        FmlObjectHandle localHandle = attributes.getObjectAttribute( parent->getRegion(), VARIABLE_ATTRIB, FHT_UNKNOWN_EVALUATOR );
-        FmlObjectHandle remoteHandle = attributes.getObjectAttribute( parent->getRegion(), SOURCE_ATTRIB, FHT_UNKNOWN_EVALUATOR );
-        if( ( remoteHandle == FML_INVALID_HANDLE ) || ( localHandle == FML_INVALID_HANDLE ) )
+        FmlObjectHandle variableHandle = attributes.getObjectAttribute( parent->getRegion(), VARIABLE_ATTRIB, FHT_UNKNOWN_EVALUATOR );
+        FmlObjectHandle sourceHandle = attributes.getObjectAttribute( parent->getRegion(), SOURCE_ATTRIB, FHT_UNKNOWN_EVALUATOR );
+        if( ( variableHandle == FML_INVALID_HANDLE ) || ( sourceHandle == FML_INVALID_HANDLE ) )
         {
             const char * name =  Fieldml_GetObjectName( parent->getRegion(), parent->handle );
             parent->getRegion()->logError( "Evaluator has malformed bind", name );
             return this;
         }
 
-        Fieldml_SetBind( parent->getRegion(), parent->handle, remoteHandle, localHandle );
+        Fieldml_SetBind( parent->getRegion(), parent->handle, variableHandle, sourceHandle );
     }
     else if( xmlStrcmp( elementName, BIND_INDEX_TAG ) == 0 )
     {

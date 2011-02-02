@@ -61,7 +61,7 @@ protected:
     
 public:
     FileInputStream( FILE *_file );
-    ~FileInputStream();
+    virtual ~FileInputStream();
 };
 
 

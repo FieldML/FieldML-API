@@ -96,6 +96,7 @@ SemidenseParameterWriter::SemidenseParameterWriter( FmlHandle handle, FmlOutputS
     gotFirstIndexSet = false;
     intSliceBuffer = NULL;
     doubleSliceBuffer = NULL;
+    currentBlockCount = 0;
 }
 
 ParameterWriter *ParameterWriter::create( FmlHandle handle, ParameterEvaluator *parameters, bool append )

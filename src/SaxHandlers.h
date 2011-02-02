@@ -65,7 +65,7 @@ private:
 
 public:
     SaxAttributes( const int attributeCount, const xmlChar ** attributes );
-    ~SaxAttributes();
+    virtual ~SaxAttributes();
 
     const char *getAttribute( const xmlChar *name );
     bool getBooleanAttribute( const xmlChar *attribute );
@@ -422,7 +422,7 @@ public:
     
     SaxHandler *getParent();
     
-    ~CharacterAccumulatorSaxHandler();
+    virtual ~CharacterAccumulatorSaxHandler();
 };
 
 
