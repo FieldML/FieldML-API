@@ -1256,7 +1256,8 @@ int Fieldml_SetSwizzle( FmlHandle handle, FmlObjectHandle objectHandle, const in
         return handle->getLastError();
     }
     
-    FmlObjectHandle ensembleHandle = Fieldml_GetSemidenseIndexEvaluator( handle, objectHandle, 1, 0 );
+    FmlObjectHandle evaluatorHandle = Fieldml_GetSemidenseIndexEvaluator( handle, objectHandle, 1, 0 );
+    FmlObjectHandle ensembleHandle = Fieldml_GetValueType( handle, evaluatorHandle );
     int ensembleCount = Fieldml_GetEnsembleTypeElementCount( handle, ensembleHandle );
     
     if( ensembleCount != count )

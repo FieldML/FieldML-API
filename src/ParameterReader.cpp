@@ -96,6 +96,7 @@ SemidenseParameterReader::SemidenseParameterReader( FmlHandle handle, FmlInputSt
     gotFirstIndexSet = false;
     intSliceBuffer = NULL;
     doubleSliceBuffer = NULL;
+    currentBlockCount = 0;
     
     if( dataType == TYPE_LINES )
     {
@@ -116,11 +117,18 @@ ParameterReader *ParameterReader::create( FmlHandle handle, ParameterEvaluator *
         int sliceCount;
         int indexType;
         int blockCount = 1;
+        int ensembleCount;
         
         for (vector<FmlObjectHandle>::iterator i = semidense->denseIndexes.begin(); i != semidense->denseIndexes.end(); i++ )
         {
             indexType = Fieldml_GetValueType( handle, *i );
-            blockCount *= Fieldml_GetEnsembleTypeElementCount( handle, indexType );
+            ensembleCount = Fieldml_GetEnsembleTypeElementCount( handle, indexType );
+            if( ensembleCount < 1 )
+            {
+                handle->setRegionError( FML_ERR_MISCONFIGURED_OBJECT );
+                return NULL;
+            }
+            blockCount *= ensembleCount; 
         }
         
         if( semidense->denseIndexes.size() == 0 )
@@ -273,7 +281,7 @@ int SemidenseParameterReader::readIntValues( int *valueBuffer, int count )
     }
     
     int readCount = 0;
-    while( readCount < count )
+    while( readCount + sliceCount <= count )
     {
         int err = readIntSlice( valueBuffer, readCount );
         
@@ -344,7 +352,7 @@ int SemidenseParameterReader::readDoubleValues( double *valueBuffer, int count )
     }
     
     int readCount = 0;
-    while( readCount < count )
+    while( readCount + sliceCount <= count )
     {
         int err = readDoubleSlice( valueBuffer, readCount );
         
