@@ -288,39 +288,6 @@ int Fieldml_GetObjectInt( FmlHandle handle, FmlObjectHandle object );
 
 
 /**
- *      Returns the number of markup entries (attribute/value pairs) for the given object.
- */
-int Fieldml_GetMarkupCount( FmlHandle handle, FmlObjectHandle objectHandle );
-
-
-/**
- *      Returns the attribute string of the nth markup entry for the given object.
- */
-const char * Fieldml_GetMarkupAttribute( FmlHandle handle, FmlObjectHandle objectHandle, int markupIndex );
-int Fieldml_CopyMarkupAttribute( FmlHandle handle, FmlObjectHandle objectHandle, int markupIndex, char *buffer, int bufferLength );
-
-
-/**
- *      Returns the value string of the nth markup entry for the given object.
- */
-const char * Fieldml_GetMarkupValue( FmlHandle handle, FmlObjectHandle objectHandle, int markupIndex );
-int Fieldml_CopyMarkupValue( FmlHandle handle, FmlObjectHandle objectHandle, int markupIndex, char *buffer, int bufferLength );
-
-
-/**
- *      Returns the value string of the markup entry with the given attribute.
- */
-const char * Fieldml_GetMarkupAttributeValue( FmlHandle handle, FmlObjectHandle objectHandle, const char * attribute );
-int Fieldml_CopyMarkupAttributeValue( FmlHandle handle, FmlObjectHandle objectHandle, const char * attribute, char *buffer, int bufferLength );
-
-
-/**
- *      Sets the value string of the markup entry with the given attribute.
- */
-int Fieldml_SetMarkup(  FmlHandle handle, FmlObjectHandle objectHandle, const char * attribute, const char * value );
-
-
-/**
  *      Validates the given object. Returns FML_ERR_NO_ERROR if the object is valid,
  *      or an appropriate error code if not. Note that FieldML objects are currently allowed
  *      to remain invalid up to and including at serialization time.

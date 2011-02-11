@@ -91,14 +91,6 @@ const string collapse3d_pyramid[6] = {
 
 
 
-static void addMarkup( FieldmlRegion *region, FmlObjectHandle handle, const string attribute, const string value )
-{
-    FieldmlObject *object = region->getObject( handle );
-
-    object->markup.set( attribute, value );
-}
-
-
 static void setRegionHandle( FieldmlRegion *region, FmlObjectHandle handle, int regionHandle )
 {
     FieldmlObject *object = region->getObject( handle );
@@ -165,15 +157,12 @@ static void addLibraryTypes( FieldmlRegion *region )
     
     handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.ensemble.xi.1d", 1, 1 );
     handle = addContinuousType( region, LIBRARY_REGION_HANDLE, "library.xi.1d", handle );
-    addMarkup( region, handle, "xi", "true" );
 
     handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.ensemble.xi.2d", 2, 1 );
     handle = addContinuousType( region, LIBRARY_REGION_HANDLE, "library.xi.2d", handle );
-    addMarkup( region, handle, "xi", "true" );
 
     handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.ensemble.xi.3d", 3, 1 );
     handle = addContinuousType( region, LIBRARY_REGION_HANDLE, "library.xi.3d", handle );
-    addMarkup( region, handle, "xi", "true" );
 
     handle = addEnsembleType( region, LIBRARY_REGION_HANDLE, "library.local_nodes.line.2", 2, 1 );
     addContinuousType( region, LIBRARY_REGION_HANDLE, "library.parameters.linear_lagrange", handle ); 

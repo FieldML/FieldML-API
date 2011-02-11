@@ -182,26 +182,6 @@ static SimpleMap<int, string> *getShapeMap( FmlHandle handle, FmlObjectHandle ob
 }
 
 
-static SimpleMap<FmlObjectHandle, FmlObjectHandle> *getConnectivityMap( FmlHandle handle, FmlObjectHandle objectHandle )
-{
-    FieldmlObject *object = handle->getObject( objectHandle );
-
-    if( object == NULL )
-    {
-        return NULL;
-    }
-
-    if( object->type == FHT_MESH_TYPE )
-    {
-        MeshType *meshType = (MeshType*)object;
-        return &meshType->connectivity;
-    }
-
-    handle->setRegionError( FML_ERR_INVALID_OBJECT );
-    return NULL;
-}
-
-
 static SemidenseDataDescription *getSemidenseDataDescription( FmlHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlObject *object = handle->getObject( objectHandle );
@@ -434,32 +414,6 @@ FieldmlHandleType Fieldml_GetObjectType( FmlHandle handle, FmlObjectHandle objec
 }
 
 
-int Fieldml_SetMarkup( FmlHandle handle, FmlObjectHandle objectHandle, const char * attribute, const char * value )
-{
-    FieldmlObject *object = handle->getObject( objectHandle );
-    
-    if( object != NULL )
-    {
-        object->markup.set( attribute, value );
-    }
-
-    return handle->getLastError();
-}
-
-
-int Fieldml_GetMarkupCount( FmlHandle handle, FmlObjectHandle objectHandle )
-{
-    FieldmlObject *object = handle->getObject( objectHandle );
-
-    if( object == NULL )
-    {
-        return -1;
-    }
-    
-    return object->markup.size();
-}
-
-
 int Fieldml_ValidateObject( FmlHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlObject *object = handle->getObject( objectHandle );
@@ -470,63 +424,6 @@ int Fieldml_ValidateObject( FmlHandle handle, FmlObjectHandle objectHandle )
     }
     
     return validateFieldmlObject( handle, object );
-}
-
-
-const char * Fieldml_GetMarkupAttribute( FmlHandle handle, FmlObjectHandle objectHandle, int index )
-{
-    FieldmlObject *object = handle->getObject( objectHandle );
-
-    if( object == NULL )
-    {
-        return NULL;
-    }
-    
-    return cstrCopy( object->markup.getKey( index -  1 ) );
-}
-
-
-int Fieldml_CopyMarkupAttribute( FmlHandle handle, FmlObjectHandle objectHandle, int index, char *buffer, int bufferLength )
-{
-    return cappedCopyAndFree( Fieldml_GetMarkupAttribute( handle, objectHandle, index ), buffer, bufferLength );
-}
-
-
-const char * Fieldml_GetMarkupValue( FmlHandle handle, FmlObjectHandle objectHandle, int index )
-{
-    FieldmlObject *object = handle->getObject( objectHandle );
-
-    if( object == NULL )
-    {
-        return NULL;
-    }
-    
-    return cstrCopy( object->markup.getValue( index -  1 ) );
-}
-
-
-int Fieldml_CopyMarkupValue( FmlHandle handle, FmlObjectHandle objectHandle, int index, char *buffer, int bufferLength )
-{
-    return cappedCopyAndFree( Fieldml_GetMarkupValue( handle, objectHandle, index ), buffer, bufferLength );
-}
-
-
-const char * Fieldml_GetMarkupAttributeValue( FmlHandle handle, FmlObjectHandle objectHandle, const char * attribute )
-{
-    FieldmlObject *object = handle->getObject( objectHandle );
-
-    if( object == NULL )
-    {
-        return NULL;
-    }
-    
-    return cstrCopy( object->markup.get( attribute, 0 ) );
-}
-
-
-int Fieldml_CopyMarkupAttributeValue( FmlHandle handle, FmlObjectHandle objectHandle, const char * attribute, char *buffer, int bufferLength )
-{
-    return cappedCopyAndFree( Fieldml_GetMarkupAttributeValue( handle, objectHandle, attribute ), buffer, bufferLength );
 }
 
 
@@ -764,42 +661,6 @@ const char * Fieldml_GetMeshElementShape( FmlHandle handle, FmlObjectHandle obje
 int Fieldml_CopyMeshElementShape( FmlHandle handle, FmlObjectHandle objectHandle, int elementNumber, int allowDefault, char *buffer, int bufferLength )
 {
     return cappedCopyAndFree( Fieldml_GetMeshElementShape( handle, objectHandle, elementNumber, allowDefault ), buffer, bufferLength );
-}
-
-
-int Fieldml_GetMeshConnectivityCount( FmlHandle handle, FmlObjectHandle objectHandle )
-{
-    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getConnectivityMap( handle, objectHandle );
-    if( map == NULL )
-    {
-        return -1;
-    }
-
-    return map->size();
-}
-
-
-FmlObjectHandle Fieldml_GetMeshConnectivityType( FmlHandle handle, FmlObjectHandle objectHandle, int index )
-{
-    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getConnectivityMap( handle, objectHandle );
-    if( map == NULL )
-    {
-        return FML_INVALID_HANDLE;
-    }
-    
-    return map->getValue( index - 1 );
-}
-
-
-FmlObjectHandle Fieldml_GetMeshConnectivitySource( FmlHandle handle, FmlObjectHandle objectHandle, int index )
-{
-    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getConnectivityMap( handle, objectHandle );
-    if( map == NULL )
-    {
-        return FML_INVALID_HANDLE;
-    }
-
-    return map->getKey( index - 1 );
 }
 
 
@@ -2029,30 +1890,6 @@ int Fieldml_SetMeshElementShape( FmlHandle handle, FmlObjectHandle objectHandle,
     }
 
     map->set( elementNumber, shape );
-    return handle->getLastError();
-}
-
-
-int Fieldml_SetMeshConnectivity( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle evaluator, FmlObjectHandle pointType )
-{
-    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getConnectivityMap( handle, objectHandle );
-    if( map == NULL )
-    {
-        return handle->getLastError();
-    }
-
-    if( ( pointType == FML_INVALID_HANDLE ) || ( evaluator == FML_INVALID_HANDLE ) )
-    {
-        // This could be use to 'un-set' a connectivity.
-        return handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
-    }
-    
-    if( Fieldml_GetObjectType( handle, pointType ) != FHT_ENSEMBLE_TYPE )
-    {
-        return handle->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
-    }
-    
-    map->set( evaluator, pointType );
     return handle->getLastError();
 }
 

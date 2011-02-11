@@ -89,7 +89,6 @@ public:
     const std::string name;
     int regionHandle; // One day this will be meaningful. For now, 0 = library, 1 = not library.
 
-    SimpleMap<std::string, std::string> markup;
     int intValue;
     
     FieldmlObject( const std::string _name, int _regionHandle, FieldmlHandleType _type );
@@ -143,7 +142,6 @@ public:
     const FmlObjectHandle elementType;
     
     SimpleMap<int, std::string> shapes;
-    SimpleMap<FmlObjectHandle, FmlObjectHandle> connectivity;
     
     MeshType( const std::string _name, int _region, FmlObjectHandle _xiType, FmlObjectHandle _elementType );
 };

@@ -831,32 +831,6 @@ SaxHandler *MeshShapesSaxHandler::onElementStart( const xmlChar *elementName, Sa
 }
 
 
-MeshConnectivitySaxHandler::MeshConnectivitySaxHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
-    ObjectMemberSaxHandler( _parent, elementName )
-{
-}
-
-
-SaxHandler *MeshConnectivitySaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
-{
-    if( xmlStrcmp( elementName, MESH_CONNECTIVITY_ENTRY_TAG ) == 0 )
-    {
-        FmlObjectHandle typeHandle = attributes.getObjectAttribute( parent->getRegion(), VALUE_ATTRIB, FHT_UNKNOWN_TYPE );
-        FmlObjectHandle fieldHandle = attributes.getObjectAttribute( parent->getRegion(), KEY_ATTRIB, FHT_UNKNOWN_EVALUATOR );
-        if( ( typeHandle == FML_INVALID_HANDLE ) || ( fieldHandle == FML_INVALID_HANDLE ) )
-        {
-            const char * name =  Fieldml_GetObjectName( parent->getRegion(), parent->handle );
-            parent->getRegion()->logError( "MeshDomain has malformed connectivity entry", name );
-            return this;
-        }
-        
-        Fieldml_SetMeshConnectivity( parent->getRegion(), parent->handle, fieldHandle, typeHandle );
-    }
-    
-    return this;
-}
-
-
 VariablesSaxHandler::VariablesSaxHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
     ObjectMemberSaxHandler( _parent, elementName )
 {

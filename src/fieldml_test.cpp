@@ -185,14 +185,6 @@ void testRead( const char * filename )
                 }
             }
         }
-        
-        count2 = Fieldml_GetMeshConnectivityCount( handle, oHandle );
-        for( j = 1; j <= count2; j++ )
-        {
-            fprintf( stdout, "    %s: %s\n",
-                Fieldml_GetObjectName( handle, Fieldml_GetMeshConnectivityType( handle, oHandle, j ) ),
-                Fieldml_GetObjectName( handle, Fieldml_GetMeshConnectivitySource( handle, oHandle, j ) ) );
-        }
     }
 
     count = Fieldml_GetObjectCount( handle, FHT_PARAMETER_EVALUATOR );

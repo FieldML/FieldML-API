@@ -76,8 +76,7 @@ ContiguousBounds::ContiguousBounds( const int _count ) :
 
 FieldmlObject::FieldmlObject( const string _name, int _regionHandle, FieldmlHandleType _type ) :
     name( _name ),
-    type( _type ),
-    markup("")
+    type( _type )
 {
     regionHandle = _regionHandle;
     intValue = 0;
@@ -113,8 +112,7 @@ MeshType::MeshType( const string _name, int _region, FmlObjectHandle _xiType, Fm
     FieldmlObject( _name, _region, FHT_MESH_TYPE ),
     xiType( _xiType ),
     elementType( _elementType ),
-    shapes(""),
-    connectivity( FML_INVALID_HANDLE )
+    shapes("")
 {
 }
 
