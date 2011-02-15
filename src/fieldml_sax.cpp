@@ -286,14 +286,13 @@ static xmlSAXHandlerPtr SAX2Handler = &SAX2HandlerStruct;
 //
 //========================================================================
 
-FieldmlRegion *parseFieldmlFile( const char *filename )
+FieldmlRegion *parseFieldmlFile( const char *filename, const int location, FieldmlRegion *region )
 {
     int res;
     SaxContext context;
-    SaxHandler *rootHandler = new RootSaxHandler( NULL, &context );
+    SaxHandler *rootHandler = new RootSaxHandler( NULL, &context, location );
     
-
-    context.region = NULL;
+    context.region = region;
     context.source = filename;
     context.handler = rootHandler;
 
@@ -315,7 +314,5 @@ FieldmlRegion *parseFieldmlFile( const char *filename )
     xmlCleanupParser();
     xmlMemoryDump();
     
-    context.region->finalize();
-
     return context.region;
 }

@@ -611,20 +611,26 @@ int writeFieldmlFile( FmlHandle handle, const char *filename )
     const char *regionName = Fieldml_GetName( handle );
     if( ( regionName != NULL ) && ( strlen( regionName ) > 0 ) ) 
     {
-        xmlTextWriterWriteAttribute( writer, NAME_TAG, (const xmlChar*)regionName );        
+        xmlTextWriterWriteAttribute( writer, NAME_ATTRIB, (const xmlChar*)regionName );        
+    }
+    
+    const char *libraryName = Fieldml_GetLibraryName( handle );
+    if( ( libraryName != NULL ) && ( strlen( libraryName ) > 0 ) ) 
+    {
+        xmlTextWriterWriteAttribute( writer, LIBRARY_ATTRIB, (const xmlChar*)libraryName );        
     }
     
     count = Fieldml_GetTotalObjectCount( handle );
     for( i = 1; i <= count; i++ )
     {
         object = Fieldml_GetObjectByIndex( handle, i );
-        if( Fieldml_GetRegion( handle, object ) == FILE_REGION_HANDLE )
+        if( Fieldml_GetRegion( handle, object ) == LOCAL_LOCATION_HANDLE )
         {
             writeFieldmlObject( writer, handle, object );
         }
         else
         {
-            //Not in our region. Don't serialize it.
+            //Not a local object. Don't serialize it.
         }
     }
 

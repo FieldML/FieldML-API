@@ -48,11 +48,10 @@
 #include "fieldml_api.h"
 #include "SimpleMap.h"
 
-extern const int FILE_REGION_HANDLE;
-
-extern const int LIBRARY_REGION_HANDLE;
-
-extern const int VIRTUAL_REGION_HANDLE;
+extern const int INVALID_LOCATION_HANDLE;
+extern const int LOCAL_LOCATION_HANDLE;
+extern const int LIBRARY_LOCATION_HANDLE;
+extern const int VIRTUAL_LOCATION_HANDLE;
 
 class TypeBounds
 {
@@ -87,11 +86,11 @@ class FieldmlObject
 public:
     const FieldmlHandleType type;
     const std::string name;
-    int regionHandle; // One day this will be meaningful. For now, 0 = library, 1 = not library.
+    int locationHandle;
 
     int intValue;
     
-    FieldmlObject( const std::string _name, int _regionHandle, FieldmlHandleType _type );
+    FieldmlObject( const std::string _name, int _locationHandle, FieldmlHandleType _type );
 };
 
 
@@ -108,7 +107,7 @@ public:
     int lastSetCount;
     int lastIndex;
     
-    ElementSet( const std::string _name, int _regionHandle, FmlObjectHandle _valueType );
+    ElementSet( const std::string _name, int _locationHandle, FmlObjectHandle _valueType );
 };
 
 
@@ -120,7 +119,7 @@ public:
 
     TypeBounds *bounds;
     
-    EnsembleType( const std::string _name, int _regionHandle, bool _isComponentEnsemble );
+    EnsembleType( const std::string _name, int _locationHandle, bool _isComponentEnsemble );
 };
 
 
@@ -130,7 +129,7 @@ class ContinuousType :
 public:
     const FmlObjectHandle componentType;
     
-    ContinuousType( const std::string _name, int _regionHandle, FmlObjectHandle _componentType );
+    ContinuousType( const std::string _name, int _locationHandle, FmlObjectHandle _componentType );
 };
 
 
@@ -202,6 +201,14 @@ class AbstractEvaluator :
 {
 public:
     AbstractEvaluator( const std::string name, int region, FmlObjectHandle _valueType );
+};
+
+
+class ExternalEvaluator :
+    public Evaluator
+{
+public:
+    ExternalEvaluator( const std::string name, int region, FmlObjectHandle _valueType );
 };
 
 

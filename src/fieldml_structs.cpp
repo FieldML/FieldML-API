@@ -74,11 +74,11 @@ ContiguousBounds::ContiguousBounds( const int _count ) :
 //
 //========================================================================
 
-FieldmlObject::FieldmlObject( const string _name, int _regionHandle, FieldmlHandleType _type ) :
+FieldmlObject::FieldmlObject( const string _name, int _locationHandle, FieldmlHandleType _type ) :
     name( _name ),
     type( _type )
 {
-    regionHandle = _regionHandle;
+    locationHandle = _locationHandle;
     intValue = 0;
 }
 
@@ -134,6 +134,12 @@ ReferenceEvaluator::ReferenceEvaluator( const string _name, int _region, FmlObje
 
 AbstractEvaluator::AbstractEvaluator( const string _name, int _region, FmlObjectHandle _valueType ) :
     Evaluator( _name, _region, FHT_ABSTRACT_EVALUATOR, _valueType )
+{
+}
+
+
+ExternalEvaluator::ExternalEvaluator( const string _name, int _region, FmlObjectHandle _valueType ) :
+    Evaluator( _name, _region, FHT_EXTERNAL_EVALUATOR, _valueType )
 {
 }
 
@@ -226,8 +232,8 @@ int Fieldml_GetRegion( FmlHandle handle, FmlObjectHandle objectHandle )
     if( object == NULL )
     {
         handle->setRegionError( FML_ERR_UNKNOWN_OBJECT );
-        return INVALID_REGION_HANDLE;
+        return INVALID_LOCATION_HANDLE;
     }
     
-    return object->regionHandle;
+    return object->locationHandle;
 }

@@ -301,29 +301,11 @@ void testRead( const char * filename )
             Fieldml_GetObjectName( handle, Fieldml_GetValueType( handle, oHandle ) ) );
     }
 
-    count = Fieldml_GetObjectCount( handle, FHT_REMOTE_TYPE );
-    fprintf( stdout, "External type: %d\n", count ); 
-    for( i = 1; i <= count; i++ )
-    {
-        oHandle = Fieldml_GetObject( handle, FHT_REMOTE_TYPE, i );
-        
-        fprintf( stdout, "  %d: %s\n", i, Fieldml_GetObjectName( handle, oHandle ) );
-    }
-
-    count = Fieldml_GetObjectCount( handle, FHT_REMOTE_ELEMENT_SET );
-    fprintf( stdout, "External set: %d\n", count ); 
-    for( i = 1; i <= count; i++ )
-    {
-        oHandle = Fieldml_GetObject( handle, FHT_REMOTE_ELEMENT_SET, i );
-        
-        fprintf( stdout, "  %d: %s\n", i, Fieldml_GetObjectName( handle, oHandle ) );
-    }
-
-    count = Fieldml_GetObjectCount( handle, FHT_REMOTE_EVALUATOR );
+    count = Fieldml_GetObjectCount( handle, FHT_EXTERNAL_EVALUATOR );
     fprintf( stdout, "External evaluator: %d\n", count ); 
     for( i = 1; i <= count; i++ )
     {
-        oHandle = Fieldml_GetObject( handle, FHT_REMOTE_EVALUATOR, i );
+        oHandle = Fieldml_GetObject( handle, FHT_EXTERNAL_EVALUATOR, i );
         
         fprintf( stdout, "  %d: %s\n", i, Fieldml_GetObjectName( handle, oHandle ) );
     }
@@ -421,7 +403,7 @@ void testMisc()
     int dummy[] = { 0 };
     double readValues[3] = { 0xdeadbeef, 0xdeadbeef, 0xdeadbeef };
     
-    handle = Fieldml_Create( "", "test" );
+    handle = Fieldml_Create( "", "test", NULL );
     
     o1 = Fieldml_CreateEnsembleType( handle, "example.component_ensemble", true );
     Fieldml_SetContiguousBoundsCount( handle, o1, 3 );
@@ -432,7 +414,7 @@ void testMisc()
     
     Fieldml_Destroy( handle );
     
-    handle = Fieldml_Create( "", "test" );
+    handle = Fieldml_Create( "", "test", "library_0.3.xml" );
     
     o1 = Fieldml_GetObjectByName( handle, "library.ensemble.rc.3d" );
     o2 = Fieldml_GetObjectByName( handle, "library.real.1d" );

@@ -152,6 +152,12 @@
         </xs:complexContent>
     </xs:complexType>
 
+    <xs:complexType name="ExternalEvaluator_Type">
+        <xs:complexContent>
+            <xs:extension base="FieldmlEvaluator_Type" />
+        </xs:complexContent>
+    </xs:complexType>
+
     <xs:complexType name="ReferenceEvaluator_Type">
         <xs:complexContent>
             <xs:extension base="FieldmlEvaluator_Type">
@@ -240,12 +246,14 @@
                     <xs:element name="ContinuousType" type="ContinuousType_Type" />
                     <xs:element name="MeshType" type="MeshType_Type" />
                     <xs:element name="AbstractEvaluator" type="AbstractEvaluator_Type" />
+                    <xs:element name="ExternalEvaluator" type="ExternalEvaluator_Type" />
                     <xs:element name="ReferenceEvaluator" type="ReferenceEvaluator_Type" />
                     <xs:element name="PiecewiseEvaluator" type="PiecewiseEvaluator_Type" />
                     <xs:element name="ParametersEvaluator" type="ParameterEvaluator_Type" />
                     <xs:element name="AggregateEvaluator" type="AggregateEvaluator_Type" />
                 </xs:choice>
                 <xs:attribute name="name" type="xs:string" />
+                <xs:attribute name="library" type="xs:string" />
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>

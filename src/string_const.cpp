@@ -84,6 +84,8 @@ const xmlChar * const VARIABLE_TAG                     = (const xmlChar* const)"
 
 const xmlChar * const ABSTRACT_EVALUATOR_TAG           = (const xmlChar* const)"AbstractEvaluator";
 
+const xmlChar * const EXTERNAL_EVALUATOR_TAG           = (const xmlChar* const)"ExternalEvaluator";
+
 const xmlChar * const PARAMETER_EVALUATOR_TAG          = (const xmlChar* const)"ParametersEvaluator";
 const xmlChar * const SEMI_DENSE_DATA_TAG              = (const xmlChar* const)"SemidenseData";
 const xmlChar * const SPARSE_INDEXES_TAG               = (const xmlChar* const)"sparseIndexes";
@@ -106,13 +108,13 @@ const xmlChar * const INLINE_DATA_TAG                  = (const xmlChar* const)"
 const xmlChar * const FILE_DATA_TAG                    = (const xmlChar* const)"fileData";
 const xmlChar * const SWIZZLE_TAG                      = (const xmlChar* const)"swizzle";
 
-const xmlChar * const NAME_TAG                         = (const xmlChar* const)"name";
-
 
 
 const xmlChar * const VERSION_ATTRIB                   = (const xmlChar* const)"version";
 
 const xmlChar * const NAME_ATTRIB                      = (const xmlChar* const)"name";
+
+const xmlChar * const LIBRARY_ATTRIB                   = (const xmlChar* const)"library";
 
 const xmlChar * const VARIABLE_ATTRIB                  = (const xmlChar* const)"variable";
 const xmlChar * const INDEX_NUMBER_ATTRIB              = (const xmlChar* const)"index_number";

@@ -46,6 +46,6 @@
 
 #include "Region.h"
 
-FieldmlRegion *parseFieldmlFile( const char *filename );
+FieldmlRegion *parseFieldmlFile( const char *filename, const int location, FieldmlRegion *region );
 
 #endif // H_FIELDMLSAX

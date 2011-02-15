@@ -85,6 +85,8 @@ extern const xmlChar * const VARIABLE_TAG;
 
 extern const xmlChar * const ABSTRACT_EVALUATOR_TAG;
 
+extern const xmlChar * const EXTERNAL_EVALUATOR_TAG;
+
 extern const xmlChar * const PARAMETER_EVALUATOR_TAG;
 extern const xmlChar * const SEMI_DENSE_DATA_TAG;
 extern const xmlChar * const SPARSE_INDEXES_TAG;
@@ -111,13 +113,13 @@ extern const xmlChar * const INLINE_DATA_TAG;
 extern const xmlChar * const FILE_DATA_TAG;
 extern const xmlChar * const SWIZZLE_TAG;
 
-extern const xmlChar * const NAME_TAG;
-
 
 
 extern const xmlChar * const VERSION_ATTRIB;
 
 extern const xmlChar * const NAME_ATTRIB;
+
+extern const xmlChar * const LIBRARY_ATTRIB;
 
 extern const xmlChar * const VARIABLE_ATTRIB;
 extern const xmlChar * const INDEX_NUMBER_ATTRIB;

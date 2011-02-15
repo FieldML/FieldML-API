@@ -117,14 +117,19 @@ struct SaxContext
 class RootSaxHandler :
     public SaxHandler
 {
+private:
+    const int location;
+    
 public:
     SaxContext * const context;
 
-    RootSaxHandler( const xmlChar *elementName, SaxContext *_context );
+    RootSaxHandler( const xmlChar *elementName, SaxContext *_context, const int _location );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
 
     virtual SaxHandler *getParent();
+    
+    int getLocation();
 };
 
 
@@ -140,6 +145,8 @@ public:
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
 
     virtual RootSaxHandler *getParent();
+    
+    int getLocation();
 };
 
 
@@ -159,6 +166,8 @@ public:
     virtual FieldmlSaxHandler *getParent();
 
     FmlHandle getRegion();
+
+    int getLocation();
 };
 
 
@@ -178,6 +187,8 @@ public:
     virtual RegionSaxHandler *getParent();
 
     FmlHandle getRegion();
+
+    int getLocation();
 };
 
 
@@ -228,6 +239,16 @@ class AbstractEvaluatorSaxHandler :
 {
 public:
     AbstractEvaluatorSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
+
+    virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
+};
+
+
+class ExternalEvaluatorSaxHandler :
+    public FieldmlObjectSaxHandler
+{
+public:
+    ExternalEvaluatorSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
 };

@@ -141,7 +141,7 @@ static FmlObjectHandle getOrCreateObjectHandle( FieldmlRegion *region, const cha
 
     if( handle == FML_INVALID_HANDLE )
     {
-        handle = region->addObject( new FieldmlObject( name, VIRTUAL_REGION_HANDLE, type ) );
+        handle = region->addObject( new FieldmlObject( name, VIRTUAL_LOCATION_HANDLE, type ) );
     }
     
     return handle;
@@ -236,9 +236,10 @@ void SaxHandler::onCharacters( const xmlChar *xmlChars, int count )
 }
 
 
-RootSaxHandler::RootSaxHandler( const xmlChar *_elementName, SaxContext *_context ) :
+RootSaxHandler::RootSaxHandler( const xmlChar *_elementName, SaxContext *_context, const int _location ) :
     SaxHandler( elementName ),
-    context( _context )
+    context( _context ),
+    location( _location )
 {
 }
 
@@ -257,6 +258,12 @@ SaxHandler *RootSaxHandler::onElementStart( const xmlChar *elementName, SaxAttri
 SaxHandler *RootSaxHandler::getParent()
 {
     return NULL;
+}
+
+
+int RootSaxHandler::getLocation()
+{
+    return location;
 }
 
 
@@ -284,6 +291,11 @@ RootSaxHandler *FieldmlSaxHandler::getParent()
 }
 
 
+int FieldmlSaxHandler::getLocation()
+{
+    return parent->getLocation();
+}
+
 
 RegionSaxHandler::RegionSaxHandler( const xmlChar *elementName, FieldmlSaxHandler *_parent, SaxAttributes &attributes, SaxContext *context ) :
     SaxHandler( elementName ),
@@ -297,8 +309,14 @@ RegionSaxHandler::RegionSaxHandler( const xmlChar *elementName, FieldmlSaxHandle
     }
 
     string location = getDirectory( context->source );
-    region = Fieldml_Create( location.c_str(), name );
-    context->region = region;
+    if( context->region == NULL )
+    {
+        const char *libraryName = attributes.getAttribute( LIBRARY_ATTRIB );
+        
+        context->region = Fieldml_Create( location.c_str(), name, libraryName );
+    }
+
+    region = context->region;
 }
 
 
@@ -325,6 +343,10 @@ SaxHandler *RegionSaxHandler::onElementStart( const xmlChar *elementName, SaxAtt
     if( xmlStrcmp( elementName, ABSTRACT_EVALUATOR_TAG ) == 0 )
     {
         return new AbstractEvaluatorSaxHandler( this, elementName, attributes );
+    }
+    if( xmlStrcmp( elementName, EXTERNAL_EVALUATOR_TAG ) == 0 )
+    {
+        return new ExternalEvaluatorSaxHandler( this, elementName, attributes );
     }
     if( xmlStrcmp( elementName, REFERENCE_EVALUATOR_TAG ) == 0 )
     {
@@ -359,6 +381,12 @@ FmlHandle RegionSaxHandler::getRegion()
 }
 
 
+int RegionSaxHandler::getLocation()
+{
+    return parent->getLocation();
+}
+
+
 FieldmlObjectSaxHandler::FieldmlObjectSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName ) :
     SaxHandler( elementName ),
     parent( _parent ),
@@ -379,6 +407,12 @@ FmlHandle FieldmlObjectSaxHandler::getRegion()
 }
 
 
+int FieldmlObjectSaxHandler::getLocation()
+{
+    return parent->getLocation();
+}
+
+
 ContinuousTypeSaxHandler::ContinuousTypeSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
     FieldmlObjectSaxHandler( _parent, elementName )
 {
@@ -394,6 +428,7 @@ ContinuousTypeSaxHandler::ContinuousTypeSaxHandler( RegionSaxHandler *_parent, c
     FmlObjectHandle componentHandle = attributes.getObjectAttribute( getRegion(), COMPONENT_ENSEMBLE_ATTRIB, FHT_UNKNOWN_TYPE );
 
     handle = Fieldml_CreateContinuousType( getRegion(), name, componentHandle );
+    getRegion()->setLocationHandle( handle, getLocation() );
 }
 
 
@@ -418,6 +453,7 @@ EnsembleTypeSaxHandler::EnsembleTypeSaxHandler( RegionSaxHandler *_parent, const
     const bool isComponentEnsemble = attributes.getBooleanAttribute( IS_COMPONENT_ENSEMBLE_ATTRIB );
     
     handle = Fieldml_CreateEnsembleType( getRegion(), name, isComponentEnsemble ? 1 : 0 );
+    getRegion()->setLocationHandle( handle, getLocation() );
 }
 
 
@@ -450,6 +486,7 @@ MeshTypeSaxHandler::MeshTypeSaxHandler( RegionSaxHandler *_parent, const xmlChar
     }
     
     handle = Fieldml_CreateMeshType( getRegion(), name, xiComponent );
+    getRegion()->setLocationHandle( handle, getLocation() );
 }
 
 
@@ -486,6 +523,7 @@ ElementSetSaxHandler::ElementSetSaxHandler( RegionSaxHandler *_parent, const xml
     }
     
     handle = Fieldml_CreateElementSet( getRegion(), name, valueType );
+    getRegion()->setLocationHandle( handle, getLocation() );
 }
 
 
@@ -551,6 +589,7 @@ AbstractEvaluatorSaxHandler::AbstractEvaluatorSaxHandler( RegionSaxHandler *_par
     }
     
     handle = Fieldml_CreateAbstractEvaluator( getRegion(), name, valueType );
+    getRegion()->setLocationHandle( handle, getLocation() );
 }
 
 
@@ -563,6 +602,40 @@ SaxHandler * AbstractEvaluatorSaxHandler::onElementStart( const xmlChar *element
     else if( xmlStrcmp( elementName, BINDS_TAG ) == 0 )
     {
 //        return new BindsSaxHandler( this, elementName, attributes ); //TODO Add binds to abstract evaluators
+    }
+    
+    return this;
+}
+
+
+ExternalEvaluatorSaxHandler::ExternalEvaluatorSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
+    FieldmlObjectSaxHandler( _parent, elementName )
+{
+    const char *name = attributes.getAttribute( NAME_ATTRIB );
+    if( name == NULL )
+    {
+        getRegion()->logError( "ExternalEvaluator has no name" );
+        return;
+    }
+    
+    FmlObjectHandle valueType = attributes.getObjectAttribute( getRegion(), VALUE_TYPE_ATTRIB, FHT_UNKNOWN_TYPE );
+    if( valueType == FML_INVALID_HANDLE )
+    {
+        getRegion()->logError( "ExternalEvaluator has no value type", name );
+        return;
+    }
+    
+    ExternalEvaluator *externalEvaluator = new ExternalEvaluator( name, getLocation(), valueType );
+    handle = getRegion()->addObject( externalEvaluator );
+    getRegion()->setLocationHandle( handle, getLocation() );
+}
+
+
+SaxHandler * ExternalEvaluatorSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
+{
+    if( xmlStrcmp( elementName, VARIABLES_TAG ) == 0 )
+    {
+        return new VariablesSaxHandler( this, elementName, attributes );
     }
     
     return this;
@@ -587,6 +660,7 @@ ReferenceEvaluatorSaxHandler::ReferenceEvaluatorSaxHandler( RegionSaxHandler *_p
     }
     
     handle = Fieldml_CreateReferenceEvaluator( getRegion(), name, remoteEvaluator );
+    getRegion()->setLocationHandle( handle, getLocation() );
 }
 
 
@@ -623,6 +697,7 @@ ParametersSaxHandler::ParametersSaxHandler( RegionSaxHandler *_parent, const xml
     }
 
     handle = Fieldml_CreateParametersEvaluator( getRegion(), name, valueType );
+    getRegion()->setLocationHandle( handle, getLocation() );
 }
 
 
@@ -659,6 +734,7 @@ PiecewiseEvaluatorSaxHandler::PiecewiseEvaluatorSaxHandler( RegionSaxHandler *_p
     }
 
     handle = Fieldml_CreatePiecewiseEvaluator( getRegion(), name, valueType );
+    getRegion()->setLocationHandle( handle, getLocation() );
 }
 
 
@@ -721,6 +797,7 @@ AggregateEvaluatorSaxHandler::AggregateEvaluatorSaxHandler( RegionSaxHandler *_p
     }
 
     handle = Fieldml_CreateAggregateEvaluator( getRegion(), name, valueType );
+    getRegion()->setLocationHandle( handle, getLocation() );
 }
 
 

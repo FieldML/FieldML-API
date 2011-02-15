@@ -143,14 +143,12 @@ enum FieldmlHandleType
     FHT_CONTINUOUS_TYPE,
     FHT_MESH_TYPE,
     FHT_ABSTRACT_EVALUATOR,
+    FHT_EXTERNAL_EVALUATOR,
     FHT_REFERENCE_EVALUATOR,
     FHT_PARAMETER_EVALUATOR,
     FHT_PIECEWISE_EVALUATOR,
     FHT_AGGREGATE_EVALUATOR,
     FHT_ELEMENT_SET,
-    FHT_REMOTE_TYPE,
-    FHT_REMOTE_EVALUATOR,
-    FHT_REMOTE_ELEMENT_SET,
     
     //These are stand-in types used to allow forward-declaration during parsing.
     FHT_UNKNOWN_TYPE,
@@ -190,7 +188,7 @@ FmlHandle Fieldml_CreateFromFile( const char *filename );
  *      Creates an empty FieldML handle. The built-in library is still implicitly
  *      included. Data files will be created at the given location.
  */
-FmlHandle Fieldml_Create( const char *location, const char *name );
+FmlHandle Fieldml_Create( const char *location, const char *name, const char *libraryLocation );
 
 /**
  *      Sets/clears the debug flag. If non-zero, errors are logged to stdout.
@@ -216,6 +214,22 @@ int Fieldml_WriteFile( FmlHandle handle, const char *filename );
  */
 void Fieldml_Destroy( FmlHandle handle );
 
+
+/**
+ *      Returns the name of the region.
+ */
+const char * Fieldml_GetName( FmlHandle handle );
+int Fieldml_CopyName( FmlHandle handle, char *buffer, int bufferLength );
+
+
+/**
+ *      Returns the name of the region's library.
+ *      
+ *      Currently, each region may only use a single library, which is specified as a
+ *      filename relative to the enclosing file's location.
+ */
+const char * Fieldml_GetLibraryName( FmlHandle handle );
+int Fieldml_CopyLibraryName( FmlHandle handle, char *buffer, int bufferLength );
 
 /**
  *      Returns the number of parsing errors encountered by the given handle during parsing.
@@ -378,29 +392,6 @@ int Fieldml_CopyMeshDefaultShape( FmlHandle handle, FmlObjectHandle mesh, char *
  */
 int Fieldml_SetMeshElementShape( FmlHandle handle, FmlObjectHandle mesh, int elementNumber, const char * shape );
 
-
-/**
- *      Returns the number of connectivities specified for the given mesh type. Each
- *      connectivity links an ensemble evaluator with a corresponding ensemble point layout ensemble.
- *      
- *      NOTE: The point locations associated with each point layout ensemble are not yet specified.
- */
-int Fieldml_GetMeshConnectivityCount( FmlHandle handle, FmlObjectHandle objectHandle );
-
-
-/**
- *      Returns the type of the nth connectivity for the given mesh. 
- */
-FmlObjectHandle Fieldml_GetMeshConnectivityType( FmlHandle handle, FmlObjectHandle objectHandle, int connectivityIndex );
-
-
-/*
-     Returns the source evaluator of the nth connectivity for the given mesh. 
- */
-FmlObjectHandle Fieldml_GetMeshConnectivitySource( FmlHandle handle, FmlObjectHandle objectHandle, int connectivityIndex );
-
-
-int Fieldml_SetMeshConnectivity( FmlHandle handle, FmlObjectHandle mesh, FmlObjectHandle evaluator, FmlObjectHandle pointType );
 
 /**
     Returns the bounds-type of the given type.

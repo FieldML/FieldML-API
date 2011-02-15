@@ -46,10 +46,10 @@
 
 #include "fieldml_structs.h"
 
-extern const int INVALID_REGION_HANDLE;
-extern const int FILE_REGION_HANDLE;
-extern const int LIBRARY_REGION_HANDLE;
-extern const int VIRTUAL_REGION_HANDLE;
+extern const int INVALID_LOCATION_HANDLE;
+extern const int LOCAL_LOCATION_HANDLE;
+extern const int LIBRARY_LOCATION_HANDLE;
+extern const int VIRTUAL_LOCATION_HANDLE;
 
 class FieldmlRegion
 {
@@ -59,6 +59,8 @@ class FieldmlRegion
     
     const std::string name;
     
+    const std::string library;
+    
     std::string root;
     
     std::vector<std::string> errors;
@@ -66,7 +68,7 @@ class FieldmlRegion
     std::vector<FieldmlObject*> objects;
     
 public:
-    FieldmlRegion( const std::string location, const std::string name );
+    FieldmlRegion( const std::string location, const std::string name, const std::string library );
     virtual ~FieldmlRegion();
     
     FmlObjectHandle addObject( FieldmlObject *object );
@@ -100,10 +102,14 @@ public:
     const int getLastError();
     
     const std::string getName();
+    
+    const std::string getLibraryName();
 
     void finalize();
 
     void logError( const std::string error, const std::string name1 = "", const std::string name2 = "" );
+
+    void setLocationHandle( FmlObjectHandle handle, int locationHandle );
 };
 
 
