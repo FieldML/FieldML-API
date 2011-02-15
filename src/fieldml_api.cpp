@@ -837,6 +837,15 @@ FmlObjectHandle Fieldml_CreateAbstractEvaluator( FmlHandle handle, const char *n
 }
 
 
+FmlObjectHandle Fieldml_CreateExternalEvaluator( FmlHandle handle, const char *name, FmlObjectHandle valueType )
+{
+    ExternalEvaluator *externalEvaluator = new ExternalEvaluator( name, LOCAL_LOCATION_HANDLE, valueType );
+    
+    handle->setRegionError( FML_ERR_NO_ERROR );
+    return handle->addObject( externalEvaluator );
+}
+
+
 FmlObjectHandle Fieldml_CreateParametersEvaluator( FmlHandle handle, const char *name, FmlObjectHandle valueType )
 {
     ParameterEvaluator *parameterEvaluator = new ParameterEvaluator( name, LOCAL_LOCATION_HANDLE, valueType );

@@ -455,9 +455,17 @@ FmlObjectHandle Fieldml_GetValueType( FmlHandle handle, FmlObjectHandle objectHa
 
 /**
  * Creates a abstract evaluator. An abstract evaluator is a placeholder for a concrete evaluator, and
- * can be bound just as concrete ones can.
+ * can be bound just as concrete ones can. Only abstract evaluators can be the target of a bind.
  */
 FmlObjectHandle Fieldml_CreateAbstractEvaluator( FmlHandle handle, const char *name, FmlObjectHandle valueType );
+
+
+/**
+ * Creates an external evaluator. An external evaluator's behaviour is defined by the author of the FieldML
+ * document in which it appears, rather than in terms of other FieldML objects. Currently, the only option
+ * is 'definition by specification'.
+ */
+FmlObjectHandle Fieldml_CreateExternalEvaluator( FmlHandle handle, const char *name, FmlObjectHandle valueType );
 
 
 /**

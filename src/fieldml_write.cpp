@@ -342,6 +342,21 @@ static int writeAbstractEvaluator( xmlTextWriterPtr writer, FmlHandle handle, Fm
 }
 
 
+static int writeExternalEvaluator( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHandle object )
+{
+    xmlTextWriterStartElement( writer, EXTERNAL_EVALUATOR_TAG );
+    
+    writeObjectName( writer, NAME_ATTRIB, handle, object );
+    writeObjectName( writer, VALUE_TYPE_ATTRIB, handle, Fieldml_GetValueType( handle, object ) );
+
+    writeVariables( writer, handle, object );
+
+    xmlTextWriterEndElement( writer );
+    
+    return 0;
+}
+
+
 static int writeReferenceEvaluator( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHandle object )
 {
     xmlTextWriterStartElement( writer, REFERENCE_EVALUATOR_TAG );
@@ -569,6 +584,8 @@ static int writeFieldmlObject( xmlTextWriterPtr writer, FmlHandle handle, FmlObj
         return writeElementSet( writer, handle, object );
     case FHT_ABSTRACT_EVALUATOR:
         return writeAbstractEvaluator( writer, handle, object );
+    case FHT_EXTERNAL_EVALUATOR:
+        return writeExternalEvaluator( writer, handle, object );
     case FHT_REFERENCE_EVALUATOR:
         return writeReferenceEvaluator( writer, handle, object );
     case FHT_PIECEWISE_EVALUATOR:
