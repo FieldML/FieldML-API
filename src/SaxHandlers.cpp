@@ -625,8 +625,7 @@ ExternalEvaluatorSaxHandler::ExternalEvaluatorSaxHandler( RegionSaxHandler *_par
         return;
     }
     
-    ExternalEvaluator *externalEvaluator = new ExternalEvaluator( name, getLocation(), valueType );
-    handle = getRegion()->addObject( externalEvaluator );
+    handle = Fieldml_CreateExternalEvaluator( getRegion(), name, valueType );
     getRegion()->setLocationHandle( handle, getLocation() );
 }
 
