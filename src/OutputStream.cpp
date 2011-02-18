@@ -42,6 +42,7 @@
 #include <stdio.h>
 
 #include <string>
+#include <sstream>
 
 #include "fieldml_api.h"
 #include "OutputStream.h"
@@ -67,6 +68,22 @@ public:
     virtual ~FileOutputStream();
 };
 
+        
+class StringOutputStream :
+    public FieldmlOutputStream
+{
+private:
+    char ** const destination;
+    stringstream buffer;
+    
+public:
+    StringOutputStream( char **_destination );
+    int writeInt( int value );
+    int writeDouble( double value );
+    int writeNewline();
+    virtual ~StringOutputStream();
+};
+
     
 FieldmlOutputStream::FieldmlOutputStream()
 {
@@ -82,6 +99,7 @@ FileOutputStream::FileOutputStream( FILE *_file ) :
     file( _file )
 {
 }
+
 
 FieldmlOutputStream *FieldmlOutputStream::create( const string filename, bool append )
 {
@@ -103,6 +121,17 @@ FieldmlOutputStream *FieldmlOutputStream::create( const string filename, bool ap
     
     
     return new FileOutputStream( file );
+}
+
+
+FieldmlOutputStream *FieldmlOutputStream::create( char ** const destination )
+{
+    if( destination == NULL )
+    {
+        return NULL;
+    }
+    
+    return new StringOutputStream( destination );
 }
 
 
@@ -136,4 +165,49 @@ FileOutputStream::~FileOutputStream()
     {
         fclose( file );
     }
+}
+
+
+StringOutputStream::StringOutputStream( char ** _destination ) :
+    destination( _destination )
+{
+}
+
+
+int StringOutputStream::writeDouble( double value )
+{
+    buffer << value << " ";
+    
+    return FML_ERR_NO_ERROR;
+}
+
+
+int StringOutputStream::writeInt( int value )
+{
+    buffer << value << " ";
+    
+    return FML_ERR_NO_ERROR;
+}
+
+
+int StringOutputStream::writeNewline()
+{
+    buffer << "\n";
+    
+    return FML_ERR_NO_ERROR;
+}
+
+
+StringOutputStream::~StringOutputStream()
+{
+    if( *destination != NULL )
+    {
+        free( *destination );
+        *destination = NULL;
+    }
+    
+    char *charBuffer = (char*)malloc( buffer.str().length() + 1 );
+    strcpy( charBuffer, buffer.str().c_str() );
+    
+    *destination = charBuffer;
 }

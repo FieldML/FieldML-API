@@ -162,14 +162,9 @@ ParameterWriter *ParameterWriter::create( FmlHandle handle, ParameterEvaluator *
         }
         else if( semidense->dataLocation->locationType == LOCATION_INLINE )
         {
-            handle->setRegionError( FML_ERR_UNSUPPORTED );
-            return NULL;
-            //TODO Support inline output
-            /*
             InlineDataLocation *inlineDataLocation = (InlineDataLocation*)semidense->dataLocation;
-            streamHandle = FmlCreateStringOutputStream( inlineDataLocation->data );
+            streamHandle = FieldmlOutputStream::create( (char**)&inlineDataLocation->data );
             dataType = TYPE_LINES; //TODO Support other types of inline data.
-            */
         }
         if( streamHandle == NULL )
         {

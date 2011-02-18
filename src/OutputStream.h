@@ -57,6 +57,8 @@ public:
     virtual ~FieldmlOutputStream();
     
     static FieldmlOutputStream *create( const std::string filename, bool append );
+
+    static FieldmlOutputStream *create( char **const destination );
 };
 
 #endif //H_FIELDML_OUTPUT_STREAM

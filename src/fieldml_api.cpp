@@ -2055,6 +2055,7 @@ int Fieldml_WriteIntValues( FmlHandle handle, FmlWriterHandle writer, int *value
     if( writer == NULL )
     {
         handle->setRegionError( FML_ERR_INVALID_OBJECT );
+        return -1;
     }
 
     return writer->writeIntValues( valueBuffer, valueCount );
@@ -2065,7 +2066,8 @@ int Fieldml_WriteDoubleValues( FmlHandle handle, FmlWriterHandle writer, double 
 {
     if( writer == NULL )
     {
-        return handle->setRegionError( FML_ERR_INVALID_OBJECT );
+        handle->setRegionError( FML_ERR_INVALID_OBJECT );
+        return -1;
     }
 
     return writer->writeDoubleValues( valueBuffer, valueCount );

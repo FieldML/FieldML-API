@@ -362,6 +362,7 @@ void testStream()
     double dExpected[10] = { 129, 24.1, -78.239, -21.34, 65.12, 3.0, 3.2, 0.092, -0.873, 0.005 };
     double dActual; 
     int i;
+    bool testOk = true;
     
     stream = FieldmlInputStream::create( "129 24 ,, 333 .. 456 -512  \n 6324 \r\n asc123asc" );
     for( i = 0; i < 7; i++ )
@@ -370,6 +371,7 @@ void testStream()
         
         if( iActual != iExpected[i] )
         {
+            testOk = false;
             fprintf( stderr, "Mismatch at %d: %d != %d\n", i, iExpected[i], iActual );
         }
     }
@@ -384,21 +386,32 @@ void testStream()
         
         if( dActual != dExpected[i] )
         {
+            testOk = false;
             fprintf( stderr, "Mismatch at %d: %f != %f\n", i, dExpected[i], dActual );
         }
     }
 
     delete stream;
+
+    if( testOk ) 
+    {
+        printf("TestStream - ok\n" );
+    }
+    else
+    {
+        printf("TestStream - failed\n" );
+    }
 }
 
 
 void testMisc()
 {
+    bool testOk = true;
     int i;
     FmlHandle handle;
     FmlObjectHandle o1, o2, o3;
     FmlReaderHandle reader;
-//    FmlWriterHandle writer;
+    FmlWriterHandle writer;
     double values[] = { 45.3, 67.0, -12.8 };
     int dummy[] = { 0 };
     double readValues[3] = { 0xdeadbeef, 0xdeadbeef, 0xdeadbeef };
@@ -426,10 +439,9 @@ void testMisc()
     o1 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract", o1 );
     Fieldml_AddDenseIndexEvaluator( handle, o3, o1, FML_INVALID_HANDLE );
     
-    Fieldml_AddParameterInlineData( handle, o3, "45.3 67.0 -12.8", 15 );
-//    writer = Fieldml_OpenWriter( handle, o3, 1 );
-//    Fieldml_WriteDoubleSlice( handle, writer, dummy, values );
-//    Fieldml_CloseWriter( handle, writer );
+    writer = Fieldml_OpenWriter( handle, o3, 1 );
+    Fieldml_WriteDoubleValues( handle, writer, values, 3 );
+    Fieldml_CloseWriter( handle, writer );
     
     reader = Fieldml_OpenReader( handle, o3 );
     Fieldml_ReadDoubleValues( handle, reader, readValues, 3 );
@@ -439,11 +451,20 @@ void testMisc()
     {
         if( values[i] != readValues[i] ) 
         {
+            testOk = false;
             printf("Parameter stream test failed: %d %g != %g\n", i, values[i], readValues[i] );
         }
     }
     
     Fieldml_Destroy( handle );
+    if( testOk ) 
+    {
+        printf("testMisc - ok\n" );
+    }
+    else
+    {
+        printf("testMisc - failed\n" );
+    }
 }
 
 
@@ -456,6 +477,6 @@ int main( int argc, char **argv )
     testRead( argv[1] );
     testWrite( argv[1] );
     testMisc();
-//    testStream();
+    testStream();
     return 0;
 }
