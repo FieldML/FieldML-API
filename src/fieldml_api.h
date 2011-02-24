@@ -68,8 +68,8 @@
 #define FML_INVALID_HANDLE -1
 
 #define FML_MAJOR_VERSION               0
-#define FML_MINOR_VERSION               2
-#define FML_DOT_VERSION                 0
+#define FML_MINOR_VERSION               3
+#define FML_DOT_VERSION                 1
 
 #define FML_ERR_NO_ERROR                0
 #define FML_ERR_UNKNOWN_OBJECT          1001
