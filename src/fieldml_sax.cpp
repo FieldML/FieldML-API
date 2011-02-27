@@ -310,9 +310,6 @@ FieldmlRegion *parseFieldmlFile( const char *filename, const int location, Field
     {
         context.region->logError( "Parser state not empty" );
     }
-
-    xmlCleanupParser();
-    xmlMemoryDump();
     
     return context.region;
 }

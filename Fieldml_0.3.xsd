@@ -110,7 +110,7 @@
                 <xs:sequence>
                     <xs:element name="bounds" type="EnsembleTypeBounds_Type" minOccurs="1" maxOccurs="1" />
                 </xs:sequence>
-                <xs:attribute name="isComponentDomain" type="xs:boolean" use="optional" />
+                <xs:attribute name="isComponentEnsemble" type="xs:boolean" use="optional" />
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>
@@ -118,7 +118,7 @@
     <xs:complexType name="ContinuousType_Type">
         <xs:complexContent>
             <xs:extension base="FieldmlObject_Type">
-                <xs:attribute name="componentDomain" type="xs:string" use="optional" />
+                <xs:attribute name="componentEnsemble" type="xs:string" use="optional" />
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>
@@ -176,7 +176,6 @@
                     <xs:element name="binds" type="BindMap_Type" minOccurs="0" maxOccurs="1" />
                     <xs:element name="elementEvaluators" type="ElementMap_Type" minOccurs="0" maxOccurs="1" />
                 </xs:sequence>
-                <xs:attribute name="indexDomain" type="xs:string" />
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>

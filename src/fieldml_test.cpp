@@ -110,9 +110,6 @@ static int validate( char *filename )
 
     xmlSchemaFree( schemas );
     
-    xmlCleanupParser( );
-    xmlMemoryDump( );
-    
     return res == 0;
 }
 
@@ -409,12 +406,17 @@ void testMisc()
     bool testOk = true;
     int i;
     FmlHandle handle;
-    FmlObjectHandle o1, o2, o3;
+    FmlObjectHandle o1, o2, o3, aa1, aa2, aa3, aa4, aa5;
     FmlReaderHandle reader;
     FmlWriterHandle writer;
     double values[] = { 45.3, 67.0, -12.8 };
+    int indexValues1[] = { 3, 1 };
+    double rawValues1[] = { -98.7, -87.6, -76.5, -65.4, -54.3, -43.2, -32.1, -21.0, -10.0 };
+    int indexValues2[] = { 2, 2 };
+    double rawValues2[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     int dummy[] = { 0 };
-    double readValues[3] = { 0xdeadbeef, 0xdeadbeef, 0xdeadbeef };
+    double readValues[9] = { 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef };
+    int readIndexes[2] = { -1, -1 };
     
     handle = Fieldml_Create( "", "test", NULL );
     
@@ -436,8 +438,8 @@ void testMisc()
     Fieldml_SetParameterDataDescription( handle, o3, DESCRIPTION_SEMIDENSE );
     Fieldml_SetParameterDataLocation( handle, o3, LOCATION_INLINE );
     
-    o1 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract", o1 );
-    Fieldml_AddDenseIndexEvaluator( handle, o3, o1, FML_INVALID_HANDLE );
+    aa1 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract", o1 );
+    Fieldml_AddDenseIndexEvaluator( handle, o3, aa1, FML_INVALID_HANDLE );
     
     writer = Fieldml_OpenWriter( handle, o3, 1 );
     Fieldml_WriteDoubleValues( handle, writer, values, 3 );
@@ -456,6 +458,71 @@ void testMisc()
         }
     }
     
+    o3 = Fieldml_CreateParametersEvaluator( handle, "test.ensemble_parameters.2", o2 );
+    Fieldml_SetParameterDataDescription( handle, o3, DESCRIPTION_SEMIDENSE );
+    Fieldml_SetParameterDataLocation( handle, o3, LOCATION_INLINE );
+    
+    aa2 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract.21", o1 );
+    Fieldml_AddDenseIndexEvaluator( handle, o3, aa2, FML_INVALID_HANDLE );
+    
+    aa3 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract.22", o1 );
+    Fieldml_AddDenseIndexEvaluator( handle, o3, aa3, FML_INVALID_HANDLE );
+
+    aa4 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract.23", o1 );
+    Fieldml_AddSparseIndexEvaluator( handle, o3, aa4 );
+    
+    aa5 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract.24", o1 );
+    Fieldml_AddSparseIndexEvaluator( handle, o3, aa5 );
+    
+    writer = Fieldml_OpenWriter( handle, o3, 1 );
+    Fieldml_WriteIndexSet( handle, writer, indexValues1 );
+    Fieldml_WriteDoubleValues( handle, writer, rawValues1, 9 );
+    Fieldml_WriteIndexSet( handle, writer, indexValues2 );
+    Fieldml_WriteDoubleValues( handle, writer, rawValues2, 9 );
+    Fieldml_CloseWriter( handle, writer );
+    
+    reader = Fieldml_OpenReader( handle, o3 );
+
+    Fieldml_ReadIndexSet( handle, reader, readIndexes );
+    if( ( indexValues1[0] != readIndexes[0] ) && ( indexValues1[1] != readIndexes[1] ) ) 
+    {
+        testOk = false;
+        printf("Parameter stream test failed: index %d %d != %d\n", i, indexValues1[i], readIndexes[i] );
+    }
+
+    Fieldml_ReadDoubleValues( handle, reader, readValues, 3 );
+    Fieldml_ReadDoubleValues( handle, reader, readValues+3, 6 );
+
+    for( i = 0; i < 9; i++ )
+    {
+        if( rawValues1[i] != readValues[i] ) 
+        {
+            testOk = false;
+            printf("Parameter stream test failed: %d %g != %g\n", i, rawValues1[i], readValues[i] );
+        }
+    }
+    
+    Fieldml_ReadIndexSet( handle, reader, readIndexes );
+    if( ( indexValues2[0] != readIndexes[0] ) && ( indexValues2[1] != readIndexes[1] ) ) 
+    {
+        testOk = false;
+        printf("Parameter stream test failed: index %d %d != %d\n", i, indexValues2[i], readIndexes[i] );
+    }
+
+    Fieldml_ReadDoubleValues( handle, reader, readValues, 9 );
+
+    for( i = 0; i < 9; i++ )
+    {
+        if( rawValues2[i] != readValues[i] ) 
+        {
+            testOk = false;
+            printf("Parameter stream test failed: %d %g != %g\n", i, rawValues2[i], readValues[i] );
+        }
+    }
+    
+    Fieldml_CloseReader( handle, reader );
+
+
     Fieldml_Destroy( handle );
     if( testOk ) 
     {
@@ -478,5 +545,9 @@ int main( int argc, char **argv )
     testWrite( argv[1] );
     testMisc();
     testStream();
+
+    xmlCleanupParser( );
+    xmlMemoryDump( );
+    
     return 0;
 }
