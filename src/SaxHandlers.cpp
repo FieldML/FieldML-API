@@ -428,6 +428,11 @@ ContinuousTypeSaxHandler::ContinuousTypeSaxHandler( RegionSaxHandler *_parent, c
     FmlObjectHandle componentHandle = attributes.getObjectAttribute( getRegion(), COMPONENT_ENSEMBLE_ATTRIB, FHT_UNKNOWN_TYPE );
 
     handle = Fieldml_CreateContinuousType( getRegion(), name, componentHandle );
+    if( handle == FML_INVALID_HANDLE )
+    {
+        getRegion()->logError( "ContinuousType creation failed", name );
+        return;
+    }
     getRegion()->setLocationHandle( handle, getLocation() );
 }
 
@@ -453,6 +458,11 @@ EnsembleTypeSaxHandler::EnsembleTypeSaxHandler( RegionSaxHandler *_parent, const
     const bool isComponentEnsemble = attributes.getBooleanAttribute( IS_COMPONENT_ENSEMBLE_ATTRIB );
     
     handle = Fieldml_CreateEnsembleType( getRegion(), name, isComponentEnsemble ? 1 : 0 );
+    if( handle == FML_INVALID_HANDLE )
+    {
+        getRegion()->logError( "EnsembleType creation failed", name );
+        return;
+    }
     getRegion()->setLocationHandle( handle, getLocation() );
 }
 
@@ -486,6 +496,11 @@ MeshTypeSaxHandler::MeshTypeSaxHandler( RegionSaxHandler *_parent, const xmlChar
     }
     
     handle = Fieldml_CreateMeshType( getRegion(), name, xiComponent );
+    if( handle == FML_INVALID_HANDLE )
+    {
+        getRegion()->logError( "MeshType creation failed", name );
+        return;
+    }
     getRegion()->setLocationHandle( handle, getLocation() );
 }
 
@@ -523,6 +538,11 @@ ElementSetSaxHandler::ElementSetSaxHandler( RegionSaxHandler *_parent, const xml
     }
     
     handle = Fieldml_CreateElementSet( getRegion(), name, valueType );
+    if( handle == FML_INVALID_HANDLE )
+    {
+        getRegion()->logError( "ElementSet creation failed", name );
+        return;
+    }
     getRegion()->setLocationHandle( handle, getLocation() );
 }
 
@@ -589,6 +609,11 @@ AbstractEvaluatorSaxHandler::AbstractEvaluatorSaxHandler( RegionSaxHandler *_par
     }
     
     handle = Fieldml_CreateAbstractEvaluator( getRegion(), name, valueType );
+    if( handle == FML_INVALID_HANDLE )
+    {
+        getRegion()->logError( "Cannot create AbstractEvaluator with given type", name, attributes.getAttribute( VALUE_TYPE_ATTRIB ) );
+        return;
+    }
     getRegion()->setLocationHandle( handle, getLocation() );
 }
 
@@ -626,6 +651,11 @@ ExternalEvaluatorSaxHandler::ExternalEvaluatorSaxHandler( RegionSaxHandler *_par
     }
     
     handle = Fieldml_CreateExternalEvaluator( getRegion(), name, valueType );
+    if( handle == FML_INVALID_HANDLE )
+    {
+        getRegion()->logError( "ExternalEvaluator creation failed", name );
+        return;
+    }
     getRegion()->setLocationHandle( handle, getLocation() );
 }
 
@@ -659,6 +689,11 @@ ReferenceEvaluatorSaxHandler::ReferenceEvaluatorSaxHandler( RegionSaxHandler *_p
     }
     
     handle = Fieldml_CreateReferenceEvaluator( getRegion(), name, remoteEvaluator );
+    if( handle == FML_INVALID_HANDLE )
+    {
+        getRegion()->logError( "ReferenceEvaluator creation failed", name );
+        return;
+    }
     getRegion()->setLocationHandle( handle, getLocation() );
 }
 
@@ -684,18 +719,23 @@ ParametersSaxHandler::ParametersSaxHandler( RegionSaxHandler *_parent, const xml
     const char *name = attributes.getAttribute( NAME_ATTRIB );
     if( name == NULL )
     {
-        getRegion()->logError( "EnsembleParameters has no name" );
+        getRegion()->logError( "ParametersEvaluator has no name" );
         return;
     }
 
     FmlObjectHandle valueType = attributes.getObjectAttribute( getRegion(), VALUE_TYPE_ATTRIB, FHT_UNKNOWN_TYPE );
     if( valueType == FML_INVALID_HANDLE )
     {
-        getRegion()->logError( "EnsembleParameters has no value type", name );
+        getRegion()->logError( "ParametersEvaluator has no value type", name );
         return;
     }
 
     handle = Fieldml_CreateParametersEvaluator( getRegion(), name, valueType );
+    if( handle == FML_INVALID_HANDLE )
+    {
+        getRegion()->logError( "ParametersEvaluator creation failed", name );
+        return;
+    }
     getRegion()->setLocationHandle( handle, getLocation() );
 }
 
@@ -733,6 +773,11 @@ PiecewiseEvaluatorSaxHandler::PiecewiseEvaluatorSaxHandler( RegionSaxHandler *_p
     }
 
     handle = Fieldml_CreatePiecewiseEvaluator( getRegion(), name, valueType );
+    if( handle == FML_INVALID_HANDLE )
+    {
+        getRegion()->logError( "PiecewiseEvaluator creation failed", name );
+        return;
+    }
     getRegion()->setLocationHandle( handle, getLocation() );
 }
 
@@ -796,6 +841,11 @@ AggregateEvaluatorSaxHandler::AggregateEvaluatorSaxHandler( RegionSaxHandler *_p
     }
 
     handle = Fieldml_CreateAggregateEvaluator( getRegion(), name, valueType );
+    if( handle == FML_INVALID_HANDLE )
+    {
+        getRegion()->logError( "Cannot create AggregateEvaluator with given type.", name, attributes.getAttribute( VALUE_TYPE_ATTRIB ) );
+        return;
+    }
     getRegion()->setLocationHandle( handle, getLocation() );
 }
 
@@ -951,7 +1001,12 @@ SaxHandler *BindsSaxHandler::onElementStart( const xmlChar *elementName, SaxAttr
             return this;
         }
 
-        Fieldml_SetBind( parent->getRegion(), parent->handle, variableHandle, sourceHandle );
+        if( Fieldml_SetBind( parent->getRegion(), parent->handle, variableHandle, sourceHandle ) != FML_ERR_NO_ERROR )
+        {
+            parent->getRegion()->logError( "Incompatible bind",
+                attributes.getAttribute( VARIABLE_ATTRIB ),
+                attributes.getAttribute( SOURCE_ATTRIB ) );
+        }
     }
     else if( xmlStrcmp( elementName, BIND_INDEX_TAG ) == 0 )
     {
