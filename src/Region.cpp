@@ -111,7 +111,7 @@ static FieldmlObject *resolveSubEvaluator( FieldmlRegion *region, string name, i
     }
     else if( subName == "xi" )
     {
-        typeHandle = Fieldml_GetMeshElementType( region, superTypeHandle );
+        typeHandle = Fieldml_GetMeshXiType( region, superTypeHandle );
     }
     else
     {
