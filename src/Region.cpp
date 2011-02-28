@@ -437,7 +437,7 @@ void FieldmlRegion::logError( const string error, const string name1, const stri
     }
     if( name2.length() > 0 )
     {
-        errorString = error + ": " + name2;
+        errorString = errorString + ":: " + name2;
     }
     
     fprintf( stderr, "%s\n", errorString.c_str() );
