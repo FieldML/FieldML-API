@@ -217,23 +217,3 @@ SemidenseDataDescription::SemidenseDataDescription() :
     swizzle = NULL;
     swizzleCount = 0;
 }
-
-//========================================================================
-//
-// Utility
-//
-//========================================================================
-
-
-int Fieldml_GetRegion( FmlHandle handle, FmlObjectHandle objectHandle )
-{
-    FieldmlObject *object = handle->getObject( objectHandle );
-    
-    if( object == NULL )
-    {
-        handle->setRegionError( FML_ERR_UNKNOWN_OBJECT );
-        return INVALID_LOCATION_HANDLE;
-    }
-    
-    return object->locationHandle;
-}

@@ -59,6 +59,26 @@ const int LIBRARY_LOCATION_HANDLE = 0;
 const int LOCAL_LOCATION_HANDLE = 1;
 
 
+static vector<FieldmlRegion *> regions;
+
+FieldmlRegion *FieldmlRegion::handleToRegion( FmlHandle handle )
+{
+    if( ( handle < 0 ) || ( handle >= regions.size() ) )
+    {
+        return NULL;
+    }
+    
+    return regions.at( handle );
+}
+
+
+long FieldmlRegion::addRegion( FieldmlRegion *region )
+{
+    regions.push_back( region );
+    return regions.size() - 1;
+}
+
+
 static FieldmlObject *resolveSubEvaluator( FieldmlRegion *region, string name, int locationHandle )
 {
     int index;
@@ -77,7 +97,7 @@ static FieldmlObject *resolveSubEvaluator( FieldmlRegion *region, string name, i
         return NULL;
     }
     
-    FieldmlHandleType superHandleType = Fieldml_GetObjectType( region, handle ); 
+    FieldmlHandleType superHandleType = Fieldml_GetObjectType( region->getRegionHandle(), handle ); 
     if( ( superHandleType != FHT_PIECEWISE_EVALUATOR ) &&
         ( superHandleType != FHT_REFERENCE_EVALUATOR ) &&
         ( superHandleType != FHT_AGGREGATE_EVALUATOR ) &&
@@ -88,13 +108,13 @@ static FieldmlObject *resolveSubEvaluator( FieldmlRegion *region, string name, i
         return NULL;
     }
     
-    FmlObjectHandle superTypeHandle = Fieldml_GetValueType( region, handle );
+    FmlObjectHandle superTypeHandle = Fieldml_GetValueType( region->getRegionHandle(), handle );
     if( superTypeHandle == FML_INVALID_HANDLE )
     {
         return NULL;
     }
     
-    FieldmlHandleType superType = Fieldml_GetObjectType( region, superTypeHandle );
+    FieldmlHandleType superType = Fieldml_GetObjectType( region->getRegionHandle(), superTypeHandle );
     if( superType != FHT_MESH_TYPE )
     {
         //Don't currently support any other kind of structured type
@@ -106,12 +126,12 @@ static FieldmlObject *resolveSubEvaluator( FieldmlRegion *region, string name, i
     
     if( subName == "element" )
     {
-        typeHandle = Fieldml_GetMeshElementType( region, superTypeHandle );
+        typeHandle = Fieldml_GetMeshElementType( region->getRegionHandle(), superTypeHandle );
 
     }
     else if( subName == "xi" )
     {
-        typeHandle = Fieldml_GetMeshXiType( region, superTypeHandle );
+        typeHandle = Fieldml_GetMeshXiType( region->getRegionHandle(), superTypeHandle );
     }
     else
     {
@@ -128,18 +148,21 @@ FieldmlRegion::FieldmlRegion( const string _location, const string _name, const 
 {
     root = _location;
 
+    handle = addRegion( this );
+
     if( library.length() != 0 )
     {
         string libraryFile = makeFilename( root, library );
         parseFieldmlFile( libraryFile.c_str(), LIBRARY_LOCATION_HANDLE, this );
     }
-    
 }
 
 
 FieldmlRegion::~FieldmlRegion()
 {
     std::for_each( objects.begin(), objects.end(), delete_object() );
+    
+    regions[handle] = NULL;
 }
 
 
@@ -284,6 +307,7 @@ FmlObjectHandle FieldmlRegion::addObject( FieldmlObject *object )
     
     if( doSwitch )
     {
+        printf(" YOINK\n" );
         objects[handle] = object;
         delete oldObject;
         
@@ -450,4 +474,10 @@ void FieldmlRegion::setLocationHandle( FmlObjectHandle handle, int locationHandl
 {
     FieldmlObject *object = getObject( handle );
     object->locationHandle = locationHandle;
+}
+
+
+FmlHandle FieldmlRegion::getRegionHandle() const
+{
+    return handle;
 }

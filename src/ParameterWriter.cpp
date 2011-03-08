@@ -51,7 +51,7 @@ class SemidenseParameterWriter :
     public ParameterWriter
 {
 private:
-    FmlHandle regionHandle;
+    FieldmlRegion *region;
     int currentBlockCount;
     const int sliceCount;
     const int* const swizzle;
@@ -69,7 +69,7 @@ protected:
     
 
 public:
-    SemidenseParameterWriter( FmlHandle handle, FmlOutputStream streamHandle, DataFileType _dataType,
+    SemidenseParameterWriter( FieldmlRegion *region, FmlOutputStream streamHandle, DataFileType _dataType,
         int indexCount, int blockCount, int sliceCount, const int *swizzle );
 
     int writeNextIndexSet( int *indexValues );
@@ -84,10 +84,10 @@ ParameterWriter::ParameterWriter( FmlOutputStream _stream, DataFileType _dataTyp
 }
     
     
-SemidenseParameterWriter::SemidenseParameterWriter( FmlHandle handle, FmlOutputStream streamHandle, DataFileType dataType,
+SemidenseParameterWriter::SemidenseParameterWriter( FieldmlRegion *_region, FmlOutputStream streamHandle, DataFileType dataType,
     int _indexCount, int _blockCount, int _sliceCount, const int *_swizzle ) :
     ParameterWriter( streamHandle, dataType ),
-    regionHandle( handle ),
+    region( _region ),
     indexCount( _indexCount ),
     blockCount( _blockCount ),
     sliceCount( _sliceCount ),
@@ -99,7 +99,7 @@ SemidenseParameterWriter::SemidenseParameterWriter( FmlHandle handle, FmlOutputS
     currentBlockCount = 0;
 }
 
-ParameterWriter *ParameterWriter::create( FmlHandle handle, ParameterEvaluator *parameters, bool append )
+ParameterWriter *ParameterWriter::create( FieldmlRegion *region, ParameterEvaluator *parameters, bool append )
 {
     if( parameters->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
     {
@@ -113,11 +113,11 @@ ParameterWriter *ParameterWriter::create( FmlHandle handle, ParameterEvaluator *
         
         for (vector<FmlObjectHandle>::iterator i = semidense->denseIndexes.begin(); i != semidense->denseIndexes.end(); i++ )
         {
-            indexType = Fieldml_GetValueType( handle, *i );
-            ensembleCount = Fieldml_GetEnsembleTypeElementCount( handle, indexType );
+            indexType = Fieldml_GetValueType( region->getRegionHandle(), *i );
+            ensembleCount = Fieldml_GetEnsembleTypeElementCount( region->getRegionHandle(), indexType );
             if( ensembleCount < 1 )
             {
-                handle->setRegionError( FML_ERR_MISCONFIGURED_OBJECT );
+                region->setRegionError( FML_ERR_MISCONFIGURED_OBJECT );
                 return NULL;
             }
             blockCount *= ensembleCount; 
@@ -129,17 +129,17 @@ ParameterWriter *ParameterWriter::create( FmlHandle handle, ParameterEvaluator *
         }
         else
         {
-            int innermostType = Fieldml_GetValueType( handle, semidense->denseIndexes[0] );
-            if( Fieldml_IsEnsembleComponentType( handle, innermostType ) != 1 )
+            int innermostType = Fieldml_GetValueType( region->getRegionHandle(), semidense->denseIndexes[0] );
+            if( Fieldml_IsEnsembleComponentType( region->getRegionHandle(), innermostType ) != 1 )
             {
                 sliceCount = 1;
             }
             else
             {
-                sliceCount = Fieldml_GetEnsembleTypeElementCount( handle, innermostType );
+                sliceCount = Fieldml_GetEnsembleTypeElementCount( region->getRegionHandle(), innermostType );
                 if( sliceCount < 1 )
                 {
-                    handle->setRegionError( FML_ERR_MISCONFIGURED_OBJECT );
+                    region->setRegionError( FML_ERR_MISCONFIGURED_OBJECT );
                     return NULL;
                 }
             }
@@ -147,7 +147,7 @@ ParameterWriter *ParameterWriter::create( FmlHandle handle, ParameterEvaluator *
 
         if( ( semidense->swizzleCount > 0 ) && ( semidense->swizzleCount != sliceCount ) )
         {
-            handle->setRegionError( FML_ERR_MISCONFIGURED_OBJECT );
+            region->setRegionError( FML_ERR_MISCONFIGURED_OBJECT );
             return NULL;
         }
         
@@ -156,7 +156,7 @@ ParameterWriter *ParameterWriter::create( FmlHandle handle, ParameterEvaluator *
         if( semidense->dataLocation->locationType == LOCATION_FILE )
         {
             FileDataLocation *fileDataLocation = (FileDataLocation*)semidense->dataLocation;
-            const string filename = makeFilename( handle->getRoot(), fileDataLocation->filename );
+            const string filename = makeFilename( region->getRoot(), fileDataLocation->filename );
             streamHandle = FieldmlOutputStream::create( filename, append );
             dataType = fileDataLocation->fileType;
         }
@@ -168,7 +168,7 @@ ParameterWriter *ParameterWriter::create( FmlHandle handle, ParameterEvaluator *
         }
         if( streamHandle == NULL )
         {
-            handle->setRegionError( FML_ERR_FILE_WRITE );
+            region->setRegionError( FML_ERR_FILE_WRITE );
             return NULL;
         }
         
@@ -176,17 +176,17 @@ ParameterWriter *ParameterWriter::create( FmlHandle handle, ParameterEvaluator *
         const int *swizzle = NULL;
         if( semidense->swizzleCount > 0 )
         {
-            handle->setRegionError( FML_ERR_UNSUPPORTED );
+            region->setRegionError( FML_ERR_UNSUPPORTED );
             return NULL;
         }
         
-        handle->setRegionError( FML_ERR_NO_ERROR );
+        region->setRegionError( FML_ERR_NO_ERROR );
 
-        return new SemidenseParameterWriter( handle, streamHandle, dataType, indexCount, blockCount, sliceCount, swizzle );
+        return new SemidenseParameterWriter( region, streamHandle, dataType, indexCount, blockCount, sliceCount, swizzle );
     }
     else
     {
-        handle->setRegionError( FML_ERR_UNSUPPORTED );
+        region->setRegionError( FML_ERR_UNSUPPORTED );
         return NULL;
     }
 }
@@ -251,7 +251,7 @@ int SemidenseParameterWriter::writeIntValues( int *valueBuffer, int count )
     if( count < sliceCount )
     {
         //The parameter number is for the corresponding API call, not this particular method.
-        regionHandle->setRegionError( FML_ERR_INVALID_PARAMETER_4 );
+        region->setRegionError( FML_ERR_INVALID_PARAMETER_4 );
         return -1;
     }
     
@@ -267,7 +267,7 @@ int SemidenseParameterWriter::writeIntValues( int *valueBuffer, int count )
         
         if( err != FML_ERR_NO_ERROR )
         {
-            regionHandle->setRegionError( err );
+            region->setRegionError( err );
             return -1;
         }
         writeCount += sliceCount;
@@ -310,7 +310,7 @@ int SemidenseParameterWriter::writeDoubleValues( double *valueBuffer, int count 
     if( count < sliceCount )
     {
         //The parameter number is for the corresponding API call, not this particular method.
-        regionHandle->setRegionError( FML_ERR_INVALID_PARAMETER_4 );
+        region->setRegionError( FML_ERR_INVALID_PARAMETER_4 );
         return -1;
     }
     
@@ -326,7 +326,7 @@ int SemidenseParameterWriter::writeDoubleValues( double *valueBuffer, int count 
         
         if( err != FML_ERR_NO_ERROR )
         {
-            regionHandle->setRegionError( err );
+            region->setRegionError( err );
             return -1;
         }
         writeCount += sliceCount;

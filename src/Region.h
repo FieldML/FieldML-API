@@ -53,6 +53,7 @@ extern const int VIRTUAL_LOCATION_HANDLE;
 
 class FieldmlRegion
 {
+private:
     int lastError;
     
     int debug;
@@ -66,6 +67,10 @@ class FieldmlRegion
     std::vector<std::string> errors;
     
     std::vector<FieldmlObject*> objects;
+    
+    int handle;
+    
+    static long addRegion( FieldmlRegion *region );
     
 public:
     FieldmlRegion( const std::string location, const std::string name, const std::string library );
@@ -110,6 +115,11 @@ public:
     void logError( const std::string error, const std::string name1 = "", const std::string name2 = "" );
 
     void setLocationHandle( FmlObjectHandle handle, int locationHandle );
+    
+    FmlHandle getRegionHandle() const;
+
+
+    static FieldmlRegion *handleToRegion( FmlHandle handle );
 };
 
 

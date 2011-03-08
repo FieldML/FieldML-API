@@ -57,7 +57,7 @@ protected:
     ParameterWriter( FmlOutputStream stream, DataFileType streamFormat );
 
 public:
-    static ParameterWriter *create( FmlHandle handle, ParameterEvaluator *parameters, bool append );
+    static ParameterWriter *create( FieldmlRegion *region, ParameterEvaluator *parameters, bool append );
 
     virtual int writeNextIndexSet( int *indexBuffer ) = 0;
     virtual int writeIntValues( int *values, int count ) = 0;

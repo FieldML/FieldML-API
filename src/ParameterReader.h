@@ -57,7 +57,7 @@ protected:
     ParameterReader( FmlInputStream stream, DataFileType streamFormat );
 
 public:
-    static ParameterReader *create( FmlHandle handle, ParameterEvaluator *parameters );
+    static ParameterReader *create( FieldmlRegion *region, ParameterEvaluator *parameters );
     
     virtual int readNextIndexSet( int *indexValues ) = 0;
     virtual int readIntValues( int *values, int count ) = 0;

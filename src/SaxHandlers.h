@@ -69,7 +69,7 @@ public:
 
     const char *getAttribute( const xmlChar *name );
     bool getBooleanAttribute( const xmlChar *attribute );
-    FmlObjectHandle getObjectAttribute( FmlHandle region, const xmlChar *attribute, FieldmlHandleType type );
+    FmlObjectHandle getObjectAttribute( const FieldmlRegion *region, const xmlChar *attribute, FieldmlHandleType type );
 };
 
 
@@ -156,7 +156,7 @@ class RegionSaxHandler :
 private:
     FieldmlSaxHandler * const parent;
 
-    FmlHandle region;
+    FieldmlRegion *region;
 
 public:
     RegionSaxHandler( const xmlChar *elementName, FieldmlSaxHandler *_parent, SaxAttributes &attributes, SaxContext *context );
@@ -165,7 +165,7 @@ public:
 
     virtual FieldmlSaxHandler *getParent();
 
-    FmlHandle getRegion();
+    FieldmlRegion *getRegion();
 
     int getLocation();
 };
@@ -186,7 +186,7 @@ public:
 
     virtual RegionSaxHandler *getParent();
 
-    FmlHandle getRegion();
+    FieldmlRegion *getRegion();
 
     int getLocation();
 };
@@ -391,13 +391,13 @@ class IndexEvaluatorListSaxHandler :
     public SaxHandler
 {
 private:
-    const FmlHandle region;
+    const FieldmlRegion *region;
     SemidenseSaxHandler * const handler;
     const int isSparse;
     SemidenseSaxHandler *parent;
 
 public:
-    IndexEvaluatorListSaxHandler( SemidenseSaxHandler *_parent, const xmlChar *elementName, FmlHandle _region, SemidenseSaxHandler *_handler, int _listId );
+    IndexEvaluatorListSaxHandler( SemidenseSaxHandler *_parent, const xmlChar *elementName, FieldmlRegion *_region, SemidenseSaxHandler *_handler, int _listId );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
     
@@ -452,13 +452,13 @@ class IntObjectMapSaxHandler :
 {
 private:
     const xmlChar * entryTagName;
-    const FmlHandle region;
+    const FieldmlRegion *region;
     IntObjectMapHandler * const handler;
     const int mapId;
     SaxHandler *parent;
 
 public:
-    IntObjectMapSaxHandler( SaxHandler *_parent, const xmlChar *elementName, const xmlChar * _entryTagName, FmlHandle _region, IntObjectMapHandler *_handler, int _mapId );
+    IntObjectMapSaxHandler( SaxHandler *_parent, const xmlChar *elementName, const xmlChar * _entryTagName, FieldmlRegion *_region, IntObjectMapHandler *_handler, int _mapId );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
     

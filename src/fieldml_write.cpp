@@ -641,7 +641,7 @@ int writeFieldmlFile( FmlHandle handle, const char *filename )
     for( i = 1; i <= count; i++ )
     {
         object = Fieldml_GetObjectByIndex( handle, i );
-        if( Fieldml_GetRegion( handle, object ) == LOCAL_LOCATION_HANDLE )
+        if( Fieldml_IsObjectLocal( handle, object ) )
         {
             writeFieldmlObject( writer, handle, object );
         }

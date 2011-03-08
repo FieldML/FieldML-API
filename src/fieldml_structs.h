@@ -297,8 +297,6 @@ public:
     ParameterEvaluator( const std::string _name, int _region, FmlObjectHandle _valueType );
 };
 
-int Fieldml_GetRegion( FmlHandle handle, FmlObjectHandle objectHandle );
-
 const char *Fieldml_GetName( FmlHandle handle );
 
 int Fieldml_SetRoot( FmlHandle, const char *root );

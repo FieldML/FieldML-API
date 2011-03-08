@@ -72,6 +72,7 @@
 #define FML_DOT_VERSION                 1
 
 #define FML_ERR_NO_ERROR                0
+#define FML_ERR_UNKNOWN_HANDLE          1000
 #define FML_ERR_UNKNOWN_OBJECT          1001
 #define FML_ERR_INVALID_OBJECT          1002
 #define FML_ERR_INCOMPLETE_OBJECT       1003
@@ -163,7 +164,7 @@ typedef class ParameterWriter *FmlWriterHandle;
 
 typedef int FmlObjectHandle;
 
-typedef class FieldmlRegion *FmlHandle;
+typedef long FmlHandle;
 
 /*
 
@@ -279,6 +280,12 @@ FieldmlHandleType Fieldml_GetObjectType( FmlHandle handle, FmlObjectHandle objec
  *      there is no such object.
  */
 FmlObjectHandle Fieldml_GetObjectByName( FmlHandle handle, const char * name );
+
+
+/**
+ *      Returns 1 is the given object is local, 0 if not, or -1 on error.
+ */
+int Fieldml_IsObjectLocal( FmlHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
