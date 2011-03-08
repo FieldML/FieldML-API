@@ -83,15 +83,6 @@
 %}
 
 
-/*
- Pre-emptively typedef these. They are opaque structs in the API, so all we lose is
- strong typing in the JNI in exchange for much more concise code.
- */
-typedef long long FmlReaderHandle;
-typedef long long FmlWriterHandle;
-typedef long long FmlHandle;
-typedef int FmlObjectHandle;
-
 %{
 #include "Fieldml_api.h"
 %}

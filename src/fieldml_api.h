@@ -158,9 +158,9 @@ enum FieldmlHandleType
 };
 
 
-typedef class ParameterReader *FmlReaderHandle;
+typedef long FmlReaderHandle;
 
-typedef class ParameterWriter *FmlWriterHandle;
+typedef long FmlWriterHandle;
 
 typedef int FmlObjectHandle;
 

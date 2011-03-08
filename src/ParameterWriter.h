@@ -49,6 +49,9 @@
 class ParameterWriter
 {
 private:
+    long handle;
+
+    static FmlWriterHandle addWriter( ParameterWriter *writer );
 
 protected:
     const DataFileType dataType;
@@ -57,7 +60,9 @@ protected:
     ParameterWriter( FmlOutputStream stream, DataFileType streamFormat );
 
 public:
-    static ParameterWriter *create( FieldmlRegion *region, ParameterEvaluator *parameters, bool append );
+    static FmlWriterHandle create( FieldmlRegion *region, ParameterEvaluator *parameters, bool append );
+    
+    static ParameterWriter *handleToWriter( FmlWriterHandle handle );
 
     virtual int writeNextIndexSet( int *indexBuffer ) = 0;
     virtual int writeIntValues( int *values, int count ) = 0;

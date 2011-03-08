@@ -2646,56 +2646,52 @@ FmlReaderHandle Fieldml_OpenReader( FmlHandle handle, FmlObjectHandle objectHand
     FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
     if( region == NULL )
     {
-        return NULL;
+        return FML_INVALID_HANDLE;
     }
 
     SemidenseDataDescription *semidense = getSemidenseDataDescription( region, objectHandle );
 
     if( semidense == NULL )
     {
-        return NULL;
+        return FML_INVALID_HANDLE;
     }
 
     FieldmlObject *object = region->getObject( objectHandle );
     ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
 
-    ParameterReader *reader = NULL;
     if( ( semidense->dataLocation->locationType == LOCATION_FILE ) ||
         ( semidense->dataLocation->locationType == LOCATION_INLINE ) )
     {
-        reader = ParameterReader::create( region, parameterEvaluator );
+        return ParameterReader::create( region, parameterEvaluator );
     }
     else
     {
-        region->setRegionError( FML_ERR_UNSUPPORTED );
+        return region->setRegionError( FML_ERR_UNSUPPORTED );
     }
-    
-    return reader;
 }
 
 
-int Fieldml_ReadIndexSet( FmlHandle handle, FmlReaderHandle reader, int *indexBuffer )
+int Fieldml_ReadIndexSet( FmlHandle handle, FmlReaderHandle readerHandle, int *indexBuffer )
 {
     FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
     if( region == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
-
-    int err;
     
+    ParameterReader *reader = ParameterReader::handleToReader( readerHandle );
     if( reader == NULL )
     {
         return region->setRegionError( FML_ERR_INVALID_OBJECT );
     }
 
-    err = reader->readNextIndexSet( indexBuffer );
+    int err = reader->readNextIndexSet( indexBuffer );
     
     return region->setRegionError( err );
 }
 
 
-int Fieldml_ReadIntValues( FmlHandle handle, FmlReaderHandle reader, int *valueBuffer, int bufferSize )
+int Fieldml_ReadIntValues( FmlHandle handle, FmlReaderHandle readerHandle, int *valueBuffer, int bufferSize )
 {
     FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
     if( region == NULL )
@@ -2703,6 +2699,7 @@ int Fieldml_ReadIntValues( FmlHandle handle, FmlReaderHandle reader, int *valueB
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
+    ParameterReader *reader = ParameterReader::handleToReader( readerHandle );
     if( reader == NULL )
     {
         region->setRegionError( FML_ERR_INVALID_OBJECT );
@@ -2712,7 +2709,7 @@ int Fieldml_ReadIntValues( FmlHandle handle, FmlReaderHandle reader, int *valueB
 }
 
 
-int Fieldml_ReadDoubleValues( FmlHandle handle, FmlReaderHandle reader, double *valueBuffer, int bufferSize )
+int Fieldml_ReadDoubleValues( FmlHandle handle, FmlReaderHandle readerHandle, double *valueBuffer, int bufferSize )
 {
     FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
     if( region == NULL )
@@ -2720,6 +2717,7 @@ int Fieldml_ReadDoubleValues( FmlHandle handle, FmlReaderHandle reader, double *
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
+    ParameterReader *reader = ParameterReader::handleToReader( readerHandle );
     if( reader == NULL )
     {
         return region->setRegionError( FML_ERR_INVALID_OBJECT );
@@ -2729,7 +2727,7 @@ int Fieldml_ReadDoubleValues( FmlHandle handle, FmlReaderHandle reader, double *
 }
 
 
-int Fieldml_CloseReader( FmlHandle handle, FmlReaderHandle reader )
+int Fieldml_CloseReader( FmlHandle handle, FmlReaderHandle readerHandle )
 {
     FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
     if( region == NULL )
@@ -2737,6 +2735,7 @@ int Fieldml_CloseReader( FmlHandle handle, FmlReaderHandle reader )
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
+    ParameterReader *reader = ParameterReader::handleToReader( readerHandle );
     if( reader == NULL )
     {
         return region->setRegionError( FML_ERR_INVALID_OBJECT );
@@ -2766,22 +2765,19 @@ FmlWriterHandle Fieldml_OpenWriter( FmlHandle handle, FmlObjectHandle objectHand
     FieldmlObject *object = region->getObject( objectHandle );
     ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
 
-    ParameterWriter *writer = NULL;
     if( ( semidense->dataLocation->locationType == LOCATION_FILE ) ||
         ( semidense->dataLocation->locationType == LOCATION_INLINE ) )
     {
-        writer = ParameterWriter::create( region, parameterEvaluator, ( append == 1 ));
+        return ParameterWriter::create( region, parameterEvaluator, ( append == 1 ));
     }
     else
     {
-        region->setRegionError( FML_ERR_UNSUPPORTED );
+        return region->setRegionError( FML_ERR_UNSUPPORTED );
     }
-    
-    return writer;
 }
 
 
-int Fieldml_WriteIndexSet( FmlHandle handle, FmlWriterHandle writer, int *indexBuffer )
+int Fieldml_WriteIndexSet( FmlHandle handle, FmlWriterHandle writerHandle, int *indexBuffer )
 {
     FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
     if( region == NULL )
@@ -2789,20 +2785,19 @@ int Fieldml_WriteIndexSet( FmlHandle handle, FmlWriterHandle writer, int *indexB
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    int err;
-    
+    ParameterWriter *writer = ParameterWriter::handleToWriter( writerHandle );
     if( writer == NULL )
     {
         return region->setRegionError( FML_ERR_INVALID_OBJECT );
     }
 
-    err = writer->writeNextIndexSet( indexBuffer );
+    int err = writer->writeNextIndexSet( indexBuffer );
     
     return region->setRegionError( err );
 }
 
 
-int Fieldml_WriteIntValues( FmlHandle handle, FmlWriterHandle writer, int *valueBuffer, int valueCount )
+int Fieldml_WriteIntValues( FmlHandle handle, FmlWriterHandle writerHandle, int *valueBuffer, int valueCount )
 {
     FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
     if( region == NULL )
@@ -2810,6 +2805,7 @@ int Fieldml_WriteIntValues( FmlHandle handle, FmlWriterHandle writer, int *value
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
+    ParameterWriter *writer = ParameterWriter::handleToWriter( writerHandle );
     if( writer == NULL )
     {
         region->setRegionError( FML_ERR_INVALID_OBJECT );
@@ -2820,7 +2816,7 @@ int Fieldml_WriteIntValues( FmlHandle handle, FmlWriterHandle writer, int *value
 }
 
 
-int Fieldml_WriteDoubleValues( FmlHandle handle, FmlWriterHandle writer, double *valueBuffer, int valueCount )
+int Fieldml_WriteDoubleValues( FmlHandle handle, FmlWriterHandle writerHandle, double *valueBuffer, int valueCount )
 {
     FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
     if( region == NULL )
@@ -2828,6 +2824,7 @@ int Fieldml_WriteDoubleValues( FmlHandle handle, FmlWriterHandle writer, double 
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
+    ParameterWriter *writer = ParameterWriter::handleToWriter( writerHandle );
     if( writer == NULL )
     {
         region->setRegionError( FML_ERR_INVALID_OBJECT );
@@ -2838,7 +2835,7 @@ int Fieldml_WriteDoubleValues( FmlHandle handle, FmlWriterHandle writer, double 
 }
 
 
-int Fieldml_CloseWriter( FmlHandle handle, FmlWriterHandle writer )
+int Fieldml_CloseWriter( FmlHandle handle, FmlWriterHandle writerHandle )
 {
     FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
     if( region == NULL )
@@ -2846,6 +2843,7 @@ int Fieldml_CloseWriter( FmlHandle handle, FmlWriterHandle writer )
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
+    ParameterWriter *writer = ParameterWriter::handleToWriter( writerHandle );
     if( writer == NULL )
     {
         return region->setRegionError( FML_ERR_INVALID_OBJECT );

@@ -49,7 +49,10 @@
 class ParameterReader
 {
 private:
+    long handle;
 
+    static FmlReaderHandle addReader( ParameterReader *reader );
+    
 protected:
     const DataFileType dataType;
     const FmlInputStream stream;
@@ -57,7 +60,9 @@ protected:
     ParameterReader( FmlInputStream stream, DataFileType streamFormat );
 
 public:
-    static ParameterReader *create( FieldmlRegion *region, ParameterEvaluator *parameters );
+    static FmlReaderHandle create( FieldmlRegion *region, ParameterEvaluator *parameters );
+    
+    static ParameterReader *handleToReader( FmlReaderHandle handle );
     
     virtual int readNextIndexSet( int *indexValues ) = 0;
     virtual int readIntValues( int *values, int count ) = 0;

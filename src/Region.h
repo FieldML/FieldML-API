@@ -70,7 +70,7 @@ private:
     
     int handle;
     
-    static long addRegion( FieldmlRegion *region );
+    static FmlHandle addRegion( FieldmlRegion *region );
     
 public:
     FieldmlRegion( const std::string location, const std::string name, const std::string library );

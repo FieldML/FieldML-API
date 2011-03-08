@@ -193,7 +193,8 @@ FileDataLocation::FileDataLocation() :
 InlineDataLocation::InlineDataLocation() :
     DataLocation( LOCATION_INLINE )
 {
-    data = NULL;
+    data = new char[1];
+    ((char*)data)[0] = 0; //Dirty hack.
     length = 0;
 }
 
