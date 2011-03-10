@@ -1,0 +1,668 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<fieldml version="0.3_alpha" xsi:noNamespaceSchemaLocation="Fieldml_0.3.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+ <Region name="library">
+  <ContinuousType name="library.real.1d"/>
+  <AbstractEvaluator name="library.real.1d.variable" valueType="library.real.1d"/>
+  <EnsembleType name="library.ensemble.generic.2d" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="2"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.ensemble.generic.2d.variable" valueType="library.ensemble.generic.2d"/>
+  <ContinuousType name="library.real.2d" componentEnsemble="library.ensemble.generic.2d"/>
+  <AbstractEvaluator name="library.real.2d.variable" valueType="library.real.2d"/>
+  <EnsembleType name="library.ensemble.generic.3d" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="3"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.ensemble.generic.3d.variable" valueType="library.ensemble.generic.3d"/>
+  <ContinuousType name="library.real.3d" componentEnsemble="library.ensemble.generic.3d"/>
+  <AbstractEvaluator name="library.real.3d.variable" valueType="library.real.3d"/>
+  <EnsembleType name="library.ensemble.xi.1d" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="1"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.ensemble.xi.1d.variable" valueType="library.ensemble.xi.1d"/>
+  <ContinuousType name="library.xi.1d" componentEnsemble="library.ensemble.xi.1d"/>
+  <AbstractEvaluator name="library.xi.1d.variable" valueType="library.xi.1d"/>
+  <EnsembleType name="library.ensemble.xi.2d" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="2"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.ensemble.xi.2d.variable" valueType="library.ensemble.xi.2d"/>
+  <ContinuousType name="library.xi.2d" componentEnsemble="library.ensemble.xi.2d"/>
+  <AbstractEvaluator name="library.xi.2d.variable" valueType="library.xi.2d"/>
+  <EnsembleType name="library.ensemble.xi.3d" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="3"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.ensemble.xi.3d.variable" valueType="library.ensemble.xi.3d"/>
+  <ContinuousType name="library.xi.3d" componentEnsemble="library.ensemble.xi.3d"/>
+  <AbstractEvaluator name="library.xi.3d.variable" valueType="library.xi.3d"/>
+  <EnsembleType name="library.localNodes.1d.line2" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="2"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.1d.line2.variable" valueType="library.localNodes.1d.line2"/>
+  <ContinuousType name="library.parameters.1d.linearLagrange" componentEnsemble="library.localNodes.1d.line2"/>
+  <AbstractEvaluator name="library.parameters.1d.linearLagrange.variable" valueType="library.parameters.1d.linearLagrange"/>
+
+  <ExternalEvaluator name="library.interpolator.1d.unit.linearLagrange" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.1d.line3" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="3"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.1d.line3.variable" valueType="library.localNodes.1d.line3"/>
+  <ContinuousType name="library.parameters.quadraticLagrange" componentEnsemble="library.localNodes.1d.line3"/>
+  <AbstractEvaluator name="library.parameters.quadraticLagrange.variable" valueType="library.parameters.quadraticLagrange"/>
+
+  <ExternalEvaluator name="library.interpolator.1d.unit.quadraticLagrange" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.2d.square2x2" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="4"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.2d.square2x2.variable" valueType="library.localNodes.2d.square2x2"/>
+  <ContinuousType name="library.parameters.bilinearLagrange" componentEnsemble="library.localNodes.2d.square2x2"/>
+  <AbstractEvaluator name="library.parameters.bilinearLagrange.variable" valueType="library.parameters.bilinearLagrange"/>
+
+  <ExternalEvaluator name="library.interpolator.2d.unit.bilinearLagrange" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.2d.square2x2_xi1C_xi20" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="3"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.2d.square2x2_xi1C_xi20.variable" valueType="library.localNodes.2d.square2x2_xi1C_xi20"/>
+  <ContinuousType name="library.parameters.bilinearLagrange_xi1C_xi20" componentEnsemble="library.localNodes.2d.square2x2_xi1C_xi20"/>
+  <AbstractEvaluator name="library.parameters.bilinearLagrange_xi1C_xi20.variable" valueType="library.parameters.bilinearLagrange_xi1C_xi20"/>
+
+  <ExternalEvaluator name="library.interpolator.2d.unit.bilinearLagrange_xi1C_xi20" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.2d.square2x2_xi1C_xi21" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="3"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.2d.square2x2_xi1C_xi21.variable" valueType="library.localNodes.2d.square2x2_xi1C_xi21"/>
+  <ContinuousType name="library.parameters.bilinearLagrange_xi1C_xi21" componentEnsemble="library.localNodes.2d.square2x2_xi1C_xi21"/>
+  <AbstractEvaluator name="library.parameters.bilinearLagrange_xi1C_xi21.variable" valueType="library.parameters.bilinearLagrange_xi1C_xi21"/>
+
+  <ExternalEvaluator name="library.interpolator.2d.unit.bilinearLagrange_xi1C_xi21" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.2d.square2x2_xi10_xi2C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="3"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.2d.square2x2_xi10_xi2C.variable" valueType="library.localNodes.2d.square2x2_xi10_xi2C"/>
+  <ContinuousType name="library.parameters.bilinearLagrange_xi10_xi2C" componentEnsemble="library.localNodes.2d.square2x2_xi10_xi2C"/>
+  <AbstractEvaluator name="library.parameters.bilinearLagrange_xi10_xi2C.variable" valueType="library.parameters.bilinearLagrange_xi10_xi2C"/>
+
+  <ExternalEvaluator name="library.interpolator.2d.unit.bilinearLagrange_xi10_xi2C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.2d.square2x2_xi11_xi2C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="3"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.2d.square2x2_xi11_xi2C.variable" valueType="library.localNodes.2d.square2x2_xi11_xi2C"/>
+  <ContinuousType name="library.parameters.bilinearLagrange_xi11_xi2C" componentEnsemble="library.localNodes.2d.square2x2_xi11_xi2C"/>
+  <AbstractEvaluator name="library.parameters.bilinearLagrange_xi11_xi2C.variable" valueType="library.parameters.bilinearLagrange_xi11_xi2C"/>
+
+  <ExternalEvaluator name="library.interpolator.2d.unit.bilinearLagrange_xi11_xi2C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.2d.square3x3" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="9"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.2d.square3x3.variable" valueType="library.localNodes.2d.square3x3"/>
+  <ContinuousType name="library.parameters.biquadraticLagrange" componentEnsemble="library.localNodes.2d.square3x3"/>
+  <AbstractEvaluator name="library.parameters.biquadraticLagrange.variable" valueType="library.parameters.biquadraticLagrange"/>
+
+  <ExternalEvaluator name="library.interpolator.2d.unit.biquadraticLagrange" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.2d.square3x3_xi1C_xi20" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="7"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.2d.square3x3_xi1C_xi20.variable" valueType="library.localNodes.2d.square3x3_xi1C_xi20"/>
+  <ContinuousType name="library.parameters.biquadraticLagrange_xi1C_xi20" componentEnsemble="library.localNodes.2d.square3x3_xi1C_xi20"/>
+  <AbstractEvaluator name="library.parameters.biquadraticLagrange_xi1C_xi20.variable" valueType="library.parameters.biquadraticLagrange_xi1C_xi20"/>
+
+  <ExternalEvaluator name="library.interpolator.2d.unit.biquadraticLagrange_xi1C_xi20" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.2d.square3x3_xi1C_xi21" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="7"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.2d.square3x3_xi1C_xi21.variable" valueType="library.localNodes.2d.square3x3_xi1C_xi21"/>
+  <ContinuousType name="library.parameters.biquadraticLagrange_xi1C_xi21" componentEnsemble="library.localNodes.2d.square3x3_xi1C_xi21"/>
+  <AbstractEvaluator name="library.parameters.biquadraticLagrange_xi1C_xi21.variable" valueType="library.parameters.biquadraticLagrange_xi1C_xi21"/>
+
+  <ExternalEvaluator name="library.interpolator.2d.unit.biquadraticLagrange_xi1C_xi21" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.2d.square3x3_xi10_xi2C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="7"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.2d.square3x3_xi10_xi2C.variable" valueType="library.localNodes.2d.square3x3_xi10_xi2C"/>
+  <ContinuousType name="library.parameters.biquadraticLagrange_xi10_xi2C" componentEnsemble="library.localNodes.2d.square3x3_xi10_xi2C"/>
+  <AbstractEvaluator name="library.parameters.biquadraticLagrange_xi10_xi2C.variable" valueType="library.parameters.biquadraticLagrange_xi10_xi2C"/>
+
+  <ExternalEvaluator name="library.interpolator.2d.unit.biquadraticLagrange_xi10_xi2C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.2d.square3x3_xi11_xi2C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="7"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.2d.square3x3_xi11_xi2C.variable" valueType="library.localNodes.2d.square3x3_xi11_xi2C"/>
+  <ContinuousType name="library.parameters.biquadraticLagrange_xi11_xi2C" componentEnsemble="library.localNodes.2d.square3x3_xi11_xi2C"/>
+  <AbstractEvaluator name="library.parameters.biquadraticLagrange_xi11_xi2C.variable" valueType="library.parameters.biquadraticLagrange_xi11_xi2C"/>
+
+  <ExternalEvaluator name="library.interpolator.2d.unit.biquadraticLagrange_xi11_xi2C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube2x2x2" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="8"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube2x2x2.variable" valueType="library.localNodes.3d.cube2x2x2"/>
+  <ContinuousType name="library.parameters.trilinearLagrange" componentEnsemble="library.localNodes.3d.cube2x2x2"/>
+  <AbstractEvaluator name="library.parameters.trilinearLagrange.variable" valueType="library.parameters.trilinearLagrange"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.trilinearLagrange" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube2x2x2_xi1C_xi20" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="6"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube2x2x2_xi1C_xi20.variable" valueType="library.localNodes.3d.cube2x2x2_xi1C_xi20"/>
+  <ContinuousType name="library.parameters.trilinearLagrange_xi1C_xi20" componentEnsemble="library.localNodes.3d.cube2x2x2_xi1C_xi20"/>
+  <AbstractEvaluator name="library.parameters.trilinearLagrange_xi1C_xi20.variable" valueType="library.parameters.trilinearLagrange_xi1C_xi20"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.trilinearLagrange_xi1C_xi20" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube2x2x2_xi1C_xi21" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="6"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube2x2x2_xi1C_xi21.variable" valueType="library.localNodes.3d.cube2x2x2_xi1C_xi21"/>
+  <ContinuousType name="library.parameters.trilinearLagrange_xi1C_xi21" componentEnsemble="library.localNodes.3d.cube2x2x2_xi1C_xi21"/>
+  <AbstractEvaluator name="library.parameters.trilinearLagrange_xi1C_xi21.variable" valueType="library.parameters.trilinearLagrange_xi1C_xi21"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.trilinearLagrange_xi1C_xi21" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube2x2x2_xi1C_xi30" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="6"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube2x2x2_xi1C_xi30.variable" valueType="library.localNodes.3d.cube2x2x2_xi1C_xi30"/>
+  <ContinuousType name="library.parameters.trilinearLagrange_xi1C_xi30" componentEnsemble="library.localNodes.3d.cube2x2x2_xi1C_xi30"/>
+  <AbstractEvaluator name="library.parameters.trilinearLagrange_xi1C_xi30.variable" valueType="library.parameters.trilinearLagrange_xi1C_xi30"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.trilinearLagrange_xi1C_xi30" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube2x2x2_xi1C_xi31" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="6"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube2x2x2_xi1C_xi31.variable" valueType="library.localNodes.3d.cube2x2x2_xi1C_xi31"/>
+  <ContinuousType name="library.parameters.trilinearLagrange_xi1C_xi31" componentEnsemble="library.localNodes.3d.cube2x2x2_xi1C_xi31"/>
+  <AbstractEvaluator name="library.parameters.trilinearLagrange_xi1C_xi31.variable" valueType="library.parameters.trilinearLagrange_xi1C_xi31"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.trilinearLagrange_xi1C_xi31" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube2x2x2_xi10_xi2C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="6"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube2x2x2_xi10_xi2C.variable" valueType="library.localNodes.3d.cube2x2x2_xi10_xi2C"/>
+  <ContinuousType name="library.parameters.trilinearLagrange_xi10_xi2C" componentEnsemble="library.localNodes.3d.cube2x2x2_xi10_xi2C"/>
+  <AbstractEvaluator name="library.parameters.trilinearLagrange_xi10_xi2C.variable" valueType="library.parameters.trilinearLagrange_xi10_xi2C"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.trilinearLagrange_xi10_xi2C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube2x2x2_xi11_xi2C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="6"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube2x2x2_xi11_xi2C.variable" valueType="library.localNodes.3d.cube2x2x2_xi11_xi2C"/>
+  <ContinuousType name="library.parameters.trilinearLagrange_xi11_xi2C" componentEnsemble="library.localNodes.3d.cube2x2x2_xi11_xi2C"/>
+  <AbstractEvaluator name="library.parameters.trilinearLagrange_xi11_xi2C.variable" valueType="library.parameters.trilinearLagrange_xi11_xi2C"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.trilinearLagrange_xi11_xi2C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube2x2x2_xi2C_xi30" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="6"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube2x2x2_xi2C_xi30.variable" valueType="library.localNodes.3d.cube2x2x2_xi2C_xi30"/>
+  <ContinuousType name="library.parameters.trilinearLagrange_xi2C_xi30" componentEnsemble="library.localNodes.3d.cube2x2x2_xi2C_xi30"/>
+  <AbstractEvaluator name="library.parameters.trilinearLagrange_xi2C_xi30.variable" valueType="library.parameters.trilinearLagrange_xi2C_xi30"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.trilinearLagrange_xi2C_xi30" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube2x2x2_xi2C_xi31" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="6"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube2x2x2_xi2C_xi31.variable" valueType="library.localNodes.3d.cube2x2x2_xi2C_xi31"/>
+  <ContinuousType name="library.parameters.trilinearLagrange_xi2C_xi31" componentEnsemble="library.localNodes.3d.cube2x2x2_xi2C_xi31"/>
+  <AbstractEvaluator name="library.parameters.trilinearLagrange_xi2C_xi31.variable" valueType="library.parameters.trilinearLagrange_xi2C_xi31"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.trilinearLagrange_xi2C_xi31" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube2x2x2_xi10_xi3C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="6"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube2x2x2_xi10_xi3C.variable" valueType="library.localNodes.3d.cube2x2x2_xi10_xi3C"/>
+  <ContinuousType name="library.parameters.trilinearLagrange_xi10_xi3C" componentEnsemble="library.localNodes.3d.cube2x2x2_xi10_xi3C"/>
+  <AbstractEvaluator name="library.parameters.trilinearLagrange_xi10_xi3C.variable" valueType="library.parameters.trilinearLagrange_xi10_xi3C"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.trilinearLagrange_xi10_xi3C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube2x2x2_xi11_xi3C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="6"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube2x2x2_xi11_xi3C.variable" valueType="library.localNodes.3d.cube2x2x2_xi11_xi3C"/>
+  <ContinuousType name="library.parameters.trilinearLagrange_xi11_xi3C" componentEnsemble="library.localNodes.3d.cube2x2x2_xi11_xi3C"/>
+  <AbstractEvaluator name="library.parameters.trilinearLagrange_xi11_xi3C.variable" valueType="library.parameters.trilinearLagrange_xi11_xi3C"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.trilinearLagrange_xi11_xi3C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube2x2x2_xi20_xi3C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="6"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube2x2x2_xi20_xi3C.variable" valueType="library.localNodes.3d.cube2x2x2_xi20_xi3C"/>
+  <ContinuousType name="library.parameters.trilinearLagrange_xi20_xi3C" componentEnsemble="library.localNodes.3d.cube2x2x2_xi20_xi3C"/>
+  <AbstractEvaluator name="library.parameters.trilinearLagrange_xi20_xi3C.variable" valueType="library.parameters.trilinearLagrange_xi20_xi3C"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.trilinearLagrange_xi20_xi3C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube2x2x2_xi21_xi3C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="6"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube2x2x2_xi21_xi3C.variable" valueType="library.localNodes.3d.cube2x2x2_xi21_xi3C"/>
+  <ContinuousType name="library.parameters.trilinearLagrange_xi21_xi3C" componentEnsemble="library.localNodes.3d.cube2x2x2_xi21_xi3C"/>
+  <AbstractEvaluator name="library.parameters.trilinearLagrange_xi21_xi3C.variable" valueType="library.parameters.trilinearLagrange_xi21_xi3C"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.trilinearLagrange_xi21_xi3C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube2x2x2_xi10_xi2C_xi3C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="5"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube2x2x2_xi10_xi2C_xi3C.variable" valueType="library.localNodes.3d.cube2x2x2_xi10_xi2C_xi3C"/>
+  <ContinuousType name="library.parameters.trilinearLagrange_xi10_xi2C_xi3C" componentEnsemble="library.localNodes.3d.cube2x2x2_xi10_xi2C_xi3C"/>
+  <AbstractEvaluator name="library.parameters.trilinearLagrange_xi10_xi2C_xi3C.variable" valueType="library.parameters.trilinearLagrange_xi10_xi2C_xi3C"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.trilinearLagrange_xi10_xi2C_xi3C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube2x2x2_xi11_xi2C_xi3C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="5"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube2x2x2_xi11_xi2C_xi3C.variable" valueType="library.localNodes.3d.cube2x2x2_xi11_xi2C_xi3C"/>
+  <ContinuousType name="library.parameters.trilinearLagrange_xi11_xi2C_xi3C" componentEnsemble="library.localNodes.3d.cube2x2x2_xi11_xi2C_xi3C"/>
+  <AbstractEvaluator name="library.parameters.trilinearLagrange_xi11_xi2C_xi3C.variable" valueType="library.parameters.trilinearLagrange_xi11_xi2C_xi3C"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.trilinearLagrange_xi11_xi2C_xi3C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube2x2x2_xi1C_xi20_xi3C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="5"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube2x2x2_xi1C_xi20_xi3C.variable" valueType="library.localNodes.3d.cube2x2x2_xi1C_xi20_xi3C"/>
+  <ContinuousType name="library.parameters.trilinearLagrange_xi1C_xi20_xi3C" componentEnsemble="library.localNodes.3d.cube2x2x2_xi1C_xi20_xi3C"/>
+  <AbstractEvaluator name="library.parameters.trilinearLagrange_xi1C_xi20_xi3C.variable" valueType="library.parameters.trilinearLagrange_xi1C_xi20_xi3C"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.trilinearLagrange_xi1C_xi20_xi3C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube2x2x2_xi1C_xi21_xi3C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="5"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube2x2x2_xi1C_xi21_xi3C.variable" valueType="library.localNodes.3d.cube2x2x2_xi1C_xi21_xi3C"/>
+  <ContinuousType name="library.parameters.trilinearLagrange_xi1C_xi21_xi3C" componentEnsemble="library.localNodes.3d.cube2x2x2_xi1C_xi21_xi3C"/>
+  <AbstractEvaluator name="library.parameters.trilinearLagrange_xi1C_xi21_xi3C.variable" valueType="library.parameters.trilinearLagrange_xi1C_xi21_xi3C"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.trilinearLagrange_xi1C_xi21_xi3C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube2x2x2_xi1C_xi2C_xi30" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="5"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube2x2x2_xi1C_xi2C_xi30.variable" valueType="library.localNodes.3d.cube2x2x2_xi1C_xi2C_xi30"/>
+  <ContinuousType name="library.parameters.trilinearLagrange_xi1C_xi2C_xi30" componentEnsemble="library.localNodes.3d.cube2x2x2_xi1C_xi2C_xi30"/>
+  <AbstractEvaluator name="library.parameters.trilinearLagrange_xi1C_xi2C_xi30.variable" valueType="library.parameters.trilinearLagrange_xi1C_xi2C_xi30"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.trilinearLagrange_xi1C_xi2C_xi30" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube2x2x2_xi1C_xi2C_xi31" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="5"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube2x2x2_xi1C_xi2C_xi31.variable" valueType="library.localNodes.3d.cube2x2x2_xi1C_xi2C_xi31"/>
+  <ContinuousType name="library.parameters.trilinearLagrange_xi1C_xi2C_xi31" componentEnsemble="library.localNodes.3d.cube2x2x2_xi1C_xi2C_xi31"/>
+  <AbstractEvaluator name="library.parameters.trilinearLagrange_xi1C_xi2C_xi31.variable" valueType="library.parameters.trilinearLagrange_xi1C_xi2C_xi31"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.trilinearLagrange_xi1C_xi2C_xi31" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube3x3x3" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="27"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube3x3x3.variable" valueType="library.localNodes.3d.cube3x3x3"/>
+  <ContinuousType name="library.parameters.triquadraticLagrange" componentEnsemble="library.localNodes.3d.cube3x3x3"/>
+  <AbstractEvaluator name="library.parameters.triquadraticLagrange.variable" valueType="library.parameters.triquadraticLagrange"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.triquadraticLagrange" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube3x3x3_xi1C_xi20" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="21"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube3x3x3_xi1C_xi20.variable" valueType="library.localNodes.3d.cube3x3x3_xi1C_xi20"/>
+  <ContinuousType name="library.parameters.triquadraticLagrange_xi1C_xi20" componentEnsemble="library.localNodes.3d.cube3x3x3_xi1C_xi20"/>
+  <AbstractEvaluator name="library.parameters.triquadraticLagrange_xi1C_xi20.variable" valueType="library.parameters.triquadraticLagrange_xi1C_xi20"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.triquadraticLagrange_xi1C_xi20" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube3x3x3_xi1C_xi21" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="21"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube3x3x3_xi1C_xi21.variable" valueType="library.localNodes.3d.cube3x3x3_xi1C_xi21"/>
+  <ContinuousType name="library.parameters.triquadraticLagrange_xi1C_xi21" componentEnsemble="library.localNodes.3d.cube3x3x3_xi1C_xi21"/>
+  <AbstractEvaluator name="library.parameters.triquadraticLagrange_xi1C_xi21.variable" valueType="library.parameters.triquadraticLagrange_xi1C_xi21"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.triquadraticLagrange_xi1C_xi21" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube3x3x3_xi1C_xi30" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="21"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube3x3x3_xi1C_xi30.variable" valueType="library.localNodes.3d.cube3x3x3_xi1C_xi30"/>
+  <ContinuousType name="library.parameters.triquadraticLagrange_xi1C_xi30" componentEnsemble="library.localNodes.3d.cube3x3x3_xi1C_xi30"/>
+  <AbstractEvaluator name="library.parameters.triquadraticLagrange_xi1C_xi30.variable" valueType="library.parameters.triquadraticLagrange_xi1C_xi30"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.triquadraticLagrange_xi1C_xi30" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube3x3x3_xi1C_xi31" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="21"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube3x3x3_xi1C_xi31.variable" valueType="library.localNodes.3d.cube3x3x3_xi1C_xi31"/>
+  <ContinuousType name="library.parameters.triquadraticLagrange_xi1C_xi31" componentEnsemble="library.localNodes.3d.cube3x3x3_xi1C_xi31"/>
+  <AbstractEvaluator name="library.parameters.triquadraticLagrange_xi1C_xi31.variable" valueType="library.parameters.triquadraticLagrange_xi1C_xi31"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.triquadraticLagrange_xi1C_xi31" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube3x3x3_xi10_xi2C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="21"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube3x3x3_xi10_xi2C.variable" valueType="library.localNodes.3d.cube3x3x3_xi10_xi2C"/>
+  <ContinuousType name="library.parameters.triquadraticLagrange_xi10_xi2C" componentEnsemble="library.localNodes.3d.cube3x3x3_xi10_xi2C"/>
+  <AbstractEvaluator name="library.parameters.triquadraticLagrange_xi10_xi2C.variable" valueType="library.parameters.triquadraticLagrange_xi10_xi2C"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.triquadraticLagrange_xi10_xi2C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube3x3x3_xi11_xi2C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="21"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube3x3x3_xi11_xi2C.variable" valueType="library.localNodes.3d.cube3x3x3_xi11_xi2C"/>
+  <ContinuousType name="library.parameters.triquadraticLagrange_xi11_xi2C" componentEnsemble="library.localNodes.3d.cube3x3x3_xi11_xi2C"/>
+  <AbstractEvaluator name="library.parameters.triquadraticLagrange_xi11_xi2C.variable" valueType="library.parameters.triquadraticLagrange_xi11_xi2C"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.triquadraticLagrange_xi11_xi2C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube3x3x3_xi2C_xi30" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="21"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube3x3x3_xi2C_xi30.variable" valueType="library.localNodes.3d.cube3x3x3_xi2C_xi30"/>
+  <ContinuousType name="library.parameters.triquadraticLagrange_xi2C_xi30" componentEnsemble="library.localNodes.3d.cube3x3x3_xi2C_xi30"/>
+  <AbstractEvaluator name="library.parameters.triquadraticLagrange_xi2C_xi30.variable" valueType="library.parameters.triquadraticLagrange_xi2C_xi30"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.triquadraticLagrange_xi2C_xi30" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube3x3x3_xi2C_xi31" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="21"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube3x3x3_xi2C_xi31.variable" valueType="library.localNodes.3d.cube3x3x3_xi2C_xi31"/>
+  <ContinuousType name="library.parameters.triquadraticLagrange_xi2C_xi31" componentEnsemble="library.localNodes.3d.cube3x3x3_xi2C_xi31"/>
+  <AbstractEvaluator name="library.parameters.triquadraticLagrange_xi2C_xi31.variable" valueType="library.parameters.triquadraticLagrange_xi2C_xi31"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.triquadraticLagrange_xi2C_xi31" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube3x3x3_xi10_xi3C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="21"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube3x3x3_xi10_xi3C.variable" valueType="library.localNodes.3d.cube3x3x3_xi10_xi3C"/>
+  <ContinuousType name="library.parameters.triquadraticLagrange_xi10_xi3C" componentEnsemble="library.localNodes.3d.cube3x3x3_xi10_xi3C"/>
+  <AbstractEvaluator name="library.parameters.triquadraticLagrange_xi10_xi3C.variable" valueType="library.parameters.triquadraticLagrange_xi10_xi3C"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.triquadraticLagrange_xi10_xi3C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube3x3x3_xi11_xi3C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="21"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube3x3x3_xi11_xi3C.variable" valueType="library.localNodes.3d.cube3x3x3_xi11_xi3C"/>
+  <ContinuousType name="library.parameters.triquadraticLagrange_xi11_xi3C" componentEnsemble="library.localNodes.3d.cube3x3x3_xi11_xi3C"/>
+  <AbstractEvaluator name="library.parameters.triquadraticLagrange_xi11_xi3C.variable" valueType="library.parameters.triquadraticLagrange_xi11_xi3C"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.triquadraticLagrange_xi11_xi3C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube3x3x3_xi20_xi3C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="21"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube3x3x3_xi20_xi3C.variable" valueType="library.localNodes.3d.cube3x3x3_xi20_xi3C"/>
+  <ContinuousType name="library.parameters.triquadraticLagrange_xi20_xi3C" componentEnsemble="library.localNodes.3d.cube3x3x3_xi20_xi3C"/>
+  <AbstractEvaluator name="library.parameters.triquadraticLagrange_xi20_xi3C.variable" valueType="library.parameters.triquadraticLagrange_xi20_xi3C"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.triquadraticLagrange_xi20_xi3C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube3x3x3_xi21_xi3C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="21"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube3x3x3_xi21_xi3C.variable" valueType="library.localNodes.3d.cube3x3x3_xi21_xi3C"/>
+  <ContinuousType name="library.parameters.triquadraticLagrange_xi21_xi3C" componentEnsemble="library.localNodes.3d.cube3x3x3_xi21_xi3C"/>
+  <AbstractEvaluator name="library.parameters.triquadraticLagrange_xi21_xi3C.variable" valueType="library.parameters.triquadraticLagrange_xi21_xi3C"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.triquadraticLagrange_xi21_xi3C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube3x3x3_xi10_xi2C_xi3C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="19"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube3x3x3_xi10_xi2C_xi3C.variable" valueType="library.localNodes.3d.cube3x3x3_xi10_xi2C_xi3C"/>
+  <ContinuousType name="library.parameters.triquadraticLagrange_xi10_xi2C_xi3C" componentEnsemble="library.localNodes.3d.cube3x3x3_xi10_xi2C_xi3C"/>
+  <AbstractEvaluator name="library.parameters.triquadraticLagrange_xi10_xi2C_xi3C.variable" valueType="library.parameters.triquadraticLagrange_xi10_xi2C_xi3C"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.triquadraticLagrange_xi10_xi2C_xi3C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube3x3x3_xi11_xi2C_xi3C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="19"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube3x3x3_xi11_xi2C_xi3C.variable" valueType="library.localNodes.3d.cube3x3x3_xi11_xi2C_xi3C"/>
+  <ContinuousType name="library.parameters.triquadraticLagrange_xi11_xi2C_xi3C" componentEnsemble="library.localNodes.3d.cube3x3x3_xi11_xi2C_xi3C"/>
+  <AbstractEvaluator name="library.parameters.triquadraticLagrange_xi11_xi2C_xi3C.variable" valueType="library.parameters.triquadraticLagrange_xi11_xi2C_xi3C"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.triquadraticLagrange_xi11_xi2C_xi3C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube3x3x3_xi1C_xi20_xi3C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="19"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube3x3x3_xi1C_xi20_xi3C.variable" valueType="library.localNodes.3d.cube3x3x3_xi1C_xi20_xi3C"/>
+  <ContinuousType name="library.parameters.triquadraticLagrange_xi1C_xi20_xi3C" componentEnsemble="library.localNodes.3d.cube3x3x3_xi1C_xi20_xi3C"/>
+  <AbstractEvaluator name="library.parameters.triquadraticLagrange_xi1C_xi20_xi3C.variable" valueType="library.parameters.triquadraticLagrange_xi1C_xi20_xi3C"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.triquadraticLagrange_xi1C_xi20_xi3C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube3x3x3_xi1C_xi21_xi3C" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="19"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube3x3x3_xi1C_xi21_xi3C.variable" valueType="library.localNodes.3d.cube3x3x3_xi1C_xi21_xi3C"/>
+  <ContinuousType name="library.parameters.triquadraticLagrange_xi1C_xi21_xi3C" componentEnsemble="library.localNodes.3d.cube3x3x3_xi1C_xi21_xi3C"/>
+  <AbstractEvaluator name="library.parameters.triquadraticLagrange_xi1C_xi21_xi3C.variable" valueType="library.parameters.triquadraticLagrange_xi1C_xi21_xi3C"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.triquadraticLagrange_xi1C_xi21_xi3C" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube3x3x3_xi1C_xi2C_xi30" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="19"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube3x3x3_xi1C_xi2C_xi30.variable" valueType="library.localNodes.3d.cube3x3x3_xi1C_xi2C_xi30"/>
+  <ContinuousType name="library.parameters.triquadraticLagrange_xi1C_xi2C_xi30" componentEnsemble="library.localNodes.3d.cube3x3x3_xi1C_xi2C_xi30"/>
+  <AbstractEvaluator name="library.parameters.triquadraticLagrange_xi1C_xi2C_xi30.variable" valueType="library.parameters.triquadraticLagrange_xi1C_xi2C_xi30"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.triquadraticLagrange_xi1C_xi2C_xi30" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.localNodes.3d.cube3x3x3_xi1C_xi2C_xi31" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="19"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.localNodes.3d.cube3x3x3_xi1C_xi2C_xi31.variable" valueType="library.localNodes.3d.cube3x3x3_xi1C_xi2C_xi31"/>
+  <ContinuousType name="library.parameters.triquadraticLagrange_xi1C_xi2C_xi31" componentEnsemble="library.localNodes.3d.cube3x3x3_xi1C_xi2C_xi31"/>
+  <AbstractEvaluator name="library.parameters.triquadraticLagrange_xi1C_xi2C_xi31.variable" valueType="library.parameters.triquadraticLagrange_xi1C_xi2C_xi31"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.triquadraticLagrange_xi1C_xi2C_xi31" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.ensemble.rc.1d" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="1"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.ensemble.rc.1d.variable" valueType="library.ensemble.rc.1d"/>
+  <ContinuousType name="library.coordinates.rc.1d" componentEnsemble="library.ensemble.rc.1d"/>
+  <AbstractEvaluator name="library.coordinates.rc.1d.variable" valueType="library.coordinates.rc.1d"/>
+  <ContinuousType name="library.velocity.rc.1d" componentEnsemble="library.ensemble.rc.1d"/>
+  <AbstractEvaluator name="library.velocity.rc.1d.variable" valueType="library.velocity.rc.1d"/>
+  <EnsembleType name="library.ensemble.rc.2d" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="2"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.ensemble.rc.2d.variable" valueType="library.ensemble.rc.2d"/>
+  <ContinuousType name="library.coordinates.rc.2d" componentEnsemble="library.ensemble.rc.2d"/>
+  <AbstractEvaluator name="library.coordinates.rc.2d.variable" valueType="library.coordinates.rc.2d"/>
+  <ContinuousType name="library.velocity.rc.2d" componentEnsemble="library.ensemble.rc.2d"/>
+  <AbstractEvaluator name="library.velocity.rc.2d.variable" valueType="library.velocity.rc.2d"/>
+  <EnsembleType name="library.ensemble.rc.3d" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="3"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.ensemble.rc.3d.variable" valueType="library.ensemble.rc.3d"/>
+  <ContinuousType name="library.coordinates.rc.3d" componentEnsemble="library.ensemble.rc.3d"/>
+  <AbstractEvaluator name="library.coordinates.rc.3d.variable" valueType="library.coordinates.rc.3d"/>
+  <ContinuousType name="library.velocity.rc.3d" componentEnsemble="library.ensemble.rc.3d"/>
+  <AbstractEvaluator name="library.velocity.rc.3d.variable" valueType="library.velocity.rc.3d"/>
+  <ContinuousType name="library.pressure"/>
+  <AbstractEvaluator name="library.pressure.variable" valueType="library.pressure"/>
+
+  <EnsembleType name="library.parameters.1d.cubicHermite.ensemble" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="4"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.parameters.1d.cubicHermite.ensemble.variable" valueType="library.parameters.1d.cubicHermite.ensemble"/>
+  <ContinuousType name="library.parameters.1d.cubicHermite" componentEnsemble="library.parameters.1d.cubicHermite.ensemble"/>
+  <AbstractEvaluator name="library.parameters.1d.cubicHermite.variable" valueType="library.parameters.1d.cubicHermite"/>
+  <AbstractEvaluator name="library.parameters.1d.cubicHermiteScaling.variable" valueType="library.parameters.1d.cubicHermite"/>
+
+  <ExternalEvaluator name="library.interpolator.1d.unit.cubicHermite" valueType="library.real.1d"/>
+  <ExternalEvaluator name="library.interpolator.1d.unit.cubicHermiteScaled" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.parameters.2d.bicubicHermite.ensemble" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="16"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.parameters.2d.bicubicHermite.ensemble.variable" valueType="library.parameters.2d.bicubicHermite.ensemble"/>
+  <ContinuousType name="library.parameters.2d.bicubicHermite" componentEnsemble="library.parameters.2d.bicubicHermite.ensemble"/>
+  <AbstractEvaluator name="library.parameters.2d.bicubicHermite.variable" valueType="library.parameters.2d.bicubicHermite"/>
+  <AbstractEvaluator name="library.parameters.2d.bicubicHermiteScaling.variable" valueType="library.parameters.2d.bicubicHermite"/>
+
+  <ExternalEvaluator name="library.interpolator.2d.unit.bicubicHermite" valueType="library.real.1d"/>
+  <ExternalEvaluator name="library.interpolator.2d.unit.bicubicHermiteScaled" valueType="library.real.1d"/>
+
+  <EnsembleType name="library.parameters.3d.tricubicHermite.ensemble" isComponentEnsemble="true">
+   <bounds>
+    <ContiguousEnsembleBounds valueCount="64"/>
+   </bounds>
+  </EnsembleType>
+  <AbstractEvaluator name="library.parameters.3d.tricubicHermite.ensemble.variable" valueType="library.parameters.3d.tricubicHermite.ensemble"/>
+  <ContinuousType name="library.parameters.3d.tricubicHermite" componentEnsemble="library.parameters.3d.tricubicHermite.ensemble"/>
+  <AbstractEvaluator name="library.parameters.3d.tricubicHermite.variable" valueType="library.parameters.3d.tricubicHermite"/>
+  <AbstractEvaluator name="library.parameters.3d.tricubicHermiteScaling.variable" valueType="library.parameters.3d.tricubicHermite"/>
+
+  <ExternalEvaluator name="library.interpolator.3d.unit.tricubicHermite" valueType="library.real.1d"/>
+  <ExternalEvaluator name="library.interpolator.3d.unit.tricubicHermiteScaled" valueType="library.real.1d"/>
+ </Region>
+</fieldml>
