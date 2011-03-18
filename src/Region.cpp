@@ -138,7 +138,7 @@ static FieldmlObject *resolveSubEvaluator( FieldmlRegion *region, string name, i
         return NULL;
     }
 
-    return new Evaluator( name, VIRTUAL_LOCATION_HANDLE, FHT_EXTERNAL_EVALUATOR, typeHandle );
+    return new Evaluator( name, VIRTUAL_LOCATION_HANDLE, superHandleType, typeHandle );
 }
 
 
