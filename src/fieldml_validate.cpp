@@ -47,7 +47,7 @@ int validateEnsembleType( FieldmlRegion *region, EnsembleType *ensembleType )
 {
     if( ensembleType->bounds->boundsType == BOUNDS_UNKNOWN )
     {
-        region->logError( "EnsembleType has no bounds", ensembleType->name );
+        region->logError( "EnsembleType has no bounds", ensembleType->name.c_str() );
         return FML_ERR_INCOMPLETE_OBJECT;
     }
     else if( ensembleType->bounds->boundsType == BOUNDS_DISCRETE_CONTIGUOUS )

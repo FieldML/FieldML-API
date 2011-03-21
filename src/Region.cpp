@@ -179,11 +179,11 @@ void FieldmlRegion::finalize()
         
         if( object->type == FHT_UNKNOWN_TYPE )
         {
-            logError( "Unknown type: ", object->name );
+            logError( "Unknown type: ", object->name.c_str() );
         }
         else if( object->type == FHT_UNKNOWN_ELEMENT_SET )
         {
-            logError( "Unknown element set: ", object->name );
+            logError( "Unknown element set: ", object->name.c_str() );
         }
         else if( object->type == FHT_UNKNOWN_EVALUATOR )
         {
@@ -195,7 +195,7 @@ void FieldmlRegion::finalize()
             }
             else
             {
-                logError( "Unknown evaluator: ", object->name );
+                logError( "Unknown evaluator: ", object->name.c_str() );
             }
         }
     }
@@ -219,7 +219,7 @@ int FieldmlRegion::setRegionErrorAndLocation( const char *file, const int line, 
 {
     lastError = error;
 
-    if( error != FML_ERR_NO_ERROR )
+    if( ( error != FML_ERR_NO_ERROR ) && ( error != FML_ERR_IO_NO_DATA ) )
     {
         if( debug )
         {
@@ -314,7 +314,7 @@ FmlObjectHandle FieldmlRegion::addObject( FieldmlObject *object )
         return handle;
     }
     
-    logError( "Handle collision. Cannot replace", object->name, oldObject->name );
+    logError( "Handle collision. Cannot replace", object->name.c_str(), oldObject->name.c_str() );
     fprintf( stderr, "Handle collision. Cannot replace %s:%d with %s:%d\n", object->name.c_str(), object->type, oldObject->name.c_str(), oldObject->type );
     delete object;
     
@@ -451,15 +451,15 @@ void FieldmlRegion::setDebug( const int debugValue )
 }
 
 
-void FieldmlRegion::logError( const string error, const string name1, const string name2 )
+void FieldmlRegion::logError( const char *error, const char *name1, const char *name2 )
 {
     string errorString = error;
 
-    if( name1.length() > 0 )
+    if( name1 != NULL )
     {
         errorString = errorString + ": " + name1;
     }
-    if( name2.length() > 0 )
+    if( name2 != NULL )
     {
         errorString = errorString + ":: " + name2;
     }

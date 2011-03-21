@@ -112,7 +112,7 @@ public:
 
     void finalize();
 
-    void logError( const std::string error, const std::string name1 = "", const std::string name2 = "" );
+    void logError( const char *error, const char *name1 = NULL, const char *name2 = NULL );
 
     void setLocationHandle( FmlObjectHandle handle, int locationHandle );
     

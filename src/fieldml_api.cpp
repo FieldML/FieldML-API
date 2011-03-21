@@ -2154,7 +2154,7 @@ int Fieldml_GetIndexCount( FmlHandle handle, FmlObjectHandle objectHandle )
         return -1;
     }
     
-    if( object->type == FHT_PIECEWISE_EVALUATOR )
+    if( ( object->type == FHT_PIECEWISE_EVALUATOR ) || ( object->type == FHT_AGGREGATE_EVALUATOR ) )
     {
         return 1;
     }
@@ -2346,8 +2346,10 @@ FmlObjectHandle Fieldml_GetIndexEvaluator( FmlHandle handle, FmlObjectHandle obj
             region->setRegionError( FML_ERR_UNSUPPORTED );
         }
     }
-    
-    region->setRegionError( FML_ERR_INVALID_OBJECT );
+    else
+    {
+        region->setRegionError( FML_ERR_INVALID_OBJECT );
+    }
 
     return FML_INVALID_HANDLE;
 }
