@@ -410,6 +410,10 @@ FmlHandle Fieldml_CreateFromFile( const char *filename )
 {
     FieldmlRegion *region = parseFieldmlFile( filename, LOCAL_LOCATION_HANDLE, NULL );
     
+    if( region == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
     region->finalize();
     
     return region->getRegionHandle();

@@ -119,7 +119,7 @@ static int writeBinds( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHandl
         return 0;
     }
 
-    xmlTextWriterStartElement( writer, BINDS_TAG );
+    xmlTextWriterStartElement( writer, BINDINGS_TAG );
     
     if( indexEvaluator != FML_INVALID_HANDLE )
     {
@@ -463,7 +463,7 @@ static int writePiecewiseEvaluator( xmlTextWriterPtr writer, FmlHandle handle, F
             {
                 continue;
             }
-            writeComponentEvaluator( writer, ELEMENT_TAG, element, Fieldml_GetObjectName( handle, evaluator ) );
+            writeComponentEvaluator( writer, ELEMENT_EVALUATOR_TAG, element, Fieldml_GetObjectName( handle, evaluator ) );
         }
 
         xmlTextWriterEndElement( writer );
@@ -496,7 +496,7 @@ static void writeSemidenseIndexes( xmlTextWriterPtr writer, FmlHandle handle, Fm
             {
                 continue;
             }
-            xmlTextWriterStartElement( writer, INDEX_TAG );
+            xmlTextWriterStartElement( writer, INDEX_EVALUATOR_TAG );
             xmlTextWriterWriteAttribute( writer, EVALUATOR_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, index ) );
 
 #if 0
@@ -618,7 +618,7 @@ static int writeAggregateEvaluator( xmlTextWriterPtr writer, FmlHandle handle, F
             {
                 continue;
             }
-            writeComponentEvaluator( writer, COMPONENT_TAG, element, Fieldml_GetObjectName( handle, evaluator ) );
+            writeComponentEvaluator( writer, COMPONENT_EVALUATOR_TAG, element, Fieldml_GetObjectName( handle, evaluator ) );
         }
 
         xmlTextWriterEndElement( writer );

@@ -314,7 +314,11 @@ static void onStartElementNs( void *context, const xmlChar *elementName, const x
 static void onEndElementNs( void *context, const xmlChar *elementName, const xmlChar *prefix, const xmlChar *URI )
 {
     SaxContext *saxContext = (SaxContext*)context;
-    if( xmlStrcmp( elementName, saxContext->handler->elementName ) == 0 )
+    if( saxContext->handler->elementName == NULL )
+    {
+        //Cannot 'pop' the root handler.
+    }
+    else if( xmlStrcmp( elementName, saxContext->handler->elementName ) == 0 )
     {
         SaxHandler *newHandler = saxContext->handler->getParent();
         delete saxContext->handler;

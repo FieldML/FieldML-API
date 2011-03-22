@@ -59,18 +59,13 @@ extern const xmlChar * const FIELDML_TAG;
 extern const xmlChar * const REGION_TAG;
 
 extern const xmlChar * const ENSEMBLE_TYPE_TAG;
-extern const xmlChar * const BOUNDS_TAG;
-extern const xmlChar * const CONTIGUOUS_ENSEMBLE_BOUNDS_TAG;
-extern const xmlChar * const ARBITRARY_ENSEMBLE_BOUNDS_TAG;
 
 extern const xmlChar * const CONTINUOUS_TYPE_TAG;
 
 extern const xmlChar * const MESH_TYPE_TAG;
-extern const xmlChar * const MESH_XI_TAG;
 extern const xmlChar * const MESH_SHAPES_TAG;
 extern const xmlChar * const MESH_SHAPE_TAG;
 extern const xmlChar * const MESH_CONNECTIVITY_TAG;
-extern const xmlChar * const MESH_CONNECTIVITY_ENTRY_TAG;
 
 extern const xmlChar * const ELEMENT_SEQUENCE_TAG;
 extern const xmlChar * const ELEMENTS_TAG;
@@ -80,7 +75,7 @@ extern const xmlChar * const MEMBER_RANGE_TAG;
 extern const xmlChar * const MEMBER_LIST_TAG;
 
 extern const xmlChar * const REFERENCE_EVALUATOR_TAG;
-extern const xmlChar * const BINDS_TAG;
+extern const xmlChar * const BINDINGS_TAG;
 extern const xmlChar * const BIND_TAG;
 extern const xmlChar * const BIND_INDEX_TAG;
 
@@ -96,23 +91,20 @@ extern const xmlChar * const SEMI_DENSE_DATA_TAG;
 extern const xmlChar * const SPARSE_INDEXES_TAG;
 extern const xmlChar * const DENSE_INDEXES_TAG;
 
-extern const xmlChar * const INDEX_TAG;
+extern const xmlChar * const INDEX_EVALUATOR_TAG;
 
 extern const xmlChar * const PIECEWISE_EVALUATOR_TAG;
 extern const xmlChar * const ELEMENT_EVALUATORS_TAG;
-extern const xmlChar * const ELEMENT_TAG;
+extern const xmlChar * const ELEMENT_EVALUATOR_TAG;
 
 extern const xmlChar * const RANGE_TAG;
 
 extern const xmlChar * const AGGREGATE_EVALUATOR_TAG;
 extern const xmlChar * const COMPONENT_EVALUATORS_TAG;
-extern const xmlChar * const COMPONENT_TAG;
+extern const xmlChar * const COMPONENT_EVALUATOR_TAG;
 
 extern const xmlChar * const MARKUP_TAG;
 
-extern const xmlChar * const ENTRY_TAG;
-
-extern const xmlChar * const ENTRY_TAG;
 extern const xmlChar * const DATA_LOCATION_TAG;
 
 extern const xmlChar * const INLINE_DATA_TAG;

@@ -21,13 +21,13 @@
 
     <xs:complexType name="BindMapIndexEntry_Type">
         <xs:attribute name="variable" type="xs:string" />
-        <xs:attribute name="index_number" type="xs:positiveInteger" />
+        <xs:attribute name="indexNumber" type="xs:positiveInteger" />
     </xs:complexType>
 
     <xs:complexType name="BindMap_Type">
         <xs:choice minOccurs="0" maxOccurs="unbounded">
-            <xs:element name="bind" type="BindMapEntry_Type" />
-            <xs:element name="bind_index" type="BindMapIndexEntry_Type" />
+            <xs:element name="Bind" type="BindMapEntry_Type" />
+            <xs:element name="BindIndex" type="BindMapIndexEntry_Type" />
         </xs:choice>
     </xs:complexType>
 
@@ -38,7 +38,7 @@
 
     <xs:complexType name="ComponentEvaluators_Type">
         <xs:choice minOccurs="0" maxOccurs="unbounded">
-            <xs:element name="component" type="ComponentEvaluatorsEntry_Type" />
+            <xs:element name="ComponentEvaluator" type="ComponentEvaluatorsEntry_Type" />
         </xs:choice>
         <xs:attribute name="default" type="xs:string" />
     </xs:complexType>
@@ -61,7 +61,7 @@
 
     <xs:complexType name="ElementMap_Type">
         <xs:choice minOccurs="0" maxOccurs="unbounded">
-            <xs:element name="element" type="ElementMapEntry_Type" />
+            <xs:element name="ElementEvaluator" type="ElementMapEntry_Type" />
         </xs:choice>
         <xs:attribute name="default" type="xs:string" use="optional"/>
     </xs:complexType>
@@ -80,7 +80,7 @@
 
     <xs:complexType name="VariableList_Type">
         <xs:choice minOccurs="0" maxOccurs="unbounded">
-            <xs:element name="variable" type="VariableListEntry_Type" />
+            <xs:element name="Variable" type="VariableListEntry_Type" />
         </xs:choice>
     </xs:complexType>
 
@@ -88,9 +88,9 @@
         <xs:attribute name="evaluator" type="xs:string" />
     </xs:complexType>
 
-    <xs:complexType name="IndexList_Type">
+    <xs:complexType name="IndexEvaluatorList_Type">
         <xs:choice minOccurs="0" maxOccurs="unbounded">
-            <xs:element name="index" type="EvaluatorListEntry_Type" />
+            <xs:element name="IndexEvaluator" type="EvaluatorListEntry_Type" />
         </xs:choice>
     </xs:complexType>
 
@@ -109,8 +109,8 @@
 
     <xs:complexType name="EnsembleMembers_Type">
         <xs:choice minOccurs="1" maxOccurs="unbounded">
-            <xs:element name="member_list" type="MemberList_Type" />
-            <xs:element name="member_range" type="MemberRange_Type" />
+            <xs:element name="MemberList" type="MemberList_Type" />
+            <xs:element name="MemberRange" type="MemberRange_Type" />
         </xs:choice>
     </xs:complexType>
 
@@ -118,7 +118,7 @@
         <xs:complexContent>
             <xs:extension base="FieldmlObject_Type">
                 <xs:sequence>
-                    <xs:element name="members" type="EnsembleMembers_Type" minOccurs="1" maxOccurs="1" />
+                    <xs:element name="Members" type="EnsembleMembers_Type" minOccurs="1" maxOccurs="1" />
                 </xs:sequence>
                 <xs:attribute name="isComponentEnsemble" type="xs:boolean" use="optional" />
             </xs:extension>
@@ -137,10 +137,10 @@
         <xs:complexContent>
             <xs:extension base="FieldmlObject_Type">
                 <xs:sequence>
-                    <xs:element name="elements" type="EnsembleMembers_Type" minOccurs="1" maxOccurs="1" />
-                    <xs:element name="shapes" type="DefaultSimpleMap_Type" minOccurs="1" maxOccurs="1" />
+                    <xs:element name="Elements" type="EnsembleMembers_Type" minOccurs="1" maxOccurs="1" />
+                    <xs:element name="Shapes" type="DefaultSimpleMap_Type" minOccurs="1" maxOccurs="1" />
                 </xs:sequence>
-                <xs:attribute name="xi_component" type="xs:string" />
+                <xs:attribute name="xiComponent" type="xs:string" />
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>
@@ -149,7 +149,7 @@
         <xs:complexContent>
             <xs:extension base="FieldmlObject_Type">
                 <xs:sequence>
-                    <xs:element name="variables" type="VariableList_Type" minOccurs="0" maxOccurs="1" />
+                    <xs:element name="Variables" type="VariableList_Type" minOccurs="0" maxOccurs="1" />
                 </xs:sequence>
                 <xs:attribute name="valueType" type="xs:string" />
             </xs:extension>
@@ -172,7 +172,7 @@
         <xs:complexContent>
             <xs:extension base="FieldmlEvaluator_Type">
                 <xs:sequence>
-                    <xs:element name="binds" type="BindMap_Type" minOccurs="0" maxOccurs="1" />
+                    <xs:element name="Bindings" type="BindMap_Type" minOccurs="0" maxOccurs="1" />
                 </xs:sequence>
                 <xs:attribute name="evaluator" type="xs:string" />
             </xs:extension>
@@ -183,8 +183,8 @@
         <xs:complexContent>
             <xs:extension base="FieldmlEvaluator_Type">
                 <xs:sequence>
-                    <xs:element name="binds" type="BindMap_Type" minOccurs="0" maxOccurs="1" />
-                    <xs:element name="elementEvaluators" type="ElementMap_Type" minOccurs="0" maxOccurs="1" />
+                    <xs:element name="Bindings" type="BindMap_Type" minOccurs="0" maxOccurs="1" />
+                    <xs:element name="ElementEvaluators" type="ElementMap_Type" minOccurs="0" maxOccurs="1" />
                 </xs:sequence>
             </xs:extension>
         </xs:complexContent>
@@ -212,17 +212,17 @@
 
     <xs:complexType name="DataLocation_Type">
         <xs:choice>
-            <xs:element name="fileData" type="FileData_Type" />
-            <xs:element name="inlineData" type="InlineData_Type" />
+            <xs:element name="FileData" type="FileData_Type" />
+            <xs:element name="InlineData" type="InlineData_Type" />
         </xs:choice>
     </xs:complexType>
 
     <xs:complexType name="SemidenseData_Type">
         <xs:sequence>
-            <xs:element name="denseIndexes" type="IndexList_Type" minOccurs="0" maxOccurs="1" />
-            <xs:element name="sparseIndexes" type="IndexList_Type" minOccurs="0" maxOccurs="1" />
-            <xs:element name="dataLocation" type="DataLocation_Type" minOccurs="1" maxOccurs="1" />
-            <xs:element name="swizzle" type="Swizzle_Type" minOccurs="0" maxOccurs="1" />
+            <xs:element name="DenseIndexes" type="IndexEvaluatorList_Type" minOccurs="0" maxOccurs="1" />
+            <xs:element name="SparseIndexes" type="IndexEvaluatorList_Type" minOccurs="0" maxOccurs="1" />
+            <xs:element name="DataLocation" type="DataLocation_Type" minOccurs="1" maxOccurs="1" />
+            <xs:element name="Swizzle" type="Swizzle_Type" minOccurs="0" maxOccurs="1" />
         </xs:sequence>
     </xs:complexType>
 
@@ -240,8 +240,8 @@
         <xs:complexContent>
             <xs:extension base="FieldmlEvaluator_Type">
                 <xs:sequence>
-                    <xs:element name="binds" type="BindMap_Type" minOccurs="0" maxOccurs="1" />
-                    <xs:element name="componentEvaluators" type="ComponentEvaluators_Type" minOccurs="1" maxOccurs="1" />
+                    <xs:element name="Bindings" type="BindMap_Type" minOccurs="0" maxOccurs="1" />
+                    <xs:element name="ComponentEvaluators" type="ComponentEvaluators_Type" minOccurs="1" maxOccurs="1" />
                 </xs:sequence>
             </xs:extension>
         </xs:complexContent>
@@ -278,6 +278,6 @@
         </xs:complexContent>
     </xs:complexType>
     
-    <xs:element name="fieldml" type="Fieldml_Type"/>
+    <xs:element name="Fieldml" type="Fieldml_Type"/>
     
 </xs:schema>

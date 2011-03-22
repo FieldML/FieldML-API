@@ -237,7 +237,7 @@ void SaxHandler::onCharacters( const xmlChar *xmlChars, int count )
 
 
 RootSaxHandler::RootSaxHandler( const xmlChar *_elementName, SaxContext *_context, const int _location ) :
-    SaxHandler( elementName ),
+    SaxHandler( _elementName ),
     context( _context ),
     location( _location )
 {
@@ -628,7 +628,7 @@ SaxHandler * AbstractEvaluatorSaxHandler::onElementStart( const xmlChar *element
     {
         return new VariablesSaxHandler( this, elementName, attributes );
     }
-    else if( xmlStrcmp( elementName, BINDS_TAG ) == 0 )
+    else if( xmlStrcmp( elementName, BINDINGS_TAG ) == 0 )
     {
 //        return new BindsSaxHandler( this, elementName, attributes ); //TODO Add binds to abstract evaluators
     }
@@ -708,7 +708,7 @@ SaxHandler * ReferenceEvaluatorSaxHandler::onElementStart( const xmlChar *elemen
     {
         return new VariablesSaxHandler( this, elementName, attributes );
     }
-    else if( xmlStrcmp( elementName, BINDS_TAG ) == 0 )
+    else if( xmlStrcmp( elementName, BINDINGS_TAG ) == 0 )
     {
         return new BindsSaxHandler( this, elementName, attributes );
     }
@@ -795,13 +795,13 @@ SaxHandler * PiecewiseEvaluatorSaxHandler::onElementStart( const xmlChar *elemen
         {
             Fieldml_SetDefaultEvaluator( getRegionHandle(), handle, defaultHandle );
         }
-        return new IntObjectMapSaxHandler( this, elementName, ELEMENT_TAG, getRegion(), this, 0 );
+        return new IntObjectMapSaxHandler( this, elementName, ELEMENT_EVALUATOR_TAG, getRegion(), this, 0 );
     }
     else if( xmlStrcmp( elementName, VARIABLES_TAG ) == 0 )
     {
         return new VariablesSaxHandler( this, elementName, attributes );
     }
-    else if( xmlStrcmp( elementName, BINDS_TAG ) == 0 )
+    else if( xmlStrcmp( elementName, BINDINGS_TAG ) == 0 )
     {
         return new BindsSaxHandler( this, elementName, attributes );
     }
@@ -863,13 +863,13 @@ SaxHandler * AggregateEvaluatorSaxHandler::onElementStart( const xmlChar *elemen
         {
             Fieldml_SetDefaultEvaluator( getRegionHandle(), handle, defaultHandle );
         }
-        return new IntObjectMapSaxHandler( this, elementName, COMPONENT_TAG, getRegion(), this, 0 );
+        return new IntObjectMapSaxHandler( this, elementName, COMPONENT_EVALUATOR_TAG, getRegion(), this, 0 );
     }
     else if( xmlStrcmp( elementName, VARIABLES_TAG ) == 0 )
     {
         return new VariablesSaxHandler( this, elementName, attributes );
     }
-    else if( xmlStrcmp( elementName, BINDS_TAG ) == 0 )
+    else if( xmlStrcmp( elementName, BINDINGS_TAG ) == 0 )
     {
         return new BindsSaxHandler( this, elementName, attributes );
     }
@@ -1186,7 +1186,7 @@ IndexEvaluatorListSaxHandler::IndexEvaluatorListSaxHandler( SemidenseSaxHandler 
 
 SaxHandler *IndexEvaluatorListSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
-    if( xmlStrcmp( elementName, INDEX_TAG ) == 0 )
+    if( xmlStrcmp( elementName, INDEX_EVALUATOR_TAG ) == 0 )
     {
         FmlObjectHandle handle = attributes.getObjectAttribute( region, EVALUATOR_ATTRIB, FHT_UNKNOWN_EVALUATOR );
         // FmlObjectHandle setHandle = attributes.getObjectAttribute( region, ELEMENT_SEQUENCE_ATTRIB, FHT_UNKNOWN_ELEMENT_SEQUENCE );
