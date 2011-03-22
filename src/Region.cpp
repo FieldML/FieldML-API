@@ -44,6 +44,7 @@
 #include "string_const.h"
 #include "fieldml_structs.h"
 #include "fieldml_sax.h"
+#include "fieldml_library_0.3.h"
 
 using namespace std;
 
@@ -152,8 +153,15 @@ FieldmlRegion::FieldmlRegion( const string _location, const string _name, const 
 
     if( library.length() != 0 )
     {
-        string libraryFile = makeFilename( root, library );
-        parseFieldmlFile( libraryFile.c_str(), LIBRARY_LOCATION_HANDLE, this );
+        if( library == "library_0.3.xml" )
+        {
+            parseFieldmlString( FML_LIBRARY_0_3_STRING, "Internal library 0.3", LIBRARY_LOCATION_HANDLE, this );
+        }
+        else
+        {
+            string libraryFile = makeFilename( root, library );
+            parseFieldmlFile( libraryFile.c_str(), LIBRARY_LOCATION_HANDLE, this );
+        }
     }
 }
 

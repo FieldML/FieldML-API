@@ -125,7 +125,7 @@
 
   <EnsembleType name="library.localNodes.3d.cube3x3x3" isComponentEnsemble="true">
    <members>
-    <member_range min="1" max="8"/>
+    <member_range min="1" max="27"/>
    </members>
   </EnsembleType>
   <AbstractEvaluator name="library.localNodes.3d.cube3x3x3.variable" valueType="library.localNodes.3d.cube3x3x3"/>

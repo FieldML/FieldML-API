@@ -53,6 +53,87 @@ using namespace std;
 
 
 //========================================================================
+
+class SaxParser
+{
+public:
+    virtual int parse( xmlSAXHandlerPtr saxHandler, SaxContext *context ) = 0;
+    
+    virtual const char *getSource() = 0; 
+};
+
+//========================================================================
+
+class SaxFileParser :
+    public SaxParser
+{
+private:
+    const char *filename;
+    
+public:
+    SaxFileParser( const char *_filename );
+    
+    virtual int parse( xmlSAXHandlerPtr saxHandler, SaxContext *context );
+    
+    virtual const char *getSource();
+};
+
+
+SaxFileParser::SaxFileParser( const char *_filename ) :
+    filename( _filename )
+{
+}
+
+
+int SaxFileParser::parse( xmlSAXHandlerPtr saxHandler, SaxContext *context )
+{
+    return xmlSAXUserParseFile( saxHandler, context, filename );
+}
+
+
+const char *SaxFileParser::getSource()
+{
+    return filename;
+}
+
+//========================================================================
+
+class SaxStringParser :
+    public SaxParser
+{
+private:
+    const char *string;
+    
+    const char *stringDescription;
+    
+public:
+    SaxStringParser( const char *_string, const char *_stringDescription );
+    
+    virtual int parse( xmlSAXHandlerPtr saxHandler, SaxContext *context );
+    
+    virtual const char *getSource();
+};
+
+
+SaxStringParser::SaxStringParser( const char *_string, const char *_stringDescription ) :
+    string( _string ),
+    stringDescription( _stringDescription )
+{
+}
+
+
+int SaxStringParser::parse( xmlSAXHandlerPtr saxHandler, SaxContext *context )
+{
+    return xmlSAXUserParseMemory( saxHandler, context, string, strlen( string ) );
+}
+
+
+const char *SaxStringParser::getSource()
+{
+    return stringDescription;
+}
+
+//========================================================================
 //
 // SAX handlers
 //
@@ -286,21 +367,23 @@ static xmlSAXHandlerPtr SAX2Handler = &SAX2HandlerStruct;
 //
 //========================================================================
 
-FieldmlRegion *parseFieldmlFile( const char *filename, const int location, FieldmlRegion *region )
+
+static FieldmlRegion *parseFieldml( SaxParser *parser, const int location, FieldmlRegion *region )
 {
     int res;
     SaxContext context;
     SaxHandler *rootHandler = new RootSaxHandler( NULL, &context, location );
     
     context.region = region;
-    context.source = filename;
+    context.source = parser->getSource();
     context.handler = rootHandler;
 
     LIBXML_TEST_VERSION
 
     xmlSubstituteEntitiesDefault( 1 );
+
+    res = parser->parse( SAX2Handler, &context );
     
-    res = xmlSAXUserParseFile( SAX2Handler, &context, filename );
     if( res != 0 )
     {
         context.region->logError( "xmlSAXUserParseFile returned error" );
@@ -312,4 +395,20 @@ FieldmlRegion *parseFieldmlFile( const char *filename, const int location, Field
     }
     
     return context.region;
+}
+
+
+FieldmlRegion *parseFieldmlFile( const char *filename, const int location, FieldmlRegion *region )
+{
+    SaxFileParser parser( filename );
+    
+    return parseFieldml( &parser, location, region );
+}
+
+
+FieldmlRegion *parseFieldmlString( const char *string, const char *stringDescription, const int location, FieldmlRegion *region )
+{
+    SaxStringParser parser( string, stringDescription );
+    
+    return parseFieldml( &parser, location, region );
 }

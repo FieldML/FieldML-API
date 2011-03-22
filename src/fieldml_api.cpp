@@ -2918,20 +2918,30 @@ int Fieldml_GetElementEntries( FmlHandle handle, FmlObjectHandle setHandle, cons
 
     if( ( object->type == FHT_ELEMENT_SEQUENCE ) || ( object->type == FHT_ENSEMBLE_TYPE ) || ( object->type == FHT_MESH_TYPE ) )
     {
+        int ensembleCount = Fieldml_GetElementCount( handle, setHandle );
+        if( firstIndex > ensembleCount )
+        {
+            region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );  
+            return -1;
+        }
+
         int actualCount = 0;
-        for( int i = 0; i < count; i++ )
+        if( count + firstIndex <= ensembleCount + 1 )
+        {
+            actualCount = count;
+        }
+        else
+        {
+            actualCount = ( ensembleCount + 1 ) - firstIndex;
+        }
+        
+        for( int i = 0; i < actualCount; i++ )
         {
             elements[i] = Fieldml_GetElementEntry( handle, setHandle, firstIndex + i );
             if( elements[i] == -1 )
             {
                 break;
             }
-            actualCount++;
-        }
-        
-        if( actualCount == 0 )
-        {
-            return -1;
         }
 
         region->setRegionError( FML_ERR_NO_ERROR );

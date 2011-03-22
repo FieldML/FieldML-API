@@ -39,15 +39,9 @@
  *
  */
 
-#ifndef H_FIELDMLSAX
-#define H_FIELDMLSAX
+#ifndef H_FIELDML_LIBRARY_0_3_H
+#define H_FIELDML_LIBRARY_0_3_H
 
-#include "fieldml_structs.h"
+extern const char * const FML_LIBRARY_0_3_STRING;
 
-#include "Region.h"
-
-FieldmlRegion *parseFieldmlFile( const char *filename, const int location, FieldmlRegion *region );
-
-FieldmlRegion *parseFieldmlString( const char *string, const char *stringDescription, const int location, FieldmlRegion *region );
-
-#endif // H_FIELDMLSAX
+#endif // H_FIELDML_LIBRARY_0_3_H
