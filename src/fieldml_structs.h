@@ -130,7 +130,7 @@ class ReferenceEvaluator :
     public Evaluator
 {
 public:
-    const FmlObjectHandle remoteEvaluator;
+    const FmlObjectHandle sourceEvaluator;
 
     SimpleMap<FmlObjectHandle, FmlObjectHandle> binds;
 

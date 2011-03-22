@@ -1792,7 +1792,7 @@ FmlObjectHandle Fieldml_GetElementEvaluator( FmlHandle handle, FmlObjectHandle o
 }
 
 
-FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlHandle handle, const char * name, FmlObjectHandle remoteEvaluator )
+FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlHandle handle, const char * name, FmlObjectHandle sourceEvaluator )
 {
     FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
     if( region == NULL )
@@ -1800,16 +1800,16 @@ FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlHandle handle, const char *
         return FML_INVALID_HANDLE;
     }
 
-    FmlObjectHandle valueType = Fieldml_GetValueType( handle, remoteEvaluator );
+    FmlObjectHandle valueType = Fieldml_GetValueType( handle, sourceEvaluator );
 
-    ReferenceEvaluator *referenceEvaluator = new ReferenceEvaluator( name, LOCAL_LOCATION_HANDLE, remoteEvaluator, valueType );
+    ReferenceEvaluator *referenceEvaluator = new ReferenceEvaluator( name, LOCAL_LOCATION_HANDLE, sourceEvaluator, valueType );
     
     region->setRegionError( FML_ERR_NO_ERROR );
     return region->addObject( referenceEvaluator );
 }
 
 
-FmlObjectHandle Fieldml_GetReferenceRemoteEvaluator( FmlHandle handle, FmlObjectHandle objectHandle )
+FmlObjectHandle Fieldml_GetReferenceSourceEvaluator( FmlHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
     if( region == NULL )
@@ -1827,7 +1827,7 @@ FmlObjectHandle Fieldml_GetReferenceRemoteEvaluator( FmlHandle handle, FmlObject
     if( object->type == FHT_REFERENCE_EVALUATOR )
     {
         ReferenceEvaluator *referenceEvaluator = (ReferenceEvaluator *)object;
-        return referenceEvaluator->remoteEvaluator;
+        return referenceEvaluator->sourceEvaluator;
     }
     
     region->setRegionError( FML_ERR_INVALID_OBJECT );
@@ -2910,6 +2910,10 @@ int Fieldml_GetElementEntries( FmlHandle handle, FmlObjectHandle setHandle, cons
         return -1;
     }
 
+    if( firstIndex < 1 )
+    {
+        region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );  
+    }
     if( count < 1 )
     {
         region->setRegionError( FML_ERR_INVALID_PARAMETER_5 );  

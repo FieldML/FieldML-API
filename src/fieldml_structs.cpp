@@ -99,7 +99,7 @@ Evaluator::Evaluator( const string _name, int _region, FieldmlHandleType _type, 
 
 ReferenceEvaluator::ReferenceEvaluator( const string _name, int _region, FmlObjectHandle _evaluator, FmlObjectHandle _valueType ) :
     Evaluator( _name, _region, FHT_REFERENCE_EVALUATOR, _valueType ),
-    remoteEvaluator( _evaluator ),
+    sourceEvaluator( _evaluator ),
     binds( FML_INVALID_HANDLE )
 {
 }

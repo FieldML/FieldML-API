@@ -178,8 +178,11 @@ extern "C" {
 FmlHandle Fieldml_CreateFromFile( const char *filename );
 
 /**
- *      Creates an empty FieldML handle. The built-in library is still implicitly
- *      included. Data files will be created at the given location.
+ *      Creates an empty FieldML handle. If libraryLocation is "library_0.3.xml", the internal 
+ *      library will be used, otherwise libraryLocation will be interpreted as the relative
+ *      location of a FieldML file, and parsed as part of the FieldML handle's creation.
+ *      
+ *      Data files will be created at the given location.
  */
 FmlHandle Fieldml_Create( const char *location, const char *name, const char *libraryLocation );
 
@@ -203,7 +206,7 @@ int Fieldml_WriteFile( FmlHandle handle, const char *filename );
 
 /**
  *      Frees all resources associated with the given handle. The handle should
- *      be discarded after this call.
+ *      not be used after this call.
  */
 void Fieldml_Destroy( FmlHandle handle );
 
@@ -218,14 +221,16 @@ int Fieldml_CopyName( FmlHandle handle, char *buffer, int bufferLength );
 /**
  *      Returns the name of the region's library.
  *      
- *      Currently, each region may only use a single library, which is specified as a
- *      filename relative to the enclosing file's location.
+ *      Currently, each region may only use a single library, which is specified
+ *      either as the string "library_0.3.xml" or as a filename relative to the
+ *      enclosing file's location.
  */
 const char * Fieldml_GetLibraryName( FmlHandle handle );
 int Fieldml_CopyLibraryName( FmlHandle handle, char *buffer, int bufferLength );
 
 /**
- *      Returns the number of parsing errors encountered by the given handle during parsing.
+ *      Returns the number of parsing errors encountered by the given handle
+ *      during XML parsing.
  */
 int Fieldml_GetErrorCount( FmlHandle handle );
 
@@ -275,7 +280,10 @@ FmlObjectHandle Fieldml_GetObjectByName( FmlHandle handle, const char * name );
 
 
 /**
- *      Returns 1 is the given object is local, 0 if not, or -1 on error.
+ *      Returns 1 if the given object is local, 0 if not, or -1 on error.
+ *      
+ *      Note that imported objects are not local, and only local objects
+ *      get serialized by Fieldml_WriteFile.
  */
 int Fieldml_IsObjectLocal( FmlHandle handle, FmlObjectHandle objectHandle );
 
@@ -328,7 +336,8 @@ FmlObjectHandle Fieldml_CreateContinuousType( FmlHandle handle, const char * nam
  *      Creates a mesh type with the given name, and with the given dimensionality.
  *      Each mesh has its own unique element and xi type, which can be accessed by the relevant functions.
  *      Because the xi and element types have a name based on the mesh name, care must be taken to ensure
- *      that neither the mesh's name, nor it's element or xi type names are already in use. 
+ *      that neither the mesh's name, nor it's element or xi type names are already in use. If they are,
+ *      this function will return an error.
  */
 FmlObjectHandle Fieldml_CreateMeshType( FmlHandle handle, const char * name, FmlObjectHandle xiComponentHandle );
 
@@ -391,19 +400,6 @@ int Fieldml_IsEnsembleComponentType( FmlHandle handle, FmlObjectHandle objectHan
 
 
 /**
- * Returns the names of the elements in the given ensemble type. For now, the only supported element names are
- * positive integers.
- * 
- * NOTE: If the bounds are contiguous, the names will simply be 1, 2, 3... n. 
- */
-//NYI int Fieldml_GetEnsembleTypeElementNames( FmlHandle handle, FmlObjectHandle objectHandle, const int *array, int arrayLength );
-
-
-
-
-
-
-/**
      Returns the value type of the given evaluator.
  */
 FmlObjectHandle Fieldml_GetValueType( FmlHandle handle, FmlObjectHandle objectHandle );
@@ -426,9 +422,9 @@ FmlObjectHandle Fieldml_CreateExternalEvaluator( FmlHandle handle, const char *n
 
 /**
  * Creates a new parameter set. A parameter set contains a store of literal values, indexed by a set
- * of ensemble-valued evaluators. The format and location of the store is intended to be very flexible, and include the ability
- * to describe 3rd-party formats such as HDF5, and allow for locations that refer to inline data, as well as
- * files on the local filesystem, or over the network.
+ * of ensemble-valued evaluators. The format and location of the store is intended to be very flexible,
+ * and include the ability to describe 3rd-party formats such as HDF5, and allow for locations that
+ * refer to inline data, as well as files on the local filesystem, or over the network.
  */
 FmlObjectHandle Fieldml_CreateParametersEvaluator( FmlHandle handle, const char *name, FmlObjectHandle valueType );
 
@@ -515,10 +511,13 @@ DataDescriptionType Fieldml_GetParameterDataDescription( FmlHandle handle, FmlOb
 
 
 /**
- * Adds an index evaluator to the given parameter set's semidense data description.
+ * Adds a dense index evaluator to the given parameter set's semidense data description.
  */
 int Fieldml_AddDenseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle, FmlObjectHandle setHandle );
 
+/**
+ * Adds a sparse index evaluator to the given parameter set's semidense data description.
+ */
 int Fieldml_AddSparseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle );
 
 /**
@@ -537,18 +536,24 @@ FmlObjectHandle Fieldml_GetSemidenseIndexEvaluator( FmlHandle handle, FmlObjectH
 
 /**
  * Sets the swizzle indexes for the given parameter set. The swizzle is only applied to the innermost dense index.
+ * 
+ * NOTE: Swizzles are an experiment feature, and are likely to be removed.
  */
 int Fieldml_SetSwizzle( FmlHandle handle, FmlObjectHandle objectHandle, const int *buffer, int count );
 
 
 /**
  * Gets the number of swizzle indexes for the given parameter set, or zero if no swizzle is defined.
+ * 
+ * NOTE: Swizzles are an experiment feature, and are likely to be removed.
  */
 int Fieldml_GetSwizzleCount( FmlHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
  * Returns the swizzle indexes, if present.
+ * 
+ * NOTE: Swizzles are an experiment feature, and are likely to be removed.
  */
 const int *Fieldml_GetSwizzleData( FmlHandle handle, FmlObjectHandle objectHandle );
 int Fieldml_CopySwizzleData( FmlHandle handle, FmlObjectHandle objectHandle, int *buffer, int bufferLength );
@@ -564,8 +569,9 @@ FmlObjectHandle Fieldml_CreatePiecewiseEvaluator( FmlHandle handle, const char *
 
 /**
  * Creates a new aggregate evaluator.
- * Evaluators must all be scalar continuous. The value is obtained by aggregating the scalar evaluators over the
- * value domain's component ensemble. There must be an entry for each index.
+ * The aggregate evaluator's index evaluators must all be scalar continuous.
+ * The value is obtained by aggregating the scalar evaluators over the
+ * value domain's component ensemble. There must be an entry (or a default) for each index value.
  */
 FmlObjectHandle Fieldml_CreateAggregateEvaluator( FmlHandle handle, const char * name, FmlObjectHandle valueType );
 
@@ -577,23 +583,28 @@ FmlObjectHandle Fieldml_CreateAggregateEvaluator( FmlHandle handle, const char *
  */
 int Fieldml_SetIndexEvaluator( FmlHandle handle, FmlObjectHandle valueType, int index, FmlObjectHandle indexHandle );
 
-
+/*
+ * Experimental.
+ */
+/*
 int Fieldml_GetSemidenseIndexSet( FmlHandle handle, FmlObjectHandle parametersHandle, int index );
+*/
 
-
+/*
+ * Experimental.
+ */
+/*
 int Fieldml_SetSemidenseIndexSet( FmlHandle handle, FmlObjectHandle parametersHandle, int index, FmlObjectHandle setHandle );
-
+*/
 
 /**
- * Sets the default evaluator for the given piecewise evaluator.
- * 
- * NOTE: There's probably a good reason for not allowing aggregate evaluators to have defaults.
+ * Sets the default evaluator for the given piecewise or aggregate evaluator.
  */
 int Fieldml_SetDefaultEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle evaluator );
 
 
 /**
- * Returns the default evaluator for the given piecewise evaluator.
+ * Returns the default evaluator for the given piecewise or aggregate evaluator.
  */
 int Fieldml_GetDefaultEvaluator( FmlHandle handle, FmlObjectHandle objectHandle );
 
@@ -637,9 +648,9 @@ FmlObjectHandle Fieldml_GetElementEvaluator( FmlHandle handle, FmlObjectHandle o
 /**
     Returns the number of indexes used by the given evaluator.
     
-    NOTE: Only defined for piecewise and parameter evaluators.
+    NOTE: Only defined for piecewise, aggregate and parameter evaluators.
     
-    NOTE: For piecewise evalutors, this is currently always one. For parameter evaluators,
+    NOTE: For piecewise or aggreate evaluators, this is currently always one. For parameter evaluators,
     it depends on the data store.
  */
 int Fieldml_GetIndexCount( FmlHandle handle, FmlObjectHandle objectHandle );
@@ -648,7 +659,7 @@ int Fieldml_GetIndexCount( FmlHandle handle, FmlObjectHandle objectHandle );
 /**
  *  Returns the evaluator of the nth index used by the given evaluator.
  *  
- *  NOTE: Only defined for piecewise and parameter evaluators.
+ *  NOTE: Only defined for piecewise, aggregate and parameter evaluators.
  */
 FmlObjectHandle Fieldml_GetIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int indexIndex );
 
@@ -657,13 +668,13 @@ FmlObjectHandle Fieldml_GetIndexEvaluator( FmlHandle handle, FmlObjectHandle obj
  * Creates a reference evaluator. Reference evaluators delegate their evaluation to another evaluator, and may bind
  * domains and evaluators before doing so.
  */
-FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlHandle handle, const char * name, FmlObjectHandle remoteEvaluator );
+FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlHandle handle, const char * name, FmlObjectHandle sourceEvaluator );
 
 
 /**
- * Gets the remote evaluator which the given evaluator references.
+ * Gets the source evaluator which the given evaluator references.
  */
-FmlObjectHandle Fieldml_GetReferenceRemoteEvaluator( FmlHandle handle, FmlObjectHandle objectHandle );
+FmlObjectHandle Fieldml_GetReferenceSourceEvaluator( FmlHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
@@ -703,7 +714,7 @@ FmlObjectHandle Fieldml_GetBindVariable( FmlHandle handle, FmlObjectHandle objec
 
 
 /**
- *  Returns the remote object used by the nth bind of the given evaluator. 
+ *  Returns the source evaluator used by the nth bind of the given evaluator. 
  */
 FmlObjectHandle Fieldml_GetBindEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int bindIndex );
 
@@ -715,37 +726,39 @@ FmlObjectHandle Fieldml_GetBindByVariable( FmlHandle handle, FmlObjectHandle obj
 
 
 /**
- * Create a new element sequence of the given ensemble type
+ * Experimental.
  */
+/*
 FmlObjectHandle Fieldml_CreateEnsembleElementSequence( FmlHandle handle, const char * name, FmlObjectHandle valueType );
-
+*/
 
 /**
- * Add the given element indexes to the given element set
+ * Add the given elements to the given ensemble.
  */
 int Fieldml_AddEnsembleElements( FmlHandle handle, FmlObjectHandle setHandle, const int * elements, const int elementCount );
 
 
 /**
- * Add the given element indexes to the given element set
+ * Add the given element range to the given ensemble.
  */
 int Fieldml_AddEnsembleElementRange( FmlHandle handle, FmlObjectHandle objectHandle, const int minElement, const int maxElement, const int stride );
 
 
 /**
- * Get the number of elements in the given ensemble/element sequence
+ * Get the number of elements in the given ensemble
  */
 int Fieldml_GetElementCount( FmlHandle handle, FmlObjectHandle setHandle );
 
 
 /**
- * Get the nth element index from the given element set, or -1 on error.
+ * Get the nth element from the given ensemble, or -1 on error.
  */
 int Fieldml_GetElementEntry( FmlHandle handle, FmlObjectHandle setHandle, const int index );
 
 
 /**
- * Get n element indexes from the given offset
+ * Get n element from the given offset. Returns the number of elements actually retrieved, as this may be less
+ * than the number requested. 
  */
 int Fieldml_GetElementEntries( FmlHandle handle, FmlObjectHandle setHandle, const int firstIndex, int * elements, const int count );
 

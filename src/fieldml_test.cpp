@@ -249,7 +249,7 @@ void testRead( const char * filename )
         
         fprintf( stdout, "  %d: %s (%s)\n", i, Fieldml_GetObjectName( handle, oHandle ),
             Fieldml_GetObjectName( handle, Fieldml_GetValueType( handle, oHandle ) ) );
-        fprintf( stdout, "    Remote name: %s\n", Fieldml_GetObjectName( handle, Fieldml_GetReferenceRemoteEvaluator( handle, oHandle ) ) );
+        fprintf( stdout, "    Source name: %s\n", Fieldml_GetObjectName( handle, Fieldml_GetReferenceSourceEvaluator( handle, oHandle ) ) );
         
         count2 = Fieldml_GetBindCount( handle, oHandle );
         for( j = 1; j <= count2; j++ )

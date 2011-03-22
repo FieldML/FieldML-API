@@ -342,7 +342,7 @@ SaxHandler *RegionSaxHandler::onElementStart( const xmlChar *elementName, SaxAtt
     
     if( xmlStrcmp( elementName, ELEMENT_SEQUENCE_TAG ) == 0 )
     {
-        return new ElementSequenceSaxHandler( this, elementName, attributes );
+//NYI        return new ElementSequenceSaxHandler( this, elementName, attributes );
     }
 
     if( xmlStrcmp( elementName, ABSTRACT_EVALUATOR_TAG ) == 0 )
@@ -540,6 +540,7 @@ SaxHandler *MeshTypeSaxHandler::onElementStart( const xmlChar *elementName, SaxA
 ElementSequenceSaxHandler::ElementSequenceSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
     FieldmlObjectSaxHandler( _parent, elementName )
 {
+#if 0
     const char *name = attributes.getAttribute( NAME_ATTRIB );
     if( name == NULL )
     {
@@ -561,6 +562,7 @@ ElementSequenceSaxHandler::ElementSequenceSaxHandler( RegionSaxHandler *_parent,
         return;
     }
     getRegion()->setLocationHandle( handle, getLocation() );
+#endif //NYI
 }
 
 
@@ -683,14 +685,14 @@ ReferenceEvaluatorSaxHandler::ReferenceEvaluatorSaxHandler( RegionSaxHandler *_p
         return;
     }
     
-    FmlObjectHandle remoteEvaluator = attributes.getObjectAttribute( getRegion(), EVALUATOR_ATTRIB, FHT_UNKNOWN_EVALUATOR );
-    if( remoteEvaluator == FML_INVALID_HANDLE )
+    FmlObjectHandle sourceEvaluator = attributes.getObjectAttribute( getRegion(), EVALUATOR_ATTRIB, FHT_UNKNOWN_EVALUATOR );
+    if( sourceEvaluator == FML_INVALID_HANDLE )
     {
-        getRegion()->logError( "ReferenceEvaluator has no remote evaluator", name );
+        getRegion()->logError( "ReferenceEvaluator has no source evaluator", name );
         return;
     }
     
-    handle = Fieldml_CreateReferenceEvaluator( getRegionHandle(), name, remoteEvaluator );
+    handle = Fieldml_CreateReferenceEvaluator( getRegionHandle(), name, sourceEvaluator );
     if( handle == FML_INVALID_HANDLE )
     {
         getRegion()->logError( "ReferenceEvaluator creation failed", name );
@@ -1187,7 +1189,9 @@ SaxHandler *IndexEvaluatorListSaxHandler::onElementStart( const xmlChar *element
     if( xmlStrcmp( elementName, INDEX_TAG ) == 0 )
     {
         FmlObjectHandle handle = attributes.getObjectAttribute( region, EVALUATOR_ATTRIB, FHT_UNKNOWN_EVALUATOR );
-        FmlObjectHandle setHandle = attributes.getObjectAttribute( region, ELEMENT_SEQUENCE_ATTRIB, FHT_UNKNOWN_ELEMENT_SEQUENCE );        if( handle == FML_INVALID_HANDLE )
+        // FmlObjectHandle setHandle = attributes.getObjectAttribute( region, ELEMENT_SEQUENCE_ATTRIB, FHT_UNKNOWN_ELEMENT_SEQUENCE );
+        FmlObjectHandle setHandle = FML_INVALID_HANDLE;
+        if( handle == FML_INVALID_HANDLE )
         {
             parent->parent->getRegion()->logError( "Invalid index in semi dense data" );
         }

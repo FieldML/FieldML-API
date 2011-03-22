@@ -421,7 +421,7 @@ static int writeReferenceEvaluator( xmlTextWriterPtr writer, FmlHandle handle, F
     xmlTextWriterStartElement( writer, REFERENCE_EVALUATOR_TAG );
     
     writeObjectName( writer, NAME_ATTRIB, handle, object );
-    writeObjectName( writer, EVALUATOR_ATTRIB, handle, Fieldml_GetReferenceRemoteEvaluator( handle, object ) );
+    writeObjectName( writer, EVALUATOR_ATTRIB, handle, Fieldml_GetReferenceSourceEvaluator( handle, object ) );
 
     writeVariables( writer, handle, object );
     
@@ -498,13 +498,14 @@ static void writeSemidenseIndexes( xmlTextWriterPtr writer, FmlHandle handle, Fm
             }
             xmlTextWriterStartElement( writer, INDEX_TAG );
             xmlTextWriterWriteAttribute( writer, EVALUATOR_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, index ) );
-            
+
+#if 0
             FmlObjectHandle set = Fieldml_GetSemidenseIndexSet( handle, object, i );
             if( set != FML_INVALID_HANDLE )
             {
                 xmlTextWriterWriteAttribute( writer, ELEMENT_SEQUENCE_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, set ) );
             }
-            
+#endif //NYI
             xmlTextWriterEndElement( writer );
         }
 
@@ -639,8 +640,8 @@ static int writeFieldmlObject( xmlTextWriterPtr writer, FmlHandle handle, FmlObj
         return writeEnsembleType( writer, handle, object );
     case FHT_MESH_TYPE:
         return writeMeshType( writer, handle, object );
-    case FHT_ELEMENT_SEQUENCE:
-        return writeElementSequence( writer, handle, object );
+//NYI    case FHT_ELEMENT_SEQUENCE:
+//        return writeElementSequence( writer, handle, object );
     case FHT_ABSTRACT_EVALUATOR:
         return writeAbstractEvaluator( writer, handle, object );
     case FHT_EXTERNAL_EVALUATOR:
