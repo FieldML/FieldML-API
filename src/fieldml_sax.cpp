@@ -376,11 +376,11 @@ static FieldmlRegion *parseFieldml( SaxParser *parser, const int location, Field
 {
     int res;
     SaxContext context;
-    SaxHandler *rootHandler = new RootSaxHandler( NULL, &context, location );
+    RootSaxHandler rootHandler( NULL, &context, location );
     
     context.region = region;
     context.source = parser->getSource();
-    context.handler = rootHandler;
+    context.handler = &rootHandler;
 
     LIBXML_TEST_VERSION
 
@@ -393,7 +393,7 @@ static FieldmlRegion *parseFieldml( SaxParser *parser, const int location, Field
         context.region->logError( "xmlSAXUserParseFile returned error" );
     }
 
-    if( context.handler != rootHandler )
+    if( context.handler != &rootHandler )
     {
         context.region->logError( "Parser state not empty" );
     }

@@ -64,6 +64,8 @@ public:
     int intValue;
     
     FieldmlObject( const std::string _name, int _locationHandle, FieldmlHandleType _type );
+    
+    virtual ~FieldmlObject();
 };
 
 
@@ -184,6 +186,8 @@ class DataLocation
 {
 public:
     const DataLocationType locationType;
+    
+    virtual ~DataLocation();
 
 protected:
     DataLocation( DataLocationType _locationType );
@@ -206,6 +210,8 @@ public:
     int length;
     
     InlineDataLocation();
+    
+    virtual ~InlineDataLocation();
 };
 
 
@@ -225,6 +231,8 @@ class DataDescription
 {
 public:
     const DataDescriptionType descriptionType;
+    
+    virtual ~DataDescription();
 
 protected:
     DataDescription( DataDescriptionType _descriptionType );
@@ -253,6 +261,8 @@ public:
     DataLocation *dataLocation;
     
     SemidenseDataDescription();
+    
+    virtual ~SemidenseDataDescription();
 };
 
 
@@ -263,6 +273,8 @@ public:
     DataDescription *dataDescription;
     
     ParameterEvaluator( const std::string _name, int _region, FmlObjectHandle _valueType );
+    
+    virtual ~ParameterEvaluator();
 };
 
 const char *Fieldml_GetName( FmlHandle handle );

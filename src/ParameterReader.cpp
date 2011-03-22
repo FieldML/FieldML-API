@@ -94,7 +94,9 @@ public:
 
     int readNextIndexSet( int *indexValues );
     int readIntValues( int *values, int count );
-    int readDoubleValues( double *value, int count ); 
+    int readDoubleValues( double *value, int count );
+    
+    virtual ~SemidenseParameterReader();
 };
 
 ParameterReader::ParameterReader( FmlInputStream _stream, DataFileType _dataType ) :
@@ -388,6 +390,13 @@ int SemidenseParameterReader::readDoubleValues( double *valueBuffer, int count )
     }
     
     return readCount;
+}
+
+
+SemidenseParameterReader::~SemidenseParameterReader()
+{
+    delete doubleSliceBuffer;
+    delete intSliceBuffer;
 }
 
 

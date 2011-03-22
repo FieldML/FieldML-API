@@ -60,6 +60,11 @@ FieldmlObject::FieldmlObject( const string _name, int _locationHandle, FieldmlHa
 }
 
 
+FieldmlObject::~FieldmlObject()
+{
+}
+
+
 ElementSequence::ElementSequence( const string _name, int _region, FmlObjectHandle _elementType ) :
     FieldmlObject( _name, _region, FHT_ELEMENT_SEQUENCE ),
     elementType( _elementType )
@@ -124,6 +129,12 @@ ParameterEvaluator::ParameterEvaluator( const string _name, int _region, FmlObje
 }
 
 
+ParameterEvaluator::~ParameterEvaluator()
+{
+    delete dataDescription;
+}
+
+
 PiecewiseEvaluator::PiecewiseEvaluator( const string _name, int _region, FmlObjectHandle _valueType ) :
     Evaluator( _name, _region, FHT_PIECEWISE_EVALUATOR, _valueType ),
     binds( FML_INVALID_HANDLE ),
@@ -144,6 +155,11 @@ AggregateEvaluator::AggregateEvaluator( const string _name, int _region, FmlObje
 
 DataLocation::DataLocation( DataLocationType _locationType ) :
     locationType( _locationType )
+{
+}
+
+
+DataLocation::~DataLocation()
 {
 }
 
@@ -172,8 +188,19 @@ InlineDataLocation::InlineDataLocation() :
 }
 
 
+InlineDataLocation::~InlineDataLocation()
+{
+    delete data;
+}
+
+
 DataDescription::DataDescription( DataDescriptionType _descriptionType ) :
     descriptionType( _descriptionType )
+{
+}
+
+
+DataDescription::~DataDescription()
 {
 }
 
@@ -190,4 +217,10 @@ SemidenseDataDescription::SemidenseDataDescription() :
 {
     swizzle = NULL;
     swizzleCount = 0;
+}
+
+
+SemidenseDataDescription::~SemidenseDataDescription()
+{
+    delete dataLocation;
 }
