@@ -181,7 +181,7 @@ void FieldmlRegion::finalize()
         {
             logError( "Unknown type: ", object->name.c_str() );
         }
-        else if( object->type == FHT_UNKNOWN_ELEMENT_SET )
+        else if( object->type == FHT_UNKNOWN_ELEMENT_SEQUENCE )
         {
             logError( "Unknown element set: ", object->name.c_str() );
         }
@@ -307,7 +307,6 @@ FmlObjectHandle FieldmlRegion::addObject( FieldmlObject *object )
     
     if( doSwitch )
     {
-        printf(" YOINK\n" );
         objects[handle] = object;
         delete oldObject;
         

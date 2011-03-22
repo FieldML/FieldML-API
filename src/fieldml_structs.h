@@ -47,39 +47,12 @@
 
 #include "fieldml_api.h"
 #include "SimpleMap.h"
+#include "SimpleBitset.h"
 
 extern const int INVALID_LOCATION_HANDLE;
 extern const int LOCAL_LOCATION_HANDLE;
 extern const int LIBRARY_LOCATION_HANDLE;
 extern const int VIRTUAL_LOCATION_HANDLE;
-
-class TypeBounds
-{
-public:
-    const TypeBoundsType boundsType;
-    
-protected:   
-    TypeBounds( TypeBoundsType _boundsType );
-};
-
-
-class UnknownBounds :
-    public TypeBounds
-{
-public:
-    UnknownBounds();
-};
-
-
-class ContiguousBounds :
-    public TypeBounds
-{
-public:
-    const int count;
-    
-    ContiguousBounds( const int _count );
-};
-
 
 class FieldmlObject
 {
@@ -94,32 +67,27 @@ public:
 };
 
 
-class ElementSet :
-    public FieldmlObject
-{
-public:
-    const FmlObjectHandle valueType;
-
-    //NOTE Can't use std::bitset, as the size cannot be set at compile-time.
-    //TODO Encapsulate all the relevant logic into a custom bitset class that wraps vector<bool>
-    std::vector<int> presentElements;
-    int maxElement;
-    int lastSetCount;
-    int lastIndex;
-    
-    ElementSet( const std::string _name, int _locationHandle, FmlObjectHandle _valueType );
-};
-
-
 class EnsembleType :
     public FieldmlObject
 {
 public:
     const bool isComponentEnsemble;
 
-    TypeBounds *bounds;
+    SimpleBitset members;
     
     EnsembleType( const std::string _name, int _locationHandle, bool _isComponentEnsemble );
+};
+
+
+class ElementSequence :
+    public FieldmlObject
+{
+public:
+    const FmlObjectHandle elementType;
+
+    SimpleBitset members;
+    
+    ElementSequence( const std::string _name, int _locationHandle, FmlObjectHandle _componentType );
 };
 
 

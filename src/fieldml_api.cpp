@@ -47,7 +47,6 @@
 #include "fieldml_sax.h"
 #include "fieldml_structs.h"
 #include "fieldml_write.h"
-#include "fieldml_validate.h"
 #include "string_const.h"
 
 #include "ParameterReader.h"
@@ -255,7 +254,11 @@ static int cappedCopyAndFree( const char *source, char *buffer, int bufferLength
 
 static InlineDataLocation *getInlineDataLocation( FieldmlRegion *region, FmlObjectHandle objectHandle )
 {
-    SemidenseDataDescription *semidense = getSemidenseDataDescription( region, objectHandle ); 
+    SemidenseDataDescription *semidense = getSemidenseDataDescription( region, objectHandle );
+    if( semidense == NULL )
+    {
+        return NULL;
+    }
 
     if( semidense->dataLocation->locationType == LOCATION_INLINE )
     {
@@ -271,7 +274,11 @@ static InlineDataLocation *getInlineDataLocation( FieldmlRegion *region, FmlObje
 
 static FileDataLocation *getFileDataLocation( FieldmlRegion *region, FmlObjectHandle objectHandle )
 {
-    SemidenseDataDescription *semidense = getSemidenseDataDescription( region, objectHandle ); 
+    SemidenseDataDescription *semidense = getSemidenseDataDescription( region, objectHandle );
+    if( semidense == NULL )
+    {
+        return NULL;
+    }
 
     if( semidense->dataLocation->locationType == LOCATION_FILE )
     {
@@ -640,25 +647,6 @@ FieldmlHandleType Fieldml_GetObjectType( FmlHandle handle, FmlObjectHandle objec
 }
 
 
-int Fieldml_ValidateObject( FmlHandle handle, FmlObjectHandle objectHandle )
-{
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
-    {
-        return FML_ERR_UNKNOWN_HANDLE;
-    }
-        
-    FieldmlObject *object = region->getObject( objectHandle );
-
-    if( object == NULL )
-    {
-        return region->getLastError();
-    }
-    
-    return validateFieldmlObject( region, object );
-}
-
-
 FmlObjectHandle Fieldml_GetTypeComponentEnsemble( FmlHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
@@ -708,37 +696,11 @@ int Fieldml_GetTypeComponentCount( FmlHandle handle, FmlObjectHandle objectHandl
         return -1;
     }
     
-    return Fieldml_GetEnsembleTypeElementCount( handle, componentTypeHandle );
+    return Fieldml_GetElementCount( handle, componentTypeHandle );
 }
 
 
-TypeBoundsType Fieldml_GetBoundsType( FmlHandle handle, FmlObjectHandle objectHandle )
-{
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
-    {
-        return BOUNDS_UNKNOWN;
-    }
-        
-    FieldmlObject *object = region->getObject( objectHandle );
-
-    if( object == NULL ) 
-    {
-        return BOUNDS_UNKNOWN;
-    }
-
-    if( object->type == FHT_ENSEMBLE_TYPE )
-    {
-        EnsembleType *ensembleType = (EnsembleType*)object;
-        return ensembleType->bounds->boundsType;
-    }
-    
-    region->setRegionError( FML_ERR_INVALID_OBJECT );  
-    return BOUNDS_UNKNOWN;
-}
-
-
-int Fieldml_GetEnsembleTypeElementCount( FmlHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetElementCount( FmlHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
     if( region == NULL )
@@ -756,15 +718,19 @@ int Fieldml_GetEnsembleTypeElementCount( FmlHandle handle, FmlObjectHandle objec
     if( object->type == FHT_ENSEMBLE_TYPE )
     {
         EnsembleType *ensembleType = (EnsembleType*)object;
-        if( ensembleType->bounds->boundsType == BOUNDS_DISCRETE_CONTIGUOUS )
-        {
-            ContiguousBounds *contiguous = (ContiguousBounds *)ensembleType->bounds;
-            return contiguous->count;
-        }
-        
-        region->setRegionError( FML_ERR_UNSUPPORTED );  
-        return -1;
+        return ensembleType->members.getCount();
     }
+    else if( object->type == FHT_ELEMENT_SEQUENCE )
+    {
+        ElementSequence *sequence = (ElementSequence*)object;
+        return sequence->members.getCount();
+    }
+    else if( object->type == FHT_MESH_TYPE )
+    {
+        MeshType *meshType = (MeshType*)object;
+        return Fieldml_GetElementCount( handle, meshType->elementType );
+    }
+        
 
     region->setRegionError( FML_ERR_INVALID_OBJECT );  
     return -1;
@@ -794,110 +760,6 @@ int Fieldml_IsEnsembleComponentType( FmlHandle handle, FmlObjectHandle objectHan
     
     region->setRegionError( FML_ERR_INVALID_OBJECT );  
     return -1;
-}
-
-
-int Fieldml_GetContiguousBoundsCount( FmlHandle handle, FmlObjectHandle objectHandle )
-{
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
-    {
-        return -1;
-    }
-        
-    FieldmlObject *object = region->getObject( objectHandle );
-
-    if( object == NULL )
-    {
-        return -1;
-    }
-    
-    if( object->type == FHT_ENSEMBLE_TYPE )
-    {
-        EnsembleType *ensembleType = (EnsembleType*)object;
-        if( ensembleType->bounds->boundsType == BOUNDS_DISCRETE_CONTIGUOUS )
-        {
-            ContiguousBounds *contiguous = (ContiguousBounds *)ensembleType->bounds;
-            region->setRegionError( FML_ERR_NO_ERROR );  
-            return contiguous->count;
-        }
-        
-        region->setRegionError( FML_ERR_INVALID_OBJECT );  
-        return -1;
-    }
-    else if( object->type == FHT_MESH_TYPE )
-    {
-        MeshType *meshType = (MeshType*)object;
-        FieldmlObject *subObject;
-        
-        subObject = region->getObject( meshType->elementType );
-        
-        if( ( subObject == NULL ) || ( subObject->type != FHT_ENSEMBLE_TYPE ) )
-        {
-            return region->setRegionError( FML_ERR_MISCONFIGURED_OBJECT );
-        }
-        
-        return Fieldml_GetContiguousBoundsCount( handle, meshType->elementType );
-    }
-    else
-    {
-        region->setRegionError( FML_ERR_INVALID_OBJECT );  
-        return -1;
-    }
-
-
-}
-
-
-int Fieldml_SetContiguousBoundsCount( FmlHandle handle, FmlObjectHandle objectHandle, int count )
-{
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
-    {
-        return FML_ERR_UNKNOWN_HANDLE;
-    }
-        
-    FieldmlObject *object = region->getObject( objectHandle );
-
-    if( object == NULL )
-    {
-        return region->getLastError();
-    }
-    
-    if( count < 1 )
-    {
-        return region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
-    }
-
-    if( object->type == FHT_ENSEMBLE_TYPE )
-    {
-        EnsembleType *ensembleType = (EnsembleType*)object;
-        delete ensembleType->bounds;
-        ensembleType->bounds = new ContiguousBounds( count );
-        
-        return region->getLastError();
-    }
-    else if( object->type == FHT_MESH_TYPE )
-    {
-        MeshType *meshType = (MeshType*)object;
-
-        FieldmlObject *subObject;
-        
-        subObject = region->getObject( meshType->elementType );
-        
-        if( ( subObject == NULL ) || ( subObject->type != FHT_ENSEMBLE_TYPE ) )
-        {
-            return region->setRegionError( FML_ERR_MISCONFIGURED_OBJECT );
-        }
-        
-        EnsembleType *ensembleType = (EnsembleType*)subObject;
-        delete ensembleType->bounds;
-        ensembleType->bounds = new ContiguousBounds( count );
-        
-        return region->getLastError();
-    }
-
-    return region->setRegionError( FML_ERR_INVALID_OBJECT );
 }
 
 
@@ -1137,10 +999,10 @@ FmlObjectHandle Fieldml_GetValueType( FmlHandle handle, FmlObjectHandle objectHa
         ExternalEvaluator *externalEvaluator = (ExternalEvaluator *)object;
         return externalEvaluator->valueType;
     }
-    else if( object->type == FHT_ELEMENT_SET )
+    else if( object->type == FHT_ELEMENT_SEQUENCE )
     {
-        ElementSet *set = (ElementSet *)object;
-        return set->valueType;
+        ElementSequence *sequence = (ElementSequence *)object;
+        return sequence->elementType;
     }
 
     region->setRegionError( FML_ERR_INVALID_OBJECT );
@@ -1303,6 +1165,10 @@ int Fieldml_SetParameterDataLocation( FmlHandle handle, FmlObjectHandle objectHa
     }
 
     SemidenseDataDescription *semidense = getSemidenseDataDescription( region, objectHandle );
+    if( semidense == NULL )
+    {
+        return region->getLastError();
+    }
 
     if( semidense->dataLocation->locationType != LOCATION_UNKNOWN )
     {
@@ -1624,7 +1490,7 @@ int Fieldml_SetSwizzle( FmlHandle handle, FmlObjectHandle objectHandle, const in
     
     FmlObjectHandle evaluatorHandle = Fieldml_GetSemidenseIndexEvaluator( handle, objectHandle, 1, 0 );
     FmlObjectHandle ensembleHandle = Fieldml_GetValueType( handle, evaluatorHandle );
-    int ensembleCount = Fieldml_GetEnsembleTypeElementCount( handle, ensembleHandle );
+    int ensembleCount = Fieldml_GetElementCount( handle, ensembleHandle );
     
     if( ensembleCount != count )
     {
@@ -2197,7 +2063,7 @@ int Fieldml_SetIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, i
 
     if( object == NULL )
     {
-        return FML_INVALID_HANDLE;
+        return region->getLastError();
     }
     
     if( object->type == FHT_PIECEWISE_EVALUATOR )
@@ -2211,8 +2077,7 @@ int Fieldml_SetIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, i
         }
         else
         {
-            region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
-            return FML_INVALID_HANDLE;
+            return region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
         }
     }
     else if( object->type == FHT_AGGREGATE_EVALUATOR )
@@ -2226,8 +2091,7 @@ int Fieldml_SetIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, i
         }
         else
         {
-            region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
-            return FML_INVALID_HANDLE;
+            return region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
         }
     }
     else if( object->type == FHT_PARAMETER_EVALUATOR )
@@ -2445,7 +2309,7 @@ int Fieldml_SetSemidenseIndexSet( FmlHandle handle, FmlObjectHandle objectHandle
     }
     
     FieldmlHandleType type = Fieldml_GetObjectType( handle, setHandle );
-    if( type != FHT_ELEMENT_SET )
+    if( type != FHT_ELEMENT_SEQUENCE )
     {
         region->setRegionError( FML_ERR_INVALID_PARAMETER_4 );
         return region->getLastError();
@@ -2857,7 +2721,7 @@ int Fieldml_CloseWriter( FmlHandle handle, FmlWriterHandle writerHandle )
 }
 
 
-FmlObjectHandle Fieldml_CreateElementSet( FmlHandle handle, const char * name, FmlObjectHandle valueType )
+FmlObjectHandle Fieldml_CreateEnsembleElementSequence( FmlHandle handle, const char * name, FmlObjectHandle valueType )
 {
     FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
     if( region == NULL )
@@ -2865,14 +2729,14 @@ FmlObjectHandle Fieldml_CreateElementSet( FmlHandle handle, const char * name, F
         return FML_INVALID_HANDLE;
     }
 
-    ElementSet *elementSet = new ElementSet( name, LOCAL_LOCATION_HANDLE, valueType );
+    ElementSequence *elementSequence = new ElementSequence( name, LOCAL_LOCATION_HANDLE, valueType );
     
     region->setRegionError( FML_ERR_NO_ERROR );
-    return region->addObject( elementSet );
+    return region->addObject( elementSequence );
 }
 
 
-int Fieldml_AddElementEntries( FmlHandle handle, FmlObjectHandle setHandle, const int * elements, const int elementCount )
+int Fieldml_AddEnsembleElements( FmlHandle handle, FmlObjectHandle setHandle, const int * elements, const int elementCount )
 {
     FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
     if( region == NULL )
@@ -2887,37 +2751,39 @@ int Fieldml_AddElementEntries( FmlHandle handle, FmlObjectHandle setHandle, cons
         return region->getLastError();
     }
 
-    if( object->type == FHT_ELEMENT_SET )
+    if( object->type == FHT_ELEMENT_SEQUENCE )
     {
-        ElementSet *elementSet = (ElementSet*)object;
+        ElementSequence *elementSequence = (ElementSequence*)object;
         
         for( int i = 0; i < elementCount; i++ )
         {
-            if( elements[i] < 1 )
-            {
-                return region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
-            }
-            if( elementSet->presentElements.size() <= elements[i] )
-            {
-                int count = elements[i] - elementSet->presentElements.size();
-                elementSet->presentElements.insert( elementSet->presentElements.end(), count + 1, false );
-            }
-
-            elementSet->presentElements[ elements[i] ] = true;
-            if( elements[i] > elementSet->maxElement )
-            {
-                elementSet->maxElement = elements[i];
-            }
+            elementSequence->members.setBit( elements[i], true );
         }
         
         return region->getLastError();
+    }
+    else if( object->type == FHT_ENSEMBLE_TYPE )
+    {
+        EnsembleType *ensemble = (EnsembleType*)object;
+
+        for( int i = 0; i < elementCount; i++ )
+        {
+            ensemble->members.setBit( elements[i], true );
+        }
+        
+        return region->getLastError();
+    }
+    else if( object->type == FHT_MESH_TYPE )
+    {
+        MeshType *meshType = (MeshType*)object;
+        return Fieldml_AddEnsembleElements( handle, meshType->elementType, elements, elementCount );
     }
 
     return region->setRegionError( FML_ERR_INVALID_OBJECT );
 }
 
 
-int Fieldml_AddElementRange( FmlHandle handle, FmlObjectHandle setHandle, const int minElement, const int maxElement )
+int Fieldml_AddEnsembleElementRange( FmlHandle handle, FmlObjectHandle setHandle, const int minElement, const int maxElement, const int stride )
 {
     FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
     if( region == NULL )
@@ -2936,70 +2802,46 @@ int Fieldml_AddElementRange( FmlHandle handle, FmlObjectHandle setHandle, const 
     {
         return region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
     }
-    
+
     if( maxElement < 1 )
     {
         return region->setRegionError( FML_ERR_INVALID_PARAMETER_4 );
     }
     
-    if( object->type == FHT_ELEMENT_SET )
+    if( stride < 1 )
     {
-        ElementSet *elementSet = (ElementSet*)object;
+        return region->setRegionError( FML_ERR_INVALID_PARAMETER_5 );
+    }
+    
+    if( object->type == FHT_ELEMENT_SEQUENCE )
+    {
+        ElementSequence *elementSequence = (ElementSequence*)object;
 
-        if( elementSet->presentElements.size() <= maxElement )
+        for( int i = minElement; i <= maxElement; i += stride )
         {
-            int count = maxElement - elementSet->presentElements.size();
-            elementSet->presentElements.insert( elementSet->presentElements.end(), count + 1, false );
-        }
-
-        for( int i = minElement; i <= maxElement; i++ )
-        {
-            elementSet->presentElements[ i ] = true;
-        }
-        if( maxElement > elementSet->maxElement )
-        {
-            elementSet->maxElement = maxElement;
+            elementSequence->members.setBit( i, true );
         }
         
         return region->getLastError();
     }
-
-    return region->setRegionError( FML_ERR_INVALID_OBJECT );
-}
-
-
-int Fieldml_GetElementCount( FmlHandle handle, FmlObjectHandle setHandle )
-{
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    else if( object->type == FHT_ENSEMBLE_TYPE )
     {
-        return -1;
-    }
+        EnsembleType *ensemble = (EnsembleType*)object;
 
-    FieldmlObject *object = region->getObject( setHandle );
-
-    if( object == NULL )
-    {
-        return -1;
-    }
-
-    if( object->type == FHT_ELEMENT_SET )
-    {
-        ElementSet *elementSet = (ElementSet*)object;
-        int count = 0;
-        for( int i = 0; i <= elementSet->maxElement; i++ )
+        for( int i = minElement; i <= maxElement; i += stride )
         {
-            if( elementSet->presentElements[i] )
-            {
-                count++;
-            }
+            ensemble->members.setBit( i, true );
         }
         
-        return count;
+        return region->getLastError();
+    }
+    else if( object->type == FHT_MESH_TYPE )
+    {
+        MeshType *meshType = (MeshType*)object;
+        return Fieldml_AddEnsembleElementRange( handle, meshType->elementType, minElement, maxElement, stride );
     }
 
-    region->setRegionError( FML_ERR_INVALID_OBJECT );
-    return -1;
+    return region->setRegionError( FML_ERR_INVALID_OBJECT );
 }
 
 
@@ -3018,50 +2860,34 @@ int Fieldml_GetElementEntry( FmlHandle handle, FmlObjectHandle setHandle, const 
         return -1;
     }
 
-    if( object->type == FHT_ELEMENT_SET )
+    if( object->type == FHT_ELEMENT_SEQUENCE )
     {
-        ElementSet *elementSet = (ElementSet*)object;
+        ElementSequence *elementSequence = (ElementSequence*)object;
 
-        if( ( index < 1 ) || ( index > elementSet->presentElements.size() ) )
-        {
-            region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );  
-            return -1;
-        }
-
-        if( index == elementSet->lastSetCount )
-        {
-            return elementSet->lastIndex;
-        }
-        
-        if( index < elementSet->lastSetCount )
-        {
-            elementSet->lastSetCount = 0;
-            elementSet->lastIndex = 0;
-        }
-        
-        int setCount = index - elementSet->lastSetCount;
-        int testIndex = elementSet->lastIndex;
-        
-        //Look for the setCount'th set bit starting at the one after testIndex.
-        while( ( setCount > 0 ) && ( testIndex < elementSet->presentElements.size() ) )
-        {
-            testIndex++;
-            if( elementSet->presentElements[ testIndex ] )
-            {
-                setCount--;
-            }
-        }
-        
-        if( setCount > 0 )
+        if( ( index < 1 ) || ( index > elementSequence->members.getCount() ) )
         {
             region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );  
             return -1;
         }
         
-        elementSet->lastSetCount = index;
-        elementSet->lastIndex = testIndex;
+        return elementSequence->members.getTrueBit( index );
+    }
+    else if( object->type == FHT_ENSEMBLE_TYPE )
+    {
+        EnsembleType *ensemble = (EnsembleType*)object;
+
+        if( ( index < 1 ) || ( index > ensemble->members.getCount() ) )
+        {
+            region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );  
+            return -1;
+        }
         
-        return testIndex;
+        return ensemble->members.getTrueBit( index );
+    }
+    else if( object->type == FHT_MESH_TYPE )
+    {
+        MeshType *meshType = (MeshType*)object;
+        return Fieldml_GetElementEntry( handle, meshType->elementType, index );
     }
 
     region->setRegionError( FML_ERR_INVALID_OBJECT );
@@ -3084,14 +2910,14 @@ int Fieldml_GetElementEntries( FmlHandle handle, FmlObjectHandle setHandle, cons
         return -1;
     }
 
-    if( object->type == FHT_ELEMENT_SET )
+    if( count < 1 )
     {
-        if( count < 1 )
-        {
-            region->setRegionError( FML_ERR_INVALID_PARAMETER_5 );  
-            return -1;
-        }
+        region->setRegionError( FML_ERR_INVALID_PARAMETER_5 );  
+        return -1;
+    }
 
+    if( ( object->type == FHT_ELEMENT_SEQUENCE ) || ( object->type == FHT_ENSEMBLE_TYPE ) || ( object->type == FHT_MESH_TYPE ) )
+    {
         int actualCount = 0;
         for( int i = 0; i < count; i++ )
         {

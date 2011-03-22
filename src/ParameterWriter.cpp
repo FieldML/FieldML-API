@@ -135,7 +135,7 @@ FmlWriterHandle ParameterWriter::create( FieldmlRegion *region, ParameterEvaluat
         for (vector<FmlObjectHandle>::iterator i = semidense->denseIndexes.begin(); i != semidense->denseIndexes.end(); i++ )
         {
             indexType = Fieldml_GetValueType( region->getRegionHandle(), *i );
-            ensembleCount = Fieldml_GetEnsembleTypeElementCount( region->getRegionHandle(), indexType );
+            ensembleCount = Fieldml_GetElementCount( region->getRegionHandle(), indexType );
             if( ensembleCount < 1 )
             {
                 region->setRegionError( FML_ERR_MISCONFIGURED_OBJECT );
@@ -157,7 +157,7 @@ FmlWriterHandle ParameterWriter::create( FieldmlRegion *region, ParameterEvaluat
             }
             else
             {
-                sliceCount = Fieldml_GetEnsembleTypeElementCount( region->getRegionHandle(), innermostType );
+                sliceCount = Fieldml_GetElementCount( region->getRegionHandle(), innermostType );
                 if( sliceCount < 1 )
                 {
                     region->setRegionError( FML_ERR_MISCONFIGURED_OBJECT );

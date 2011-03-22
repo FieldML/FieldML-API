@@ -71,8 +71,12 @@ const xmlChar * const MESH_XI_TAG                      = (const xmlChar* const)"
 const xmlChar * const MESH_SHAPES_TAG                  = (const xmlChar* const)"shapes";
 const xmlChar * const MESH_SHAPE_TAG                   = (const xmlChar* const)"shape";
 
-const xmlChar * const ELEMENT_SET_TAG                  = (const xmlChar* const)"ElementSet";
+const xmlChar * const ELEMENT_SEQUENCE_TAG             = (const xmlChar* const)"ElementSequence";
 const xmlChar * const ELEMENTS_TAG                     = (const xmlChar* const)"elements";
+const xmlChar * const MEMBERS_TAG                      = (const xmlChar* const)"members";
+
+const xmlChar * const MEMBER_RANGE_TAG                 = (const xmlChar* const)"member_range";
+const xmlChar * const MEMBER_LIST_TAG                  = (const xmlChar* const)"member_list";
 
 const xmlChar * const REFERENCE_EVALUATOR_TAG          = (const xmlChar* const)"ReferenceEvaluator";
 const xmlChar * const BINDS_TAG                        = (const xmlChar* const)"binds";
@@ -130,13 +134,15 @@ const xmlChar * const KEY_ATTRIB                       = (const xmlChar* const)"
 const xmlChar * const VALUE_ATTRIB                     = (const xmlChar* const)"value";
 const xmlChar * const DEFAULT_ATTRIB                   = (const xmlChar* const)"default";
 
-const xmlChar * const VALUE_COUNT_ATTRIB                = (const xmlChar* const)"valueCount";
-
 const xmlChar * const XI_COMPONENT_ATTRIB               = (const xmlChar* const)"xi_component";
 
 const xmlChar * const NUMBER_ATTRIB                     = (const xmlChar* const)"number";
 const xmlChar * const EVALUATOR_ATTRIB                  = (const xmlChar* const)"evaluator";
-const xmlChar * const ELEMENT_SET_ATTRIB                = (const xmlChar* const)"element_set";
+const xmlChar * const ELEMENT_SEQUENCE_ATTRIB           = (const xmlChar* const)"element_sequence";
+
+const xmlChar * const MIN_ATTRIB                        = (const xmlChar* const)"min";
+const xmlChar * const MAX_ATTRIB                        = (const xmlChar* const)"max";
+const xmlChar * const STRIDE_ATTRIB                     = (const xmlChar* const)"stride";
 
 const xmlChar * const INDEX_EVALUATOR_ATTRIB            = (const xmlChar* const)"indexEvaluator";
 

@@ -47,29 +47,6 @@ using namespace std;
 
 //========================================================================
 //
-// Bounds
-//
-//========================================================================
-
-TypeBounds::TypeBounds( TypeBoundsType _boundsType ) :
-    boundsType( _boundsType )
-{
-}
-
-UnknownBounds::UnknownBounds() :
-    TypeBounds( BOUNDS_UNKNOWN )
-{
-}
-
-
-ContiguousBounds::ContiguousBounds( const int _count ) :
-    TypeBounds( BOUNDS_DISCRETE_CONTIGUOUS ),
-    count( _count )
-{
-}
-
-//========================================================================
-//
 // FieldmlObject
 //
 //========================================================================
@@ -83,20 +60,16 @@ FieldmlObject::FieldmlObject( const string _name, int _locationHandle, FieldmlHa
 }
 
 
-ElementSet::ElementSet( const string _name, int _region, FmlObjectHandle _valueType ) :
-    FieldmlObject( _name, _region, FHT_ELEMENT_SET ),
-    valueType( _valueType )
+ElementSequence::ElementSequence( const string _name, int _region, FmlObjectHandle _elementType ) :
+    FieldmlObject( _name, _region, FHT_ELEMENT_SEQUENCE ),
+    elementType( _elementType )
 {
-    maxElement = -1;
-    lastIndex = 0;
-    lastSetCount = 0;
 }
 
 
 EnsembleType::EnsembleType( const string _name, int _region, bool _isComponentEnsemble ) :
     FieldmlObject( _name, _region, FHT_ENSEMBLE_TYPE ),
-    isComponentEnsemble( _isComponentEnsemble ),
-    bounds( new UnknownBounds() )
+    isComponentEnsemble( _isComponentEnsemble )
 {
 }
 

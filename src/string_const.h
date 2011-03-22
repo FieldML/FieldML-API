@@ -72,8 +72,12 @@ extern const xmlChar * const MESH_SHAPE_TAG;
 extern const xmlChar * const MESH_CONNECTIVITY_TAG;
 extern const xmlChar * const MESH_CONNECTIVITY_ENTRY_TAG;
 
-extern const xmlChar * const ELEMENT_SET_TAG;
+extern const xmlChar * const ELEMENT_SEQUENCE_TAG;
 extern const xmlChar * const ELEMENTS_TAG;
+extern const xmlChar * const MEMBERS_TAG;
+
+extern const xmlChar * const MEMBER_RANGE_TAG;
+extern const xmlChar * const MEMBER_LIST_TAG;
 
 extern const xmlChar * const REFERENCE_EVALUATOR_TAG;
 extern const xmlChar * const BINDS_TAG;
@@ -97,6 +101,8 @@ extern const xmlChar * const INDEX_TAG;
 extern const xmlChar * const PIECEWISE_EVALUATOR_TAG;
 extern const xmlChar * const ELEMENT_EVALUATORS_TAG;
 extern const xmlChar * const ELEMENT_TAG;
+
+extern const xmlChar * const RANGE_TAG;
 
 extern const xmlChar * const AGGREGATE_EVALUATOR_TAG;
 extern const xmlChar * const COMPONENT_EVALUATORS_TAG;
@@ -135,13 +141,15 @@ extern const xmlChar * const KEY_ATTRIB;
 extern const xmlChar * const VALUE_ATTRIB;
 extern const xmlChar * const DEFAULT_ATTRIB;
 
-extern const xmlChar * const VALUE_COUNT_ATTRIB;
-
 extern const xmlChar * const XI_COMPONENT_ATTRIB;
 
 extern const xmlChar * const NUMBER_ATTRIB;
 extern const xmlChar * const EVALUATOR_ATTRIB;
-extern const xmlChar * const ELEMENT_SET_ATTRIB;
+extern const xmlChar * const ELEMENT_SEQUENCE_ATTRIB;
+
+extern const xmlChar * const MIN_ATTRIB;
+extern const xmlChar * const MAX_ATTRIB;
+extern const xmlChar * const STRIDE_ATTRIB;
 
 extern const xmlChar * const INDEX_EVALUATOR_ATTRIB;
 

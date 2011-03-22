@@ -39,8 +39,9 @@
  *
  */
 
-#include <stdio.h>
-
+#include <cstdio>
+#include <cstdlib>
+#include <cstring> 
 #include <string>
 #include <sstream>
 

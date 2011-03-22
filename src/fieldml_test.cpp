@@ -119,7 +119,6 @@ void testRead( const char * filename )
     int i, j, count, count2;
     FmlObjectHandle oHandle;
     FmlHandle handle;
-    TypeBoundsType boundsType;
     const int *swizzle;
     const char *shape;
 
@@ -132,6 +131,10 @@ void testRead( const char * filename )
     for( i = 1; i <= count; i++ )
     {
         oHandle = Fieldml_GetObject( handle, FHT_CONTINUOUS_TYPE, i );
+        if( !Fieldml_IsObjectLocal( handle, oHandle ) )
+        {
+            continue;
+        }
         
         if( Fieldml_GetTypeComponentEnsemble( handle, oHandle ) == FML_INVALID_HANDLE )
         {
@@ -149,14 +152,20 @@ void testRead( const char * filename )
     for( i = 1; i <= count; i++ )
     {
         oHandle = Fieldml_GetObject( handle, FHT_ENSEMBLE_TYPE, i );
+        if( !Fieldml_IsObjectLocal( handle, oHandle ) )
+        {
+            continue;
+        }
         
         fprintf( stdout, "  %d: %s\n", i, Fieldml_GetObjectName( handle, oHandle ) );
         
-        boundsType = Fieldml_GetBoundsType( handle, oHandle );
-        if( boundsType == BOUNDS_DISCRETE_CONTIGUOUS )
+        count2 = Fieldml_GetElementCount( handle, oHandle );
+        fprintf( stdout, "  %d elements:  ", count2 );
+        for( j = 1; j <= count2; j++ )
         {
-            fprintf( stdout, "    1...%d\n", Fieldml_GetContiguousBoundsCount( handle, oHandle ) );
+            fprintf( stdout, "%d ", Fieldml_GetElementEntry( handle, oHandle, j ) );
         }
+        fprintf( stdout, "\n" );
     }
 
     count = Fieldml_GetObjectCount( handle, FHT_MESH_TYPE );
@@ -164,24 +173,31 @@ void testRead( const char * filename )
     for( i = 1; i <= count; i++ )
     {
         oHandle = Fieldml_GetObject( handle, FHT_MESH_TYPE, i );
+        if( !Fieldml_IsObjectLocal( handle, oHandle ) )
+        {
+            continue;
+        }
         
         fprintf( stdout, "  %d: %s (%s, %s)\n", i, Fieldml_GetObjectName( handle, oHandle ),
             Fieldml_GetObjectName( handle, Fieldml_GetMeshElementType( handle, oHandle ) ),
             Fieldml_GetObjectName( handle, Fieldml_GetMeshXiType( handle, oHandle ) ) );
-        boundsType = Fieldml_GetBoundsType( handle, Fieldml_GetMeshElementType( handle, oHandle ) );
-        if( boundsType == BOUNDS_DISCRETE_CONTIGUOUS )
+        fprintf( stdout, "    " );
+        count2 = Fieldml_GetElementCount( handle, oHandle );
+        fprintf( stdout, "  %d elements:  ", count2 );
+        for( j = 1; j <= count2; j++ )
         {
-            int bounds = Fieldml_GetContiguousBoundsCount( handle, Fieldml_GetMeshElementType( handle, oHandle ) );
-            fprintf( stdout, "    1...%d\n", bounds );
-            for( j = 1; j <= bounds; j++ )
+            fprintf( stdout, "%d", Fieldml_GetElementEntry( handle, oHandle, j ) );
+            shape = Fieldml_GetMeshElementShape( handle, oHandle, j, 0 );
+            if( shape != NULL )
             {
-                shape = Fieldml_GetMeshElementShape( handle, oHandle, j, 0 );
-                if( shape != NULL )
-                {
-                    fprintf( stdout, "    %d: %s\n", j, shape );
-                }
+                fprintf( stdout, ":%s ",shape );
+            }
+            else
+            {
+                fprintf( stdout, " " );
             }
         }
+        fprintf( stdout, "\n" );
     }
 
     count = Fieldml_GetObjectCount( handle, FHT_PARAMETER_EVALUATOR );
@@ -189,6 +205,10 @@ void testRead( const char * filename )
     for( i = 1; i <= count; i++ )
     {
         oHandle = Fieldml_GetObject( handle, FHT_PARAMETER_EVALUATOR, i );
+        if( !Fieldml_IsObjectLocal( handle, oHandle ) )
+        {
+            continue;
+        }
         
         fprintf( stdout, "  %d: %d %s (%s)\n", i, Fieldml_GetParameterDataDescription( handle, oHandle ),
             Fieldml_GetObjectName( handle, oHandle ),
@@ -222,6 +242,10 @@ void testRead( const char * filename )
     for( i = 1; i <= count; i++ )
     {
         oHandle = Fieldml_GetObject( handle, FHT_REFERENCE_EVALUATOR, i );
+        if( !Fieldml_IsObjectLocal( handle, oHandle ) )
+        {
+            continue;
+        }
         
         fprintf( stdout, "  %d: %s (%s)\n", i, Fieldml_GetObjectName( handle, oHandle ),
             Fieldml_GetObjectName( handle, Fieldml_GetValueType( handle, oHandle ) ) );
@@ -241,6 +265,10 @@ void testRead( const char * filename )
     for( i = 1; i <= count; i++ )
     {
         oHandle = Fieldml_GetObject( handle, FHT_PIECEWISE_EVALUATOR, i );
+        if( !Fieldml_IsObjectLocal( handle, oHandle ) )
+        {
+            continue;
+        }
         
         fprintf( stdout, "  %d: %s over %s (%s)\n", i,
             Fieldml_GetObjectName( handle, oHandle ),
@@ -268,6 +296,10 @@ void testRead( const char * filename )
     for( i = 1; i <= count; i++ )
     {
         oHandle = Fieldml_GetObject( handle, FHT_AGGREGATE_EVALUATOR, i );
+        if( !Fieldml_IsObjectLocal( handle, oHandle ) )
+        {
+            continue;
+        }
         
         fprintf( stdout, "  %d: %s (%s)\n", i, Fieldml_GetObjectName( handle, oHandle ),
             Fieldml_GetObjectName( handle, Fieldml_GetValueType( handle, oHandle ) ) );
@@ -293,6 +325,10 @@ void testRead( const char * filename )
     for( i = 1; i <= count; i++ )
     {
         oHandle = Fieldml_GetObject( handle, FHT_ABSTRACT_EVALUATOR, i );
+        if( !Fieldml_IsObjectLocal( handle, oHandle ) )
+        {
+            continue;
+        }
         
         fprintf( stdout, "  %d: %s (%s)\n", i, Fieldml_GetObjectName( handle, oHandle ),
             Fieldml_GetObjectName( handle, Fieldml_GetValueType( handle, oHandle ) ) );
@@ -303,6 +339,10 @@ void testRead( const char * filename )
     for( i = 1; i <= count; i++ )
     {
         oHandle = Fieldml_GetObject( handle, FHT_EXTERNAL_EVALUATOR, i );
+        if( !Fieldml_IsObjectLocal( handle, oHandle ) )
+        {
+            continue;
+        }
         
         fprintf( stdout, "  %d: %s\n", i, Fieldml_GetObjectName( handle, oHandle ) );
     }
@@ -421,7 +461,7 @@ void testMisc()
     handle = Fieldml_Create( "", "test", NULL );
     
     o1 = Fieldml_CreateEnsembleType( handle, "example.component_ensemble", true );
-    Fieldml_SetContiguousBoundsCount( handle, o1, 3 );
+    Fieldml_AddEnsembleElementRange( handle, o1, 1, 3, 1 );
     
     o2 = Fieldml_CreateContinuousType( handle, "example.continuous_type", o1 );
     

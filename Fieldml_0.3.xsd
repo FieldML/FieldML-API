@@ -94,13 +94,23 @@
         </xs:choice>
     </xs:complexType>
 
-    <xs:complexType name="ContiguousEnsembleBounds_Type">
-        <xs:attribute name="valueCount" type="xs:positiveInteger" />
+    <xs:complexType name="MemberRange_Type">
+        <xs:attribute name="min" type="xs:nonNegativeInteger" />
+        <xs:attribute name="max" type="xs:nonNegativeInteger" />
+        <xs:attribute name="stride" type="xs:positiveInteger" use="optional"/>
     </xs:complexType>
 
-    <xs:complexType name="EnsembleTypeBounds_Type">
-        <xs:choice minOccurs="1" maxOccurs="1">
-            <xs:element name="ContiguousEnsembleBounds" type="ContiguousEnsembleBounds_Type" />
+    <xs:complexType name="MemberList_Type">
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:complexType name="EnsembleMembers_Type">
+        <xs:choice minOccurs="1" maxOccurs="unbounded">
+            <xs:element name="member_list" type="MemberList_Type" />
+            <xs:element name="member_range" type="MemberRange_Type" />
         </xs:choice>
     </xs:complexType>
 
@@ -108,7 +118,7 @@
         <xs:complexContent>
             <xs:extension base="FieldmlObject_Type">
                 <xs:sequence>
-                    <xs:element name="bounds" type="EnsembleTypeBounds_Type" minOccurs="1" maxOccurs="1" />
+                    <xs:element name="members" type="EnsembleMembers_Type" minOccurs="1" maxOccurs="1" />
                 </xs:sequence>
                 <xs:attribute name="isComponentEnsemble" type="xs:boolean" use="optional" />
             </xs:extension>
@@ -127,7 +137,7 @@
         <xs:complexContent>
             <xs:extension base="FieldmlObject_Type">
                 <xs:sequence>
-                    <xs:element name="bounds" type="EnsembleTypeBounds_Type" minOccurs="1" maxOccurs="1" />
+                    <xs:element name="elements" type="EnsembleMembers_Type" minOccurs="1" maxOccurs="1" />
                     <xs:element name="shapes" type="DefaultSimpleMap_Type" minOccurs="1" maxOccurs="1" />
                 </xs:sequence>
                 <xs:attribute name="xi_component" type="xs:string" />

@@ -105,14 +105,6 @@
 
 */
 
-enum TypeBoundsType
-{
-    BOUNDS_UNKNOWN,              // EnsembleDomain bounds not yet known.
-    BOUNDS_DISCRETE_CONTIGUOUS,  // Contiguous bounds (i.e. 1 ... N)
-    BOUNDS_DISCRETE_ARBITRARY,   // Arbitrary bounds (not yet supported)
-};
-
-
 enum DataFileType
 {
     TYPE_UNKNOWN,
@@ -149,12 +141,12 @@ enum FieldmlHandleType
     FHT_PARAMETER_EVALUATOR,
     FHT_PIECEWISE_EVALUATOR,
     FHT_AGGREGATE_EVALUATOR,
-    FHT_ELEMENT_SET,
+    FHT_ELEMENT_SEQUENCE,
     
     //These are stand-in types used to allow forward-declaration during parsing.
     FHT_UNKNOWN_TYPE,
     FHT_UNKNOWN_EVALUATOR,
-    FHT_UNKNOWN_ELEMENT_SET
+    FHT_UNKNOWN_ELEMENT_SEQUENCE
 };
 
 
@@ -309,14 +301,6 @@ int Fieldml_GetObjectInt( FmlHandle handle, FmlObjectHandle object );
 
 
 /**
- *      Validates the given object. Returns FML_ERR_NO_ERROR if the object is valid,
- *      or an appropriate error code if not. Note that FieldML objects are currently allowed
- *      to remain invalid up to and including at serialization time.
- */
-int Fieldml_ValidateObject( FmlHandle handle, FmlObjectHandle objectHandle );
-
-
-/**
  *      Returns the handle of the given type's component ensemble.
  */
 FmlObjectHandle Fieldml_GetTypeComponentEnsemble( FmlHandle handle, FmlObjectHandle objectHandle );
@@ -365,7 +349,7 @@ FmlObjectHandle Fieldml_GetMeshXiComponentType( FmlHandle handle, FmlObjectHandl
 
 /**
  *     Returns the handle of the given mesh type's element type. This is a unique ensemble
- *     type whose bounds is specified by the user. If the mesh's name is "*", the element type's
+ *     type whose elements are specified by the user. If the mesh's name is "*", the element type's
  *     name is "*.element"
  */
 FmlObjectHandle Fieldml_GetMeshElementType( FmlHandle handle, FmlObjectHandle objectHandle );
@@ -401,21 +385,6 @@ int Fieldml_SetMeshElementShape( FmlHandle handle, FmlObjectHandle mesh, int ele
 
 
 /**
-    Returns the bounds-type of the given type.
-    
-    NOTE: Currently, only ensemble types have explicit bounds.
-    NOTE: Currently, only discrete contiguous bounds are supported.
- */
-TypeBoundsType Fieldml_GetBoundsType( FmlHandle handle, FmlObjectHandle objectHandle );
-
-
-/**
- * Returns the number of elements in the given ensemble type. 
- */
-int Fieldml_GetEnsembleTypeElementCount( FmlHandle handle, FmlObjectHandle objectHandle );
-
-
-/**
  * Returns 1 if the ensemble type is a component ensemble, 0 if not, -1 on error.
  */
 int Fieldml_IsEnsembleComponentType( FmlHandle handle, FmlObjectHandle objectHandle );
@@ -428,26 +397,6 @@ int Fieldml_IsEnsembleComponentType( FmlHandle handle, FmlObjectHandle objectHan
  * NOTE: If the bounds are contiguous, the names will simply be 1, 2, 3... n. 
  */
 //NYI int Fieldml_GetEnsembleTypeElementNames( FmlHandle handle, FmlObjectHandle objectHandle, const int *array, int arrayLength );
-
-
-/**
- * Returns the number of elements in the given types contiguous bounds.
- * Returns -1 if the type does not have contiguous bounds.
- * 
- * For convenience, this function can be called on a mesh type, in which case the
- * bounds of the mesh's element type is returned.
- */
-int Fieldml_GetContiguousBoundsCount( FmlHandle handle, FmlObjectHandle objectHandle );
-
-
-/**
- * Sets the given ensemble type to have contiguous bounds, with elements numbered from
- * 1 to count.
- * 
- * For convenience, this function can be called on a mesh type, in which case the
- * bounds of the mesh's element type is set.
- */
-int Fieldml_SetContiguousBoundsCount( FmlHandle handle, FmlObjectHandle objectHandle, int count );
 
 
 
@@ -766,25 +715,25 @@ FmlObjectHandle Fieldml_GetBindByVariable( FmlHandle handle, FmlObjectHandle obj
 
 
 /**
- * Create a new element set of the given ensemble type
+ * Create a new element sequence of the given ensemble type
  */
-FmlObjectHandle Fieldml_CreateElementSet( FmlHandle handle, const char * name, FmlObjectHandle valueType );
+FmlObjectHandle Fieldml_CreateEnsembleElementSequence( FmlHandle handle, const char * name, FmlObjectHandle valueType );
 
 
 /**
  * Add the given element indexes to the given element set
  */
-int Fieldml_AddElementEntries( FmlHandle handle, FmlObjectHandle setHandle, const int * elements, const int elementCount );
+int Fieldml_AddEnsembleElements( FmlHandle handle, FmlObjectHandle setHandle, const int * elements, const int elementCount );
 
 
 /**
  * Add the given element indexes to the given element set
  */
-int Fieldml_AddElementRange( FmlHandle handle, FmlObjectHandle setHandle, const int minElement, const int maxElement );
+int Fieldml_AddEnsembleElementRange( FmlHandle handle, FmlObjectHandle objectHandle, const int minElement, const int maxElement, const int stride );
 
 
 /**
- * Get the number of elements in the given element set
+ * Get the number of elements in the given ensemble/element sequence
  */
 int Fieldml_GetElementCount( FmlHandle handle, FmlObjectHandle setHandle );
 
@@ -792,7 +741,7 @@ int Fieldml_GetElementCount( FmlHandle handle, FmlObjectHandle setHandle );
 /**
  * Get the nth element index from the given element set, or -1 on error.
  */
-int Fieldml_GetElementEntry( FmlHandle handle, FmlObjectHandle setHandle, const int firstIndex );
+int Fieldml_GetElementEntry( FmlHandle handle, FmlObjectHandle setHandle, const int index );
 
 
 /**
@@ -826,7 +775,7 @@ int Fieldml_ReadIndexSet( FmlHandle handle, FmlReaderHandle reader, int *indexBu
  * 
  * Returns the number of values read, or -1 on error.
  */
-int Fieldml_ReadIntValues( FmlHandle handle, FmlReaderHandle reader, int *indexBuffer, int bufferSize );
+int Fieldml_ReadIntValues( FmlHandle handle, FmlReaderHandle reader, int *valueBuffer, int bufferSize );
 
 
 /**
@@ -835,7 +784,7 @@ int Fieldml_ReadIntValues( FmlHandle handle, FmlReaderHandle reader, int *indexB
  * 
  * Returns the number of values read, or -1 on error.
  */
-int Fieldml_ReadDoubleValues( FmlHandle handle, FmlReaderHandle reader, double *indexBuffer, int bufferSize );
+int Fieldml_ReadDoubleValues( FmlHandle handle, FmlReaderHandle reader, double *valueBuffer, int bufferSize );
 
 
 /**

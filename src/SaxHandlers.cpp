@@ -340,9 +340,9 @@ SaxHandler *RegionSaxHandler::onElementStart( const xmlChar *elementName, SaxAtt
         return new MeshTypeSaxHandler( this, elementName, attributes );
     }
     
-    if( xmlStrcmp( elementName, ELEMENT_SET_TAG ) == 0 )
+    if( xmlStrcmp( elementName, ELEMENT_SEQUENCE_TAG ) == 0 )
     {
-        return new ElementSetSaxHandler( this, elementName, attributes );
+        return new ElementSequenceSaxHandler( this, elementName, attributes );
     }
 
     if( xmlStrcmp( elementName, ABSTRACT_EVALUATOR_TAG ) == 0 )
@@ -386,6 +386,12 @@ FieldmlRegion *RegionSaxHandler::getRegion()
 }
 
 
+FmlHandle RegionSaxHandler::getRegionHandle()
+{
+    return region->getRegionHandle();
+}
+
+
 int RegionSaxHandler::getLocation()
 {
     return parent->getLocation();
@@ -412,6 +418,12 @@ FieldmlRegion *FieldmlObjectSaxHandler::getRegion()
 }
 
 
+FmlHandle FieldmlObjectSaxHandler::getRegionHandle()
+{
+    return parent->getRegionHandle();
+}
+
+
 int FieldmlObjectSaxHandler::getLocation()
 {
     return parent->getLocation();
@@ -432,7 +444,7 @@ ContinuousTypeSaxHandler::ContinuousTypeSaxHandler( RegionSaxHandler *_parent, c
 
     FmlObjectHandle componentHandle = attributes.getObjectAttribute( getRegion(), COMPONENT_ENSEMBLE_ATTRIB, FHT_UNKNOWN_TYPE );
 
-    handle = Fieldml_CreateContinuousType( getRegion()->getRegionHandle(), name, componentHandle );
+    handle = Fieldml_CreateContinuousType( getRegionHandle(), name, componentHandle );
     if( handle == FML_INVALID_HANDLE )
     {
         getRegion()->logError( "ContinuousType creation failed", name );
@@ -462,7 +474,7 @@ EnsembleTypeSaxHandler::EnsembleTypeSaxHandler( RegionSaxHandler *_parent, const
     
     const bool isComponentEnsemble = attributes.getBooleanAttribute( IS_COMPONENT_ENSEMBLE_ATTRIB );
     
-    handle = Fieldml_CreateEnsembleType( getRegion()->getRegionHandle(), name, isComponentEnsemble ? 1 : 0 );
+    handle = Fieldml_CreateEnsembleType( getRegionHandle(), name, isComponentEnsemble ? 1 : 0 );
     if( handle == FML_INVALID_HANDLE )
     {
         getRegion()->logError( "EnsembleType creation failed", name );
@@ -474,9 +486,9 @@ EnsembleTypeSaxHandler::EnsembleTypeSaxHandler( RegionSaxHandler *_parent, const
 
 SaxHandler *EnsembleTypeSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
-    if( xmlStrcmp( elementName, CONTIGUOUS_ENSEMBLE_BOUNDS_TAG ) == 0 )
+    if( xmlStrcmp( elementName, MEMBERS_TAG ) == 0 )
     {
-        return new ContiguousEnsembleBoundsHandler( this, elementName, attributes );
+        return new EnsembleElementsHandler( this, elementName, attributes );
     }
 
     return this;
@@ -500,7 +512,7 @@ MeshTypeSaxHandler::MeshTypeSaxHandler( RegionSaxHandler *_parent, const xmlChar
         return;
     }
     
-    handle = Fieldml_CreateMeshType( getRegion()->getRegionHandle(), name, xiComponent );
+    handle = Fieldml_CreateMeshType( getRegionHandle(), name, xiComponent );
     if( handle == FML_INVALID_HANDLE )
     {
         getRegion()->logError( "MeshType creation failed", name );
@@ -516,43 +528,43 @@ SaxHandler *MeshTypeSaxHandler::onElementStart( const xmlChar *elementName, SaxA
     {
         return new MeshShapesSaxHandler( this, elementName, attributes );
     }
-    else if( xmlStrcmp( elementName, CONTIGUOUS_ENSEMBLE_BOUNDS_TAG ) == 0 )
+    else if( xmlStrcmp( elementName, ELEMENTS_TAG ) == 0 )
     {
-        return new ContiguousEnsembleBoundsHandler( this, elementName, attributes );
+        return new EnsembleElementsHandler( this, elementName, attributes );
     }
     
     return this;
 }
 
 
-ElementSetSaxHandler::ElementSetSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
+ElementSequenceSaxHandler::ElementSequenceSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
     FieldmlObjectSaxHandler( _parent, elementName )
 {
     const char *name = attributes.getAttribute( NAME_ATTRIB );
     if( name == NULL )
     {
-        getRegion()->logError( "ElementSet has no name" );
+        getRegion()->logError( "ElementSequence has no name" );
         return;
     }
     
     FmlObjectHandle valueType = attributes.getObjectAttribute( getRegion(), VALUE_TYPE_ATTRIB, FHT_UNKNOWN_TYPE );
     if( valueType == FML_INVALID_HANDLE )
     {
-        getRegion()->logError( "ElementSet has no value type", name );
+        getRegion()->logError( "ElementSequence has no value type", name );
         return;
     }
     
-    handle = Fieldml_CreateElementSet( getRegion()->getRegionHandle(), name, valueType );
+    handle = Fieldml_CreateEnsembleElementSequence( getRegionHandle(), name, valueType );
     if( handle == FML_INVALID_HANDLE )
     {
-        getRegion()->logError( "ElementSet creation failed", name );
+        getRegion()->logError( "ElementSequence creation failed", name );
         return;
     }
     getRegion()->setLocationHandle( handle, getLocation() );
 }
 
 
-SaxHandler *ElementSetSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
+SaxHandler *ElementSequenceSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
     if( xmlStrcmp( elementName, ELEMENTS_TAG ) == 0 )
     {
@@ -563,33 +575,18 @@ SaxHandler *ElementSetSaxHandler::onElementStart( const xmlChar *elementName, Sa
 }
 
 
-void ElementSetSaxHandler::onCharacterBuffer( const char *buffer, int count, int id )
+void ElementSequenceSaxHandler::onCharacterBuffer( const char *buffer, int count, int id )
 {
     if( id == 0 )
     {
         //TODO This stuff should be streamed in directly from SAX
-        //NOTE Unholy hack. The string "1-5" arrives as a pair of ints ( 1, -5 ), which is then parsed as the range 1 - 5.
         int intCount;
-        int singleElementCount = 0;
         int *ints;
         
         intCount = intParserCount( buffer );
         ints = (int*)intParserInts( buffer );
         
-        for( int index = 0; index < intCount; index++ )
-        {
-            if( ( index < ( intCount - 1 ) ) && ( ints[index + 1] < 0 ) )
-            {
-                Fieldml_AddElementRange( getRegion()->getRegionHandle(), handle, ints[index], -ints[index+1] );
-                index++;
-            }
-            else
-            {
-                ints[singleElementCount++] = ints[index];
-            }
-        }
-        
-        Fieldml_AddElementEntries( getRegion()->getRegionHandle(), handle, ints, singleElementCount );
+        Fieldml_AddEnsembleElements( getRegionHandle(), handle, ints, intCount );
         
         delete[] ints;
     }
@@ -613,7 +610,7 @@ AbstractEvaluatorSaxHandler::AbstractEvaluatorSaxHandler( RegionSaxHandler *_par
         return;
     }
     
-    handle = Fieldml_CreateAbstractEvaluator( getRegion()->getRegionHandle(), name, valueType );
+    handle = Fieldml_CreateAbstractEvaluator( getRegionHandle(), name, valueType );
     if( handle == FML_INVALID_HANDLE )
     {
         getRegion()->logError( "Cannot create AbstractEvaluator with given type", name, attributes.getAttribute( VALUE_TYPE_ATTRIB ) );
@@ -655,7 +652,7 @@ ExternalEvaluatorSaxHandler::ExternalEvaluatorSaxHandler( RegionSaxHandler *_par
         return;
     }
     
-    handle = Fieldml_CreateExternalEvaluator( getRegion()->getRegionHandle(), name, valueType );
+    handle = Fieldml_CreateExternalEvaluator( getRegionHandle(), name, valueType );
     if( handle == FML_INVALID_HANDLE )
     {
         getRegion()->logError( "ExternalEvaluator creation failed", name );
@@ -693,7 +690,7 @@ ReferenceEvaluatorSaxHandler::ReferenceEvaluatorSaxHandler( RegionSaxHandler *_p
         return;
     }
     
-    handle = Fieldml_CreateReferenceEvaluator( getRegion()->getRegionHandle(), name, remoteEvaluator );
+    handle = Fieldml_CreateReferenceEvaluator( getRegionHandle(), name, remoteEvaluator );
     if( handle == FML_INVALID_HANDLE )
     {
         getRegion()->logError( "ReferenceEvaluator creation failed", name );
@@ -735,7 +732,7 @@ ParametersSaxHandler::ParametersSaxHandler( RegionSaxHandler *_parent, const xml
         return;
     }
 
-    handle = Fieldml_CreateParametersEvaluator( getRegion()->getRegionHandle(), name, valueType );
+    handle = Fieldml_CreateParametersEvaluator( getRegionHandle(), name, valueType );
     if( handle == FML_INVALID_HANDLE )
     {
         getRegion()->logError( "ParametersEvaluator creation failed", name );
@@ -777,7 +774,7 @@ PiecewiseEvaluatorSaxHandler::PiecewiseEvaluatorSaxHandler( RegionSaxHandler *_p
         return;
     }
 
-    handle = Fieldml_CreatePiecewiseEvaluator( getRegion()->getRegionHandle(), name, valueType );
+    handle = Fieldml_CreatePiecewiseEvaluator( getRegionHandle(), name, valueType );
     if( handle == FML_INVALID_HANDLE )
     {
         getRegion()->logError( "PiecewiseEvaluator creation failed", name );
@@ -794,7 +791,7 @@ SaxHandler * PiecewiseEvaluatorSaxHandler::onElementStart( const xmlChar *elemen
         FmlObjectHandle defaultHandle = attributes.getObjectAttribute( getRegion(), DEFAULT_ATTRIB, FHT_UNKNOWN_EVALUATOR );
         if( defaultHandle != FML_INVALID_HANDLE )
         {
-            Fieldml_SetDefaultEvaluator( getRegion()->getRegionHandle(), handle, defaultHandle );
+            Fieldml_SetDefaultEvaluator( getRegionHandle(), handle, defaultHandle );
         }
         return new IntObjectMapSaxHandler( this, elementName, ELEMENT_TAG, getRegion(), this, 0 );
     }
@@ -817,12 +814,12 @@ void PiecewiseEvaluatorSaxHandler::onIntObjectMapEntry( int key, FmlObjectHandle
     {
         if( ( key <= 0 ) || ( value == FML_INVALID_HANDLE ) )
         {
-            const char * name =  Fieldml_GetObjectName( getRegion()->getRegionHandle(), handle );
+            const char * name =  Fieldml_GetObjectName( getRegionHandle(), handle );
             getRegion()->logError( "Malformed element evaluator for PiecewiseEvaluator", name );
         }
         else
         {
-            Fieldml_SetEvaluator( getRegion()->getRegionHandle(), handle, key, value );
+            Fieldml_SetEvaluator( getRegionHandle(), handle, key, value );
         }
     }
 }
@@ -845,7 +842,7 @@ AggregateEvaluatorSaxHandler::AggregateEvaluatorSaxHandler( RegionSaxHandler *_p
         return;
     }
 
-    handle = Fieldml_CreateAggregateEvaluator( getRegion()->getRegionHandle(), name, valueType );
+    handle = Fieldml_CreateAggregateEvaluator( getRegionHandle(), name, valueType );
     if( handle == FML_INVALID_HANDLE )
     {
         getRegion()->logError( "Cannot create AggregateEvaluator with given type.", name, attributes.getAttribute( VALUE_TYPE_ATTRIB ) );
@@ -862,7 +859,7 @@ SaxHandler * AggregateEvaluatorSaxHandler::onElementStart( const xmlChar *elemen
         FmlObjectHandle defaultHandle = attributes.getObjectAttribute( getRegion(), DEFAULT_ATTRIB, FHT_UNKNOWN_EVALUATOR );
         if( defaultHandle != FML_INVALID_HANDLE )
         {
-            Fieldml_SetDefaultEvaluator( getRegion()->getRegionHandle(), handle, defaultHandle );
+            Fieldml_SetDefaultEvaluator( getRegionHandle(), handle, defaultHandle );
         }
         return new IntObjectMapSaxHandler( this, elementName, COMPONENT_TAG, getRegion(), this, 0 );
     }
@@ -885,12 +882,12 @@ void AggregateEvaluatorSaxHandler::onIntObjectMapEntry( int key, FmlObjectHandle
     {
         if( ( key <= 0 ) || ( value == FML_INVALID_HANDLE ) )
         {
-            const char * name =  Fieldml_GetObjectName( getRegion()->getRegionHandle(), handle );
+            const char * name =  Fieldml_GetObjectName( getRegionHandle(), handle );
             getRegion()->logError( "Malformed element evaluator for AggregateEvaluator", name );
         }
         else
         {
-            Fieldml_SetEvaluator( getRegion()->getRegionHandle(), handle, key, value );
+            Fieldml_SetEvaluator( getRegionHandle(), handle, key, value );
         }
     }
 }
@@ -909,24 +906,55 @@ FieldmlObjectSaxHandler *ObjectMemberSaxHandler::getParent()
 }
 
 
-ContiguousEnsembleBoundsHandler::ContiguousEnsembleBoundsHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
+EnsembleElementsHandler::EnsembleElementsHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
     ObjectMemberSaxHandler( _parent, elementName )
 {
-    const char *count = attributes.getAttribute( VALUE_COUNT_ATTRIB );
-    if( count == NULL )
-    {
-        const char * name =  Fieldml_GetObjectName( parent->getRegion()->getRegionHandle(), parent->handle );
-        parent->getRegion()->logError( "Contiguous bounds has no value count", name );
-        return;
-    }
-    
-    Fieldml_SetContiguousBoundsCount( parent->getRegion()->getRegionHandle(), parent->handle, atoi( count ) );
 }
 
 
-SaxHandler *ContiguousEnsembleBoundsHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
+SaxHandler *EnsembleElementsHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
+    if( xmlStrcmp( elementName, MEMBER_RANGE_TAG ) == 0 )
+    {
+        const char *min = attributes.getAttribute( MIN_ATTRIB );
+        const char *max = attributes.getAttribute( MAX_ATTRIB );
+        const char *stride = attributes.getAttribute( STRIDE_ATTRIB );
+        
+        if( ( min == NULL ) || ( max == NULL ) )
+        {
+            const char *name = Fieldml_GetObjectName( parent->getRegionHandle(), parent->handle );
+            parent->getRegion()->logError( "member_range is malformed", name );
+            return this;
+        }
+        
+        int strideCount = 1;
+        if( stride != NULL )
+        {
+            strideCount = atoi( stride );
+        }
+        
+        Fieldml_AddEnsembleElementRange( parent->getRegionHandle(), parent->handle, atoi( min ), atoi( max ), strideCount );
+    }
+    else if( xmlStrcmp( elementName, MEMBER_LIST_TAG ) == 0 )
+    {
+        return new CharacterAccumulatorSaxHandler( this, elementName, this, 0 );
+    }
+
     return this;
+}
+
+
+void EnsembleElementsHandler::onCharacterBuffer( const char *buffer, int count, int id )
+{
+    int intCount;
+    int *ints;
+    
+    intCount = intParserCount( buffer );
+    ints = (int*)intParserInts( buffer );
+    
+    Fieldml_AddEnsembleElements( parent->getRegionHandle(), parent->handle, ints, intCount );
+    
+    delete[] ints;
 }
 
 
@@ -936,7 +964,7 @@ MeshShapesSaxHandler::MeshShapesSaxHandler( FieldmlObjectSaxHandler *_parent, co
     const char *defaultValue = attributes.getAttribute( DEFAULT_ATTRIB );
     if( defaultValue != NULL )
     {
-        Fieldml_SetMeshDefaultShape( parent->getRegion()->getRegionHandle(), parent->handle, defaultValue );
+        Fieldml_SetMeshDefaultShape( parent->getRegionHandle(), parent->handle, defaultValue );
     }
 }
 
@@ -950,12 +978,12 @@ SaxHandler *MeshShapesSaxHandler::onElementStart( const xmlChar *elementName, Sa
 
         if( ( element == NULL ) || ( shape == NULL ) )
         {
-            const char * name =  Fieldml_GetObjectName( parent->getRegion()->getRegionHandle(), parent->handle );
+            const char * name =  Fieldml_GetObjectName( parent->getRegionHandle(), parent->handle );
             parent->getRegion()->logError( "MeshDomain has malformed shape entry", name );
             return this;
         }
         
-        Fieldml_SetMeshElementShape( parent->getRegion()->getRegionHandle(), parent->handle, atoi( element ), shape );
+        Fieldml_SetMeshElementShape( parent->getRegionHandle(), parent->handle, atoi( element ), shape );
     }
     
     return this;
@@ -975,11 +1003,11 @@ SaxHandler *VariablesSaxHandler::onElementStart( const xmlChar *elementName, Sax
         FmlObjectHandle variableHandle = attributes.getObjectAttribute( parent->getRegion(), NAME_ATTRIB, FHT_UNKNOWN_EVALUATOR );
         if( variableHandle == FML_INVALID_HANDLE )
         {
-            const char * name =  Fieldml_GetObjectName( parent->getRegion()->getRegionHandle(), parent->handle );
+            const char * name =  Fieldml_GetObjectName( parent->getRegionHandle(), parent->handle );
             parent->getRegion()->logError( "Evaluator has malformed variable", name );
             return this;
         }
-        Fieldml_AddVariable( parent->getRegion()->getRegionHandle(), parent->handle, variableHandle );
+        Fieldml_AddVariable( parent->getRegionHandle(), parent->handle, variableHandle );
     }
     
     return this;
@@ -1001,12 +1029,12 @@ SaxHandler *BindsSaxHandler::onElementStart( const xmlChar *elementName, SaxAttr
         FmlObjectHandle sourceHandle = attributes.getObjectAttribute( parent->getRegion(), SOURCE_ATTRIB, FHT_UNKNOWN_EVALUATOR );
         if( ( variableHandle == FML_INVALID_HANDLE ) || ( sourceHandle == FML_INVALID_HANDLE ) )
         {
-            const char * name =  Fieldml_GetObjectName( parent->getRegion()->getRegionHandle(), parent->handle );
+            const char * name =  Fieldml_GetObjectName( parent->getRegionHandle(), parent->handle );
             parent->getRegion()->logError( "Evaluator has malformed bind", name );
             return this;
         }
 
-        if( Fieldml_SetBind( parent->getRegion()->getRegionHandle(), parent->handle, variableHandle, sourceHandle ) != FML_ERR_NO_ERROR )
+        if( Fieldml_SetBind( parent->getRegionHandle(), parent->handle, variableHandle, sourceHandle ) != FML_ERR_NO_ERROR )
         {
             parent->getRegion()->logError( "Incompatible bind",
                 attributes.getAttribute( VARIABLE_ATTRIB ),
@@ -1018,7 +1046,7 @@ SaxHandler *BindsSaxHandler::onElementStart( const xmlChar *elementName, SaxAttr
         FmlObjectHandle indexHandle = attributes.getObjectAttribute( parent->getRegion(), VARIABLE_ATTRIB, FHT_UNKNOWN_EVALUATOR );
         if( indexHandle == FML_INVALID_HANDLE )
         {
-            const char * name =  Fieldml_GetObjectName( parent->getRegion()->getRegionHandle(), parent->handle );
+            const char * name =  Fieldml_GetObjectName( parent->getRegionHandle(), parent->handle );
             parent->getRegion()->logError( "Evaluator has malformed index bind", name );
             return this;
         }
@@ -1030,7 +1058,7 @@ SaxHandler *BindsSaxHandler::onElementStart( const xmlChar *elementName, SaxAttr
             index = atoi( indexString );
         }
 
-        Fieldml_SetIndexEvaluator( parent->getRegion()->getRegionHandle(), parent->handle, index, indexHandle );
+        Fieldml_SetIndexEvaluator( parent->getRegionHandle(), parent->handle, index, indexHandle );
     }
     
     return this;
@@ -1041,7 +1069,7 @@ SaxHandler *BindsSaxHandler::onElementStart( const xmlChar *elementName, SaxAttr
 SemidenseSaxHandler::SemidenseSaxHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
     ObjectMemberSaxHandler( _parent, elementName )
 {
-    Fieldml_SetParameterDataDescription( parent->getRegion()->getRegionHandle(), parent->handle, DESCRIPTION_SEMIDENSE );
+    Fieldml_SetParameterDataDescription( parent->getRegionHandle(), parent->handle, DESCRIPTION_SEMIDENSE );
 }
 
 
@@ -1055,14 +1083,14 @@ void SemidenseSaxHandler::onFileData( SaxAttributes &attributes )
     
     if( file == NULL )
     {
-        const char * name =  Fieldml_GetObjectName( parent->getRegion()->getRegionHandle(), parent->handle );
+        const char * name =  Fieldml_GetObjectName( parent->getRegionHandle(), parent->handle );
         parent->getRegion()->logError( "Parameters file data for must have a file name", name );
         return;
     }
     
     if( type == NULL )
     {
-        const char * name =  Fieldml_GetObjectName( parent->getRegion()->getRegionHandle(), parent->handle );
+        const char * name =  Fieldml_GetObjectName( parent->getRegionHandle(), parent->handle );
         parent->getRegion()->logError( "Parameters file data for must have a file type", name );
         return;
     }
@@ -1076,7 +1104,7 @@ void SemidenseSaxHandler::onFileData( SaxAttributes &attributes )
     }
     else 
     {
-        const char * name =  Fieldml_GetObjectName( parent->getRegion()->getRegionHandle(), parent->handle );
+        const char * name =  Fieldml_GetObjectName( parent->getRegionHandle(), parent->handle );
         parent->getRegion()->logError( "Parameters file data for must have a known file type", name );
         return;
     }
@@ -1090,8 +1118,8 @@ void SemidenseSaxHandler::onFileData( SaxAttributes &attributes )
         offsetAmount = atoi( offset );
     }
     
-    Fieldml_SetParameterDataLocation( parent->getRegion()->getRegionHandle(), parent->handle, LOCATION_FILE );
-    Fieldml_SetParameterFileData( parent->getRegion()->getRegionHandle(), parent->handle, file, fileType, offsetAmount );
+    Fieldml_SetParameterDataLocation( parent->getRegionHandle(), parent->handle, LOCATION_FILE );
+    Fieldml_SetParameterFileData( parent->getRegionHandle(), parent->handle, file, fileType, offsetAmount );
 }
 
 
@@ -1107,7 +1135,7 @@ SaxHandler *SemidenseSaxHandler::onElementStart( const xmlChar *elementName, Sax
     }
     else if( xmlStrcmp( elementName, INLINE_DATA_TAG ) == 0 )
     {
-        Fieldml_SetParameterDataLocation( parent->getRegion()->getRegionHandle(), parent->handle, LOCATION_INLINE );
+        Fieldml_SetParameterDataLocation( parent->getRegionHandle(), parent->handle, LOCATION_INLINE );
         return new CharacterBufferSaxHandler( this, elementName, this, 0 );
     }
     else if( xmlStrcmp( elementName, FILE_DATA_TAG ) == 0 )
@@ -1127,7 +1155,7 @@ void SemidenseSaxHandler::onCharacterBuffer( const char *buffer, int count, int 
 {
     if( id == 0 )
     {
-        Fieldml_AddParameterInlineData( parent->getRegion()->getRegionHandle(), parent->handle, buffer, count );
+        Fieldml_AddParameterInlineData( parent->getRegionHandle(), parent->handle, buffer, count );
     }
     else if( id == 1 )
     {
@@ -1137,7 +1165,7 @@ void SemidenseSaxHandler::onCharacterBuffer( const char *buffer, int count, int 
         intCount = intParserCount( buffer );
         ints = intParserInts( buffer );
         
-        Fieldml_SetSwizzle( parent->getRegion()->getRegionHandle(), parent->handle, ints, intCount );
+        Fieldml_SetSwizzle( parent->getRegionHandle(), parent->handle, ints, intCount );
         
         delete[] ints;
     }
@@ -1159,17 +1187,17 @@ SaxHandler *IndexEvaluatorListSaxHandler::onElementStart( const xmlChar *element
     if( xmlStrcmp( elementName, INDEX_TAG ) == 0 )
     {
         FmlObjectHandle handle = attributes.getObjectAttribute( region, EVALUATOR_ATTRIB, FHT_UNKNOWN_EVALUATOR );
-        FmlObjectHandle setHandle = attributes.getObjectAttribute( region, ELEMENT_SET_ATTRIB, FHT_UNKNOWN_ELEMENT_SET );        if( handle == FML_INVALID_HANDLE )
+        FmlObjectHandle setHandle = attributes.getObjectAttribute( region, ELEMENT_SEQUENCE_ATTRIB, FHT_UNKNOWN_ELEMENT_SEQUENCE );        if( handle == FML_INVALID_HANDLE )
         {
             parent->parent->getRegion()->logError( "Invalid index in semi dense data" );
         }
         else if( isSparse )
         {
-            Fieldml_AddSparseIndexEvaluator( parent->parent->getRegion()->getRegionHandle(), parent->parent->handle, handle );
+            Fieldml_AddSparseIndexEvaluator( parent->parent->getRegionHandle(), parent->parent->handle, handle );
         }
         else
         {
-            Fieldml_AddDenseIndexEvaluator( parent->parent->getRegion()->getRegionHandle(), parent->parent->handle, handle, setHandle );
+            Fieldml_AddDenseIndexEvaluator( parent->parent->getRegionHandle(), parent->parent->handle, handle, setHandle );
         }
     }
     

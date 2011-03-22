@@ -196,18 +196,77 @@ static int writeContinuousType( xmlTextWriterPtr writer, FmlHandle handle, FmlOb
 }
 
 
-static void writeBounds( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHandle object )
+static void writeElements( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHandle object )
 {
-    TypeBoundsType boundsType = Fieldml_GetBoundsType( handle, object );
+    xmlTextWriterStartElement( writer, MEMBERS_TAG );
     
-    if( boundsType == BOUNDS_DISCRETE_CONTIGUOUS )
+    //Output ranges first, then individuals. It's cleaner that way, even if potentially slower.
+    int index = 1;
+    int firstElement = Fieldml_GetElementEntry( handle, object, index++ );
+    int lastElement = firstElement;
+    int prevElement;
+    bool hasSingles = false; 
+    while( firstElement != -1 )
     {
-        xmlTextWriterStartElement( writer, BOUNDS_TAG );
-        xmlTextWriterStartElement( writer, CONTIGUOUS_ENSEMBLE_BOUNDS_TAG );
-        xmlTextWriterWriteFormatAttribute( writer, VALUE_COUNT_ATTRIB, "%d", Fieldml_GetContiguousBoundsCount( handle, object ) );
-        xmlTextWriterEndElement( writer );
-        xmlTextWriterEndElement( writer );
+        //TODO Use strides greater than 1 to optimize output.
+        prevElement = lastElement;
+        lastElement = Fieldml_GetElementEntry( handle, object, index++ );
+        while( lastElement == prevElement + 1 )
+        {
+            prevElement = lastElement;
+            lastElement = Fieldml_GetElementEntry( handle, object, index++ );
+        }
+        
+        if( prevElement != firstElement )
+        {
+            xmlTextWriterStartElement( writer, MEMBER_RANGE_TAG );
+            xmlTextWriterWriteFormatAttribute( writer, MIN_ATTRIB, "%d", firstElement );
+            xmlTextWriterWriteFormatAttribute( writer, MAX_ATTRIB, "%d", prevElement );
+            xmlTextWriterEndElement( writer );
+        }
+        else
+        {
+            hasSingles = true;
+        }
+        
+        firstElement = lastElement;
     }
+    
+    if( !hasSingles )
+    {
+        xmlTextWriterEndElement( writer );
+        return;
+    }
+    
+    
+    xmlTextWriterStartElement( writer, MEMBER_LIST_TAG );
+
+    index = 1;
+    firstElement = Fieldml_GetElementEntry( handle, object, index++ );
+    lastElement = firstElement;
+    prevElement;
+    while( firstElement != -1 )
+    {
+        //TODO Use strides greater than 1 to optimize output.
+        prevElement = lastElement;
+        lastElement = Fieldml_GetElementEntry( handle, object, index++ );
+        while( lastElement == prevElement + 1 )
+        {
+            prevElement = lastElement;
+            lastElement = Fieldml_GetElementEntry( handle, object, index++ );
+        }
+        
+        if( prevElement == firstElement )
+        {
+            xmlTextWriterWriteFormatString( writer, "%d ", firstElement );
+        }
+        
+        firstElement = lastElement;
+    }
+
+    xmlTextWriterEndElement( writer );
+
+    xmlTextWriterEndElement( writer );
 }
 
 
@@ -220,7 +279,7 @@ static int writeEnsembleType( xmlTextWriterPtr writer, FmlHandle handle, FmlObje
         xmlTextWriterWriteAttribute( writer, IS_COMPONENT_ENSEMBLE_ATTRIB, (const xmlChar*)STRING_TRUE );
     }
     
-    writeBounds( writer, handle, object );
+    writeElements( writer, handle, object );
 
     xmlTextWriterEndElement( writer );
     
@@ -242,9 +301,9 @@ static int writeMeshType( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHa
     }
     
     FmlObjectHandle elementType = Fieldml_GetMeshElementType( handle, object );
-    int elementCount = Fieldml_GetEnsembleTypeElementCount( handle, elementType );
+    int elementCount = Fieldml_GetElementCount( handle, elementType );
 
-    writeBounds( writer, handle, Fieldml_GetMeshElementType( handle, object ) );
+    writeElements( writer, handle, Fieldml_GetMeshElementType( handle, object ) );
 
     xmlTextWriterStartElement( writer, MESH_SHAPES_TAG );
     const char *defaultShape = Fieldml_GetMeshDefaultShape( handle, object );
@@ -269,9 +328,9 @@ static int writeMeshType( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHa
 }
 
 
-static int writeElementSet( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHandle object )
+static int writeElementSequence( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHandle object )
 {
-    xmlTextWriterStartElement( writer, ELEMENT_SET_TAG );
+    xmlTextWriterStartElement( writer, ELEMENT_SEQUENCE_TAG );
     
     writeObjectName( writer, NAME_ATTRIB, handle, object );
     writeObjectName( writer, VALUE_TYPE_ATTRIB, handle, Fieldml_GetValueType( handle, object ) );
@@ -443,7 +502,7 @@ static void writeSemidenseIndexes( xmlTextWriterPtr writer, FmlHandle handle, Fm
             FmlObjectHandle set = Fieldml_GetSemidenseIndexSet( handle, object, i );
             if( set != FML_INVALID_HANDLE )
             {
-                xmlTextWriterWriteAttribute( writer, ELEMENT_SET_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, set ) );
+                xmlTextWriterWriteAttribute( writer, ELEMENT_SEQUENCE_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, set ) );
             }
             
             xmlTextWriterEndElement( writer );
@@ -580,8 +639,8 @@ static int writeFieldmlObject( xmlTextWriterPtr writer, FmlHandle handle, FmlObj
         return writeEnsembleType( writer, handle, object );
     case FHT_MESH_TYPE:
         return writeMeshType( writer, handle, object );
-    case FHT_ELEMENT_SET:
-        return writeElementSet( writer, handle, object );
+    case FHT_ELEMENT_SEQUENCE:
+        return writeElementSequence( writer, handle, object );
     case FHT_ABSTRACT_EVALUATOR:
         return writeAbstractEvaluator( writer, handle, object );
     case FHT_EXTERNAL_EVALUATOR:

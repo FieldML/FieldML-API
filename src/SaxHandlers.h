@@ -166,6 +166,7 @@ public:
     virtual FieldmlSaxHandler *getParent();
 
     FieldmlRegion *getRegion();
+    FmlHandle getRegionHandle();
 
     int getLocation();
 };
@@ -187,6 +188,7 @@ public:
     virtual RegionSaxHandler *getParent();
 
     FieldmlRegion *getRegion();
+    FmlHandle getRegionHandle();
 
     int getLocation();
 };
@@ -222,11 +224,11 @@ public:
 };
 
 
-class ElementSetSaxHandler :
+class ElementSequenceSaxHandler :
     public FieldmlObjectSaxHandler, CharacterBufferHandler
 {
 public:
-    ElementSetSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
+    ElementSequenceSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
     
@@ -322,13 +324,15 @@ public:
 };
 
 
-class ContiguousEnsembleBoundsHandler :
-    public ObjectMemberSaxHandler
+class EnsembleElementsHandler :
+    public ObjectMemberSaxHandler, CharacterBufferHandler
 {
 public:
-    ContiguousEnsembleBoundsHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
+    EnsembleElementsHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
+    
+    virtual void onCharacterBuffer( const char *buffer, int count, int id );
 };
 
 
