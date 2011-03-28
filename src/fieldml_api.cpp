@@ -2761,7 +2761,10 @@ int Fieldml_AddEnsembleElements( FmlHandle handle, FmlObjectHandle setHandle, co
         
         for( int i = 0; i < elementCount; i++ )
         {
-            elementSequence->members.setBit( elements[i], true );
+            if( elements[i] >= 0 )
+            {
+                ensemble->members.setBit( elements[i], true );
+            }
         }
         
         return region->getLastError();
@@ -2772,7 +2775,10 @@ int Fieldml_AddEnsembleElements( FmlHandle handle, FmlObjectHandle setHandle, co
 
         for( int i = 0; i < elementCount; i++ )
         {
-            ensemble->members.setBit( elements[i], true );
+            if( elements[i] >= 0 )
+            {
+                ensemble->members.setBit( elements[i], true );
+            }
         }
         
         return region->getLastError();
@@ -2802,16 +2808,11 @@ int Fieldml_AddEnsembleElementRange( FmlHandle handle, FmlObjectHandle setHandle
         return region->getLastError();
     }
 
-    if( ( minElement < 1 ) || ( minElement > maxElement ) )
+    if( ( minElement < 0 ) || ( minElement > maxElement ) )
     {
         return region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
     }
 
-    if( maxElement < 1 )
-    {
-        return region->setRegionError( FML_ERR_INVALID_PARAMETER_4 );
-    }
-    
     if( stride < 1 )
     {
         return region->setRegionError( FML_ERR_INVALID_PARAMETER_5 );
