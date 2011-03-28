@@ -55,7 +55,6 @@ using namespace std;
 //========================================================================
 
 const int INVALID_LOCATION_HANDLE = -2;
-const int VIRTUAL_LOCATION_HANDLE = -1; //For derived objects, e.g. mesh type xi and element types.
 const int LIBRARY_LOCATION_HANDLE = 0;
 const int LOCAL_LOCATION_HANDLE = 1;
 
@@ -139,7 +138,7 @@ static FieldmlObject *resolveSubEvaluator( FieldmlRegion *region, string name, i
         return NULL;
     }
 
-    return new Evaluator( name, VIRTUAL_LOCATION_HANDLE, superHandleType, typeHandle );
+    return new Evaluator( name, LOCAL_LOCATION_HANDLE, superHandleType, typeHandle, true );
 }
 
 
@@ -276,50 +275,8 @@ FmlObjectHandle FieldmlRegion::addObject( FieldmlObject *object )
         objects.push_back( object );
         return objects.size() - 1;
     }
-
-    doSwitch = 0;
     
     oldObject = getObject( handle );
-    
-    if( ( oldObject->locationHandle != VIRTUAL_LOCATION_HANDLE ) ||
-        ( object->locationHandle == VIRTUAL_LOCATION_HANDLE ) )
-    {
-        // Do nothing. Virtual objects should never replace non-virtual ones.
-    }
-    if( oldObject->type == FHT_UNKNOWN_TYPE )
-    {
-        if( object->type == FHT_ENSEMBLE_TYPE )
-        {
-            doSwitch = 1;
-        }
-    }
-    else if( oldObject->type == FHT_UNKNOWN_TYPE )
-    {
-        if( object->type == FHT_CONTINUOUS_TYPE )
-        {
-            doSwitch = 1;
-        }
-    }
-    else if( oldObject->type == FHT_UNKNOWN_EVALUATOR )
-    {
-        if( ( object->type == FHT_PIECEWISE_EVALUATOR ) ||
-            ( object->type == FHT_REFERENCE_EVALUATOR ) ||
-            ( object->type == FHT_AGGREGATE_EVALUATOR ) ||
-            ( object->type == FHT_PARAMETER_EVALUATOR ) ||
-            ( object->type == FHT_EXTERNAL_EVALUATOR ) ||
-            ( object->type == FHT_ABSTRACT_EVALUATOR ) )
-        {
-            doSwitch = 1;
-        }
-    }
-    
-    if( doSwitch )
-    {
-        objects[handle] = object;
-        delete oldObject;
-        
-        return handle;
-    }
     
     logError( "Handle collision. Cannot replace", object->name.c_str(), oldObject->name.c_str() );
     fprintf( stderr, "Handle collision. Cannot replace %s:%d with %s:%d\n", object->name.c_str(), object->type, oldObject->name.c_str(), oldObject->type );
@@ -423,7 +380,6 @@ const int FieldmlRegion::getNamedHandle( const string name )
 
     objects.push_back( object );
     handle = objects.size() - 1;
-    setLocationHandle( handle, VIRTUAL_LOCATION_HANDLE );
     
     return handle;
 }

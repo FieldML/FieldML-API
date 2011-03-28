@@ -135,16 +135,9 @@ static const int *intParserInts( const char *buffer )
 }
 
 
-static FmlObjectHandle getOrCreateObjectHandle( const FieldmlRegion *region, const char *name, FieldmlHandleType type )
+static FmlObjectHandle getObjectHandle( const FieldmlRegion *region, const char *name, FieldmlHandleType type )
 {
-    FmlObjectHandle objectHandle = Fieldml_GetObjectByName( region->getRegionHandle(), name );
-
-    if( objectHandle == FML_INVALID_HANDLE )
-    {
-//        objectHandle = ((FieldmlRegion*)region)->addObject( new FieldmlObject( name, VIRTUAL_LOCATION_HANDLE, type ) );
-    }
-    
-    return objectHandle;
+    return Fieldml_GetObjectByName( region->getRegionHandle(), name );
 }
 
 
@@ -213,7 +206,7 @@ FmlObjectHandle SaxAttributes::getObjectAttribute( const FieldmlRegion *region, 
 
     if( rawAttribute != NULL )
     {
-        return getOrCreateObjectHandle( region, rawAttribute, type );
+        return getObjectHandle( region, rawAttribute, type );
     }
 
     return FML_INVALID_HANDLE;

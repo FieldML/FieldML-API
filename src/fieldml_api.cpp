@@ -881,7 +881,7 @@ int Fieldml_IsObjectLocal( FmlHandle handle, FmlObjectHandle objectHandle )
         return -1;
     }
     
-    if( object->locationHandle == LOCAL_LOCATION_HANDLE )
+    if( ( object->locationHandle == LOCAL_LOCATION_HANDLE ) && !object->isVirtual )
     {
         return 1;
     }
@@ -1028,7 +1028,7 @@ FmlObjectHandle Fieldml_CreateAbstractEvaluator( FmlHandle handle, const char *n
         return FML_INVALID_HANDLE;
     }
         
-    AbstractEvaluator *abstractEvaluator = new AbstractEvaluator( name, LOCAL_LOCATION_HANDLE, valueType );
+    AbstractEvaluator *abstractEvaluator = new AbstractEvaluator( name, LOCAL_LOCATION_HANDLE, valueType, false );
     
     region->setRegionError( FML_ERR_NO_ERROR );
     return region->addObject( abstractEvaluator );
@@ -1049,7 +1049,7 @@ FmlObjectHandle Fieldml_CreateExternalEvaluator( FmlHandle handle, const char *n
         return FML_INVALID_HANDLE;
     }
         
-    ExternalEvaluator *externalEvaluator = new ExternalEvaluator( name, LOCAL_LOCATION_HANDLE, valueType );
+    ExternalEvaluator *externalEvaluator = new ExternalEvaluator( name, LOCAL_LOCATION_HANDLE, valueType, false );
     
     region->setRegionError( FML_ERR_NO_ERROR );
     return region->addObject( externalEvaluator );
@@ -1070,7 +1070,7 @@ FmlObjectHandle Fieldml_CreateParametersEvaluator( FmlHandle handle, const char 
         return FML_INVALID_HANDLE;
     }
         
-    ParameterEvaluator *parameterEvaluator = new ParameterEvaluator( name, LOCAL_LOCATION_HANDLE, valueType );
+    ParameterEvaluator *parameterEvaluator = new ParameterEvaluator( name, LOCAL_LOCATION_HANDLE, valueType, false );
     
     region->setRegionError( FML_ERR_NO_ERROR );
     return region->addObject( parameterEvaluator );
@@ -1593,7 +1593,7 @@ FmlObjectHandle Fieldml_CreatePiecewiseEvaluator( FmlHandle handle, const char *
         return FML_INVALID_HANDLE;
     }
         
-    PiecewiseEvaluator *piecewiseEvaluator = new PiecewiseEvaluator( name, LOCAL_LOCATION_HANDLE, valueType );
+    PiecewiseEvaluator *piecewiseEvaluator = new PiecewiseEvaluator( name, LOCAL_LOCATION_HANDLE, valueType, false );
     
     region->setRegionError( FML_ERR_NO_ERROR );
     return region->addObject( piecewiseEvaluator );
@@ -1614,7 +1614,7 @@ FmlObjectHandle Fieldml_CreateAggregateEvaluator( FmlHandle handle, const char *
         return FML_INVALID_HANDLE;
     }
         
-    AggregateEvaluator *aggregateEvaluator = new AggregateEvaluator( name, LOCAL_LOCATION_HANDLE, valueType );
+    AggregateEvaluator *aggregateEvaluator = new AggregateEvaluator( name, LOCAL_LOCATION_HANDLE, valueType, false );
     
     region->setRegionError( FML_ERR_NO_ERROR );
     return region->addObject( aggregateEvaluator );
@@ -1806,7 +1806,7 @@ FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlHandle handle, const char *
 
     FmlObjectHandle valueType = Fieldml_GetValueType( handle, sourceEvaluator );
 
-    ReferenceEvaluator *referenceEvaluator = new ReferenceEvaluator( name, LOCAL_LOCATION_HANDLE, sourceEvaluator, valueType );
+    ReferenceEvaluator *referenceEvaluator = new ReferenceEvaluator( name, LOCAL_LOCATION_HANDLE, sourceEvaluator, valueType, false );
     
     region->setRegionError( FML_ERR_NO_ERROR );
     return region->addObject( referenceEvaluator );
@@ -2379,7 +2379,7 @@ FmlObjectHandle Fieldml_CreateContinuousType( FmlHandle handle, const char * nam
         }
     }
 
-    ContinuousType *continuousType = new ContinuousType( name, LOCAL_LOCATION_HANDLE, componentDescriptionHandle );
+    ContinuousType *continuousType = new ContinuousType( name, LOCAL_LOCATION_HANDLE, componentDescriptionHandle, false );
     
     region->setRegionError( FML_ERR_NO_ERROR );
     return region->addObject( continuousType );
@@ -2394,7 +2394,7 @@ FmlObjectHandle Fieldml_CreateEnsembleType( FmlHandle handle, const char * name,
         return FML_INVALID_HANDLE;
     }
 
-    EnsembleType *ensembleType = new EnsembleType( name, LOCAL_LOCATION_HANDLE, isComponentType == 1 );
+    EnsembleType *ensembleType = new EnsembleType( name, LOCAL_LOCATION_HANDLE, isComponentType == 1, false );
     
     region->setRegionError( FML_ERR_NO_ERROR );
     return region->addObject( ensembleType );
@@ -2435,13 +2435,13 @@ FmlObjectHandle Fieldml_CreateMeshType( FmlHandle handle, const char * name, Fml
         return FML_INVALID_HANDLE;
     }
     
-    ContinuousType *xiObject = new ContinuousType( xiName.c_str(), VIRTUAL_LOCATION_HANDLE, xiEnsembleDescription );
+    ContinuousType *xiObject = new ContinuousType( xiName.c_str(), LOCAL_LOCATION_HANDLE, xiEnsembleDescription, true );
     xiHandle = region->addObject( xiObject );
     
-    EnsembleType *elementObject = new EnsembleType( elementsName.c_str(), VIRTUAL_LOCATION_HANDLE, false );
+    EnsembleType *elementObject = new EnsembleType( elementsName.c_str(), LOCAL_LOCATION_HANDLE, false, true );
     elementHandle = region->addObject( elementObject );
     
-    MeshType *meshType = new MeshType( name, LOCAL_LOCATION_HANDLE, xiHandle, elementHandle );
+    MeshType *meshType = new MeshType( name, LOCAL_LOCATION_HANDLE, xiHandle, elementHandle, false );
 
     region->setRegionError( FML_ERR_NO_ERROR );
 
@@ -2763,7 +2763,7 @@ int Fieldml_AddEnsembleElements( FmlHandle handle, FmlObjectHandle setHandle, co
         {
             if( elements[i] >= 0 )
             {
-                ensemble->members.setBit( elements[i], true );
+                elementSequence->members.setBit( elements[i], true );
             }
         }
         

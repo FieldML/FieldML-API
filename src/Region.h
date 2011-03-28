@@ -49,7 +49,6 @@
 extern const int INVALID_LOCATION_HANDLE;
 extern const int LOCAL_LOCATION_HANDLE;
 extern const int LIBRARY_LOCATION_HANDLE;
-extern const int VIRTUAL_LOCATION_HANDLE;
 
 class FieldmlRegion
 {
