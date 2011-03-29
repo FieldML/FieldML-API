@@ -42,6 +42,7 @@
 #ifndef H_FIELDML_LIBRARY_0_3_H
 #define H_FIELDML_LIBRARY_0_3_H
 
+extern const char * const FML_LIBRARY_0_3_NAME;
 extern const char * const FML_LIBRARY_0_3_STRING;
 
 #endif // H_FIELDML_LIBRARY_0_3_H

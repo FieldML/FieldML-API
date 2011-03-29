@@ -412,7 +412,7 @@ int insertLibrary( FieldmlSession *session, string libraryName )
 {
     if( libraryName.length() != 0 )
     {
-        if( libraryName == "library_0.3.xml" )
+        if( libraryName == FML_LIBRARY_0_3_NAME )
         {
             return parseFieldmlString( FML_LIBRARY_0_3_STRING, "Internal library 0.3", LIBRARY_LOCATION_HANDLE, session );
         }

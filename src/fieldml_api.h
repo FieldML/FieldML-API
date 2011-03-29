@@ -174,7 +174,7 @@ extern "C" {
 FmlHandle Fieldml_CreateFromFile( const char *filename );
 
 /**
- *      Creates an empty FieldML handle. If libraryLocation is "library_0.3.xml", the internal 
+ *      Creates an empty FieldML handle. If libraryLocation is a known internal library name, the internal 
  *      library will be used, otherwise libraryLocation will be interpreted as the relative
  *      location of a FieldML file, and parsed as part of the FieldML handle's creation.
  *      
@@ -218,7 +218,7 @@ int Fieldml_CopyRegionName( FmlHandle handle, char *buffer, int bufferLength );
  *      Returns the name of the region's library.
  *      
  *      Currently, each region may only use a single library, which is specified
- *      either as the string "library_0.3.xml" or as a filename relative to the
+ *      either as a known internal library name or as a filename relative to the
  *      enclosing file's location.
  */
 const char * Fieldml_GetLibraryName( FmlHandle handle );
