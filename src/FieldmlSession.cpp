@@ -78,6 +78,8 @@ FieldmlSession::FieldmlSession()
 
 FieldmlSession::~FieldmlSession()
 {
+    delete region;
+    
     sessions[handle] = NULL;
 }
 
