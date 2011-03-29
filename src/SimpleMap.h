@@ -39,6 +39,9 @@
  *
  */
 
+#ifndef H_SIMPLE_MAP
+#define H_SIMPLE_MAP
+
 #include <vector>
 
 template <typename K, typename V> class SimpleMap
@@ -191,3 +194,4 @@ public:
     }
 };
 
+#endif // H_SIMPLE_MAP
