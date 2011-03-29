@@ -39,38 +39,57 @@
  *
  */
 
-#ifndef H_PARAMETER_WRITER
-#define H_PARAMETER_WRITER
+#ifndef H_FIELDML_REGION
+#define H_FIELDML_REGION
 
-#include "OutputStream.h"
+#include <vector>
 
-#include "FieldmlErrorHandler.h"
 #include "fieldml_structs.h"
 
-class ParameterWriter
+extern const int INVALID_LOCATION_HANDLE;
+extern const int LOCAL_LOCATION_HANDLE;
+extern const int LIBRARY_LOCATION_HANDLE;
+
+class FieldmlRegion
 {
 private:
-    long handle;
-
-    static FmlWriterHandle addWriter( ParameterWriter *writer );
-
-protected:
-    const DataFileType dataType;
-    const FmlOutputStream stream;
-
-    ParameterWriter( FmlOutputStream stream, DataFileType streamFormat );
-
+    const std::string name;
+    
+    const std::string library;
+    
+    std::string root;
+    
+    std::vector<FieldmlObject*> objects;
+    
 public:
-    static FmlWriterHandle create( FmlHandle sessionHandle, FieldmlErrorHandler *eHandler, const char *root, ParameterEvaluator *parameters, bool append );
+    FieldmlRegion( const std::string location, const std::string name, const std::string library );
+    virtual ~FieldmlRegion();
     
-    static ParameterWriter *handleToWriter( FmlWriterHandle handle );
+    FmlObjectHandle addObject( FieldmlObject *object );
 
-    virtual int writeNextIndexSet( int *indexBuffer ) = 0;
-    virtual int writeIntValues( int *values, int count ) = 0;
-    virtual int writeDoubleValues( double *values, int count ) = 0;
+    FieldmlObject *getObject( const FmlObjectHandle handle );
     
-    virtual ~ParameterWriter();
+    const int getObjectByIndex( const int index );
+    
+    const int getTotal( FieldmlHandleType type );
+
+    const int getTotal();
+
+    const int getNthHandle( const FieldmlHandleType type, const int index );
+    
+    const int getNamedHandle( const std::string name );
+
+    void setRoot( const std::string newRoot );
+
+    const std::string getRoot();
+
+    const std::string getName();
+    
+    const std::string getLibraryName();
+
+    void finalize();
+
+    void setLocationHandle( FmlObjectHandle handle, int locationHandle );
 };
 
-
-#endif //H_PARAMETER_WRITER
+#endif //H_FIELDML_REGION

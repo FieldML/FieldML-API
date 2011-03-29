@@ -43,6 +43,7 @@
 #define H_PARAMETER_READER
 
 #include "InputStream.h"
+#include "FieldmlErrorHandler.h"
 
 #include "fieldml_structs.h"
 
@@ -60,7 +61,7 @@ protected:
     ParameterReader( FmlInputStream stream, DataFileType streamFormat );
 
 public:
-    static FmlReaderHandle create( FieldmlRegion *region, ParameterEvaluator *parameters );
+    static FmlReaderHandle create( FmlHandle sessionHandle, FieldmlErrorHandler *errorHandler, const char *root, ParameterEvaluator *parameters );
     
     static ParameterReader *handleToReader( FmlReaderHandle handle );
     

@@ -80,6 +80,7 @@
 #define FML_ERR_ACCESS_VIOLATION        1005
 #define FML_ERR_FILE_READ               1006
 #define FML_ERR_FILE_WRITE              1007
+#define FML_ERR_NAME_COLLISION          1008
 
 //Used for giving the user precise feedback on bad parameters passed to the API
 //Only used for parameters other than the FieldML handle and object handle parameters.
@@ -142,11 +143,6 @@ enum FieldmlHandleType
     FHT_PIECEWISE_EVALUATOR,
     FHT_AGGREGATE_EVALUATOR,
     FHT_ELEMENT_SEQUENCE,
-    
-    //These are stand-in types used to allow forward-declaration during parsing.
-    FHT_UNKNOWN_TYPE,
-    FHT_UNKNOWN_EVALUATOR,
-    FHT_UNKNOWN_ELEMENT_SEQUENCE
 };
 
 
@@ -214,8 +210,8 @@ void Fieldml_Destroy( FmlHandle handle );
 /**
  *      Returns the name of the region.
  */
-const char * Fieldml_GetName( FmlHandle handle );
-int Fieldml_CopyName( FmlHandle handle, char *buffer, int bufferLength );
+const char * Fieldml_GetRegionName( FmlHandle handle );
+int Fieldml_CopyRegionName( FmlHandle handle, char *buffer, int bufferLength );
 
 
 /**

@@ -46,6 +46,9 @@
 #include <libxml/xmlmemory.h>
 #include <libxml/xmlschemas.h>
 
+#include "fieldml_library_0.3.h"
+#include "string_const.h"
+
 #include "fieldml_sax.h"
 #include "SaxHandlers.h"
 
@@ -372,13 +375,12 @@ static xmlSAXHandlerPtr SAX2Handler = &SAX2HandlerStruct;
 //========================================================================
 
 
-static FieldmlRegion *parseFieldml( SaxParser *parser, const int location, FieldmlRegion *region )
+static int parseFieldml( SaxParser *parser, const int location, FieldmlSession *session )
 {
-    int res;
     SaxContext context;
     RootSaxHandler rootHandler( NULL, &context, location );
     
-    context.region = region;
+    context.session = session;
     context.source = parser->getSource();
     context.handler = &rootHandler;
 
@@ -386,33 +388,40 @@ static FieldmlRegion *parseFieldml( SaxParser *parser, const int location, Field
 
     xmlSubstituteEntitiesDefault( 1 );
 
-    res = parser->parse( SAX2Handler, &context );
-    
-    if( res != 0 )
-    {
-        context.region->logError( "xmlSAXUserParseFile returned error" );
-    }
-
-    if( context.handler != &rootHandler )
-    {
-        context.region->logError( "Parser state not empty" );
-    }
-    
-    return context.region;
+    return parser->parse( SAX2Handler, &context );
 }
 
 
-FieldmlRegion *parseFieldmlFile( const char *filename, const int location, FieldmlRegion *region )
+int parseFieldmlFile( const char *filename, const int location, FieldmlSession *session )
 {
     SaxFileParser parser( filename );
     
-    return parseFieldml( &parser, location, region );
+    return parseFieldml( &parser, location, session );
 }
 
 
-FieldmlRegion *parseFieldmlString( const char *string, const char *stringDescription, const int location, FieldmlRegion *region )
+int parseFieldmlString( const char *string, const char *stringDescription, const int location, FieldmlSession *session )
 {
     SaxStringParser parser( string, stringDescription );
     
-    return parseFieldml( &parser, location, region );
+    return parseFieldml( &parser, location, session );
+}
+
+
+int insertLibrary( FieldmlSession *session, string libraryName )
+{
+    if( libraryName.length() != 0 )
+    {
+        if( libraryName == "library_0.3.xml" )
+        {
+            return parseFieldmlString( FML_LIBRARY_0_3_STRING, "Internal library 0.3", LIBRARY_LOCATION_HANDLE, session );
+        }
+        else
+        {
+            string libraryFile = makeFilename( session->region->getRoot(), libraryName );
+            return parseFieldmlFile( libraryFile.c_str(), LIBRARY_LOCATION_HANDLE, session );
+        }
+    }
+    
+    return 0;
 }

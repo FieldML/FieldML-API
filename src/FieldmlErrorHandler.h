@@ -39,38 +39,22 @@
  *
  */
 
-#ifndef H_PARAMETER_WRITER
-#define H_PARAMETER_WRITER
+#ifndef H_FIELDML_ERROR_HANDLER
+#define H_FIELDML_ERROR_HANDLER
 
-#include "OutputStream.h"
+#include <vector>
 
-#include "FieldmlErrorHandler.h"
-#include "fieldml_structs.h"
-
-class ParameterWriter
+class FieldmlErrorHandler
 {
-private:
-    long handle;
-
-    static FmlWriterHandle addWriter( ParameterWriter *writer );
-
-protected:
-    const DataFileType dataType;
-    const FmlOutputStream stream;
-
-    ParameterWriter( FmlOutputStream stream, DataFileType streamFormat );
-
 public:
-    static FmlWriterHandle create( FmlHandle sessionHandle, FieldmlErrorHandler *eHandler, const char *root, ParameterEvaluator *parameters, bool append );
-    
-    static ParameterWriter *handleToWriter( FmlWriterHandle handle );
+    virtual int setErrorAndLocation( const char *file, const int line, const int error ) = 0;
 
-    virtual int writeNextIndexSet( int *indexBuffer ) = 0;
-    virtual int writeIntValues( int *values, int count ) = 0;
-    virtual int writeDoubleValues( double *values, int count ) = 0;
-    
-    virtual ~ParameterWriter();
+    virtual void addError( const std::string string ) = 0;
+
+    virtual void logError( const char *error, const char *name1 = NULL, const char *name2 = NULL ) = 0;
 };
 
 
-#endif //H_PARAMETER_WRITER
+#define setError( error ) setErrorAndLocation( __FILE__, __LINE__, error )
+
+#endif //H_FIELDML_ERROR_HANDLER

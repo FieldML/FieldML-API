@@ -43,6 +43,8 @@
 
 #include <string.h>
 
+#include "fieldml_library_0.3.h"
+
 #include "fieldml_api.h"
 #include "fieldml_sax.h"
 #include "fieldml_structs.h"
@@ -51,7 +53,7 @@
 
 #include "ParameterReader.h"
 #include "ParameterWriter.h"
-#include "Region.h"
+#include "FieldmlRegion.h"
 
 using namespace std;
 
@@ -62,9 +64,42 @@ using namespace std;
 //========================================================================
 
 
-static SimpleMap<int, FmlObjectHandle> *getEvaluatorMap( FieldmlRegion *region, FmlObjectHandle objectHandle )
+static FieldmlObject *getObject( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = session->region->getObject( objectHandle );
+    
+    if( object == NULL )
+    {
+        session->setError( FML_ERR_UNKNOWN_OBJECT );
+    }
+    
+    return object;
+}
+
+
+static FmlObjectHandle addObject( FieldmlSession *session, FieldmlObject *object )
+{
+    FmlObjectHandle handle = session->region->getNamedHandle( object->name.c_str() );
+    
+    if( handle == FML_INVALID_HANDLE )
+    {
+        return session->region->addObject( object );
+    }
+    
+    FieldmlObject *oldObject = session->region->getObject( handle );
+    
+    session->logError( "Handle collision. Cannot replace", object->name.c_str(), oldObject->name.c_str() );
+    delete object;
+    
+    session->setError( FML_ERR_NAME_COLLISION );
+    
+    return FML_INVALID_HANDLE;
+}
+
+
+static SimpleMap<int, FmlObjectHandle> *getEvaluatorMap( FieldmlSession *session, FmlObjectHandle objectHandle )
+{
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
@@ -83,15 +118,15 @@ static SimpleMap<int, FmlObjectHandle> *getEvaluatorMap( FieldmlRegion *region, 
     }
     else
     {
-        region->setRegionError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT );
         return NULL;
     }
 }
 
 
-static SimpleMap<FmlObjectHandle, FmlObjectHandle> *getBindMap( FieldmlRegion *region, FmlObjectHandle objectHandle )
+static SimpleMap<FmlObjectHandle, FmlObjectHandle> *getBindMap( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
@@ -115,15 +150,15 @@ static SimpleMap<FmlObjectHandle, FmlObjectHandle> *getBindMap( FieldmlRegion *r
     }
     else
     {
-        region->setRegionError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT );
         return NULL;
     }
 }
 
 
-static std::vector<FmlObjectHandle> *getVariableList( FieldmlRegion *region, FmlObjectHandle objectHandle )
+static std::vector<FmlObjectHandle> *getVariableList( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
@@ -161,14 +196,14 @@ static std::vector<FmlObjectHandle> *getVariableList( FieldmlRegion *region, Fml
         return &piecewiseEvaluator->variables;
     }
 
-    region->setRegionError( FML_ERR_INVALID_OBJECT );
+    session->setError( FML_ERR_INVALID_OBJECT );
     return NULL;
 }
 
 
-static SimpleMap<int, string> *getShapeMap( FieldmlRegion *region, FmlObjectHandle objectHandle )
+static SimpleMap<int, string> *getShapeMap( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
@@ -181,14 +216,14 @@ static SimpleMap<int, string> *getShapeMap( FieldmlRegion *region, FmlObjectHand
         return &meshType->shapes;
     }
 
-    region->setRegionError( FML_ERR_INVALID_OBJECT );
+    session->setError( FML_ERR_INVALID_OBJECT );
     return NULL;
 }
 
 
-static SemidenseDataDescription *getSemidenseDataDescription( FieldmlRegion *region, FmlObjectHandle objectHandle )
+static SemidenseDataDescription *getSemidenseDataDescription( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
@@ -205,7 +240,7 @@ static SemidenseDataDescription *getSemidenseDataDescription( FieldmlRegion *reg
         }
     }
 
-    region->setRegionError( FML_ERR_INVALID_OBJECT );
+    session->setError( FML_ERR_INVALID_OBJECT );
     return NULL;
 }
 
@@ -252,9 +287,9 @@ static int cappedCopyAndFree( const char *source, char *buffer, int bufferLength
 }
 
 
-static InlineDataLocation *getInlineDataLocation( FieldmlRegion *region, FmlObjectHandle objectHandle )
+static InlineDataLocation *getInlineDataLocation( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
-    SemidenseDataDescription *semidense = getSemidenseDataDescription( region, objectHandle );
+    SemidenseDataDescription *semidense = getSemidenseDataDescription( session, objectHandle );
     if( semidense == NULL )
     {
         return NULL;
@@ -266,15 +301,15 @@ static InlineDataLocation *getInlineDataLocation( FieldmlRegion *region, FmlObje
     }
     else
     {
-        region->setRegionError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT );
         return NULL;
     }
 }
 
 
-static FileDataLocation *getFileDataLocation( FieldmlRegion *region, FmlObjectHandle objectHandle )
+static FileDataLocation *getFileDataLocation( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
-    SemidenseDataDescription *semidense = getSemidenseDataDescription( region, objectHandle );
+    SemidenseDataDescription *semidense = getSemidenseDataDescription( session, objectHandle );
     if( semidense == NULL )
     {
         return NULL;
@@ -286,15 +321,15 @@ static FileDataLocation *getFileDataLocation( FieldmlRegion *region, FmlObjectHa
     }
     else
     {
-        region->setRegionError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT );
         return NULL;
     }
 }
 
 
-static bool checkIsValueType( FieldmlRegion *region, FmlObjectHandle objectHandle, bool allowContinuous, bool allowEnsemble, bool allowMesh )
+static bool checkIsValueType( FieldmlSession *session, FmlObjectHandle objectHandle, bool allowContinuous, bool allowEnsemble, bool allowMesh )
 {
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
     if( object == NULL )
     {
         return false;
@@ -319,9 +354,9 @@ static bool checkIsValueType( FieldmlRegion *region, FmlObjectHandle objectHandl
 }
 
 
-static bool checkIsEvaluatorType( FieldmlRegion *region, FmlObjectHandle objectHandle, bool allowContinuous, bool allowEnsemble )
+static bool checkIsEvaluatorType( FieldmlSession *session, FmlObjectHandle objectHandle, bool allowContinuous, bool allowEnsemble )
 {
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
     if( object == NULL )
     {
         return false;
@@ -337,23 +372,23 @@ static bool checkIsEvaluatorType( FieldmlRegion *region, FmlObjectHandle objectH
         return false;
     }
     
-    return checkIsValueType( region, Fieldml_GetValueType( region->getRegionHandle(), objectHandle ), allowContinuous, allowEnsemble, false );
+    return checkIsValueType( session, Fieldml_GetValueType( session->getHandle(), objectHandle ), allowContinuous, allowEnsemble, false );
 }
 
 
-static bool checkIsTypeCompatible( FieldmlRegion *region, FmlObjectHandle objectHandle1, FmlObjectHandle objectHandle2 )
+static bool checkIsTypeCompatible( FieldmlSession *session, FmlObjectHandle objectHandle1, FmlObjectHandle objectHandle2 )
 {
-    if( !checkIsValueType( region, objectHandle1, true, true, false ) )
+    if( !checkIsValueType( session, objectHandle1, true, true, false ) )
     {
         return false;
     }
-    if( !checkIsValueType( region, objectHandle2, true, true, false ) )
+    if( !checkIsValueType( session, objectHandle2, true, true, false ) )
     {
         return false;
     }
 
-    FieldmlObject *object1 = region->getObject( objectHandle1 );
-    FieldmlObject *object2 = region->getObject( objectHandle2 );
+    FieldmlObject *object1 = getObject( session, objectHandle1 );
+    FieldmlObject *object2 = getObject( session, objectHandle2 );
     
     if( ( object1->type == FHT_ENSEMBLE_TYPE ) && ( object2->type == FHT_ENSEMBLE_TYPE ) )
     {
@@ -361,8 +396,8 @@ static bool checkIsTypeCompatible( FieldmlRegion *region, FmlObjectHandle object
     }
     else if( ( object1->type == FHT_CONTINUOUS_TYPE ) && ( object2->type == FHT_CONTINUOUS_TYPE ) )
     {
-        FmlObjectHandle component1 = Fieldml_GetTypeComponentEnsemble( region->getRegionHandle(), objectHandle1 );
-        FmlObjectHandle component2 = Fieldml_GetTypeComponentEnsemble( region->getRegionHandle(), objectHandle2 );
+        FmlObjectHandle component1 = Fieldml_GetTypeComponentEnsemble( session->getHandle(), objectHandle1 );
+        FmlObjectHandle component2 = Fieldml_GetTypeComponentEnsemble( session->getHandle(), objectHandle2 );
         
         if( ( component1 == FML_INVALID_HANDLE ) && ( component2 == FML_INVALID_HANDLE ) )
         {
@@ -373,7 +408,7 @@ static bool checkIsTypeCompatible( FieldmlRegion *region, FmlObjectHandle object
             return false;
         }
         
-        return Fieldml_GetTypeComponentCount( region->getRegionHandle(), objectHandle1 ) == Fieldml_GetTypeComponentCount( region->getRegionHandle(), objectHandle2 );
+        return Fieldml_GetTypeComponentCount( session->getHandle(), objectHandle1 ) == Fieldml_GetTypeComponentCount( session->getHandle(), objectHandle2 );
     }
     else
     {
@@ -382,21 +417,21 @@ static bool checkIsTypeCompatible( FieldmlRegion *region, FmlObjectHandle object
 }
 
 
-static bool checkIsEvaluatorTypeCompatible( FieldmlRegion *region, FmlObjectHandle objectHandle1, FmlObjectHandle objectHandle2 )
+static bool checkIsEvaluatorTypeCompatible( FieldmlSession *session, FmlObjectHandle objectHandle1, FmlObjectHandle objectHandle2 )
 {
-    if( !checkIsEvaluatorType( region, objectHandle1, true, true ) )
+    if( !checkIsEvaluatorType( session, objectHandle1, true, true ) )
     {
         return false;
     }
-    if( !checkIsEvaluatorType( region, objectHandle2, true, true ) )
+    if( !checkIsEvaluatorType( session, objectHandle2, true, true ) )
     {
         return false;
     }
     
-    FmlObjectHandle typeHandle1 = Fieldml_GetValueType( region->getRegionHandle(), objectHandle1 );
-    FmlObjectHandle typeHandle2 = Fieldml_GetValueType( region->getRegionHandle(), objectHandle2 );
+    FmlObjectHandle typeHandle1 = Fieldml_GetValueType( session->getHandle(), objectHandle1 );
+    FmlObjectHandle typeHandle2 = Fieldml_GetValueType( session->getHandle(), objectHandle2 );
     
-    return checkIsTypeCompatible( region, typeHandle1, typeHandle2 );
+    return checkIsTypeCompatible( session, typeHandle1, typeHandle2 );
 }
 
 
@@ -408,15 +443,18 @@ static bool checkIsEvaluatorTypeCompatible( FieldmlRegion *region, FmlObjectHand
 
 FmlHandle Fieldml_CreateFromFile( const char *filename )
 {
-    FieldmlRegion *region = parseFieldmlFile( filename, LOCAL_LOCATION_HANDLE, NULL );
+    FieldmlSession *session = new FieldmlSession();
     
-    if( region == NULL )
+    int err = parseFieldmlFile( filename, LOCAL_LOCATION_HANDLE, session );
+    
+    if( session->region == NULL )
     {
+        delete session;
         return FML_INVALID_HANDLE;
     }
-    region->finalize();
+    session->region->finalize();
     
-    return region->getRegionHandle();
+    return session->getHandle();
 }
 
 
@@ -427,47 +465,52 @@ FmlHandle Fieldml_Create( const char *location, const char *name, const char *li
         libraryLocation = "";
     }
     
-    FieldmlRegion *region = new FieldmlRegion( location, name, libraryLocation );
-    return region->getRegionHandle();
+    FieldmlSession *session = new FieldmlSession();
+    
+    session->region = new FieldmlRegion( location, name, libraryLocation );
+
+    insertLibrary( session, libraryLocation );
+    
+    return session->getHandle();
 }
 
 
 int Fieldml_SetDebug( FmlHandle handle, const int debug )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
         
-    region->setDebug( debug );
+    session->setDebug( debug );
     
-    return region->setRegionError( FML_ERR_NO_ERROR );
+    return session->setError( FML_ERR_NO_ERROR );
 }
 
 
 int Fieldml_GetLastError( FmlHandle handle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
         
-    return region->getLastError();
+    return session->getLastError();
 }
 
 
 int Fieldml_WriteFile( FmlHandle handle, const char *filename )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
         
-    region->setRegionError( FML_ERR_NO_ERROR );
-    region->setRoot( getDirectory( filename ) );
+    session->setError( FML_ERR_NO_ERROR );
+    session->region->setRoot( getDirectory( filename ) );
 
     return writeFieldmlFile( handle, filename );
 }
@@ -475,45 +518,45 @@ int Fieldml_WriteFile( FmlHandle handle, const char *filename )
 
 void Fieldml_Destroy( FmlHandle handle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return;
     }
         
-    delete region;
+    delete session;
 }
 
 
-const char * Fieldml_GetName( FmlHandle handle )
+const char * Fieldml_GetRegionName( FmlHandle handle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return NULL;
     }
         
-    region->setRegionError( FML_ERR_NO_ERROR );
-    return cstrCopy( region->getName() );
+    session->setError( FML_ERR_NO_ERROR );
+    return cstrCopy( session->region->getName() );
 }
 
 
-int Fieldml_CopyName( FmlHandle handle, char *buffer, int bufferLength )
+int Fieldml_CopyRegionName( FmlHandle handle, char *buffer, int bufferLength )
 {
-    return cappedCopyAndFree( Fieldml_GetName( handle ), buffer, bufferLength );
+    return cappedCopyAndFree( Fieldml_GetRegionName( handle ), buffer, bufferLength );
 }
 
 
 const char * Fieldml_GetLibraryName( FmlHandle handle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return NULL;
     }
         
-    region->setRegionError( FML_ERR_NO_ERROR );
-    return cstrCopy( region->getLibraryName() );
+    session->setError( FML_ERR_NO_ERROR );
+    return cstrCopy( session->region->getLibraryName() );
 }
 
 
@@ -525,27 +568,27 @@ int Fieldml_CopyLibraryName( FmlHandle handle, char *buffer, int bufferLength )
 
 int Fieldml_GetErrorCount( FmlHandle handle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return -1;
     }
         
-    region->setRegionError( FML_ERR_NO_ERROR );
-    return region->getErrorCount();
+    session->setError( FML_ERR_NO_ERROR );
+    return session->getErrorCount();
 }
 
 
 const char * Fieldml_GetError( FmlHandle handle, int index )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return NULL;
     }
         
-    region->setRegionError( FML_ERR_NO_ERROR );
-    return cstrCopy( region->getError( index - 1 ) );
+    session->setError( FML_ERR_NO_ERROR );
+    return cstrCopy( session->getError( index - 1 ) );
 }
 
 
@@ -557,63 +600,63 @@ int Fieldml_CopyError( FmlHandle handle, int index, char *buffer, int bufferLeng
 
 int Fieldml_GetTotalObjectCount( FmlHandle handle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return -1;
     }
         
-    region->setRegionError( FML_ERR_NO_ERROR );
-    return region->getTotal();
+    session->setError( FML_ERR_NO_ERROR );
+    return session->region->getTotal();
 }
 
 
 FmlObjectHandle Fieldml_GetObjectByIndex( FmlHandle handle, const int index )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
         
-    region->setRegionError( FML_ERR_NO_ERROR );
-    return region->getObjectByIndex( index );
+    session->setError( FML_ERR_NO_ERROR );
+    return session->region->getObjectByIndex( index );
 }
 
 
 int Fieldml_GetObjectCount( FmlHandle handle, FieldmlHandleType type )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return -1;
     }
         
-    region->setRegionError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR );
     if( type == FHT_UNKNOWN )
     {
         return -1;
     }
 
-    return region->getTotal( type );
+    return session->region->getTotal( type );
 }
 
 
 FmlObjectHandle Fieldml_GetObject( FmlHandle handle, FieldmlHandleType type, int index )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
         
-    region->setRegionError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR );
 
-    FmlObjectHandle object = region->getNthHandle( type, index );
+    FmlObjectHandle object = session->region->getNthHandle( type, index );
     
     if( object == FML_INVALID_HANDLE )
     {
-        region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );  
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );  
     }
     
     return object;
@@ -622,25 +665,25 @@ FmlObjectHandle Fieldml_GetObject( FmlHandle handle, FieldmlHandleType type, int
 
 FmlObjectHandle Fieldml_GetObjectByName( FmlHandle handle, const char * name )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
         
-    return region->getNamedHandle( name );
+    return session->region->getNamedHandle( name );
 }
 
 
 FieldmlHandleType Fieldml_GetObjectType( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FHT_UNKNOWN;
     }
         
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
@@ -653,13 +696,13 @@ FieldmlHandleType Fieldml_GetObjectType( FmlHandle handle, FmlObjectHandle objec
 
 FmlObjectHandle Fieldml_GetTypeComponentEnsemble( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
         
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
@@ -676,15 +719,15 @@ FmlObjectHandle Fieldml_GetTypeComponentEnsemble( FmlHandle handle, FmlObjectHan
         return FML_INVALID_HANDLE;
     }
 
-    region->setRegionError( FML_ERR_INVALID_OBJECT );  
+    session->setError( FML_ERR_INVALID_OBJECT );  
     return FML_INVALID_HANDLE;
 }
 
 
 int Fieldml_GetTypeComponentCount( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return -1;
     }
@@ -693,7 +736,7 @@ int Fieldml_GetTypeComponentCount( FmlHandle handle, FmlObjectHandle objectHandl
     
     if( componentTypeHandle == FML_INVALID_HANDLE )
     {
-        if( region->getLastError() == FML_ERR_NO_ERROR )
+        if( session->getLastError() == FML_ERR_NO_ERROR )
         {
             return 1;
         }
@@ -706,13 +749,13 @@ int Fieldml_GetTypeComponentCount( FmlHandle handle, FmlObjectHandle objectHandl
 
 int Fieldml_GetElementCount( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return -1;
     }
         
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL ) 
     {
@@ -736,20 +779,20 @@ int Fieldml_GetElementCount( FmlHandle handle, FmlObjectHandle objectHandle )
     }
         
 
-    region->setRegionError( FML_ERR_INVALID_OBJECT );  
+    session->setError( FML_ERR_INVALID_OBJECT );  
     return -1;
 }
 
 
 int Fieldml_IsEnsembleComponentType( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return -1;
     }
         
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL ) 
     {
@@ -762,20 +805,20 @@ int Fieldml_IsEnsembleComponentType( FmlHandle handle, FmlObjectHandle objectHan
         return ensembleType->isComponentEnsemble;
     }
     
-    region->setRegionError( FML_ERR_INVALID_OBJECT );  
+    session->setError( FML_ERR_INVALID_OBJECT );  
     return -1;
 }
 
 
 FmlObjectHandle Fieldml_GetMeshElementType( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
         
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
@@ -787,20 +830,20 @@ FmlObjectHandle Fieldml_GetMeshElementType( FmlHandle handle, FmlObjectHandle ob
         return meshType->elementType;
     }
     
-    region->setRegionError( FML_ERR_INVALID_OBJECT );  
+    session->setError( FML_ERR_INVALID_OBJECT );  
     return FML_INVALID_HANDLE;
 }
 
 
 const char * Fieldml_GetMeshElementShape( FmlHandle handle, FmlObjectHandle objectHandle, int elementNumber, int allowDefault )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return NULL;
     }
         
-    SimpleMap<int, string> *map = getShapeMap( region, objectHandle ); 
+    SimpleMap<int, string> *map = getShapeMap( session, objectHandle ); 
     if( map == NULL )
     {
         return NULL;
@@ -818,13 +861,13 @@ int Fieldml_CopyMeshElementShape( FmlHandle handle, FmlObjectHandle objectHandle
 
 FmlObjectHandle Fieldml_GetMeshXiType( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
         
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
@@ -836,20 +879,20 @@ FmlObjectHandle Fieldml_GetMeshXiType( FmlHandle handle, FmlObjectHandle objectH
         return meshType->xiType;
     }
     
-    region->setRegionError( FML_ERR_INVALID_OBJECT );  
+    session->setError( FML_ERR_INVALID_OBJECT );  
     return FML_INVALID_HANDLE;
 }
 
 
 FmlObjectHandle Fieldml_GetMeshXiComponentType( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
         
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
@@ -861,20 +904,20 @@ FmlObjectHandle Fieldml_GetMeshXiComponentType( FmlHandle handle, FmlObjectHandl
         return Fieldml_GetTypeComponentEnsemble( handle, meshType->xiType );
     }
     
-    region->setRegionError( FML_ERR_INVALID_OBJECT );  
+    session->setError( FML_ERR_INVALID_OBJECT );  
     return FML_INVALID_HANDLE;
 }
 
 
 int Fieldml_IsObjectLocal( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return -1;
     }
         
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL ) 
     {
@@ -894,13 +937,13 @@ int Fieldml_IsObjectLocal( FmlHandle handle, FmlObjectHandle objectHandle )
 
 const char * Fieldml_GetObjectName( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return NULL;
     }
         
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
@@ -919,33 +962,33 @@ int Fieldml_CopyObjectName( FmlHandle handle, FmlObjectHandle objectHandle, char
 
 int Fieldml_SetObjectInt( FmlHandle handle, FmlObjectHandle objectHandle, int value )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
         
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
-        return region->getLastError();
+        return session->getLastError();
     }
 
     object->intValue = value;
-    return region->getLastError();
+    return session->getLastError();
 }
 
 
 int Fieldml_GetObjectInt( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return 0;
     }
 
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
@@ -958,20 +1001,20 @@ int Fieldml_GetObjectInt( FmlHandle handle, FmlObjectHandle objectHandle )
 
 FmlObjectHandle Fieldml_GetValueType( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
-    region->setRegionError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR );
     
     if( object->type == FHT_PARAMETER_EVALUATOR ) 
     {
@@ -1009,87 +1052,119 @@ FmlObjectHandle Fieldml_GetValueType( FmlHandle handle, FmlObjectHandle objectHa
         return sequence->elementType;
     }
 
-    region->setRegionError( FML_ERR_INVALID_OBJECT );
+    session->setError( FML_ERR_INVALID_OBJECT );
     return FML_INVALID_HANDLE;
 }
 
 
 FmlObjectHandle Fieldml_CreateAbstractEvaluator( FmlHandle handle, const char *name, FmlObjectHandle valueType )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
-    if( !checkIsValueType( region, valueType, true, true, true ) )
+    if( !checkIsValueType( session, valueType, true, true, true ) )
     {
-        region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
     }
+
+    //TODO Icky hack to auto-add mesh type subevaluators. Subevaluators need to either be first-class objects, or
+    //specified at bind-time.
+    if( Fieldml_GetObjectType( handle, valueType ) == FHT_MESH_TYPE )
+    {
+        string xiName, elementName;
         
+        xiName = name;
+        xiName += ".xi";
+        
+        elementName = name;
+        elementName += ".element";
+        
+        if( Fieldml_GetObjectByName( handle, xiName.c_str() ) != FML_INVALID_HANDLE )
+        {
+            session->setError( FML_ERR_INVALID_PARAMETER_2 );
+            return FML_INVALID_HANDLE;
+        }
+        if( Fieldml_GetObjectByName( handle, elementName.c_str() ) != FML_INVALID_HANDLE )
+        {
+            session->setError( FML_ERR_INVALID_PARAMETER_2 );
+            return FML_INVALID_HANDLE;
+        }
+        
+        FmlObjectHandle xiType = Fieldml_GetMeshXiType( handle, valueType );
+        AbstractEvaluator *xiEvaluator = new AbstractEvaluator( xiName.c_str(), LOCAL_LOCATION_HANDLE, xiType, true );
+        addObject( session, xiEvaluator );        
+        
+        FmlObjectHandle elementType = Fieldml_GetMeshElementType( handle, valueType );
+        AbstractEvaluator *elementEvaluator = new AbstractEvaluator( elementName.c_str(), LOCAL_LOCATION_HANDLE, elementType, true );
+        addObject( session, elementEvaluator );        
+    }
+    
     AbstractEvaluator *abstractEvaluator = new AbstractEvaluator( name, LOCAL_LOCATION_HANDLE, valueType, false );
     
-    region->setRegionError( FML_ERR_NO_ERROR );
-    return region->addObject( abstractEvaluator );
+    session->setError( FML_ERR_NO_ERROR );
+    return addObject( session, abstractEvaluator );
 }
 
 
 FmlObjectHandle Fieldml_CreateExternalEvaluator( FmlHandle handle, const char *name, FmlObjectHandle valueType )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
-    if( !checkIsValueType( region, valueType, true, true, false ) )
+    if( !checkIsValueType( session, valueType, true, true, false ) )
     {
-        region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
     }
         
     ExternalEvaluator *externalEvaluator = new ExternalEvaluator( name, LOCAL_LOCATION_HANDLE, valueType, false );
     
-    region->setRegionError( FML_ERR_NO_ERROR );
-    return region->addObject( externalEvaluator );
+    session->setError( FML_ERR_NO_ERROR );
+    return addObject( session, externalEvaluator );
 }
 
 
 FmlObjectHandle Fieldml_CreateParametersEvaluator( FmlHandle handle, const char *name, FmlObjectHandle valueType )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
-    if( !checkIsValueType( region, valueType, true, true, false ) )
+    if( !checkIsValueType( session, valueType, true, true, false ) )
     {
-        region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
     }
         
     ParameterEvaluator *parameterEvaluator = new ParameterEvaluator( name, LOCAL_LOCATION_HANDLE, valueType, false );
     
-    region->setRegionError( FML_ERR_NO_ERROR );
-    return region->addObject( parameterEvaluator );
+    session->setError( FML_ERR_NO_ERROR );
+    return addObject( session, parameterEvaluator );
 }
 
 
 int Fieldml_SetParameterDataDescription( FmlHandle handle, FmlObjectHandle objectHandle, DataDescriptionType description )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
-        return region->getLastError();
+        return session->getLastError();
     }
 
     if( object->type == FHT_PARAMETER_EVALUATOR )
@@ -1097,33 +1172,33 @@ int Fieldml_SetParameterDataDescription( FmlHandle handle, FmlObjectHandle objec
         ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
         if( parameterEvaluator->dataDescription->descriptionType != DESCRIPTION_UNKNOWN )
         {
-            return region->setRegionError( FML_ERR_ACCESS_VIOLATION );
+            return session->setError( FML_ERR_ACCESS_VIOLATION );
         }
 
         if( description == DESCRIPTION_SEMIDENSE )
         {
             delete parameterEvaluator->dataDescription;
             parameterEvaluator->dataDescription = new SemidenseDataDescription();
-            return region->getLastError();
+            return session->getLastError();
         }
         else
         {
-            return region->setRegionError( FML_ERR_UNSUPPORTED );  
+            return session->setError( FML_ERR_UNSUPPORTED );  
         }
     }
 
-    return region->setRegionError( FML_ERR_INVALID_OBJECT );
+    return session->setError( FML_ERR_INVALID_OBJECT );
 }
 
 DataDescriptionType Fieldml_GetParameterDataDescription( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return DESCRIPTION_UNKNOWN;
     }
 
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
@@ -1136,20 +1211,20 @@ DataDescriptionType Fieldml_GetParameterDataDescription( FmlHandle handle, FmlOb
         return parameterEvaluator->dataDescription->descriptionType;
     }
 
-    region->setRegionError( FML_ERR_INVALID_OBJECT );
+    session->setError( FML_ERR_INVALID_OBJECT );
     return DESCRIPTION_UNKNOWN;
 }
 
 
 DataLocationType Fieldml_GetParameterDataLocation( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return LOCATION_UNKNOWN;
     }
 
-    SemidenseDataDescription *semidense = getSemidenseDataDescription( region, objectHandle );
+    SemidenseDataDescription *semidense = getSemidenseDataDescription( session, objectHandle );
     
     if( semidense == NULL )
     {
@@ -1162,54 +1237,54 @@ DataLocationType Fieldml_GetParameterDataLocation( FmlHandle handle, FmlObjectHa
 
 int Fieldml_SetParameterDataLocation( FmlHandle handle, FmlObjectHandle objectHandle, DataLocationType location )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    SemidenseDataDescription *semidense = getSemidenseDataDescription( region, objectHandle );
+    SemidenseDataDescription *semidense = getSemidenseDataDescription( session, objectHandle );
     if( semidense == NULL )
     {
-        return region->getLastError();
+        return session->getLastError();
     }
 
     if( semidense->dataLocation->locationType != LOCATION_UNKNOWN )
     {
-        return region->setRegionError( FML_ERR_ACCESS_VIOLATION );
+        return session->setError( FML_ERR_ACCESS_VIOLATION );
     }
 
     if( location == LOCATION_INLINE )
     {
         delete semidense->dataLocation;
         semidense->dataLocation = new InlineDataLocation();
-        return region->setRegionError( FML_ERR_NO_ERROR );
+        return session->setError( FML_ERR_NO_ERROR );
     }
     else if( location == LOCATION_FILE )
     {
         delete semidense->dataLocation;
         semidense->dataLocation = new FileDataLocation();
-        return region->setRegionError( FML_ERR_NO_ERROR );
+        return session->setError( FML_ERR_NO_ERROR );
     }
     else
     {
-        return region->setRegionError( FML_ERR_UNSUPPORTED );
+        return session->setError( FML_ERR_UNSUPPORTED );
     }
 }
 
 
 int Fieldml_AddParameterInlineData( FmlHandle handle, FmlObjectHandle objectHandle, const char *data, const int length )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    InlineDataLocation *location = getInlineDataLocation( region, objectHandle );
+    InlineDataLocation *location = getInlineDataLocation( session, objectHandle );
     if( location == NULL )
     {
-        return region->getLastError();
+        return session->getLastError();
     }
 
     char *newData = new char[location->length + length + 1];
@@ -1222,19 +1297,19 @@ int Fieldml_AddParameterInlineData( FmlHandle handle, FmlObjectHandle objectHand
     location->length += length;
     newData[location->length] = 0;
     
-    return region->getLastError();
+    return session->getLastError();
 }
 
 
 int Fieldml_GetParameterInlineDataLength( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return -1;
     }
 
-    InlineDataLocation *location = getInlineDataLocation( region, objectHandle );
+    InlineDataLocation *location = getInlineDataLocation( session, objectHandle );
     if( location == NULL )
     {
         return -1;
@@ -1246,13 +1321,13 @@ int Fieldml_GetParameterInlineDataLength( FmlHandle handle, FmlObjectHandle obje
 
 const char * Fieldml_GetParameterInlineData( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return NULL;
     }
 
-    InlineDataLocation *location = getInlineDataLocation( region, objectHandle );
+    InlineDataLocation *location = getInlineDataLocation( session, objectHandle );
     if( location == NULL )
     {
         return NULL;
@@ -1264,13 +1339,13 @@ const char * Fieldml_GetParameterInlineData( FmlHandle handle, FmlObjectHandle o
 
 int Fieldml_CopyInlineParameterData( FmlHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength, int offset )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return -1;
     }
 
-    InlineDataLocation *location = getInlineDataLocation( region, objectHandle );
+    InlineDataLocation *location = getInlineDataLocation( session, objectHandle );
     if( location == NULL )
     {
         return -1;
@@ -1287,35 +1362,35 @@ int Fieldml_CopyInlineParameterData( FmlHandle handle, FmlObjectHandle objectHan
 
 int Fieldml_SetParameterFileData( FmlHandle handle, FmlObjectHandle objectHandle, const char * filename, DataFileType type, int offset )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    FileDataLocation *location = getFileDataLocation( region, objectHandle );
+    FileDataLocation *location = getFileDataLocation( session, objectHandle );
     if( location == NULL )
     {
-        return region->getLastError();
+        return session->getLastError();
     }
 
     location->filename = filename;
     location->fileType = type;
     location->offset = offset;
     
-    return region->getLastError();
+    return session->getLastError();
 }
 
 
 const char * Fieldml_GetParameterDataFilename( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return NULL;
     }
 
-    FileDataLocation *location = getFileDataLocation( region, objectHandle );
+    FileDataLocation *location = getFileDataLocation( session, objectHandle );
     if( location == NULL )
     {
         return NULL;
@@ -1333,13 +1408,13 @@ int Fieldml_CopyParameterDataFilename( FmlHandle handle, FmlObjectHandle objectH
 
 int Fieldml_GetParameterDataOffset( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return -1;
     }
 
-    FileDataLocation *location = getFileDataLocation( region, objectHandle );
+    FileDataLocation *location = getFileDataLocation( session, objectHandle );
     if( location == NULL )
     {
         return -1;
@@ -1351,13 +1426,13 @@ int Fieldml_GetParameterDataOffset( FmlHandle handle, FmlObjectHandle objectHand
 
 DataFileType Fieldml_GetParameterDataFileType( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return TYPE_UNKNOWN;
     }
 
-    FileDataLocation *location = getFileDataLocation( region, objectHandle );
+    FileDataLocation *location = getFileDataLocation( session, objectHandle );
     if( location == NULL )
     {
         return TYPE_UNKNOWN;
@@ -1369,64 +1444,64 @@ DataFileType Fieldml_GetParameterDataFileType( FmlHandle handle, FmlObjectHandle
 
 int Fieldml_AddDenseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle, FmlObjectHandle setHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    if( !checkIsEvaluatorType( region, indexHandle, false, true ) )
+    if( !checkIsEvaluatorType( session, indexHandle, false, true ) )
     {
-        return region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
 
-    SemidenseDataDescription *semidense = getSemidenseDataDescription( region, objectHandle );
+    SemidenseDataDescription *semidense = getSemidenseDataDescription( session, objectHandle );
     if( semidense == NULL )
     {
-        return region->getLastError();
+        return session->getLastError();
     }
 
     semidense->denseIndexes.push_back( indexHandle );
     semidense->denseSets.push_back( setHandle );
     
-    return region->getLastError();
+    return session->getLastError();
 }
 
 
 int Fieldml_AddSparseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    if( !checkIsEvaluatorType( region, indexHandle, false, true ) )
+    if( !checkIsEvaluatorType( session, indexHandle, false, true ) )
     {
-        return region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
         
-    SemidenseDataDescription *semidense = getSemidenseDataDescription( region, objectHandle );
+    SemidenseDataDescription *semidense = getSemidenseDataDescription( session, objectHandle );
     if( semidense == NULL )
     {
-        return region->getLastError();
+        return session->getLastError();
     }
 
     semidense->sparseIndexes.push_back( indexHandle );
     
-    return region->getLastError();
+    return session->getLastError();
 }
 
 
 int Fieldml_GetSemidenseIndexCount( FmlHandle handle, FmlObjectHandle objectHandle, int isSparse )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return -1;
     }
 
-    SemidenseDataDescription *semidense = getSemidenseDataDescription( region, objectHandle );
+    SemidenseDataDescription *semidense = getSemidenseDataDescription( session, objectHandle );
     if( semidense == NULL )
     {
         return -1;
@@ -1445,13 +1520,13 @@ int Fieldml_GetSemidenseIndexCount( FmlHandle handle, FmlObjectHandle objectHand
 
 FmlObjectHandle Fieldml_GetSemidenseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int index, int isSparse )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
-    SemidenseDataDescription *semidense = getSemidenseDataDescription( region, objectHandle );
+    SemidenseDataDescription *semidense = getSemidenseDataDescription( session, objectHandle );
     if( semidense == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -1472,7 +1547,7 @@ FmlObjectHandle Fieldml_GetSemidenseIndexEvaluator( FmlHandle handle, FmlObjectH
         }
     }
     
-    region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+    session->setError( FML_ERR_INVALID_PARAMETER_3 );
     
     return FML_INVALID_HANDLE;
 }
@@ -1480,16 +1555,16 @@ FmlObjectHandle Fieldml_GetSemidenseIndexEvaluator( FmlHandle handle, FmlObjectH
 
 int Fieldml_SetSwizzle( FmlHandle handle, FmlObjectHandle objectHandle, const int *buffer, int count )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    SemidenseDataDescription *semidense = getSemidenseDataDescription( region, objectHandle );
+    SemidenseDataDescription *semidense = getSemidenseDataDescription( session, objectHandle );
     if( semidense == NULL )
     {
-        return region->getLastError();
+        return session->getLastError();
     }
     
     FmlObjectHandle evaluatorHandle = Fieldml_GetSemidenseIndexEvaluator( handle, objectHandle, 1, 0 );
@@ -1498,7 +1573,7 @@ int Fieldml_SetSwizzle( FmlHandle handle, FmlObjectHandle objectHandle, const in
     
     if( ensembleCount != count )
     {
-        return region->setRegionError( FML_ERR_INVALID_PARAMETER_4 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_4 );
     }
     
     if( semidense->swizzle != NULL )
@@ -1512,19 +1587,19 @@ int Fieldml_SetSwizzle( FmlHandle handle, FmlObjectHandle objectHandle, const in
     semidense->swizzleCount = count;
     semidense->swizzle = ints;
     
-    return region->getLastError();
+    return session->getLastError();
 }
 
 
 int Fieldml_GetSwizzleCount( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return -1;
     }
 
-    SemidenseDataDescription *semidense = getSemidenseDataDescription( region, objectHandle );
+    SemidenseDataDescription *semidense = getSemidenseDataDescription( session, objectHandle );
     if( semidense == NULL )
     {
         return -1;
@@ -1536,13 +1611,13 @@ int Fieldml_GetSwizzleCount( FmlHandle handle, FmlObjectHandle objectHandle )
 
 const int * Fieldml_GetSwizzleData( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return NULL;
     }
 
-    SemidenseDataDescription *semidense = getSemidenseDataDescription( region, objectHandle );
+    SemidenseDataDescription *semidense = getSemidenseDataDescription( session, objectHandle );
     if( semidense == NULL )
     {
         return NULL;
@@ -1554,13 +1629,13 @@ const int * Fieldml_GetSwizzleData( FmlHandle handle, FmlObjectHandle objectHand
 
 int Fieldml_CopySwizzleData( FmlHandle handle, FmlObjectHandle objectHandle, int *buffer, int bufferLength )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return -1;
     }
 
-    SemidenseDataDescription *semidense = getSemidenseDataDescription( region, objectHandle );
+    SemidenseDataDescription *semidense = getSemidenseDataDescription( session, objectHandle );
     if( semidense == NULL )
     {
         return -1;
@@ -1581,96 +1656,96 @@ int Fieldml_CopySwizzleData( FmlHandle handle, FmlObjectHandle objectHandle, int
 
 FmlObjectHandle Fieldml_CreatePiecewiseEvaluator( FmlHandle handle, const char * name, FmlObjectHandle valueType )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
-    if( !checkIsValueType( region, valueType, true, true, false ) )
+    if( !checkIsValueType( session, valueType, true, true, false ) )
     {
-        region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
     }
         
     PiecewiseEvaluator *piecewiseEvaluator = new PiecewiseEvaluator( name, LOCAL_LOCATION_HANDLE, valueType, false );
     
-    region->setRegionError( FML_ERR_NO_ERROR );
-    return region->addObject( piecewiseEvaluator );
+    session->setError( FML_ERR_NO_ERROR );
+    return addObject( session, piecewiseEvaluator );
 }
 
 
 FmlObjectHandle Fieldml_CreateAggregateEvaluator( FmlHandle handle, const char * name, FmlObjectHandle valueType )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
-    if( !checkIsValueType( region, valueType, true, false, false ) )
+    if( !checkIsValueType( session, valueType, true, false, false ) )
     {
-        region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
     }
         
     AggregateEvaluator *aggregateEvaluator = new AggregateEvaluator( name, LOCAL_LOCATION_HANDLE, valueType, false );
     
-    region->setRegionError( FML_ERR_NO_ERROR );
-    return region->addObject( aggregateEvaluator );
+    session->setError( FML_ERR_NO_ERROR );
+    return addObject( session, aggregateEvaluator );
 }
 
 
 int Fieldml_SetDefaultEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle evaluator )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
     if( Fieldml_GetObjectType( handle, objectHandle ) == FHT_AGGREGATE_EVALUATOR )
     {
-        if( !checkIsEvaluatorType( region, evaluator, true, false ) )
+        if( !checkIsEvaluatorType( session, evaluator, true, false ) )
         {
-            return region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+            return session->setError( FML_ERR_INVALID_PARAMETER_3 );
         }
     }
-    else if( !checkIsEvaluatorTypeCompatible( region, objectHandle, evaluator ) )
+    else if( !checkIsEvaluatorTypeCompatible( session, objectHandle, evaluator ) )
     {
-        return region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
 
-    FieldmlObject *object = region->getObject( objectHandle );
-    SimpleMap<int, FmlObjectHandle> *map = getEvaluatorMap( region, objectHandle ); 
+    FieldmlObject *object = getObject( session, objectHandle );
+    SimpleMap<int, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
  
     if( map == NULL )
     {
-        return region->getLastError();
+        return session->getLastError();
     }
 
     if( ( object->type == FHT_PIECEWISE_EVALUATOR ) || ( object->type == FHT_AGGREGATE_EVALUATOR ) )
     {
         map->setDefault( evaluator );
-        return region->getLastError();
+        return session->getLastError();
     }
     else
     {
-        return region->setRegionError( FML_ERR_INVALID_OBJECT );
+        return session->setError( FML_ERR_INVALID_OBJECT );
     }
 }
 
 
 int Fieldml_GetDefaultEvaluator( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
-    FieldmlObject *object = region->getObject( objectHandle );
-    SimpleMap<int, FmlObjectHandle> *map = getEvaluatorMap( region, objectHandle ); 
+    FieldmlObject *object = getObject( session, objectHandle );
+    SimpleMap<int, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
  
     if( map == NULL )
     {
@@ -1683,7 +1758,7 @@ int Fieldml_GetDefaultEvaluator( FmlHandle handle, FmlObjectHandle objectHandle 
     }
     else
     {
-        region->setRegionError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT );
         return FML_INVALID_HANDLE;
     }
 }
@@ -1691,44 +1766,44 @@ int Fieldml_GetDefaultEvaluator( FmlHandle handle, FmlObjectHandle objectHandle 
 
 int Fieldml_SetEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int element, FmlObjectHandle evaluator )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
     if( Fieldml_GetObjectType( handle, objectHandle ) == FHT_AGGREGATE_EVALUATOR )
     {
-        if( !checkIsEvaluatorType( region, evaluator, true, false ) )
+        if( !checkIsEvaluatorType( session, evaluator, true, false ) )
         {
-            return region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+            return session->setError( FML_ERR_INVALID_PARAMETER_3 );
         }
     }
-    else if( !checkIsEvaluatorTypeCompatible( region, objectHandle, evaluator ) )
+    else if( !checkIsEvaluatorTypeCompatible( session, objectHandle, evaluator ) )
     {
-        return region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
 
-    SimpleMap<int, FmlObjectHandle> *map = getEvaluatorMap( region, objectHandle ); 
+    SimpleMap<int, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
  
     if( map != NULL )
     {
         map->set( element, evaluator );
     }
 
-    return region->getLastError();
+    return session->getLastError();
 }
 
 
 int Fieldml_GetEvaluatorCount( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return -1;
     }
 
-    SimpleMap<int, FmlObjectHandle> *map = getEvaluatorMap( region, objectHandle ); 
+    SimpleMap<int, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
  
     if( map == NULL )
     {
@@ -1741,13 +1816,13 @@ int Fieldml_GetEvaluatorCount( FmlHandle handle, FmlObjectHandle objectHandle )
 
 int Fieldml_GetEvaluatorElement( FmlHandle handle, FmlObjectHandle objectHandle, int index )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return -1;
     }
 
-    SimpleMap<int, FmlObjectHandle> *map = getEvaluatorMap( region, objectHandle ); 
+    SimpleMap<int, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
  
     if( map == NULL )
     {
@@ -1760,13 +1835,13 @@ int Fieldml_GetEvaluatorElement( FmlHandle handle, FmlObjectHandle objectHandle,
 
 FmlObjectHandle Fieldml_GetEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int index )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
-    SimpleMap<int, FmlObjectHandle> *map = getEvaluatorMap( region, objectHandle ); 
+    SimpleMap<int, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
  
     if( map == NULL )
     {
@@ -1779,13 +1854,13 @@ FmlObjectHandle Fieldml_GetEvaluator( FmlHandle handle, FmlObjectHandle objectHa
 
 FmlObjectHandle Fieldml_GetElementEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int elementNumber, int allowDefault )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
-    SimpleMap<int, FmlObjectHandle> *map = getEvaluatorMap( region, objectHandle ); 
+    SimpleMap<int, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
  
     if( map == NULL )
     {
@@ -1798,8 +1873,8 @@ FmlObjectHandle Fieldml_GetElementEvaluator( FmlHandle handle, FmlObjectHandle o
 
 FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlHandle handle, const char * name, FmlObjectHandle sourceEvaluator )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
@@ -1808,20 +1883,20 @@ FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlHandle handle, const char *
 
     ReferenceEvaluator *referenceEvaluator = new ReferenceEvaluator( name, LOCAL_LOCATION_HANDLE, sourceEvaluator, valueType, false );
     
-    region->setRegionError( FML_ERR_NO_ERROR );
-    return region->addObject( referenceEvaluator );
+    session->setError( FML_ERR_NO_ERROR );
+    return addObject( session, referenceEvaluator );
 }
 
 
 FmlObjectHandle Fieldml_GetReferenceSourceEvaluator( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
@@ -1834,20 +1909,20 @@ FmlObjectHandle Fieldml_GetReferenceSourceEvaluator( FmlHandle handle, FmlObject
         return referenceEvaluator->sourceEvaluator;
     }
     
-    region->setRegionError( FML_ERR_INVALID_OBJECT );
+    session->setError( FML_ERR_INVALID_OBJECT );
     return FML_INVALID_HANDLE;
 }
 
 
 int Fieldml_GetVariableCount( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return -1;
     }
 
-    vector<FmlObjectHandle> *variables = getVariableList( region, objectHandle );
+    vector<FmlObjectHandle> *variables = getVariableList( session, objectHandle );
     if( variables == NULL )
     {
         return -1;
@@ -1859,13 +1934,13 @@ int Fieldml_GetVariableCount( FmlHandle handle, FmlObjectHandle objectHandle )
 
 FmlObjectHandle Fieldml_GetVariable( FmlHandle handle, FmlObjectHandle objectHandle, int variableIndex )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
-    vector<FmlObjectHandle> *variables = getVariableList( region, objectHandle );
+    vector<FmlObjectHandle> *variables = getVariableList( session, objectHandle );
     if( variables == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -1873,7 +1948,7 @@ FmlObjectHandle Fieldml_GetVariable( FmlHandle handle, FmlObjectHandle objectHan
     
     if( ( variableIndex < 1 ) || ( variableIndex > variables->size() ) )
     {
-        region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
     }
     
@@ -1883,13 +1958,13 @@ FmlObjectHandle Fieldml_GetVariable( FmlHandle handle, FmlObjectHandle objectHan
 
 int Fieldml_AddVariable( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle evaluatorHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    vector<FmlObjectHandle> *variables = getVariableList( region, objectHandle );
+    vector<FmlObjectHandle> *variables = getVariableList( session, objectHandle );
     if( variables == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
@@ -1900,19 +1975,19 @@ int Fieldml_AddVariable( FmlHandle handle, FmlObjectHandle objectHandle, FmlObje
         variables->push_back( evaluatorHandle );
     }
 
-    return region->getLastError();
+    return session->getLastError();
 }
 
 
 int Fieldml_GetBindCount( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return -1;
     }
 
-    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getBindMap( region, objectHandle );
+    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getBindMap( session, objectHandle );
     if( map == NULL )
     {
         return -1;
@@ -1924,13 +1999,13 @@ int Fieldml_GetBindCount( FmlHandle handle, FmlObjectHandle objectHandle )
 
 FmlObjectHandle Fieldml_GetBindVariable( FmlHandle handle, FmlObjectHandle objectHandle, int index )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
-    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getBindMap( region, objectHandle );
+    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getBindMap( session, objectHandle );
     if( map == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -1942,13 +2017,13 @@ FmlObjectHandle Fieldml_GetBindVariable( FmlHandle handle, FmlObjectHandle objec
 
 FmlObjectHandle Fieldml_GetBindEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int index )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
-    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getBindMap( region, objectHandle );
+    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getBindMap( session, objectHandle );
     if( map == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -1960,13 +2035,13 @@ FmlObjectHandle Fieldml_GetBindEvaluator( FmlHandle handle, FmlObjectHandle obje
 
 FmlObjectHandle Fieldml_GetBindByVariable( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle variableHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
-    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getBindMap( region, objectHandle );
+    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getBindMap( session, objectHandle );
     if( map == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -1986,38 +2061,38 @@ FmlObjectHandle Fieldml_GetBindByVariable( FmlHandle handle, FmlObjectHandle obj
 
 int Fieldml_SetBind( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle variableHandle, FmlObjectHandle sourceHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    if( !checkIsEvaluatorTypeCompatible( region, variableHandle, sourceHandle ) )
+    if( !checkIsEvaluatorTypeCompatible( session, variableHandle, sourceHandle ) )
     {
-        return region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
 
-    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getBindMap( region, objectHandle );
+    SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getBindMap( session, objectHandle );
     if( map == NULL )
     {
-        return region->getLastError();
+        return session->getLastError();
     }
     
     map->set( variableHandle, sourceHandle );
-    return region->getLastError();
+    return session->getLastError();
 }
 
 
 
 int Fieldml_GetIndexCount( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return -1;
     }
 
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
@@ -2041,33 +2116,33 @@ int Fieldml_GetIndexCount( FmlHandle handle, FmlObjectHandle objectHandle )
             return count1 + count2;
         }
         
-        region->setRegionError( FML_ERR_UNSUPPORTED );
+        session->setError( FML_ERR_UNSUPPORTED );
         return -1;
     }
     
-    region->setRegionError( FML_ERR_INVALID_OBJECT );
+    session->setError( FML_ERR_INVALID_OBJECT );
     return -1;
 }
 
 
 int Fieldml_SetIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int index, FmlObjectHandle evaluatorHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    if( !checkIsEvaluatorType( region, evaluatorHandle, false, true ) )
+    if( !checkIsEvaluatorType( session, evaluatorHandle, false, true ) )
     {
-        return region->setRegionError( FML_ERR_INVALID_PARAMETER_4 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_4 );
     }
 
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
-        return region->getLastError();
+        return session->getLastError();
     }
     
     if( object->type == FHT_PIECEWISE_EVALUATOR )
@@ -2077,11 +2152,11 @@ int Fieldml_SetIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, i
         if( index == 1 )
         {
             piecewise->indexEvaluator = evaluatorHandle;
-            return region->getLastError();
+            return session->getLastError();
         }
         else
         {
-            return region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+            return session->setError( FML_ERR_INVALID_PARAMETER_3 );
         }
     }
     else if( object->type == FHT_AGGREGATE_EVALUATOR )
@@ -2091,11 +2166,11 @@ int Fieldml_SetIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, i
         if( index == 1 )
         {
             aggregate->indexEvaluator = evaluatorHandle;
-            return region->getLastError();
+            return session->getLastError();
         }
         else
         {
-            return region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+            return session->setError( FML_ERR_INVALID_PARAMETER_3 );
         }
     }
     else if( object->type == FHT_PARAMETER_EVALUATOR )
@@ -2111,7 +2186,7 @@ int Fieldml_SetIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, i
             if( index <= count )
             {
                 semidense->sparseIndexes[index - 1] = evaluatorHandle;
-                return region->getLastError();
+                return session->getLastError();
             }
 
             index -= count;
@@ -2120,34 +2195,34 @@ int Fieldml_SetIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, i
             if( index <= count )
             {
                 semidense->denseIndexes[index - 1] = evaluatorHandle;
-                return region->getLastError();
+                return session->getLastError();
             }
             
-            region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+            session->setError( FML_ERR_INVALID_PARAMETER_3 );
         }
         else
         {
-            region->setRegionError( FML_ERR_UNSUPPORTED );
+            session->setError( FML_ERR_UNSUPPORTED );
         }
     }
     else
     {
-        region->setRegionError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT );
     }
 
-    return region->getLastError();
+    return session->getLastError();
 }
 
 
 FmlObjectHandle Fieldml_GetIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int index )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
@@ -2156,7 +2231,7 @@ FmlObjectHandle Fieldml_GetIndexEvaluator( FmlHandle handle, FmlObjectHandle obj
     
     if( index <= 0 )
     {
-        region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
     }
     
@@ -2169,7 +2244,7 @@ FmlObjectHandle Fieldml_GetIndexEvaluator( FmlHandle handle, FmlObjectHandle obj
             return piecewise->indexEvaluator;
         }
         
-        region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
     }
     else if( object->type == FHT_AGGREGATE_EVALUATOR )
@@ -2181,7 +2256,7 @@ FmlObjectHandle Fieldml_GetIndexEvaluator( FmlHandle handle, FmlObjectHandle obj
             return aggregate->indexEvaluator;
         }
         
-        region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
     }
     else if( object->type == FHT_PARAMETER_EVALUATOR )
@@ -2207,16 +2282,16 @@ FmlObjectHandle Fieldml_GetIndexEvaluator( FmlHandle handle, FmlObjectHandle obj
                 return semidense->denseIndexes[index - 1];
             }
             
-            region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+            session->setError( FML_ERR_INVALID_PARAMETER_3 );
         }
         else
         {
-            region->setRegionError( FML_ERR_UNSUPPORTED );
+            session->setError( FML_ERR_UNSUPPORTED );
         }
     }
     else
     {
-        region->setRegionError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT );
     }
 
     return FML_INVALID_HANDLE;
@@ -2225,13 +2300,13 @@ FmlObjectHandle Fieldml_GetIndexEvaluator( FmlHandle handle, FmlObjectHandle obj
 
 int Fieldml_GetSemidenseIndexSet( FmlHandle handle, FmlObjectHandle objectHandle, int index )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
@@ -2240,13 +2315,13 @@ int Fieldml_GetSemidenseIndexSet( FmlHandle handle, FmlObjectHandle objectHandle
     
     if( index <= 0 )
     {
-        region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
     }
     
     if( object->type != FHT_PARAMETER_EVALUATOR )
     {
-        region->setRegionError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT );
         return FML_INVALID_HANDLE;
     }
     
@@ -2260,7 +2335,7 @@ int Fieldml_GetSemidenseIndexSet( FmlHandle handle, FmlObjectHandle objectHandle
         
         if( index <= count )
         {
-            region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+            session->setError( FML_ERR_INVALID_PARAMETER_3 );
             return FML_INVALID_HANDLE;
         }
 
@@ -2272,11 +2347,11 @@ int Fieldml_GetSemidenseIndexSet( FmlHandle handle, FmlObjectHandle objectHandle
             return semidense->denseSets[index - 1];
         }
         
-        region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
     else
     {
-        region->setRegionError( FML_ERR_UNSUPPORTED );
+        session->setError( FML_ERR_UNSUPPORTED );
     }
 
     return FML_INVALID_HANDLE;
@@ -2287,36 +2362,36 @@ int Fieldml_GetSemidenseIndexSet( FmlHandle handle, FmlObjectHandle objectHandle
 
 int Fieldml_SetSemidenseIndexSet( FmlHandle handle, FmlObjectHandle objectHandle, int index, FmlObjectHandle setHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
-        return region->getLastError();
+        return session->getLastError();
     }
     
     if( index <= 0 )
     {
-        region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
-        return region->getLastError();
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        return session->getLastError();
     }
     
     if( object->type != FHT_PARAMETER_EVALUATOR )
     {
-        region->setRegionError( FML_ERR_INVALID_OBJECT );
-        return region->getLastError();
+        session->setError( FML_ERR_INVALID_OBJECT );
+        return session->getLastError();
     }
     
     FieldmlHandleType type = Fieldml_GetObjectType( handle, setHandle );
     if( type != FHT_ELEMENT_SEQUENCE )
     {
-        region->setRegionError( FML_ERR_INVALID_PARAMETER_4 );
-        return region->getLastError();
+        session->setError( FML_ERR_INVALID_PARAMETER_4 );
+        return session->getLastError();
     }
     
     int count;
@@ -2329,8 +2404,8 @@ int Fieldml_SetSemidenseIndexSet( FmlHandle handle, FmlObjectHandle objectHandle
         
         if( index <= count )
         {
-            region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
-            return region->getLastError();
+            session->setError( FML_ERR_INVALID_PARAMETER_3 );
+            return session->getLastError();
         }
 
         index -= count;
@@ -2342,30 +2417,30 @@ int Fieldml_SetSemidenseIndexSet( FmlHandle handle, FmlObjectHandle objectHandle
             return FML_ERR_NO_ERROR;
         }
         
-        region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
     else
     {
-        region->setRegionError( FML_ERR_UNSUPPORTED );
+        session->setError( FML_ERR_UNSUPPORTED );
     }
 
-    return region->getLastError();
+    return session->getLastError();
 }
 
 
 FmlObjectHandle Fieldml_CreateContinuousType( FmlHandle handle, const char * name, FmlObjectHandle componentDescriptionHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
     if( ( componentDescriptionHandle != FML_INVALID_HANDLE ) )
     {
-        if( !checkIsValueType( region, componentDescriptionHandle, false, true, false ) )
+        if( !checkIsValueType( session, componentDescriptionHandle, false, true, false ) )
         {
-            region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+            session->setError( FML_ERR_INVALID_PARAMETER_3 );
             return FML_INVALID_HANDLE;
         }
     }
@@ -2374,37 +2449,37 @@ FmlObjectHandle Fieldml_CreateContinuousType( FmlHandle handle, const char * nam
     {
         if( Fieldml_IsEnsembleComponentType( handle, componentDescriptionHandle ) != 1 )
         {
-            region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+            session->setError( FML_ERR_INVALID_PARAMETER_3 );
             return FML_INVALID_HANDLE;
         }
     }
 
     ContinuousType *continuousType = new ContinuousType( name, LOCAL_LOCATION_HANDLE, componentDescriptionHandle, false );
     
-    region->setRegionError( FML_ERR_NO_ERROR );
-    return region->addObject( continuousType );
+    session->setError( FML_ERR_NO_ERROR );
+    return addObject( session, continuousType );
 }
 
 
 FmlObjectHandle Fieldml_CreateEnsembleType( FmlHandle handle, const char * name, const int isComponentType )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
     EnsembleType *ensembleType = new EnsembleType( name, LOCAL_LOCATION_HANDLE, isComponentType == 1, false );
     
-    region->setRegionError( FML_ERR_NO_ERROR );
-    return region->addObject( ensembleType );
+    session->setError( FML_ERR_NO_ERROR );
+    return addObject( session, ensembleType );
 }
 
 
 FmlObjectHandle Fieldml_CreateMeshType( FmlHandle handle, const char * name, FmlObjectHandle xiEnsembleDescription )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
@@ -2415,7 +2490,7 @@ FmlObjectHandle Fieldml_CreateMeshType( FmlHandle handle, const char * name, Fml
     if( ( xiEnsembleDescription == FML_INVALID_HANDLE ) ||
         ( Fieldml_GetObjectType( handle, xiEnsembleDescription ) != FHT_ENSEMBLE_TYPE ) )
     {
-        region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
     }
 
@@ -2423,7 +2498,7 @@ FmlObjectHandle Fieldml_CreateMeshType( FmlHandle handle, const char * name, Fml
     xiName += ".xi";
     if( Fieldml_GetObjectByName( handle, xiName.c_str() ) != FML_INVALID_HANDLE )
     {
-        region->setRegionError( FML_ERR_INVALID_PARAMETER_2 );
+        session->setError( FML_ERR_INVALID_PARAMETER_2 );
         return FML_INVALID_HANDLE;
     }
 
@@ -2431,52 +2506,52 @@ FmlObjectHandle Fieldml_CreateMeshType( FmlHandle handle, const char * name, Fml
     elementsName += ".elements";
     if( Fieldml_GetObjectByName( handle, elementsName.c_str() ) != FML_INVALID_HANDLE )
     {
-        region->setRegionError( FML_ERR_INVALID_PARAMETER_2 );
+        session->setError( FML_ERR_INVALID_PARAMETER_2 );
         return FML_INVALID_HANDLE;
     }
     
     ContinuousType *xiObject = new ContinuousType( xiName.c_str(), LOCAL_LOCATION_HANDLE, xiEnsembleDescription, true );
-    xiHandle = region->addObject( xiObject );
+    xiHandle = addObject( session, xiObject );
     
     EnsembleType *elementObject = new EnsembleType( elementsName.c_str(), LOCAL_LOCATION_HANDLE, false, true );
-    elementHandle = region->addObject( elementObject );
+    elementHandle = addObject( session, elementObject );
     
     MeshType *meshType = new MeshType( name, LOCAL_LOCATION_HANDLE, xiHandle, elementHandle, false );
 
-    region->setRegionError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR );
 
-    return region->addObject( meshType );
+    return addObject( session, meshType );
 }
 
 
 int Fieldml_SetMeshDefaultShape( FmlHandle handle, FmlObjectHandle objectHandle, const char * shape )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    SimpleMap<int, string> *map = getShapeMap( region, objectHandle ); 
+    SimpleMap<int, string> *map = getShapeMap( session, objectHandle ); 
     if( map == NULL )
     {
-        return region->getLastError();
+        return session->getLastError();
     }
     
     map->setDefault( shape );
-    return region->getLastError();
+    return session->getLastError();
 }
 
 
 const char * Fieldml_GetMeshDefaultShape( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return NULL;
     }
 
-    SimpleMap<int, string> *map = getShapeMap( region, objectHandle ); 
+    SimpleMap<int, string> *map = getShapeMap( session, objectHandle ); 
     if( map == NULL )
     {
         return NULL;
@@ -2494,57 +2569,57 @@ int Fieldml_CopyMeshDefaultShape( FmlHandle handle, FmlObjectHandle objectHandle
 
 int Fieldml_SetMeshElementShape( FmlHandle handle, FmlObjectHandle objectHandle, int elementNumber, const char * shape )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    SimpleMap<int, string> *map = getShapeMap( region, objectHandle ); 
+    SimpleMap<int, string> *map = getShapeMap( session, objectHandle ); 
     if( map == NULL )
     {
-        return region->getLastError();
+        return session->getLastError();
     }
 
     map->set( elementNumber, shape );
-    return region->getLastError();
+    return session->getLastError();
 }
 
 
 FmlReaderHandle Fieldml_OpenReader( FmlHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
-    SemidenseDataDescription *semidense = getSemidenseDataDescription( region, objectHandle );
+    SemidenseDataDescription *semidense = getSemidenseDataDescription( session, objectHandle );
 
     if( semidense == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
     ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
 
     if( ( semidense->dataLocation->locationType == LOCATION_FILE ) ||
         ( semidense->dataLocation->locationType == LOCATION_INLINE ) )
     {
-        return ParameterReader::create( region, parameterEvaluator );
+        return ParameterReader::create( session->getHandle(), session, session->region->getRoot().c_str(), parameterEvaluator );
     }
     else
     {
-        return region->setRegionError( FML_ERR_UNSUPPORTED );
+        return session->setError( FML_ERR_UNSUPPORTED );
     }
 }
 
 
 int Fieldml_ReadIndexSet( FmlHandle handle, FmlReaderHandle readerHandle, int *indexBuffer )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
@@ -2552,19 +2627,19 @@ int Fieldml_ReadIndexSet( FmlHandle handle, FmlReaderHandle readerHandle, int *i
     ParameterReader *reader = ParameterReader::handleToReader( readerHandle );
     if( reader == NULL )
     {
-        return region->setRegionError( FML_ERR_INVALID_OBJECT );
+        return session->setError( FML_ERR_INVALID_OBJECT );
     }
 
     int err = reader->readNextIndexSet( indexBuffer );
     
-    return region->setRegionError( err );
+    return session->setError( err );
 }
 
 
 int Fieldml_ReadIntValues( FmlHandle handle, FmlReaderHandle readerHandle, int *valueBuffer, int bufferSize )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
@@ -2572,7 +2647,7 @@ int Fieldml_ReadIntValues( FmlHandle handle, FmlReaderHandle readerHandle, int *
     ParameterReader *reader = ParameterReader::handleToReader( readerHandle );
     if( reader == NULL )
     {
-        region->setRegionError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT );
     }
 
     return reader->readIntValues( valueBuffer, bufferSize );
@@ -2581,8 +2656,8 @@ int Fieldml_ReadIntValues( FmlHandle handle, FmlReaderHandle readerHandle, int *
 
 int Fieldml_ReadDoubleValues( FmlHandle handle, FmlReaderHandle readerHandle, double *valueBuffer, int bufferSize )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
@@ -2590,7 +2665,7 @@ int Fieldml_ReadDoubleValues( FmlHandle handle, FmlReaderHandle readerHandle, do
     ParameterReader *reader = ParameterReader::handleToReader( readerHandle );
     if( reader == NULL )
     {
-        return region->setRegionError( FML_ERR_INVALID_OBJECT );
+        return session->setError( FML_ERR_INVALID_OBJECT );
     }
 
     return reader->readDoubleValues( valueBuffer, bufferSize );
@@ -2599,8 +2674,8 @@ int Fieldml_ReadDoubleValues( FmlHandle handle, FmlReaderHandle readerHandle, do
 
 int Fieldml_CloseReader( FmlHandle handle, FmlReaderHandle readerHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
@@ -2608,49 +2683,49 @@ int Fieldml_CloseReader( FmlHandle handle, FmlReaderHandle readerHandle )
     ParameterReader *reader = ParameterReader::handleToReader( readerHandle );
     if( reader == NULL )
     {
-        return region->setRegionError( FML_ERR_INVALID_OBJECT );
+        return session->setError( FML_ERR_INVALID_OBJECT );
     }
 
     delete reader;
     
-    return region->setRegionError( FML_ERR_NO_ERROR );
+    return session->setError( FML_ERR_NO_ERROR );
 }
 
 
 FmlWriterHandle Fieldml_OpenWriter( FmlHandle handle, FmlObjectHandle objectHandle, int append )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return NULL;
     }
 
-    SemidenseDataDescription *semidense = getSemidenseDataDescription( region, objectHandle );
+    SemidenseDataDescription *semidense = getSemidenseDataDescription( session, objectHandle );
 
     if( semidense == NULL )
     {
         return NULL;
     }
 
-    FieldmlObject *object = region->getObject( objectHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
     ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
 
     if( ( semidense->dataLocation->locationType == LOCATION_FILE ) ||
         ( semidense->dataLocation->locationType == LOCATION_INLINE ) )
     {
-        return ParameterWriter::create( region, parameterEvaluator, ( append == 1 ));
+        return ParameterWriter::create( session->getHandle(), session, session->region->getRoot().c_str(), parameterEvaluator, ( append == 1 ));
     }
     else
     {
-        return region->setRegionError( FML_ERR_UNSUPPORTED );
+        return session->setError( FML_ERR_UNSUPPORTED );
     }
 }
 
 
 int Fieldml_WriteIndexSet( FmlHandle handle, FmlWriterHandle writerHandle, int *indexBuffer )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
@@ -2658,19 +2733,19 @@ int Fieldml_WriteIndexSet( FmlHandle handle, FmlWriterHandle writerHandle, int *
     ParameterWriter *writer = ParameterWriter::handleToWriter( writerHandle );
     if( writer == NULL )
     {
-        return region->setRegionError( FML_ERR_INVALID_OBJECT );
+        return session->setError( FML_ERR_INVALID_OBJECT );
     }
 
     int err = writer->writeNextIndexSet( indexBuffer );
     
-    return region->setRegionError( err );
+    return session->setError( err );
 }
 
 
 int Fieldml_WriteIntValues( FmlHandle handle, FmlWriterHandle writerHandle, int *valueBuffer, int valueCount )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
@@ -2678,7 +2753,7 @@ int Fieldml_WriteIntValues( FmlHandle handle, FmlWriterHandle writerHandle, int 
     ParameterWriter *writer = ParameterWriter::handleToWriter( writerHandle );
     if( writer == NULL )
     {
-        region->setRegionError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT );
         return -1;
     }
 
@@ -2688,8 +2763,8 @@ int Fieldml_WriteIntValues( FmlHandle handle, FmlWriterHandle writerHandle, int 
 
 int Fieldml_WriteDoubleValues( FmlHandle handle, FmlWriterHandle writerHandle, double *valueBuffer, int valueCount )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
@@ -2697,7 +2772,7 @@ int Fieldml_WriteDoubleValues( FmlHandle handle, FmlWriterHandle writerHandle, d
     ParameterWriter *writer = ParameterWriter::handleToWriter( writerHandle );
     if( writer == NULL )
     {
-        region->setRegionError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT );
         return -1;
     }
 
@@ -2707,8 +2782,8 @@ int Fieldml_WriteDoubleValues( FmlHandle handle, FmlWriterHandle writerHandle, d
 
 int Fieldml_CloseWriter( FmlHandle handle, FmlWriterHandle writerHandle )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
@@ -2716,43 +2791,43 @@ int Fieldml_CloseWriter( FmlHandle handle, FmlWriterHandle writerHandle )
     ParameterWriter *writer = ParameterWriter::handleToWriter( writerHandle );
     if( writer == NULL )
     {
-        return region->setRegionError( FML_ERR_INVALID_OBJECT );
+        return session->setError( FML_ERR_INVALID_OBJECT );
     }
 
     delete writer;
     
-    return region->setRegionError( FML_ERR_NO_ERROR );
+    return session->setError( FML_ERR_NO_ERROR );
 }
 
 
 FmlObjectHandle Fieldml_CreateEnsembleElementSequence( FmlHandle handle, const char * name, FmlObjectHandle valueType )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
 
     ElementSequence *elementSequence = new ElementSequence( name, LOCAL_LOCATION_HANDLE, valueType );
     
-    region->setRegionError( FML_ERR_NO_ERROR );
-    return region->addObject( elementSequence );
+    session->setError( FML_ERR_NO_ERROR );
+    return addObject( session, elementSequence );
 }
 
 
 int Fieldml_AddEnsembleElements( FmlHandle handle, FmlObjectHandle setHandle, const int * elements, const int elementCount )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    FieldmlObject *object = region->getObject( setHandle );
+    FieldmlObject *object = getObject( session, setHandle );
 
     if( object == NULL )
     {
-        return region->getLastError();
+        return session->getLastError();
     }
 
     if( object->type == FHT_ELEMENT_SEQUENCE )
@@ -2767,7 +2842,7 @@ int Fieldml_AddEnsembleElements( FmlHandle handle, FmlObjectHandle setHandle, co
             }
         }
         
-        return region->getLastError();
+        return session->getLastError();
     }
     else if( object->type == FHT_ENSEMBLE_TYPE )
     {
@@ -2781,7 +2856,7 @@ int Fieldml_AddEnsembleElements( FmlHandle handle, FmlObjectHandle setHandle, co
             }
         }
         
-        return region->getLastError();
+        return session->getLastError();
     }
     else if( object->type == FHT_MESH_TYPE )
     {
@@ -2789,33 +2864,33 @@ int Fieldml_AddEnsembleElements( FmlHandle handle, FmlObjectHandle setHandle, co
         return Fieldml_AddEnsembleElements( handle, meshType->elementType, elements, elementCount );
     }
 
-    return region->setRegionError( FML_ERR_INVALID_OBJECT );
+    return session->setError( FML_ERR_INVALID_OBJECT );
 }
 
 
 int Fieldml_AddEnsembleElementRange( FmlHandle handle, FmlObjectHandle setHandle, const int minElement, const int maxElement, const int stride )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    FieldmlObject *object = region->getObject( setHandle );
+    FieldmlObject *object = getObject( session, setHandle );
 
     if( object == NULL )
     {
-        return region->getLastError();
+        return session->getLastError();
     }
 
     if( ( minElement < 0 ) || ( minElement > maxElement ) )
     {
-        return region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
 
     if( stride < 1 )
     {
-        return region->setRegionError( FML_ERR_INVALID_PARAMETER_5 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_5 );
     }
     
     if( object->type == FHT_ELEMENT_SEQUENCE )
@@ -2827,7 +2902,7 @@ int Fieldml_AddEnsembleElementRange( FmlHandle handle, FmlObjectHandle setHandle
             elementSequence->members.setBit( i, true );
         }
         
-        return region->getLastError();
+        return session->getLastError();
     }
     else if( object->type == FHT_ENSEMBLE_TYPE )
     {
@@ -2838,7 +2913,7 @@ int Fieldml_AddEnsembleElementRange( FmlHandle handle, FmlObjectHandle setHandle
             ensemble->members.setBit( i, true );
         }
         
-        return region->getLastError();
+        return session->getLastError();
     }
     else if( object->type == FHT_MESH_TYPE )
     {
@@ -2846,19 +2921,19 @@ int Fieldml_AddEnsembleElementRange( FmlHandle handle, FmlObjectHandle setHandle
         return Fieldml_AddEnsembleElementRange( handle, meshType->elementType, minElement, maxElement, stride );
     }
 
-    return region->setRegionError( FML_ERR_INVALID_OBJECT );
+    return session->setError( FML_ERR_INVALID_OBJECT );
 }
 
 
 int Fieldml_GetElementEntry( FmlHandle handle, FmlObjectHandle setHandle, const int index )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return -1;
     }
 
-    FieldmlObject *object = region->getObject( setHandle );
+    FieldmlObject *object = getObject( session, setHandle );
 
     if( object == NULL )
     {
@@ -2871,7 +2946,7 @@ int Fieldml_GetElementEntry( FmlHandle handle, FmlObjectHandle setHandle, const 
 
         if( ( index < 1 ) || ( index > elementSequence->members.getCount() ) )
         {
-            region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );  
+            session->setError( FML_ERR_INVALID_PARAMETER_3 );  
             return -1;
         }
         
@@ -2883,7 +2958,7 @@ int Fieldml_GetElementEntry( FmlHandle handle, FmlObjectHandle setHandle, const 
 
         if( ( index < 1 ) || ( index > ensemble->members.getCount() ) )
         {
-            region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );  
+            session->setError( FML_ERR_INVALID_PARAMETER_3 );  
             return -1;
         }
         
@@ -2895,20 +2970,20 @@ int Fieldml_GetElementEntry( FmlHandle handle, FmlObjectHandle setHandle, const 
         return Fieldml_GetElementEntry( handle, meshType->elementType, index );
     }
 
-    region->setRegionError( FML_ERR_INVALID_OBJECT );
+    session->setError( FML_ERR_INVALID_OBJECT );
     return -1;
 }
 
 
 int Fieldml_GetElementEntries( FmlHandle handle, FmlObjectHandle setHandle, const int firstIndex, int * elements, const int count )
 {
-    FieldmlRegion *region = FieldmlRegion::handleToRegion( handle );
-    if( region == NULL )
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
     {
         return -1;
     }
 
-    FieldmlObject *object = region->getObject( setHandle );
+    FieldmlObject *object = getObject( session, setHandle );
 
     if( object == NULL )
     {
@@ -2917,11 +2992,11 @@ int Fieldml_GetElementEntries( FmlHandle handle, FmlObjectHandle setHandle, cons
 
     if( firstIndex < 1 )
     {
-        region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );  
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );  
     }
     if( count < 1 )
     {
-        region->setRegionError( FML_ERR_INVALID_PARAMETER_5 );  
+        session->setError( FML_ERR_INVALID_PARAMETER_5 );  
         return -1;
     }
 
@@ -2930,7 +3005,7 @@ int Fieldml_GetElementEntries( FmlHandle handle, FmlObjectHandle setHandle, cons
         int ensembleCount = Fieldml_GetElementCount( handle, setHandle );
         if( firstIndex > ensembleCount )
         {
-            region->setRegionError( FML_ERR_INVALID_PARAMETER_3 );  
+            session->setError( FML_ERR_INVALID_PARAMETER_3 );  
             return -1;
         }
 
@@ -2953,10 +3028,10 @@ int Fieldml_GetElementEntries( FmlHandle handle, FmlObjectHandle setHandle, cons
             }
         }
 
-        region->setRegionError( FML_ERR_NO_ERROR );
+        session->setError( FML_ERR_NO_ERROR );
         return actualCount;
     }
 
-    region->setRegionError( FML_ERR_INVALID_OBJECT );
+    session->setError( FML_ERR_INVALID_OBJECT );
     return -1;
 }

@@ -685,7 +685,7 @@ int writeFieldmlFile( FmlHandle handle, const char *filename )
     xmlTextWriterWriteAttribute( writer, (const xmlChar*)"xmlns:xsi", (const xmlChar*)"http://www.w3.org/2001/XMLSchema-instance" );        
     xmlTextWriterStartElement( writer, REGION_TAG );
     
-    const char *regionName = Fieldml_GetName( handle );
+    const char *regionName = Fieldml_GetRegionName( handle );
     if( ( regionName != NULL ) && ( strlen( regionName ) > 0 ) ) 
     {
         xmlTextWriterWriteAttribute( writer, NAME_ATTRIB, (const xmlChar*)regionName );        

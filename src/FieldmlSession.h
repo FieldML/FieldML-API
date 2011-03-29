@@ -39,57 +39,33 @@
  *
  */
 
-#ifndef H_FIELDML_REGION
-#define H_FIELDML_REGION
+#ifndef H_FIELDML_SESSION
+#define H_FIELDML_SESSION
 
 #include <vector>
 
-#include "fieldml_structs.h"
+#include "FieldmlErrorHandler.h"
+#include "FieldmlRegion.h"
 
-extern const int INVALID_LOCATION_HANDLE;
-extern const int LOCAL_LOCATION_HANDLE;
-extern const int LIBRARY_LOCATION_HANDLE;
-
-class FieldmlRegion
+class FieldmlSession :
+    public FieldmlErrorHandler
 {
 private:
     int lastError;
     
     int debug;
     
-    const std::string name;
-    
-    const std::string library;
-    
-    std::string root;
-    
     std::vector<std::string> errors;
-    
-    std::vector<FieldmlObject*> objects;
     
     int handle;
     
-    static FmlHandle addRegion( FieldmlRegion *region );
+    static FmlHandle addSession( FieldmlSession *session );
     
 public:
-    FieldmlRegion( const std::string location, const std::string name, const std::string library );
-    virtual ~FieldmlRegion();
+    FieldmlSession();
+    virtual ~FieldmlSession();
     
-    FmlObjectHandle addObject( FieldmlObject *object );
-
-    FieldmlObject *getObject( const FmlObjectHandle handle );
-    
-    const int getObjectByIndex( const int index );
-    
-    const int getTotal( FieldmlHandleType type );
-
-    const int getTotal();
-
-    const int getNthHandle( const FieldmlHandleType type, const int index );
-    
-    const int getNamedHandle( const std::string name );
-
-    int setRegionErrorAndLocation( const char *file, const int line, const int error );
+    int setErrorAndLocation( const char *file, const int line, const int error );
 
     void addError( const std::string string );
 
@@ -99,29 +75,16 @@ public:
     
     const std::string getError( const int index );
 
-    int setRoot( const std::string newRoot );
-
-    const std::string getRoot();
-
     const int getLastError();
-    
-    const std::string getName();
-    
-    const std::string getLibraryName();
-
-    void finalize();
 
     void logError( const char *error, const char *name1 = NULL, const char *name2 = NULL );
-
-    void setLocationHandle( FmlObjectHandle handle, int locationHandle );
     
-    FmlHandle getRegionHandle() const;
+    FmlHandle getHandle();
+    
+    FieldmlRegion *region;
 
 
-    static FieldmlRegion *handleToRegion( FmlHandle handle );
+    static FieldmlSession *handleToSession( FmlHandle handle );
 };
 
-
-#define setRegionError( error ) setRegionErrorAndLocation( __FILE__, __LINE__, error )
-
-#endif //H_FIELDML_STRUCTS
+#endif //H_FIELDML_SESSION

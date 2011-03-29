@@ -39,7 +39,7 @@
  *
  */
 
-#include "Region.h"
+#include "FieldmlErrorHandler.h"
 #include "ParameterReader.h"
 
 #include "fieldml_api.h"
@@ -71,7 +71,7 @@ class SemidenseParameterReader :
     public ParameterReader
 {
 private:
-    FieldmlRegion *region;
+    FieldmlErrorHandler *eHandler;
     int currentBlockCount;
     const int sliceCount;
     const int* const swizzle;
@@ -89,7 +89,7 @@ protected:
     
 
 public:
-    SemidenseParameterReader( FieldmlRegion *region, FmlInputStream streamHandle, DataFileType _dataType,
+    SemidenseParameterReader( FieldmlErrorHandler *eHandler, FmlInputStream streamHandle, DataFileType _dataType,
         int offset, int indexCount, int blockCount, int sliceCount, const int *swizzle );
 
     int readNextIndexSet( int *indexValues );
@@ -107,10 +107,10 @@ ParameterReader::ParameterReader( FmlInputStream _stream, DataFileType _dataType
 }
     
     
-SemidenseParameterReader::SemidenseParameterReader( FieldmlRegion *_region, FmlInputStream streamHandle, DataFileType dataType,
+SemidenseParameterReader::SemidenseParameterReader( FieldmlErrorHandler *_eHandler, FmlInputStream streamHandle, DataFileType dataType,
     int offset, int _indexCount, int _blockCount, int _sliceCount, const int *_swizzle ) :
     ParameterReader( streamHandle, dataType ),
-    region( _region ),
+    eHandler( _eHandler ),
     indexCount( _indexCount ),
     blockCount( _blockCount ),
     sliceCount( _sliceCount ),
@@ -130,7 +130,7 @@ SemidenseParameterReader::SemidenseParameterReader( FieldmlRegion *_region, FmlI
     }
 }
     
-FmlReaderHandle ParameterReader::create( FieldmlRegion *region, ParameterEvaluator *parameters )
+FmlReaderHandle ParameterReader::create( FmlHandle sessionHandle, FieldmlErrorHandler *eHandler, const char *root, ParameterEvaluator *parameters )
 {
     if( parameters->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
     {
@@ -144,11 +144,11 @@ FmlReaderHandle ParameterReader::create( FieldmlRegion *region, ParameterEvaluat
         
         for (vector<FmlObjectHandle>::iterator i = semidense->denseIndexes.begin(); i != semidense->denseIndexes.end(); i++ )
         {
-            indexType = Fieldml_GetValueType( region->getRegionHandle(), *i );
-            ensembleCount = Fieldml_GetElementCount( region->getRegionHandle(), indexType );
+            indexType = Fieldml_GetValueType( sessionHandle, *i );
+            ensembleCount = Fieldml_GetElementCount( sessionHandle, indexType );
             if( ensembleCount < 1 )
             {
-                region->setRegionError( FML_ERR_MISCONFIGURED_OBJECT );
+                eHandler->setError( FML_ERR_MISCONFIGURED_OBJECT );
                 return FML_INVALID_HANDLE;
             }
             blockCount *= ensembleCount; 
@@ -160,17 +160,17 @@ FmlReaderHandle ParameterReader::create( FieldmlRegion *region, ParameterEvaluat
         }
         else
         {
-            int innermostType = Fieldml_GetValueType( region->getRegionHandle(), semidense->denseIndexes[0] );
-            if( Fieldml_IsEnsembleComponentType( region->getRegionHandle(), innermostType ) != 1 )
+            int innermostType = Fieldml_GetValueType( sessionHandle, semidense->denseIndexes[0] );
+            if( Fieldml_IsEnsembleComponentType( sessionHandle, innermostType ) != 1 )
             {
                 sliceCount = 1;
             }
             else
             {
-                sliceCount = Fieldml_GetElementCount( region->getRegionHandle(), innermostType );
+                sliceCount = Fieldml_GetElementCount( sessionHandle, innermostType );
                 if( sliceCount < 1 )
                 {
-                    region->setRegionError( FML_ERR_MISCONFIGURED_OBJECT );
+                    eHandler->setError( FML_ERR_MISCONFIGURED_OBJECT );
                     return FML_INVALID_HANDLE;
                 }
             }
@@ -178,7 +178,7 @@ FmlReaderHandle ParameterReader::create( FieldmlRegion *region, ParameterEvaluat
 
         if( ( semidense->swizzleCount > 0 ) && ( semidense->swizzleCount != sliceCount ) )
         {
-            region->setRegionError( FML_ERR_MISCONFIGURED_OBJECT );
+            eHandler->setError( FML_ERR_MISCONFIGURED_OBJECT );
             return FML_INVALID_HANDLE;
         }
         
@@ -188,7 +188,7 @@ FmlReaderHandle ParameterReader::create( FieldmlRegion *region, ParameterEvaluat
         if( semidense->dataLocation->locationType == LOCATION_FILE )
         {
             FileDataLocation *fileDataLocation = (FileDataLocation*)semidense->dataLocation;
-            const string filename = makeFilename( region->getRoot(), fileDataLocation->filename );
+            const string filename = makeFilename( root, fileDataLocation->filename );
             streamHandle = FieldmlInputStream::create( filename ); 
             dataType = fileDataLocation->fileType;
             offset = fileDataLocation->offset;
@@ -202,7 +202,7 @@ FmlReaderHandle ParameterReader::create( FieldmlRegion *region, ParameterEvaluat
         }
         if( streamHandle == NULL )
         {
-            region->setRegionError( FML_ERR_FILE_READ );
+            eHandler->setError( FML_ERR_FILE_READ );
             return FML_INVALID_HANDLE;
         }
         
@@ -212,14 +212,14 @@ FmlReaderHandle ParameterReader::create( FieldmlRegion *region, ParameterEvaluat
             swizzle = semidense->swizzle;
         }
         
-        region->setRegionError( FML_ERR_NO_ERROR );
+        eHandler->setError( FML_ERR_NO_ERROR );
 
-        ParameterReader *reader = new SemidenseParameterReader( region, streamHandle, dataType, offset, indexCount, blockCount, sliceCount, swizzle );
+        ParameterReader *reader = new SemidenseParameterReader( eHandler, streamHandle, dataType, offset, indexCount, blockCount, sliceCount, swizzle );
         return reader->handle;
     }
     else
     {
-        region->setRegionError( FML_ERR_UNSUPPORTED );
+        eHandler->setError( FML_ERR_UNSUPPORTED );
         return FML_INVALID_HANDLE;
     }
 }
@@ -295,7 +295,7 @@ int SemidenseParameterReader::readIntValues( int *valueBuffer, int count )
     if( count < sliceCount )
     {
         //The parameter number is for the corresponding API call, not this particular method.
-        region->setRegionError( FML_ERR_INVALID_PARAMETER_4 );
+        eHandler->setError( FML_ERR_INVALID_PARAMETER_4 );
         return -1;
     }
     
@@ -311,7 +311,7 @@ int SemidenseParameterReader::readIntValues( int *valueBuffer, int count )
         
         if( err != FML_ERR_NO_ERROR )
         {
-            region->setRegionError( err );
+            eHandler->setError( err );
             return -1;
         }
         readCount += sliceCount;
@@ -366,7 +366,7 @@ int SemidenseParameterReader::readDoubleValues( double *valueBuffer, int count )
     if( count < sliceCount )
     {
         //The parameter number is for the corresponding API call, not this particular method.
-        region->setRegionError( FML_ERR_INVALID_PARAMETER_4 );
+        eHandler->setError( FML_ERR_INVALID_PARAMETER_4 );
         return -1;
     }
     
@@ -382,7 +382,7 @@ int SemidenseParameterReader::readDoubleValues( double *valueBuffer, int count )
         
         if( err != FML_ERR_NO_ERROR )
         {
-            region->setRegionError( err );
+            eHandler->setError( err );
             return -1;
         }
         readCount += sliceCount;

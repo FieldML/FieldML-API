@@ -49,10 +49,6 @@
 #include "SimpleMap.h"
 #include "SimpleBitset.h"
 
-extern const int INVALID_LOCATION_HANDLE;
-extern const int LOCAL_LOCATION_HANDLE;
-extern const int LIBRARY_LOCATION_HANDLE;
-
 class FieldmlObject
 {
 public:
@@ -276,8 +272,6 @@ public:
     
     virtual ~ParameterEvaluator();
 };
-
-const char *Fieldml_GetName( FmlHandle handle );
 
 int Fieldml_SetRoot( FmlHandle, const char *root );
 

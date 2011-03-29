@@ -69,7 +69,7 @@ public:
 
     const char *getAttribute( const xmlChar *name );
     bool getBooleanAttribute( const xmlChar *attribute );
-    FmlObjectHandle getObjectAttribute( const FieldmlRegion *region, const xmlChar *attribute, FieldmlHandleType type );
+    FmlObjectHandle getObjectAttribute( FmlHandle sessionHandle, const xmlChar *attribute );
 };
 
 
@@ -101,6 +101,10 @@ public:
     virtual SaxHandler *getParent() = 0;
     
     virtual void onCharacters( const xmlChar *xmlChars, int count );
+    
+    virtual FmlHandle getSessionHandle();
+    
+    virtual FieldmlSession *getSession();
 };
 
 
@@ -110,7 +114,7 @@ struct SaxContext
 
     std::string source;
 
-    FieldmlRegion *region;
+    FieldmlSession *session;
 };
 
 
@@ -130,6 +134,10 @@ public:
     virtual SaxHandler *getParent();
     
     int getLocation();
+    
+    virtual FmlHandle getSessionHandle();
+    
+    virtual FieldmlSession *getSession();
 };
 
 
@@ -166,7 +174,6 @@ public:
     virtual FieldmlSaxHandler *getParent();
 
     FieldmlRegion *getRegion();
-    FmlHandle getRegionHandle();
 
     int getLocation();
 };
@@ -188,7 +195,6 @@ public:
     virtual RegionSaxHandler *getParent();
 
     FieldmlRegion *getRegion();
-    FmlHandle getRegionHandle();
 
     int getLocation();
 };

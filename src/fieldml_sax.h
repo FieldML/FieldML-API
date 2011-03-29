@@ -42,12 +42,16 @@
 #ifndef H_FIELDMLSAX
 #define H_FIELDMLSAX
 
+#include <string>
+
 #include "fieldml_structs.h"
 
-#include "Region.h"
+#include "FieldmlSession.h"
 
-FieldmlRegion *parseFieldmlFile( const char *filename, const int location, FieldmlRegion *region );
+int parseFieldmlFile( const char *filename, const int location, FieldmlSession *session );
 
-FieldmlRegion *parseFieldmlString( const char *string, const char *stringDescription, const int location, FieldmlRegion *region );
+int parseFieldmlString( const char *string, const char *stringDescription, const int location, FieldmlSession *session );
+
+int insertLibrary( FieldmlSession *session, std::string libraryName );
 
 #endif // H_FIELDMLSAX
