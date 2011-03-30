@@ -235,10 +235,9 @@ FieldmlSession *SaxHandler::getSession()
 }
 
 
-RootSaxHandler::RootSaxHandler( const xmlChar *_elementName, SaxContext *_context, const int _location ) :
+RootSaxHandler::RootSaxHandler( const xmlChar *_elementName, SaxContext *_context ) :
     SaxHandler( _elementName ),
-    context( _context ),
-    location( _location )
+    context( _context )
 {
 }
 
@@ -272,12 +271,6 @@ FieldmlSession *RootSaxHandler::getSession()
 }
 
 
-int RootSaxHandler::getLocation()
-{
-    return location;
-}
-
-
 FieldmlSaxHandler::FieldmlSaxHandler( const xmlChar *elementName, RootSaxHandler *_parent ) :
     SaxHandler( elementName ),
     parent( _parent )
@@ -302,13 +295,6 @@ RootSaxHandler *FieldmlSaxHandler::getParent()
 }
 
 
-int FieldmlSaxHandler::getLocation()
-{
-    return parent->getLocation();
-}
-
-
-
 RegionSaxHandler::RegionSaxHandler( const xmlChar *elementName, FieldmlSaxHandler *_parent, SaxAttributes &attributes, SaxContext *context ) :
     SaxHandler( elementName ),
     parent( _parent )
@@ -316,23 +302,8 @@ RegionSaxHandler::RegionSaxHandler( const xmlChar *elementName, FieldmlSaxHandle
     const char *name = attributes.getAttribute( NAME_ATTRIB );
     if( name == NULL )
     {
-        //HACK Allow nameless regions for now.
+        //HACK Ignore region names
         name = "";
-    }
-
-    string location = getDirectory( context->source );
-    if( context->session->region == NULL )
-    {
-        const char *libraryName = attributes.getAttribute( LIBRARY_ATTRIB );
-        
-        if( libraryName == NULL )
-        {
-            libraryName = "";
-        }
-        
-        context->session->region = new FieldmlRegion( location, name, libraryName );
-
-        insertLibrary( context->session, libraryName );
     }
 
     region = context->session->region;
@@ -341,6 +312,10 @@ RegionSaxHandler::RegionSaxHandler( const xmlChar *elementName, FieldmlSaxHandle
 
 SaxHandler *RegionSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
+    if( xmlStrcmp( elementName, IMPORT_TAG ) == 0 )
+    {
+        return new ImportSaxHandler( this, elementName, attributes );
+    }
     if( xmlStrcmp( elementName, ENSEMBLE_TYPE_TAG ) == 0 )
     {
         return new EnsembleTypeSaxHandler( this, elementName, attributes ); 
@@ -400,13 +375,6 @@ FieldmlRegion *RegionSaxHandler::getRegion()
 }
 
 
-
-int RegionSaxHandler::getLocation()
-{
-    return parent->getLocation();
-}
-
-
 FieldmlObjectSaxHandler::FieldmlObjectSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName ) :
     SaxHandler( elementName ),
     parent( _parent ),
@@ -424,12 +392,6 @@ RegionSaxHandler *FieldmlObjectSaxHandler::getParent()
 FieldmlRegion *FieldmlObjectSaxHandler::getRegion()
 {
     return parent->getRegion();
-}
-
-
-int FieldmlObjectSaxHandler::getLocation()
-{
-    return parent->getLocation();
 }
 
 
@@ -451,15 +413,62 @@ ContinuousTypeSaxHandler::ContinuousTypeSaxHandler( RegionSaxHandler *_parent, c
     if( handle == FML_INVALID_HANDLE )
     {
         getSession()->logError( "ContinuousType creation failed", name );
-        return;
     }
-    getRegion()->setLocationHandle( handle, getLocation() );
 }
 
 
 SaxHandler *ContinuousTypeSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
     return this;
+}
+
+
+ImportSaxHandler::ImportSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
+    SaxHandler( elementName ),
+    parent( _parent )
+{
+    const char *location = attributes.getAttribute( LOCATION_ATTRIB );
+    const char *region = attributes.getAttribute( REGION_ATTRIB );
+
+    if( location == NULL )
+    {
+        getSession()->logError( "Import has no region location" );
+        return;
+    }
+    if( region == NULL )
+    {
+        getSession()->logError( "Import has no region name" );
+        return;
+    }
+    
+    importIndex = Fieldml_AddImportSource( getSessionHandle(), location, region );
+}
+
+
+SaxHandler *ImportSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
+{
+    if( xmlStrcmp( elementName, IMPORT_TYPE_TAG ) == 0 )
+    {
+        const char *localName = attributes.getAttribute( LOCAL_NAME_ATTRIB );
+        const char *sourceName = attributes.getAttribute( SOURCE_NAME_ATTRIB );
+        
+        Fieldml_AddImport( getSessionHandle(), importIndex, localName, sourceName );
+    }
+    else if( xmlStrcmp( elementName, IMPORT_EVALUATOR_TAG ) == 0 )
+    {
+        const char *localName = attributes.getAttribute( LOCAL_NAME_ATTRIB );
+        const char *sourceName = attributes.getAttribute( SOURCE_NAME_ATTRIB );
+        
+        Fieldml_AddImport( getSessionHandle(), importIndex, localName, sourceName );
+    }
+
+    return this;
+}
+
+
+SaxHandler *ImportSaxHandler::getParent()
+{
+    return parent;
 }
 
 
@@ -481,9 +490,7 @@ EnsembleTypeSaxHandler::EnsembleTypeSaxHandler( RegionSaxHandler *_parent, const
     if( handle == FML_INVALID_HANDLE )
     {
         getSession()->logError( "EnsembleType creation failed", name );
-        return;
     }
-    getRegion()->setLocationHandle( handle, getLocation() );
 }
 
 
@@ -519,9 +526,7 @@ MeshTypeSaxHandler::MeshTypeSaxHandler( RegionSaxHandler *_parent, const xmlChar
     if( handle == FML_INVALID_HANDLE )
     {
         getSession()->logError( "MeshType creation failed", name );
-        return;
     }
-    getRegion()->setLocationHandle( handle, getLocation() );
 }
 
 
@@ -562,9 +567,7 @@ ElementSequenceSaxHandler::ElementSequenceSaxHandler( RegionSaxHandler *_parent,
     if( handle == FML_INVALID_HANDLE )
     {
         getSession()->logError( "ElementSequence creation failed", name );
-        return;
     }
-    getRegion()->setLocationHandle( handle, getLocation() );
 #endif //NYI
 }
 
@@ -619,9 +622,7 @@ AbstractEvaluatorSaxHandler::AbstractEvaluatorSaxHandler( RegionSaxHandler *_par
     if( handle == FML_INVALID_HANDLE )
     {
         getSession()->logError( "Cannot create AbstractEvaluator with given type", name, attributes.getAttribute( VALUE_TYPE_ATTRIB ) );
-        return;
     }
-    getRegion()->setLocationHandle( handle, getLocation() );
 }
 
 
@@ -661,9 +662,7 @@ ExternalEvaluatorSaxHandler::ExternalEvaluatorSaxHandler( RegionSaxHandler *_par
     if( handle == FML_INVALID_HANDLE )
     {
         getSession()->logError( "ExternalEvaluator creation failed", name );
-        return;
     }
-    getRegion()->setLocationHandle( handle, getLocation() );
 }
 
 
@@ -699,9 +698,7 @@ ReferenceEvaluatorSaxHandler::ReferenceEvaluatorSaxHandler( RegionSaxHandler *_p
     if( handle == FML_INVALID_HANDLE )
     {
         getSession()->logError( "ReferenceEvaluator creation failed", name );
-        return;
     }
-    getRegion()->setLocationHandle( handle, getLocation() );
 }
 
 
@@ -741,9 +738,7 @@ ParametersSaxHandler::ParametersSaxHandler( RegionSaxHandler *_parent, const xml
     if( handle == FML_INVALID_HANDLE )
     {
         getSession()->logError( "ParametersEvaluator creation failed", name );
-        return;
     }
-    getRegion()->setLocationHandle( handle, getLocation() );
 }
 
 
@@ -783,9 +778,7 @@ PiecewiseEvaluatorSaxHandler::PiecewiseEvaluatorSaxHandler( RegionSaxHandler *_p
     if( handle == FML_INVALID_HANDLE )
     {
         getSession()->logError( "PiecewiseEvaluator creation failed", name );
-        return;
     }
-    getRegion()->setLocationHandle( handle, getLocation() );
 }
 
 
@@ -851,9 +844,7 @@ AggregateEvaluatorSaxHandler::AggregateEvaluatorSaxHandler( RegionSaxHandler *_p
     if( handle == FML_INVALID_HANDLE )
     {
         getSession()->logError( "Cannot create AggregateEvaluator with given type.", name, attributes.getAttribute( VALUE_TYPE_ATTRIB ) );
-        return;
     }
-    getRegion()->setLocationHandle( handle, getLocation() );
 }
 
 

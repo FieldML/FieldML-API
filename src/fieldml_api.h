@@ -174,13 +174,11 @@ extern "C" {
 FmlHandle Fieldml_CreateFromFile( const char *filename );
 
 /**
- *      Creates an empty FieldML handle. If libraryLocation is a known internal library name, the internal 
- *      library will be used, otherwise libraryLocation will be interpreted as the relative
- *      location of a FieldML file, and parsed as part of the FieldML handle's creation.
+ *      Creates an empty FieldML handle.
  *      
  *      Data files will be created at the given location.
  */
-FmlHandle Fieldml_Create( const char *location, const char *name, const char *libraryLocation );
+FmlHandle Fieldml_Create( const char *location, const char *name );
 
 /**
  *      Sets/clears the debug flag. If non-zero, errors are logged to stdout.
@@ -213,16 +211,6 @@ void Fieldml_Destroy( FmlHandle handle );
 const char * Fieldml_GetRegionName( FmlHandle handle );
 int Fieldml_CopyRegionName( FmlHandle handle, char *buffer, int bufferLength );
 
-
-/**
- *      Returns the name of the region's library.
- *      
- *      Currently, each region may only use a single library, which is specified
- *      either as a known internal library name or as a filename relative to the
- *      enclosing file's location.
- */
-const char * Fieldml_GetLibraryName( FmlHandle handle );
-int Fieldml_CopyLibraryName( FmlHandle handle, char *buffer, int bufferLength );
 
 /**
  *      Returns the number of parsing errors encountered by the given handle
@@ -840,6 +828,12 @@ int Fieldml_WriteDoubleValues( FmlHandle handle, FmlWriterHandle writer, double 
  * Closes the given raw data writer.
  */
 int Fieldml_CloseWriter( FmlHandle handle, FmlWriterHandle writer );
+
+
+int Fieldml_AddImportSource( FmlHandle handle, const char *location, const char *name );
+
+
+int Fieldml_AddImport( FmlHandle handle, int importIndex, const char *localName, const char *sourceName );
 
 }
 #endif // __cplusplus

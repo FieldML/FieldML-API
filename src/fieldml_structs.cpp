@@ -51,12 +51,11 @@ using namespace std;
 //
 //========================================================================
 
-FieldmlObject::FieldmlObject( const string _name, int _locationHandle, FieldmlHandleType _type, bool _isVirtual ) :
+FieldmlObject::FieldmlObject( const string _name, FieldmlHandleType _type, bool _isVirtual ) :
     name( _name ),
     type( _type ),
     isVirtual( _isVirtual )
 {
-    locationHandle = _locationHandle;
     intValue = 0;
 }
 
@@ -66,29 +65,29 @@ FieldmlObject::~FieldmlObject()
 }
 
 
-ElementSequence::ElementSequence( const string _name, int _region, FmlObjectHandle _elementType ) :
-    FieldmlObject( _name, _region, FHT_ELEMENT_SEQUENCE, false ),
+ElementSequence::ElementSequence( const string _name, FmlObjectHandle _elementType ) :
+    FieldmlObject( _name, FHT_ELEMENT_SEQUENCE, false ),
     elementType( _elementType )
 {
 }
 
 
-EnsembleType::EnsembleType( const string _name, int _region, bool _isComponentEnsemble, bool _isVirtual ) :
-    FieldmlObject( _name, _region, FHT_ENSEMBLE_TYPE, _isVirtual ),
+EnsembleType::EnsembleType( const string _name, bool _isComponentEnsemble, bool _isVirtual ) :
+    FieldmlObject( _name, FHT_ENSEMBLE_TYPE, _isVirtual ),
     isComponentEnsemble( _isComponentEnsemble )
 {
 }
 
 
-ContinuousType::ContinuousType( const string _name, int _region, FmlObjectHandle _componentType, bool _isVirtual ) :
-    FieldmlObject( _name, _region, FHT_CONTINUOUS_TYPE, _isVirtual ),
+ContinuousType::ContinuousType( const string _name, FmlObjectHandle _componentType, bool _isVirtual ) :
+    FieldmlObject( _name, FHT_CONTINUOUS_TYPE, _isVirtual ),
     componentType( _componentType )
 {
 }
 
 
-MeshType::MeshType( const string _name, int _region, FmlObjectHandle _xiType, FmlObjectHandle _elementType, bool _isVirtual ) :
-    FieldmlObject( _name, _region, FHT_MESH_TYPE, _isVirtual ),
+MeshType::MeshType( const string _name, FmlObjectHandle _xiType, FmlObjectHandle _elementType, bool _isVirtual ) :
+    FieldmlObject( _name, FHT_MESH_TYPE, _isVirtual ),
     xiType( _xiType ),
     elementType( _elementType ),
     shapes("")
@@ -96,35 +95,35 @@ MeshType::MeshType( const string _name, int _region, FmlObjectHandle _xiType, Fm
 }
 
 
-Evaluator::Evaluator( const string _name, int _region, FieldmlHandleType _type, FmlObjectHandle _valueType, bool _isVirtual ) :
-    FieldmlObject( _name, _region, _type, _isVirtual ),
+Evaluator::Evaluator( const string _name, FieldmlHandleType _type, FmlObjectHandle _valueType, bool _isVirtual ) :
+    FieldmlObject( _name, _type, _isVirtual ),
     valueType( _valueType )
 {
 }
 
 
-ReferenceEvaluator::ReferenceEvaluator( const string _name, int _region, FmlObjectHandle _evaluator, FmlObjectHandle _valueType, bool _isVirtual ) :
-    Evaluator( _name, _region, FHT_REFERENCE_EVALUATOR, _valueType, _isVirtual ),
+ReferenceEvaluator::ReferenceEvaluator( const string _name, FmlObjectHandle _evaluator, FmlObjectHandle _valueType, bool _isVirtual ) :
+    Evaluator( _name, FHT_REFERENCE_EVALUATOR, _valueType, _isVirtual ),
     sourceEvaluator( _evaluator ),
     binds( FML_INVALID_HANDLE )
 {
 }
 
 
-AbstractEvaluator::AbstractEvaluator( const string _name, int _region, FmlObjectHandle _valueType, bool _isVirtual ) :
-    Evaluator( _name, _region, FHT_ABSTRACT_EVALUATOR, _valueType, _isVirtual )
+AbstractEvaluator::AbstractEvaluator( const string _name, FmlObjectHandle _valueType, bool _isVirtual ) :
+    Evaluator( _name, FHT_ABSTRACT_EVALUATOR, _valueType, _isVirtual )
 {
 }
 
 
-ExternalEvaluator::ExternalEvaluator( const string _name, int _region, FmlObjectHandle _valueType, bool _isVirtual ) :
-    Evaluator( _name, _region, FHT_EXTERNAL_EVALUATOR, _valueType, _isVirtual )
+ExternalEvaluator::ExternalEvaluator( const string _name, FmlObjectHandle _valueType, bool _isVirtual ) :
+    Evaluator( _name, FHT_EXTERNAL_EVALUATOR, _valueType, _isVirtual )
 {
 }
 
 
-ParameterEvaluator::ParameterEvaluator( const string _name, int _region, FmlObjectHandle _valueType, bool _isVirtual ) :
-    Evaluator( _name, _region, FHT_PARAMETER_EVALUATOR, _valueType, _isVirtual ),
+ParameterEvaluator::ParameterEvaluator( const string _name, FmlObjectHandle _valueType, bool _isVirtual ) :
+    Evaluator( _name, FHT_PARAMETER_EVALUATOR, _valueType, _isVirtual ),
     dataDescription( new UnknownDataDescription() )
 {
 }
@@ -136,8 +135,8 @@ ParameterEvaluator::~ParameterEvaluator()
 }
 
 
-PiecewiseEvaluator::PiecewiseEvaluator( const string _name, int _region, FmlObjectHandle _valueType, bool _isVirtual ) :
-    Evaluator( _name, _region, FHT_PIECEWISE_EVALUATOR, _valueType, _isVirtual ),
+PiecewiseEvaluator::PiecewiseEvaluator( const string _name, FmlObjectHandle _valueType, bool _isVirtual ) :
+    Evaluator( _name, FHT_PIECEWISE_EVALUATOR, _valueType, _isVirtual ),
     binds( FML_INVALID_HANDLE ),
     evaluators( FML_INVALID_HANDLE ),
     indexEvaluator( FML_INVALID_HANDLE )
@@ -145,8 +144,8 @@ PiecewiseEvaluator::PiecewiseEvaluator( const string _name, int _region, FmlObje
 }
 
 
-AggregateEvaluator::AggregateEvaluator( const string _name, int _region, FmlObjectHandle _valueType, bool _isVirtual ) :
-    Evaluator( _name, _region, FHT_AGGREGATE_EVALUATOR, _valueType, _isVirtual ),
+AggregateEvaluator::AggregateEvaluator( const string _name, FmlObjectHandle _valueType, bool _isVirtual ) :
+    Evaluator( _name, FHT_AGGREGATE_EVALUATOR, _valueType, _isVirtual ),
     binds( FML_INVALID_HANDLE ),
     evaluators( FML_INVALID_HANDLE ),
     indexEvaluator( FML_INVALID_HANDLE )

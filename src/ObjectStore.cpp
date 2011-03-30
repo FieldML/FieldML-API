@@ -39,17 +39,38 @@
  *
  */
 
-#ifndef H_FIELDMLSAX
-#define H_FIELDMLSAX
 
-#include <string>
+#include <algorithm>
 
-#include "fieldml_structs.h"
+#include "string_const.h"
 
-#include "FieldmlSession.h"
+#include "ObjectStore.h"
 
-int parseFieldmlFile( const char *filename, FieldmlSession *session );
+using namespace std;
 
-int parseFieldmlString( const char *string, const char *stringDescription, FieldmlSession *session );
+ObjectStore::ObjectStore()
+{
+}
 
-#endif // H_FIELDMLSAX
+ObjectStore::~ObjectStore()
+{
+    for_each( objects.begin(), objects.end(), delete_object() );
+}
+
+FieldmlObject *ObjectStore::getObject( FmlObjectHandle handle )
+{
+    if( ( handle < 0 ) || ( handle >= objects.size() ) )
+    {
+        return NULL;
+    }
+    
+    return objects[handle];
+}
+
+
+FmlObjectHandle ObjectStore::addObject( FieldmlObject *object )
+{
+    //TODO Uniqueness check
+    objects.push_back( object );
+    return objects.size() - 1;
+}

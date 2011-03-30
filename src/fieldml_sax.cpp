@@ -375,10 +375,10 @@ static xmlSAXHandlerPtr SAX2Handler = &SAX2HandlerStruct;
 //========================================================================
 
 
-static int parseFieldml( SaxParser *parser, const int location, FieldmlSession *session )
+static int parseFieldml( SaxParser *parser, FieldmlSession *session )
 {
     SaxContext context;
-    RootSaxHandler rootHandler( NULL, &context, location );
+    RootSaxHandler rootHandler( NULL, &context );
     
     context.session = session;
     context.source = parser->getSource();
@@ -392,36 +392,17 @@ static int parseFieldml( SaxParser *parser, const int location, FieldmlSession *
 }
 
 
-int parseFieldmlFile( const char *filename, const int location, FieldmlSession *session )
+int parseFieldmlFile( const char *filename, FieldmlSession *session )
 {
     SaxFileParser parser( filename );
     
-    return parseFieldml( &parser, location, session );
+    return parseFieldml( &parser, session );
 }
 
 
-int parseFieldmlString( const char *string, const char *stringDescription, const int location, FieldmlSession *session )
+int parseFieldmlString( const char *string, const char *stringDescription, FieldmlSession *session )
 {
     SaxStringParser parser( string, stringDescription );
     
-    return parseFieldml( &parser, location, session );
-}
-
-
-int insertLibrary( FieldmlSession *session, string libraryName )
-{
-    if( libraryName.length() != 0 )
-    {
-        if( libraryName == FML_LIBRARY_0_3_NAME )
-        {
-            return parseFieldmlString( FML_LIBRARY_0_3_STRING, "Internal library 0.3", LIBRARY_LOCATION_HANDLE, session );
-        }
-        else
-        {
-            string libraryFile = makeFilename( session->region->getRoot(), libraryName );
-            return parseFieldmlFile( libraryFile.c_str(), LIBRARY_LOCATION_HANDLE, session );
-        }
-    }
-    
-    return 0;
+    return parseFieldml( &parser, session );
 }

@@ -45,6 +45,7 @@
 #include <libxml/encoding.h>
 #include <string>
 
+//TODO This really should be somewhere else.
 struct delete_object
 {
   template <typename T>
@@ -57,6 +58,10 @@ extern const char * const FML_VERSION_STRING;
 extern const xmlChar * const FIELDML_TAG;
 
 extern const xmlChar * const REGION_TAG;
+
+extern const xmlChar * const IMPORT_TAG;
+extern const xmlChar * const IMPORT_TYPE_TAG;
+extern const xmlChar * const IMPORT_EVALUATOR_TAG;
 
 extern const xmlChar * const ENSEMBLE_TYPE_TAG;
 
@@ -117,7 +122,10 @@ extern const xmlChar * const VERSION_ATTRIB;
 
 extern const xmlChar * const NAME_ATTRIB;
 
-extern const xmlChar * const LIBRARY_ATTRIB;
+extern const xmlChar * const LOCATION_ATTRIB;
+extern const xmlChar * const REGION_ATTRIB;
+extern const xmlChar * const LOCAL_NAME_ATTRIB;
+extern const xmlChar * const SOURCE_NAME_ATTRIB;
 
 extern const xmlChar * const VARIABLE_ATTRIB;
 extern const xmlChar * const INDEX_NUMBER_ATTRIB;

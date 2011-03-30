@@ -121,19 +121,14 @@ struct SaxContext
 class RootSaxHandler :
     public SaxHandler
 {
-private:
-    const int location;
-    
 public:
     SaxContext * const context;
 
-    RootSaxHandler( const xmlChar *elementName, SaxContext *_context, const int _location );
+    RootSaxHandler( const xmlChar *elementName, SaxContext *_context );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
 
     virtual SaxHandler *getParent();
-    
-    int getLocation();
     
     virtual FmlHandle getSessionHandle();
     
@@ -153,8 +148,6 @@ public:
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
 
     virtual RootSaxHandler *getParent();
-    
-    int getLocation();
 };
 
 
@@ -174,8 +167,6 @@ public:
     virtual FieldmlSaxHandler *getParent();
 
     FieldmlRegion *getRegion();
-
-    int getLocation();
 };
 
 
@@ -195,8 +186,6 @@ public:
     virtual RegionSaxHandler *getParent();
 
     FieldmlRegion *getRegion();
-
-    int getLocation();
 };
 
 
@@ -207,6 +196,23 @@ public:
     ContinuousTypeSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
+};
+
+
+class ImportSaxHandler :
+    public SaxHandler
+{
+private:
+    RegionSaxHandler *parent;
+        
+    int importIndex;
+    
+public:
+    ImportSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
+
+    virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
+
+    virtual SaxHandler *getParent();
 };
 
 

@@ -14,6 +14,25 @@
         </xs:complexContent>
     </xs:complexType>
 
+    <xs:complexType name="ImportTypeEntry_Type">
+        <xs:attribute name="localName" type="xs:string" />
+        <xs:attribute name="sourceName" type="xs:string" />
+    </xs:complexType>
+
+    <xs:complexType name="ImportEvaluatorEntry_Type">
+        <xs:attribute name="localName" type="xs:string" />
+        <xs:attribute name="sourceName" type="xs:string" />
+    </xs:complexType>
+
+    <xs:complexType name="Import_Type">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="ImportType" type="ImportTypeEntry_Type" />
+            <xs:element name="ImportEvaluator" type="ImportEvaluatorEntry_Type" />
+        </xs:choice>
+        <xs:attribute name="location" type="xs:string" />
+        <xs:attribute name="region" type="xs:string" />
+    </xs:complexType>
+
     <xs:complexType name="BindMapEntry_Type">
         <xs:attribute name="variable" type="xs:string" />
         <xs:attribute name="source" type="xs:string" />
@@ -251,6 +270,7 @@
         <xs:complexContent >
             <xs:extension base="fmlmeta:FieldmlRdfTargetType">
                 <xs:choice minOccurs="0" maxOccurs="unbounded">
+                    <xs:element name="Import" type="Import_Type" />
                     <xs:element name="EnsembleType" type="EnsembleType_Type" />
                     <xs:element name="ContinuousType" type="ContinuousType_Type" />
                     <xs:element name="MeshType" type="MeshType_Type" />

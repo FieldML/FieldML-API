@@ -39,17 +39,27 @@
  *
  */
 
-#ifndef H_FIELDMLSAX
-#define H_FIELDMLSAX
+#ifndef H_IMPORT_INFO
+#define H_IMPORT_INFO
 
-#include <string>
+#include <vector>
 
-#include "fieldml_structs.h"
+#include "SimpleMap.h"
 
-#include "FieldmlSession.h"
+class ImportInfo
+{
+private:
+    
+public:
+    ImportInfo( std::string _location, std::string name );
 
-int parseFieldmlFile( const char *filename, FieldmlSession *session );
+    virtual ~ImportInfo();
 
-int parseFieldmlString( const char *string, const char *stringDescription, FieldmlSession *session );
+    const std::string location;
+    
+    const std::string name;
+    
+    SimpleMap<std::string, int> importNames;
+};
 
-#endif // H_FIELDMLSAX
+#endif //H_IMPORT_INFO

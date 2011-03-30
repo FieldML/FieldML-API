@@ -691,12 +691,6 @@ int writeFieldmlFile( FmlHandle handle, const char *filename )
         xmlTextWriterWriteAttribute( writer, NAME_ATTRIB, (const xmlChar*)regionName );        
     }
     
-    const char *libraryName = Fieldml_GetLibraryName( handle );
-    if( ( libraryName != NULL ) && ( strlen( libraryName ) > 0 ) ) 
-    {
-        xmlTextWriterWriteAttribute( writer, LIBRARY_ATTRIB, (const xmlChar*)libraryName );        
-    }
-    
     count = Fieldml_GetTotalObjectCount( handle );
     for( i = 1; i <= count; i++ )
     {

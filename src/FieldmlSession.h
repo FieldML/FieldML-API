@@ -57,6 +57,8 @@ private:
     
     std::vector<std::string> errors;
     
+    std::vector<FieldmlRegion*> regions;
+    
     int handle;
     
     static FmlHandle addSession( FieldmlSession *session );
@@ -81,7 +83,19 @@ public:
     
     FmlHandle getHandle();
     
+    FieldmlObject *getObject( const FmlObjectHandle handle );
+    
+    FieldmlRegion *addRegion( std::string location, std::string name );
+    
+    int getRegionIndex( std::string location, std::string name );
+    
+    FieldmlRegion *getRegion( int index );
+    
+    int readRegion( FieldmlRegion *region );
+    
     FieldmlRegion *region;
+
+    ObjectStore * const objects;
 
 
     static FieldmlSession *handleToSession( FmlHandle handle );

@@ -55,11 +55,10 @@ public:
     const FieldmlHandleType type;
     const std::string name;
     const bool isVirtual;
-    int locationHandle;
 
     int intValue;
     
-    FieldmlObject( const std::string _name, int _locationHandle, FieldmlHandleType _type, bool _isVirtual );
+    FieldmlObject( const std::string _name, FieldmlHandleType _type, bool _isVirtual );
     
     virtual ~FieldmlObject();
 };
@@ -73,7 +72,7 @@ public:
 
     SimpleBitset members;
     
-    EnsembleType( const std::string _name, int _locationHandle, bool _isComponentEnsemble, bool _isVirtual );
+    EnsembleType( const std::string _name, bool _isComponentEnsemble, bool _isVirtual );
 };
 
 
@@ -85,7 +84,7 @@ public:
 
     SimpleBitset members;
     
-    ElementSequence( const std::string _name, int _locationHandle, FmlObjectHandle _componentType );
+    ElementSequence( const std::string _name, FmlObjectHandle _componentType );
 };
 
 
@@ -95,7 +94,7 @@ class ContinuousType :
 public:
     const FmlObjectHandle componentType;
     
-    ContinuousType( const std::string _name, int _locationHandle, FmlObjectHandle _componentType, bool _isVirtual );
+    ContinuousType( const std::string _name, FmlObjectHandle _componentType, bool _isVirtual );
 };
 
 
@@ -108,7 +107,7 @@ public:
     
     SimpleMap<int, std::string> shapes;
     
-    MeshType( const std::string _name, int _region, FmlObjectHandle _xiType, FmlObjectHandle _elementType, bool _isVirtual );
+    MeshType( const std::string _name, FmlObjectHandle _xiType, FmlObjectHandle _elementType, bool _isVirtual );
 };
 
 
@@ -120,7 +119,7 @@ public:
 
     std::vector<FmlObjectHandle> variables;
 
-    Evaluator( const std::string _name, int _region, FieldmlHandleType _type, FmlObjectHandle _valueType, bool _isVirtual );
+    Evaluator( const std::string _name, FieldmlHandleType _type, FmlObjectHandle _valueType, bool _isVirtual );
 };
 
 
@@ -132,7 +131,7 @@ public:
 
     SimpleMap<FmlObjectHandle, FmlObjectHandle> binds;
 
-    ReferenceEvaluator( const std::string _name, int _region, FmlObjectHandle _evaluator, FmlObjectHandle _valueType, bool _isVirtual );
+    ReferenceEvaluator( const std::string _name, FmlObjectHandle _evaluator, FmlObjectHandle _valueType, bool _isVirtual );
 };
 
 
@@ -145,7 +144,7 @@ public:
     SimpleMap<FmlObjectHandle, FmlObjectHandle> binds;
     SimpleMap<int, FmlObjectHandle> evaluators;
     
-    PiecewiseEvaluator( const std::string name, int region, FmlObjectHandle valueType, bool _isVirtual );
+    PiecewiseEvaluator( const std::string name, FmlObjectHandle valueType, bool _isVirtual );
 };
 
 
@@ -158,7 +157,7 @@ public:
     
     FmlObjectHandle indexEvaluator;
     
-    AggregateEvaluator( const std::string _name, int _region, FmlObjectHandle _valueType, bool _isVirtual );
+    AggregateEvaluator( const std::string _name, FmlObjectHandle _valueType, bool _isVirtual );
 };
 
 
@@ -166,7 +165,7 @@ class AbstractEvaluator :
     public Evaluator
 {
 public:
-    AbstractEvaluator( const std::string name, int region, FmlObjectHandle _valueType, bool _isVirtual );
+    AbstractEvaluator( const std::string name, FmlObjectHandle _valueType, bool _isVirtual );
 };
 
 
@@ -174,7 +173,7 @@ class ExternalEvaluator :
     public Evaluator
 {
 public:
-    ExternalEvaluator( const std::string name, int region, FmlObjectHandle _valueType, bool _isVirtual );
+    ExternalEvaluator( const std::string name, FmlObjectHandle _valueType, bool _isVirtual );
 };
 
 
@@ -268,7 +267,7 @@ class ParameterEvaluator :
 public:
     DataDescription *dataDescription;
     
-    ParameterEvaluator( const std::string _name, int _region, FmlObjectHandle _valueType, bool _isVirtual );
+    ParameterEvaluator( const std::string _name, FmlObjectHandle _valueType, bool _isVirtual );
     
     virtual ~ParameterEvaluator();
 };

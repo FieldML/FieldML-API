@@ -59,6 +59,10 @@ const xmlChar * const FIELDML_TAG                      = (const xmlChar* const)"
 
 const xmlChar * const REGION_TAG                       = (const xmlChar* const)"Region";
 
+const xmlChar * const IMPORT_TAG                       = (const xmlChar* const)"Import";
+const xmlChar * const IMPORT_TYPE_TAG                  = (const xmlChar* const)"ImportType";
+const xmlChar * const IMPORT_EVALUATOR_TAG             = (const xmlChar* const)"ImportEvaluator";
+
 const xmlChar * const ENSEMBLE_TYPE_TAG                = (const xmlChar* const)"EnsembleType";
 
 const xmlChar * const CONTINUOUS_TYPE_TAG              = (const xmlChar* const)"ContinuousType";
@@ -112,7 +116,10 @@ const xmlChar * const VERSION_ATTRIB                   = (const xmlChar* const)"
 
 const xmlChar * const NAME_ATTRIB                      = (const xmlChar* const)"name";
 
-const xmlChar * const LIBRARY_ATTRIB                   = (const xmlChar* const)"library";
+const xmlChar * const LOCATION_ATTRIB                  = (const xmlChar* const)"location";
+const xmlChar * const REGION_ATTRIB                    = (const xmlChar* const)"region";
+const xmlChar * const LOCAL_NAME_ATTRIB                = (const xmlChar* const)"localName";
+const xmlChar * const SOURCE_NAME_ATTRIB               = (const xmlChar* const)"sourceName";
 
 const xmlChar * const VARIABLE_ATTRIB                  = (const xmlChar* const)"variable";
 const xmlChar * const INDEX_NUMBER_ATTRIB              = (const xmlChar* const)"indexNumber";

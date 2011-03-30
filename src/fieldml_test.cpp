@@ -458,7 +458,7 @@ void testMisc()
     double readValues[9] = { 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef };
     int readIndexes[2] = { -1, -1 };
     
-    handle = Fieldml_Create( "", "test", NULL );
+    handle = Fieldml_Create( "", "test" );
     
     o1 = Fieldml_CreateEnsembleType( handle, "example.component_ensemble", true );
     Fieldml_AddEnsembleElementRange( handle, o1, 1, 3, 1 );
@@ -469,10 +469,11 @@ void testMisc()
     
     Fieldml_Destroy( handle );
     
-    handle = Fieldml_Create( "", "test", "library_0.3.xml" );
+    handle = Fieldml_Create( "", "test" );
     
-    o1 = Fieldml_GetObjectByName( handle, "library.ensemble.rc.3d" );
-    o2 = Fieldml_GetObjectByName( handle, "library.real.1d" );
+    int importHandle = Fieldml_AddImportSource( handle, "library_0.3.xml", "library" );
+    o1 = Fieldml_AddImport( handle, importHandle, "library.ensemble.rc.3d", "library.ensemble.rc.3d" );
+    o2 = Fieldml_AddImport( handle, importHandle, "library.real.1d", "library.real.1d" );
     
     o3 = Fieldml_CreateParametersEvaluator( handle, "test.ensemble_parameters", o2 );
     Fieldml_SetParameterDataDescription( handle, o3, DESCRIPTION_SEMIDENSE );

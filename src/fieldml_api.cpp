@@ -66,7 +66,7 @@ using namespace std;
 
 static FieldmlObject *getObject( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
-    FieldmlObject *object = session->region->getObject( objectHandle );
+    FieldmlObject *object = session->getObject( objectHandle );
     
     if( object == NULL )
     {
@@ -83,10 +83,12 @@ static FmlObjectHandle addObject( FieldmlSession *session, FieldmlObject *object
     
     if( handle == FML_INVALID_HANDLE )
     {
-        return session->region->addObject( object );
+        FmlObjectHandle handle = session->objects->addObject( object );
+        session->region->addLocalObject( handle );
+        return handle;
     }
     
-    FieldmlObject *oldObject = session->region->getObject( handle );
+    FieldmlObject *oldObject = session->objects->getObject( handle );
     
     session->logError( "Handle collision. Cannot replace", object->name.c_str(), oldObject->name.c_str() );
     delete object;
@@ -445,9 +447,10 @@ FmlHandle Fieldml_CreateFromFile( const char *filename )
 {
     FieldmlSession *session = new FieldmlSession();
     
-    int err = parseFieldmlFile( filename, LOCAL_LOCATION_HANDLE, session );
-    
-    if( session->region == NULL )
+    session->region = session->addRegion( filename, "" );
+    int err = session->readRegion( session->region );
+
+    if( err != 0 )
     {
         delete session;
         return FML_INVALID_HANDLE;
@@ -458,18 +461,11 @@ FmlHandle Fieldml_CreateFromFile( const char *filename )
 }
 
 
-FmlHandle Fieldml_Create( const char *location, const char *name, const char *libraryLocation )
+FmlHandle Fieldml_Create( const char *location, const char *name )
 {
-    if( libraryLocation == NULL )
-    {
-        libraryLocation = "";
-    }
-    
     FieldmlSession *session = new FieldmlSession();
     
-    session->region = new FieldmlRegion( location, name, libraryLocation );
-
-    insertLibrary( session, libraryLocation );
+    session->region = session->addRegion( location, name );
     
     return session->getHandle();
 }
@@ -544,25 +540,6 @@ const char * Fieldml_GetRegionName( FmlHandle handle )
 int Fieldml_CopyRegionName( FmlHandle handle, char *buffer, int bufferLength )
 {
     return cappedCopyAndFree( Fieldml_GetRegionName( handle ), buffer, bufferLength );
-}
-
-
-const char * Fieldml_GetLibraryName( FmlHandle handle )
-{
-    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
-    if( session == NULL )
-    {
-        return NULL;
-    }
-        
-    session->setError( FML_ERR_NO_ERROR );
-    return cstrCopy( session->region->getLibraryName() );
-}
-
-
-int Fieldml_CopyLibraryName( FmlHandle handle, char *buffer, int bufferLength )
-{
-    return cappedCopyAndFree( Fieldml_GetLibraryName( handle ), buffer, bufferLength );
 }
 
 
@@ -671,7 +648,9 @@ FmlObjectHandle Fieldml_GetObjectByName( FmlHandle handle, const char * name )
         return FML_INVALID_HANDLE;
     }
         
-    return session->region->getNamedHandle( name );
+    FmlObjectHandle object = session->region->getNamedHandle( name );
+    
+    return object;
 }
 
 
@@ -916,15 +895,8 @@ int Fieldml_IsObjectLocal( FmlHandle handle, FmlObjectHandle objectHandle )
     {
         return -1;
     }
-        
-    FieldmlObject *object = getObject( session, objectHandle );
 
-    if( object == NULL ) 
-    {
-        return -1;
-    }
-    
-    if( ( object->locationHandle == LOCAL_LOCATION_HANDLE ) && !object->isVirtual )
+    if( session->region->hasLocalObject( objectHandle ) )
     {
         return 1;
     }
@@ -1095,15 +1067,15 @@ FmlObjectHandle Fieldml_CreateAbstractEvaluator( FmlHandle handle, const char *n
         }
         
         FmlObjectHandle xiType = Fieldml_GetMeshXiType( handle, valueType );
-        AbstractEvaluator *xiEvaluator = new AbstractEvaluator( xiName.c_str(), LOCAL_LOCATION_HANDLE, xiType, true );
+        AbstractEvaluator *xiEvaluator = new AbstractEvaluator( xiName.c_str(), xiType, true );
         addObject( session, xiEvaluator );        
         
         FmlObjectHandle elementType = Fieldml_GetMeshElementType( handle, valueType );
-        AbstractEvaluator *elementEvaluator = new AbstractEvaluator( elementName.c_str(), LOCAL_LOCATION_HANDLE, elementType, true );
+        AbstractEvaluator *elementEvaluator = new AbstractEvaluator( elementName.c_str(), elementType, true );
         addObject( session, elementEvaluator );        
     }
     
-    AbstractEvaluator *abstractEvaluator = new AbstractEvaluator( name, LOCAL_LOCATION_HANDLE, valueType, false );
+    AbstractEvaluator *abstractEvaluator = new AbstractEvaluator( name, valueType, false );
     
     session->setError( FML_ERR_NO_ERROR );
     return addObject( session, abstractEvaluator );
@@ -1124,7 +1096,7 @@ FmlObjectHandle Fieldml_CreateExternalEvaluator( FmlHandle handle, const char *n
         return FML_INVALID_HANDLE;
     }
         
-    ExternalEvaluator *externalEvaluator = new ExternalEvaluator( name, LOCAL_LOCATION_HANDLE, valueType, false );
+    ExternalEvaluator *externalEvaluator = new ExternalEvaluator( name, valueType, false );
     
     session->setError( FML_ERR_NO_ERROR );
     return addObject( session, externalEvaluator );
@@ -1145,7 +1117,7 @@ FmlObjectHandle Fieldml_CreateParametersEvaluator( FmlHandle handle, const char 
         return FML_INVALID_HANDLE;
     }
         
-    ParameterEvaluator *parameterEvaluator = new ParameterEvaluator( name, LOCAL_LOCATION_HANDLE, valueType, false );
+    ParameterEvaluator *parameterEvaluator = new ParameterEvaluator( name, valueType, false );
     
     session->setError( FML_ERR_NO_ERROR );
     return addObject( session, parameterEvaluator );
@@ -1668,7 +1640,7 @@ FmlObjectHandle Fieldml_CreatePiecewiseEvaluator( FmlHandle handle, const char *
         return FML_INVALID_HANDLE;
     }
         
-    PiecewiseEvaluator *piecewiseEvaluator = new PiecewiseEvaluator( name, LOCAL_LOCATION_HANDLE, valueType, false );
+    PiecewiseEvaluator *piecewiseEvaluator = new PiecewiseEvaluator( name, valueType, false );
     
     session->setError( FML_ERR_NO_ERROR );
     return addObject( session, piecewiseEvaluator );
@@ -1689,7 +1661,7 @@ FmlObjectHandle Fieldml_CreateAggregateEvaluator( FmlHandle handle, const char *
         return FML_INVALID_HANDLE;
     }
         
-    AggregateEvaluator *aggregateEvaluator = new AggregateEvaluator( name, LOCAL_LOCATION_HANDLE, valueType, false );
+    AggregateEvaluator *aggregateEvaluator = new AggregateEvaluator( name, valueType, false );
     
     session->setError( FML_ERR_NO_ERROR );
     return addObject( session, aggregateEvaluator );
@@ -1881,7 +1853,7 @@ FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlHandle handle, const char *
 
     FmlObjectHandle valueType = Fieldml_GetValueType( handle, sourceEvaluator );
 
-    ReferenceEvaluator *referenceEvaluator = new ReferenceEvaluator( name, LOCAL_LOCATION_HANDLE, sourceEvaluator, valueType, false );
+    ReferenceEvaluator *referenceEvaluator = new ReferenceEvaluator( name, sourceEvaluator, valueType, false );
     
     session->setError( FML_ERR_NO_ERROR );
     return addObject( session, referenceEvaluator );
@@ -2454,7 +2426,7 @@ FmlObjectHandle Fieldml_CreateContinuousType( FmlHandle handle, const char * nam
         }
     }
 
-    ContinuousType *continuousType = new ContinuousType( name, LOCAL_LOCATION_HANDLE, componentDescriptionHandle, false );
+    ContinuousType *continuousType = new ContinuousType( name, componentDescriptionHandle, false );
     
     session->setError( FML_ERR_NO_ERROR );
     return addObject( session, continuousType );
@@ -2469,7 +2441,7 @@ FmlObjectHandle Fieldml_CreateEnsembleType( FmlHandle handle, const char * name,
         return FML_INVALID_HANDLE;
     }
 
-    EnsembleType *ensembleType = new EnsembleType( name, LOCAL_LOCATION_HANDLE, isComponentType == 1, false );
+    EnsembleType *ensembleType = new EnsembleType( name, isComponentType == 1, false );
     
     session->setError( FML_ERR_NO_ERROR );
     return addObject( session, ensembleType );
@@ -2510,13 +2482,13 @@ FmlObjectHandle Fieldml_CreateMeshType( FmlHandle handle, const char * name, Fml
         return FML_INVALID_HANDLE;
     }
     
-    ContinuousType *xiObject = new ContinuousType( xiName.c_str(), LOCAL_LOCATION_HANDLE, xiEnsembleDescription, true );
+    ContinuousType *xiObject = new ContinuousType( xiName.c_str(), xiEnsembleDescription, true );
     xiHandle = addObject( session, xiObject );
     
-    EnsembleType *elementObject = new EnsembleType( elementsName.c_str(), LOCAL_LOCATION_HANDLE, false, true );
+    EnsembleType *elementObject = new EnsembleType( elementsName.c_str(), false, true );
     elementHandle = addObject( session, elementObject );
     
-    MeshType *meshType = new MeshType( name, LOCAL_LOCATION_HANDLE, xiHandle, elementHandle, false );
+    MeshType *meshType = new MeshType( name, xiHandle, elementHandle, false );
 
     session->setError( FML_ERR_NO_ERROR );
 
@@ -2808,7 +2780,7 @@ FmlObjectHandle Fieldml_CreateEnsembleElementSequence( FmlHandle handle, const c
         return FML_INVALID_HANDLE;
     }
 
-    ElementSequence *elementSequence = new ElementSequence( name, LOCAL_LOCATION_HANDLE, valueType );
+    ElementSequence *elementSequence = new ElementSequence( name, valueType );
     
     session->setError( FML_ERR_NO_ERROR );
     return addObject( session, elementSequence );
@@ -3034,4 +3006,80 @@ int Fieldml_GetElementEntries( FmlHandle handle, FmlObjectHandle setHandle, cons
 
     session->setError( FML_ERR_INVALID_OBJECT );
     return -1;
+}
+
+
+int Fieldml_AddImportSource( FmlHandle handle, const char *location, const char *name )
+{
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
+    {
+        return -1;
+    }
+    
+    if( location == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_2 );  
+        return -1;
+    }
+    if( name == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );  
+        return -1;
+    }
+
+    FieldmlRegion *importedRegion = session->addRegion( location, name );
+    int err = session->readRegion( importedRegion );
+    if( err != 0 )
+    {
+        delete importedRegion;
+        return -1;
+    }
+    
+    int index = session->getRegionIndex( location, name );
+    
+    session->region->addImportSource( index, location, name );
+    
+    return index;
+}
+
+
+int Fieldml_AddImport( FmlHandle handle, int importIndex, const char *localName, const char *sourceName )
+{
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );;
+    if( session == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+
+    if( localName == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );  
+        return FML_INVALID_HANDLE;
+    }
+    if( sourceName == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_4 );  
+        return FML_INVALID_HANDLE;
+    }
+    
+    FieldmlRegion *region = session->getRegion( importIndex );
+    if( region == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_2 );  
+        return FML_INVALID_HANDLE;
+    }
+    
+    FmlObjectHandle object = region->getNamedHandle( sourceName );
+    
+    if( object == FML_INVALID_HANDLE )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_4 );  
+    }
+    else
+    {
+        session->region->addImport( importIndex, localName, object );
+    }
+    
+    return object;
 }

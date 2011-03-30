@@ -68,7 +68,8 @@ long FieldmlSession::addSession( FieldmlSession *session )
 }
 
 
-FieldmlSession::FieldmlSession()
+FieldmlSession::FieldmlSession() :
+    objects( new ObjectStore() )
 {
     handle = addSession( this );
     
@@ -78,9 +79,83 @@ FieldmlSession::FieldmlSession()
 
 FieldmlSession::~FieldmlSession()
 {
-    delete region;
+    for_each( regions.begin(), regions.end(), delete_object() );
+    
+    delete objects;
     
     sessions[handle] = NULL;
+}
+
+
+FieldmlRegion *FieldmlSession::addRegion( string location, string name )
+{
+    for( vector<FieldmlRegion*>::iterator i = regions.begin(); i != regions.end(); i++ )
+    {
+        FieldmlRegion *r = *i;
+        if( ( r->getLocation() == location ) && ( r->getName() == name ) )
+        {
+            return r;
+        }
+    }
+    
+    FieldmlRegion *r = new FieldmlRegion( location, name, "", objects );
+    regions.push_back( r );
+    
+    return r;
+}
+
+
+int FieldmlSession::getRegionIndex( string location, string name )
+{
+    for( int i = 0; i < regions.size(); i++ )
+    {
+        FieldmlRegion *r = regions[i];
+        if( ( r->getLocation() == location ) && ( r->getName() == name ) )
+        {
+            return i;
+        }
+    }
+    
+    return -1;
+}
+
+
+FieldmlRegion *FieldmlSession::getRegion( int index )
+{
+    if( ( index < 0 ) || ( index >= regions.size() ) )
+    {
+        return NULL;
+    }
+    
+    return regions[index];
+}
+
+
+int FieldmlSession::readRegion( FieldmlRegion *readRegion )
+{
+    int result = 0;
+    string location = readRegion->getLocation();
+    
+    if( location.length() != 0 )
+    {
+        FieldmlRegion *currentRegion = region;
+        region = readRegion;
+        
+        int result;
+        if( location == FML_LIBRARY_0_3_NAME )
+        {
+            result = parseFieldmlString( FML_LIBRARY_0_3_STRING, "Internal library 0.3", this );
+        }
+        else
+        {
+            string libraryFile = makeFilename( region->getRoot(), location );
+            result = parseFieldmlFile( libraryFile.c_str(), this );
+        }
+        
+        region = currentRegion;
+    }
+    
+    return result;
 }
 
 
@@ -157,4 +232,10 @@ void FieldmlSession::logError( const char *error, const char *name1, const char 
     fprintf( stderr, "%s\n", errorString.c_str() );
     
     addError( errorString );
+}
+
+
+FieldmlObject *FieldmlSession::getObject( const FmlObjectHandle handle )
+{
+    return objects->getObject( handle );
 }

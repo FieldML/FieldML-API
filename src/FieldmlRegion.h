@@ -44,36 +44,38 @@
 
 #include <vector>
 
+#include "ObjectStore.h"
+#include "ImportInfo.h"
 #include "fieldml_structs.h"
-
-extern const int INVALID_LOCATION_HANDLE;
-extern const int LOCAL_LOCATION_HANDLE;
-extern const int LIBRARY_LOCATION_HANDLE;
 
 class FieldmlRegion
 {
 private:
-    const std::string name;
+    const std::string location;
     
-    const std::string library;
+    const std::string name;
     
     std::string root;
     
-    std::vector<FieldmlObject*> objects;
+    std::vector<int> localObjects;
+    
+    std::vector<ImportInfo*> imports;
+    
+    ObjectStore * const store;
     
 public:
-    FieldmlRegion( const std::string location, const std::string name, const std::string library );
+    FieldmlRegion( const std::string location, const std::string name, const std::string root, ObjectStore *_store );
     virtual ~FieldmlRegion();
     
-    FmlObjectHandle addObject( FieldmlObject *object );
+    void addLocalObject( int handle );
 
-    FieldmlObject *getObject( const FmlObjectHandle handle );
-    
     const int getObjectByIndex( const int index );
     
     const int getTotal( FieldmlHandleType type );
 
     const int getTotal();
+    
+    const bool hasLocalObject( int handle );
 
     const int getNthHandle( const FieldmlHandleType type, const int index );
     
@@ -82,6 +84,8 @@ public:
     void setRoot( const std::string newRoot );
 
     const std::string getRoot();
+    
+    const std::string getLocation();
 
     const std::string getName();
     
@@ -89,7 +93,9 @@ public:
 
     void finalize();
 
-    void setLocationHandle( FmlObjectHandle handle, int locationHandle );
+    void addImportSource( int importIndex, std::string location, std::string name );
+
+    void addImport( int importIndex, std::string localName, int object );
 };
 
 #endif //H_FIELDML_REGION

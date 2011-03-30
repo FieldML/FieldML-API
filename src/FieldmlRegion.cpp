@@ -44,7 +44,6 @@
 #include "string_const.h"
 #include "fieldml_structs.h"
 #include "fieldml_sax.h"
-#include "fieldml_library_0.3.h"
 
 using namespace std;
 
@@ -54,38 +53,23 @@ using namespace std;
 //
 //========================================================================
 
-const int INVALID_LOCATION_HANDLE = -2;
-const int LIBRARY_LOCATION_HANDLE = 0;
-const int LOCAL_LOCATION_HANDLE = 1;
-
-
-FieldmlRegion::FieldmlRegion( const string _location, const string _name, const string _library ) :
+FieldmlRegion::FieldmlRegion( const string _location, const string _name, const string _root, ObjectStore *_store ) :
+    location( _location ),
     name( _name ),
-    library( _library )
+    store( _store )
 {
-    root = _location;
+    root = _root;
 }
 
 
 FieldmlRegion::~FieldmlRegion()
 {
-    std::for_each( objects.begin(), objects.end(), delete_object() );
+    for_each( imports.begin(), imports.end(), delete_object() );
 }
 
 
 void FieldmlRegion::finalize()
 {
-}
-
-
-FieldmlObject *FieldmlRegion::getObject( const FmlObjectHandle handle )
-{
-    if( ( handle < 0 ) || ( handle >= objects.size() ) )
-    {
-        return NULL;
-    }
-    
-    return objects[handle];
 }
 
 
@@ -101,35 +85,31 @@ const string FieldmlRegion::getRoot()
 }
 
 
+const string FieldmlRegion::getLocation()
+{
+    return location;
+}
+
+
 const string FieldmlRegion::getName()
 {
     return name;
 }
 
 
-const string FieldmlRegion::getLibraryName()
+void FieldmlRegion::addLocalObject( int handle )
 {
-    return library;
-}
-
-
-FmlObjectHandle FieldmlRegion::addObject( FieldmlObject *object )
-{
-    objects.push_back( object );
-    return objects.size() - 1;
+    localObjects.push_back( handle );
 }
 
 
 const int FieldmlRegion::getTotal( FieldmlHandleType type )
 {
-    int count, i, total;
-    FieldmlObject *object;
+    int total = 0;
 
-    total = 0;
-    count = objects.size();
-    for( i = 0; i < count; i++ )
+    for( vector<int>::iterator i = localObjects.begin(); i != localObjects.end(); i++ )
     {
-        object = objects[i];
+        FieldmlObject *object = store->getObject( *i );
         if( object->type == type )
         {
             total++;
@@ -140,27 +120,38 @@ const int FieldmlRegion::getTotal( FieldmlHandleType type )
 }
 
 
+const bool FieldmlRegion::hasLocalObject( int handle )
+{
+    for( vector<int>::iterator i = localObjects.begin(); i != localObjects.end(); i++ )
+    {
+        if( *i == handle )
+        {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+
 const int FieldmlRegion::getTotal()
 {
-    return objects.size();
+    return localObjects.size();
 }
 
 
 const int FieldmlRegion::getNthHandle( const FieldmlHandleType type, const int index )
 {
-    int count, i;
-    FieldmlObject *object;
-
     if( index <= 0 )
     {
         return FML_INVALID_HANDLE;
     }
 
-    count = objects.size();
     int counter = index;
-    for( i = 0; i < count; i++ )
+
+    for( vector<int>::iterator i = localObjects.begin(); i != localObjects.end(); i++ )
     {
-        object = objects[i];
+        FieldmlObject *object = store->getObject( *i );
         if( object->type != type )
         {
             continue;
@@ -169,7 +160,7 @@ const int FieldmlRegion::getNthHandle( const FieldmlHandleType type, const int i
         counter--;
         if( counter == 0 )
         {
-            return i;
+            return *i;
         }
     }
 
@@ -179,16 +170,28 @@ const int FieldmlRegion::getNthHandle( const FieldmlHandleType type, const int i
 
 const int FieldmlRegion::getNamedHandle( const string name )
 {
-    int count, i;
-    FieldmlObject *object;
-
-    count = objects.size();
-    for( i = 0; i < count; i++ )
+    for( vector<int>::iterator i = localObjects.begin(); i != localObjects.end(); i++ )
     {
-        object = objects[i];
+        FieldmlObject *object = store->getObject( *i );
         if( object->name == name )
         {
-            return i;
+            return *i;
+        }
+    }
+    
+    for( vector<ImportInfo*>::iterator i = imports.begin(); i != imports.end(); i++ )
+    {
+        ImportInfo *info = *i;
+        
+        if( info == NULL )
+        {
+            continue;
+        }
+        
+        FmlObjectHandle object = info->importNames.get( name, true );
+        if( object != FML_INVALID_HANDLE )
+        {
+            return object;
         }
     }
     
@@ -198,12 +201,41 @@ const int FieldmlRegion::getNamedHandle( const string name )
 
 const int FieldmlRegion::getObjectByIndex( const int index )
 {
-    return index - 1;
+    //TODO Deliberate bomb. Implement this properly.
+    int *foo = NULL;
+    printf("FIX ME!\n");
+    
+    return index -1;
 }
 
 
-void FieldmlRegion::setLocationHandle( FmlObjectHandle handle, int locationHandle )
+void FieldmlRegion::addImportSource( int importIndex, string location, string name )
 {
-    FieldmlObject *object = getObject( handle );
-    object->locationHandle = locationHandle;
+    while( imports.size() <= importIndex )
+    {
+        imports.push_back( NULL );
+    }
+    
+    if( imports[importIndex] == NULL )
+    {
+        imports[importIndex] = new ImportInfo( location, name );
+    }
+}
+
+
+void FieldmlRegion::addImport( int importIndex, string localName, int handle )
+{
+    if( ( importIndex < 0 ) || ( importIndex >= imports.size() ) )
+    {
+        return;
+    }
+    
+    ImportInfo *import = imports[importIndex];
+    if( import == NULL )
+    {
+        //TODO Set an error code
+        return;
+    }
+    
+    import->importNames.set( localName, handle );
 }

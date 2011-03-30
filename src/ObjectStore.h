@@ -39,17 +39,28 @@
  *
  */
 
-#ifndef H_FIELDMLSAX
-#define H_FIELDMLSAX
+#ifndef H_OBJECT_STORE
+#define H_OBJECT_STORE
 
-#include <string>
+#include <vector>
 
 #include "fieldml_structs.h"
 
-#include "FieldmlSession.h"
+typedef int FmlObjectHandle;
 
-int parseFieldmlFile( const char *filename, FieldmlSession *session );
+class ObjectStore
+{
+private:
+    std::vector<FieldmlObject *> objects;
+    
+public:
+    ObjectStore();
+    
+    virtual ~ObjectStore();
+    
+    FieldmlObject *getObject( FmlObjectHandle handle );
+    
+    FmlObjectHandle addObject( FieldmlObject *object );
+};
 
-int parseFieldmlString( const char *string, const char *stringDescription, FieldmlSession *session );
-
-#endif // H_FIELDMLSAX
+#endif //H_OBJECT_STORE

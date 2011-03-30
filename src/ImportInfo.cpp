@@ -39,17 +39,19 @@
  *
  */
 
-#ifndef H_FIELDMLSAX
-#define H_FIELDMLSAX
+#include "fieldml_api.h"
+#include "ImportInfo.h"
 
-#include <string>
+using namespace std;
 
-#include "fieldml_structs.h"
+ImportInfo::ImportInfo( string _location, string _name ) :
+    location( _location ),
+    name( _name ),
+    importNames( FML_INVALID_HANDLE )
+{
+}
 
-#include "FieldmlSession.h"
 
-int parseFieldmlFile( const char *filename, FieldmlSession *session );
-
-int parseFieldmlString( const char *string, const char *stringDescription, FieldmlSession *session );
-
-#endif // H_FIELDMLSAX
+ImportInfo::~ImportInfo()
+{
+}
