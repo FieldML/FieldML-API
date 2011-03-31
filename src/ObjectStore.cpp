@@ -127,8 +127,23 @@ FmlObjectHandle ObjectStore::getObjectByIndex( int index, FieldmlHandleType type
             count++;
             if( count == index )
             {
-                return i - 1;
+                return i;
             }
+        }
+    }
+    
+    return FML_INVALID_HANDLE;
+}
+
+
+FmlObjectHandle ObjectStore::getObjectByName( const string name )
+{
+    for( int i = 0; i < objects.size(); i++ )
+    {
+        FieldmlObject *object = objects[i];
+        if( object->name == name )
+        {
+            return i;
         }
     }
     

@@ -84,6 +84,12 @@ void FieldmlRegion::finalize()
 }
 
 
+void FieldmlRegion::setName( const string newName )
+{
+    name = newName;
+}
+
+
 void FieldmlRegion::setRoot( const string newRoot )
 {
     root = newRoot;

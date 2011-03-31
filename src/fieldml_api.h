@@ -262,6 +262,7 @@ FieldmlHandleType Fieldml_GetObjectType( FmlHandle handle, FmlObjectHandle objec
  */
 FmlObjectHandle Fieldml_GetObjectByName( FmlHandle handle, const char * name );
 
+FmlObjectHandle Fieldml_GetObjectByDeclaredName( FmlHandle handle, const char * name );
 
 /**
  *      Returns 1 if the given object is local, 0 if not, or -1 on error.
@@ -277,6 +278,10 @@ int Fieldml_IsObjectLocal( FmlHandle handle, FmlObjectHandle objectHandle );
  */
 const char * Fieldml_GetObjectName( FmlHandle handle, FmlObjectHandle objectHandle );
 int Fieldml_CopyObjectName( FmlHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength );
+
+
+const char * Fieldml_GetObjectDeclaredName( FmlHandle handle, FmlObjectHandle objectHandle );
+int Fieldml_CopyObjectDeclaredName( FmlHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength );
 
 
 /**

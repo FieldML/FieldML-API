@@ -69,6 +69,8 @@ public:
     FmlObjectHandle getObjectByIndex( int index );
     
     FmlObjectHandle getObjectByIndex( int index, FieldmlHandleType type );
+    
+    FmlObjectHandle getObjectByName( const std::string name );
 };
 
 #endif //H_OBJECT_STORE

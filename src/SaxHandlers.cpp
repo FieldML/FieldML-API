@@ -307,6 +307,7 @@ RegionSaxHandler::RegionSaxHandler( const xmlChar *elementName, FieldmlSaxHandle
     }
 
     region = context->session->region;
+    region->setName( name );
 }
 
 
@@ -695,7 +696,6 @@ ReferenceEvaluatorSaxHandler::ReferenceEvaluatorSaxHandler( RegionSaxHandler *_p
     }
     
     handle = Fieldml_CreateReferenceEvaluator( getSessionHandle(), name, sourceEvaluator );
-    printf(">>> created ReferenceEvaluator %s\n", name );
     if( handle == FML_INVALID_HANDLE )
     {
         getSession()->logError( "ReferenceEvaluator creation failed", name );

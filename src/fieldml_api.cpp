@@ -449,6 +449,7 @@ FmlHandle Fieldml_CreateFromFile( const char *filename )
     
     session->region = session->addRegion( filename, "" );
     int err = session->readRegion( session->region );
+    session->region->setRoot( getDirectory( filename ) );
 
     if( err != 0 )
     {
@@ -629,7 +630,7 @@ FmlObjectHandle Fieldml_GetObject( FmlHandle handle, FieldmlHandleType type, int
         
     session->setError( FML_ERR_NO_ERROR );
 
-    FmlObjectHandle object = session->objects->getObjectByIndex( index );
+    FmlObjectHandle object = session->objects->getObjectByIndex( index, type );
     if( object == FML_INVALID_HANDLE )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_3 );  
@@ -648,6 +649,20 @@ FmlObjectHandle Fieldml_GetObjectByName( FmlHandle handle, const char * name )
     }
         
     FmlObjectHandle object = session->region->getNamedObject( name );
+    
+    return object;
+}
+
+
+FmlObjectHandle Fieldml_GetObjectByDeclaredName( FmlHandle handle, const char *name )
+{
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    if( session == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+    
+    FmlObjectHandle object = session->objects->getObjectByName( name );
     
     return object;
 }
@@ -927,6 +942,30 @@ const char * Fieldml_GetObjectName( FmlHandle handle, FmlObjectHandle objectHand
 int Fieldml_CopyObjectName( FmlHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength )
 {
     return cappedCopyAndFree( Fieldml_GetObjectName( handle, objectHandle ), buffer, bufferLength );
+}
+
+
+const char * Fieldml_GetObjectDeclaredName( FmlHandle handle, FmlObjectHandle objectHandle )
+{
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    if( session == NULL )
+    {
+        return NULL;
+    }
+    
+    FieldmlObject *object = session->objects->getObject( objectHandle );
+    if( object == NULL )
+    {
+        return NULL;
+    }
+    
+    return cstrCopy( object->name.c_str() );
+}
+
+
+int Fieldml_CopyObjectDeclaredName( FmlHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength )
+{
+    return cappedCopyAndFree( Fieldml_GetObjectDeclaredName( handle, objectHandle ), buffer, bufferLength );
 }
 
 
@@ -3035,6 +3074,11 @@ int Fieldml_AddImportSource( FmlHandle handle, const char *location, const char 
     }
     
     int index = session->getRegionIndex( location, name );
+    if( index < 0 )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );  
+        return -1;
+    }
     
     session->region->addImportSource( index, location, name );
     

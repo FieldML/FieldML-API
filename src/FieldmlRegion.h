@@ -53,7 +53,7 @@ class FieldmlRegion
 private:
     const std::string location;
     
-    const std::string name;
+    std::string name;
     
     std::string root;
     
@@ -76,6 +76,8 @@ public:
     const FmlObjectHandle getNamedObject( const std::string name );
     
     const std::string getObjectName( FmlObjectHandle handle );
+    
+    void setName( const std::string newName );
 
     void setRoot( const std::string newRoot );
 
