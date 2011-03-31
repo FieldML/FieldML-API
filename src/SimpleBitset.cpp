@@ -310,11 +310,18 @@ int SimpleBitset::getTrueBit( int bitCount )
     
     bitCount -= bitCounter;
     int bitNumber = chunk->firstBit;
-    for( int i = 0; i < bitCount; i++ )
+    
+    for( ; bitNumber < chunk->firstBit + BITS_PER_CHUNK; bitNumber++ )
     {
-        bitNumber = getNextTrueBit( bitNumber );
-        bitNumber++;
+        if( chunk->get( bitNumber ) )
+        {
+            bitCount--;
+            if( bitCount == 0 )
+            {
+                return bitNumber;
+            }
+        }
     }
     
-    return bitNumber - 1;
+    return -1;
 }

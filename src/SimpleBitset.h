@@ -52,12 +52,6 @@ private:
     
     BitChunk *getNextChunk( int bitNumber );
     
-    int bitCount;
-    
-    int minBit;
-    
-    int maxBit;
-    
 public:
     SimpleBitset();
     
