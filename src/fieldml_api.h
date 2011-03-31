@@ -833,8 +833,28 @@ int Fieldml_CloseWriter( FmlHandle handle, FmlWriterHandle writer );
 int Fieldml_AddImportSource( FmlHandle handle, const char *location, const char *name );
 
 
-int Fieldml_AddImport( FmlHandle handle, int importIndex, const char *localName, const char *sourceName );
+int Fieldml_AddImport( FmlHandle handle, int importSourceIndex, const char *localName, const char *sourceName );
 
+
+int Fieldml_GetImportSourceCount( FmlHandle handle );
+
+
+int Fieldml_CopyImportSourceLocation( FmlHandle handle, int importSourceIndex, char *buffer, int bufferLength );
+
+
+int Fieldml_CopyImportSourceRegionName( FmlHandle handle, int importSourceIndex, char *buffer, int bufferLength );
+
+
+int Fieldml_GetImportCount( FmlHandle handle, int importSourceIndex );
+
+
+int Fieldml_CopyImportLocalName( FmlHandle handle, int importSourceIndex, int importIndex, char *buffer, int bufferLength );
+
+
+int Fieldml_CopyImportSourceName( FmlHandle handle, int importSourceIndex, int importIndex, char *buffer, int bufferLength );
+
+
+int Fieldml_GetImportObject( FmlHandle handle, int importSourceIndex, int importIndex );
 }
 #endif // __cplusplus
 

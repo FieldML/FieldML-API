@@ -39,19 +39,130 @@
  *
  */
 
+#include <algorithm>
+
+#include "string_const.h"
 #include "fieldml_api.h"
 #include "ImportInfo.h"
 
 using namespace std;
 
+class ObjectImport
+{
+public:
+    const string localName;
+    
+    const string sourceName;
+    
+    const FmlObjectHandle handle;
+    
+    ObjectImport( string _localName, string _sourceName, FmlObjectHandle _handle );
+    
+    virtual ~ObjectImport();
+};
+
+
+ObjectImport::ObjectImport( string _localName, string _sourceName, FmlObjectHandle _handle ) :
+    localName( _localName ),
+    sourceName( _sourceName ),
+    handle( _handle )
+{
+}
+
+
+ObjectImport::~ObjectImport()
+{
+}
+
+
 ImportInfo::ImportInfo( string _location, string _name ) :
     location( _location ),
-    name( _name ),
-    importNames( FML_INVALID_HANDLE )
+    name( _name )
 {
 }
 
 
 ImportInfo::~ImportInfo()
 {
+    for_each( imports.begin(), imports.end(), delete_object() );
+}
+
+
+FmlObjectHandle ImportInfo::getObject( string localName )
+{
+    for( vector<ObjectImport*>::iterator i = imports.begin(); i != imports.end(); i++ )
+    {
+        ObjectImport *import = *i;
+        if( import->localName == localName )
+        {
+            return import->handle;
+        }
+    }
+    
+    return FML_INVALID_HANDLE;
+}
+
+
+const string ImportInfo::getLocalName( FmlObjectHandle handle )
+{
+    for( vector<ObjectImport*>::iterator i = imports.begin(); i != imports.end(); i++ )
+    {
+        ObjectImport *import = *i;
+        if( import->handle == handle )
+        {
+            return import->localName;
+        }
+    }
+    
+    return "";
+}
+
+
+void ImportInfo::addImport( string localName, string sourceName, FmlObjectHandle handle )
+{
+    if( ( localName == "" ) || ( sourceName == "" ) || ( handle == FML_INVALID_HANDLE ) )
+    {
+        return;
+    }
+    
+    imports.push_back( new ObjectImport( localName, sourceName, handle ) );
+}
+
+
+int ImportInfo::getImportCount()
+{
+    return imports.size();
+}
+
+
+const string ImportInfo::getLocalNameByIndex( int index )
+{
+    if( ( index <= 0 ) || ( index > imports.size() ) )
+    {
+        return "";
+    }
+    
+    return imports[index-1]->localName;
+}
+
+
+const string ImportInfo::getSourceNameByIndex( int index )
+{
+    if( ( index <= 0 ) || ( index > imports.size() ) )
+    {
+        return "";
+    }
+    
+    return imports[index-1]->sourceName;
+}
+
+
+int ImportInfo::getObjectByIndex( int index )
+{
+    if( ( index <= 0 ) || ( index > imports.size() ) )
+    {
+        return FML_INVALID_HANDLE;
+    }
+    
+    return imports[index-1]->handle;
 }

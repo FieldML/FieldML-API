@@ -44,22 +44,35 @@
 
 #include <vector>
 
-#include "SimpleMap.h"
+class ObjectImport;
 
 class ImportInfo
 {
 private:
+    std::vector<ObjectImport*> imports;
     
 public:
     ImportInfo( std::string _location, std::string name );
 
     virtual ~ImportInfo();
+    
+    FmlObjectHandle getObject( std::string localName );
+    
+    const std::string getLocalName( FmlObjectHandle handle );
+    
+    void addImport( std::string localName, std::string sourceName, FmlObjectHandle handle );
+    
+    int getImportCount();
+    
+    const std::string getLocalNameByIndex( int index );
+
+    const std::string getSourceNameByIndex( int index );
+    
+    FmlObjectHandle getObjectByIndex( int index );
 
     const std::string location;
     
     const std::string name;
-    
-    SimpleMap<std::string, int> importNames;
 };
 
 #endif //H_IMPORT_INFO

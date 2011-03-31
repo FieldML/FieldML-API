@@ -695,6 +695,7 @@ ReferenceEvaluatorSaxHandler::ReferenceEvaluatorSaxHandler( RegionSaxHandler *_p
     }
     
     handle = Fieldml_CreateReferenceEvaluator( getSessionHandle(), name, sourceEvaluator );
+    printf(">>> created ReferenceEvaluator %s\n", name );
     if( handle == FML_INVALID_HANDLE )
     {
         getSession()->logError( "ReferenceEvaluator creation failed", name );

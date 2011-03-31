@@ -61,6 +61,14 @@ public:
     FieldmlObject *getObject( FmlObjectHandle handle );
     
     FmlObjectHandle addObject( FieldmlObject *object );
+    
+    int getCount();
+    
+    int getCount( FieldmlHandleType type );
+    
+    FmlObjectHandle getObjectByIndex( int index );
+    
+    FmlObjectHandle getObjectByIndex( int index, FieldmlHandleType type );
 };
 
 #endif //H_OBJECT_STORE

@@ -63,23 +63,19 @@ private:
     
     ObjectStore * const store;
     
+    ImportInfo *getImportInfo( int importSourceIndex );
+    
 public:
     FieldmlRegion( const std::string location, const std::string name, const std::string root, ObjectStore *_store );
     virtual ~FieldmlRegion();
     
-    void addLocalObject( int handle );
+    void addLocalObject( FmlObjectHandle handle );
 
-    const int getObjectByIndex( const int index );
-    
-    const int getTotal( FieldmlHandleType type );
+    const bool hasLocalObject( FmlObjectHandle handle, bool allowVirtual );
 
-    const int getTotal();
+    const FmlObjectHandle getNamedObject( const std::string name );
     
-    const bool hasLocalObject( int handle );
-
-    const int getNthHandle( const FieldmlHandleType type, const int index );
-    
-    const int getNamedHandle( const std::string name );
+    const std::string getObjectName( FmlObjectHandle handle );
 
     void setRoot( const std::string newRoot );
 
@@ -93,9 +89,23 @@ public:
 
     void finalize();
 
-    void addImportSource( int importIndex, std::string location, std::string name );
+    void addImportSource( int importSourceIndex, std::string location, std::string name );
 
-    void addImport( int importIndex, std::string localName, int object );
+    void addImport( int importSourceIndex, std::string localName, std::string sourceName, FmlObjectHandle object );
+    
+    int getImportSourceCount();
+    
+    int getImportCount( int importSourceIndex );
+    
+    const std::string getImportSourceLocation( int importSourceIndex );
+    
+    const std::string getImportSourceRegionName( int importSourceIndex );
+    
+    const std::string getImportLocalName( int importSourceIndex, int importIndex );
+    
+    const std::string getImportSourceName( int importSourceIndex, int importIndex );
+    
+    FmlObjectHandle getImportObject( int importSourceIndex, int importIndex );
 };
 
 #endif //H_FIELDML_REGION

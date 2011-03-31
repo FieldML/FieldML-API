@@ -74,3 +74,63 @@ FmlObjectHandle ObjectStore::addObject( FieldmlObject *object )
     objects.push_back( object );
     return objects.size() - 1;
 }
+
+
+int ObjectStore::getCount()
+{
+    return objects.size();
+}
+
+
+int ObjectStore::getCount( FieldmlHandleType type )
+{
+    int count = 0;
+    
+    for( vector<FieldmlObject*>::iterator i = objects.begin(); i != objects.end(); i++ )
+    {
+        FieldmlObject *object = *i;
+        if( object->type == type )
+        {
+            count++;
+        }
+    }
+    
+    return count;
+}
+
+
+FmlObjectHandle ObjectStore::getObjectByIndex( int index )
+{
+    if( ( index <= 0 ) || ( index > objects.size() ) )
+    {
+        return FML_INVALID_HANDLE;
+    }
+    
+    return index - 1;
+}
+
+
+FmlObjectHandle ObjectStore::getObjectByIndex( int index, FieldmlHandleType type )
+{
+    if( index <= 0 )
+    {
+        return FML_INVALID_HANDLE;
+    }
+    
+    int count = 0;
+    
+    for( int i = 0; i < objects.size(); i++ )
+    {
+        FieldmlObject *object = objects[i];
+        if( object->type == type )
+        {
+            count++;
+            if( count == index )
+            {
+                return i - 1;
+            }
+        }
+    }
+    
+    return FML_INVALID_HANDLE;
+}

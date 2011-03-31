@@ -52,6 +52,8 @@ using namespace std;
 
 const char * MY_ENCODING = "ISO-8859-1";
 
+const int tBufferLength = 256;
+
 
 static void writeObjectName( xmlTextWriterPtr writer, const xmlChar *attribute, FmlHandle handle, int object )
 {
@@ -196,9 +198,9 @@ static int writeContinuousType( xmlTextWriterPtr writer, FmlHandle handle, FmlOb
 }
 
 
-static void writeElements( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHandle object )
+static void writeElements( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHandle object, const xmlChar *tagName )
 {
-    xmlTextWriterStartElement( writer, MEMBERS_TAG );
+    xmlTextWriterStartElement( writer, tagName );
     
     //Output ranges first, then individuals. It's cleaner that way, even if potentially slower.
     int index = 1;
@@ -279,7 +281,7 @@ static int writeEnsembleType( xmlTextWriterPtr writer, FmlHandle handle, FmlObje
         xmlTextWriterWriteAttribute( writer, IS_COMPONENT_ENSEMBLE_ATTRIB, (const xmlChar*)STRING_TRUE );
     }
     
-    writeElements( writer, handle, object );
+    writeElements( writer, handle, object, MEMBERS_TAG );
 
     xmlTextWriterEndElement( writer );
     
@@ -303,7 +305,7 @@ static int writeMeshType( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHa
     FmlObjectHandle elementType = Fieldml_GetMeshElementType( handle, object );
     int elementCount = Fieldml_GetElementCount( handle, elementType );
 
-    writeElements( writer, handle, Fieldml_GetMeshElementType( handle, object ) );
+    writeElements( writer, handle, Fieldml_GetMeshElementType( handle, object ), ELEMENTS_TAG );
 
     xmlTextWriterStartElement( writer, MESH_SHAPES_TAG );
     const char *defaultShape = Fieldml_GetMeshDefaultShape( handle, object );
@@ -665,8 +667,9 @@ static int writeFieldmlObject( xmlTextWriterPtr writer, FmlHandle handle, FmlObj
 int writeFieldmlFile( FmlHandle handle, const char *filename )
 {
     FmlObjectHandle object;
-    int i, count;
+    int i, count, length;
     int rc = 0;
+    char tBuffer[tBufferLength];
     xmlTextWriterPtr writer;
 
     writer = xmlNewTextWriterFilename( filename, 0 );
@@ -689,6 +692,68 @@ int writeFieldmlFile( FmlHandle handle, const char *filename )
     if( ( regionName != NULL ) && ( strlen( regionName ) > 0 ) ) 
     {
         xmlTextWriterWriteAttribute( writer, NAME_ATTRIB, (const xmlChar*)regionName );        
+    }
+    
+    
+    int importCount = Fieldml_GetImportSourceCount( handle );
+    for( int importSourceIndex = 1; importSourceIndex <= importCount; importSourceIndex++ )
+    {
+        int objectCount = Fieldml_GetImportCount( handle, importSourceIndex );
+        if( objectCount <= 0 )
+        {
+            continue;
+        }
+
+        xmlTextWriterStartElement( writer, IMPORT_TAG );
+        
+        length = Fieldml_CopyImportSourceLocation( handle, importSourceIndex, tBuffer, tBufferLength );
+        if( length > 0 )
+        {
+            xmlTextWriterWriteAttribute( writer, LOCATION_ATTRIB, (const xmlChar*)tBuffer );        
+        }
+        
+        length = Fieldml_CopyImportSourceRegionName( handle, importSourceIndex, tBuffer, tBufferLength );
+        if( length > 0 )
+        {
+            xmlTextWriterWriteAttribute( writer, REGION_ATTRIB, (const xmlChar*)tBuffer );        
+        }
+        
+        for( int importIndex = 1; importIndex <= objectCount; importIndex++ )
+        {
+            FmlObjectHandle objectHandle = Fieldml_GetImportObject( handle, importSourceIndex, importIndex );
+            if( objectHandle == FML_INVALID_HANDLE )
+            {
+                continue;
+            }
+            FieldmlHandleType objectType = Fieldml_GetObjectType( handle, objectHandle );
+            if( ( objectType == FHT_CONTINUOUS_TYPE ) ||
+                ( objectType == FHT_ENSEMBLE_TYPE ) ||
+                ( objectType == FHT_MESH_TYPE ) )
+            {
+                xmlTextWriterStartElement( writer, IMPORT_TYPE_TAG );
+            }
+            else
+            {
+                xmlTextWriterStartElement( writer, IMPORT_EVALUATOR_TAG );
+            }
+            
+            
+            length = Fieldml_CopyImportLocalName( handle, importSourceIndex, importIndex, tBuffer, tBufferLength );
+            if( length > 0 )
+            {
+                xmlTextWriterWriteAttribute( writer, LOCAL_NAME_ATTRIB, (const xmlChar*)tBuffer );
+            }
+
+            length = Fieldml_CopyImportSourceName( handle, importSourceIndex, importIndex, tBuffer, tBufferLength );
+            if( length > 0 )
+            {
+                xmlTextWriterWriteAttribute( writer, SOURCE_NAME_ATTRIB, (const xmlChar*)tBuffer );
+            }
+
+            xmlTextWriterEndElement( writer );
+        }
+        
+        xmlTextWriterEndElement( writer );
     }
     
     count = Fieldml_GetTotalObjectCount( handle );

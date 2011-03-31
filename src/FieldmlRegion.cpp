@@ -68,6 +68,17 @@ FieldmlRegion::~FieldmlRegion()
 }
 
 
+ImportInfo *FieldmlRegion::getImportInfo( int importSourceIndex )
+{
+    if( ( importSourceIndex < 0 ) || ( importSourceIndex >= imports.size() ) )
+    {
+        return NULL;
+    }
+    
+    return imports[importSourceIndex];
+}
+
+
 void FieldmlRegion::finalize()
 {
 }
@@ -97,31 +108,23 @@ const string FieldmlRegion::getName()
 }
 
 
-void FieldmlRegion::addLocalObject( int handle )
+void FieldmlRegion::addLocalObject( FmlObjectHandle handle )
 {
     localObjects.push_back( handle );
 }
 
 
-const int FieldmlRegion::getTotal( FieldmlHandleType type )
+const bool FieldmlRegion::hasLocalObject( FmlObjectHandle handle, bool allowVirtual )
 {
-    int total = 0;
-
-    for( vector<int>::iterator i = localObjects.begin(); i != localObjects.end(); i++ )
+    if( !allowVirtual )
     {
-        FieldmlObject *object = store->getObject( *i );
-        if( object->type == type )
+        FieldmlObject *object = store->getObject( handle );
+        if( ( object != NULL ) && ( object->isVirtual ) )
         {
-            total++;
+            return false;
         }
     }
-
-    return total;
-}
-
-
-const bool FieldmlRegion::hasLocalObject( int handle )
-{
+    
     for( vector<int>::iterator i = localObjects.begin(); i != localObjects.end(); i++ )
     {
         if( *i == handle )
@@ -134,41 +137,7 @@ const bool FieldmlRegion::hasLocalObject( int handle )
 }
 
 
-const int FieldmlRegion::getTotal()
-{
-    return localObjects.size();
-}
-
-
-const int FieldmlRegion::getNthHandle( const FieldmlHandleType type, const int index )
-{
-    if( index <= 0 )
-    {
-        return FML_INVALID_HANDLE;
-    }
-
-    int counter = index;
-
-    for( vector<int>::iterator i = localObjects.begin(); i != localObjects.end(); i++ )
-    {
-        FieldmlObject *object = store->getObject( *i );
-        if( object->type != type )
-        {
-            continue;
-        }
-        
-        counter--;
-        if( counter == 0 )
-        {
-            return *i;
-        }
-    }
-
-    return FML_INVALID_HANDLE;
-}
-
-
-const int FieldmlRegion::getNamedHandle( const string name )
+const FmlObjectHandle FieldmlRegion::getNamedObject( const string name )
 {
     for( vector<int>::iterator i = localObjects.begin(); i != localObjects.end(); i++ )
     {
@@ -188,7 +157,7 @@ const int FieldmlRegion::getNamedHandle( const string name )
             continue;
         }
         
-        FmlObjectHandle object = info->importNames.get( name, true );
+        FmlObjectHandle object = info->getObject( name );
         if( object != FML_INVALID_HANDLE )
         {
             return object;
@@ -199,43 +168,138 @@ const int FieldmlRegion::getNamedHandle( const string name )
 }
 
 
-const int FieldmlRegion::getObjectByIndex( const int index )
+const string FieldmlRegion::getObjectName( FmlObjectHandle handle )
 {
-    //TODO Deliberate bomb. Implement this properly.
-    int *foo = NULL;
-    printf("FIX ME!\n");
+    for( vector<int>::iterator i = localObjects.begin(); i != localObjects.end(); i++ )
+    {
+        if( handle == *i )
+        {
+            FieldmlObject *object = store->getObject( *i );
+            return object->name;
+        }
+    }
+
     
-    return index -1;
+    for( vector<ImportInfo*>::iterator i = imports.begin(); i != imports.end(); i++ )
+    {
+        ImportInfo *info = *i;
+        
+        if( info == NULL )
+        {
+            continue;
+        }
+        
+        string name = info->getLocalName( handle );
+        if( name != "" )
+        {
+            return name;
+        }
+    }
+    
+    return "";
 }
 
 
-void FieldmlRegion::addImportSource( int importIndex, string location, string name )
+void FieldmlRegion::addImportSource( int importSourceIndex, string location, string name )
 {
-    while( imports.size() <= importIndex )
+    while( imports.size() <= importSourceIndex )
     {
         imports.push_back( NULL );
     }
     
-    if( imports[importIndex] == NULL )
+    if( imports[importSourceIndex] == NULL )
     {
-        imports[importIndex] = new ImportInfo( location, name );
+        imports[importSourceIndex] = new ImportInfo( location, name );
     }
 }
 
 
-void FieldmlRegion::addImport( int importIndex, string localName, int handle )
+void FieldmlRegion::addImport( int importSourceIndex, string localName, string sourceName, FmlObjectHandle handle )
 {
-    if( ( importIndex < 0 ) || ( importIndex >= imports.size() ) )
-    {
-        return;
-    }
-    
-    ImportInfo *import = imports[importIndex];
+    ImportInfo *import = getImportInfo( importSourceIndex );
     if( import == NULL )
     {
         //TODO Set an error code
         return;
     }
     
-    import->importNames.set( localName, handle );
+    import->addImport( localName, sourceName, handle );
+}
+
+
+int FieldmlRegion::getImportSourceCount()
+{
+    return imports.size();
+}
+
+
+int FieldmlRegion::getImportCount( int importSourceIndex )
+{
+    ImportInfo *import = getImportInfo( importSourceIndex );
+    if( import == NULL )
+    {
+        return 0;
+    }
+    
+    return import->getImportCount();
+}
+
+
+const string FieldmlRegion::getImportSourceLocation( int importSourceIndex )
+{
+    ImportInfo *import = getImportInfo( importSourceIndex );
+    if( import == NULL )
+    {
+        return "";
+    }
+
+    return import->location;
+}
+
+
+const string FieldmlRegion::getImportSourceRegionName( int importSourceIndex )
+{
+    ImportInfo *import = getImportInfo( importSourceIndex );
+    if( import == NULL )
+    {
+        return "";
+    }
+
+    return import->name;
+}
+
+
+const string FieldmlRegion::getImportLocalName( int importSourceIndex, int importIndex )
+{
+    ImportInfo *import = getImportInfo( importSourceIndex );
+    if( import == NULL )
+    {
+        return "";
+    }
+    
+    return import->getLocalNameByIndex( importIndex );
+}
+
+
+const string FieldmlRegion::getImportSourceName( int importSourceIndex, int importIndex )
+{
+    ImportInfo *import = getImportInfo( importSourceIndex );
+    if( import == NULL )
+    {
+        return "";
+    }
+    
+    return import->getSourceNameByIndex( importIndex );
+}
+
+
+FmlObjectHandle FieldmlRegion::getImportObject( int importSourceIndex, int importIndex )
+{
+    ImportInfo *import = getImportInfo( importSourceIndex );
+    if( import == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+    
+    return import->getObjectByIndex( importIndex );
 }
