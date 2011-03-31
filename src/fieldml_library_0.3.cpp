@@ -280,6 +280,25 @@ const char * const FML_LIBRARY_0_3_STRING = "<?xml version=\"1.0\" encoding=\"IS
     </Variables> \
   </ExternalEvaluator> \
  \
+ \
+<!-- SIMPLEX OBJECTS--> \
+ \
+  <EnsembleType name=\"library.localNodes.2d.triangle1x1\" isComponentEnsemble=\"true\"> \
+   <Members> \
+    <MemberRange min=\"1\" max=\"3\"/> \
+   </Members> \
+  </EnsembleType> \
+  <AbstractEvaluator name=\"library.localNodes.2d.triangle1x1.variable\" valueType=\"library.localNodes.2d.triangle1x1\"/> \
+  <ContinuousType name=\"library.parameters.2d.bilinearSimplex\" componentEnsemble=\"library.localNodes.2d.triangle1x1\"/> \
+  <AbstractEvaluator name=\"library.parameters.2d.bilinearSimplex.variable\" valueType=\"library.parameters.2d.bilinearSimplex\"/> \
+ \
+  <ExternalEvaluator name=\"library.interpolator.2d.unit.bilinearSimplex\" valueType=\"library.real.1d\"> \
+    <Variables> \
+      <Variable name=\"library.xi.2d.variable\"/> \
+      <Variable name=\"library.parameters.2d.bilinearSimplex.variable\"/> \
+    </Variables> \
+  </ExternalEvaluator> \
+ \
  </Region> \
 </Fieldml> \
 ";
