@@ -44,10 +44,10 @@
 /**
      API notes:
      
-     If a function returns a FmlHandle or FmlObjectHandle, it will return
-     FML_INVALID_HANDLE on error.
+     If a function returns a FmlHandle, FmlReaderHandle, FmlWriterHandle or
+     FmlObjectHandle, it will return FML_INVALID_HANDLE on error.
      
-     All FieldML objects are referred to only by their integer handle.
+     All FieldML objects are referred to only by their handle.
      
      All handles are internally type-checked. If an inappropriate handle is
      passed to a function, the function will return -1, NULL or
@@ -57,7 +57,7 @@
      copies the relevant string into a provided buffer and returns the number of characters
      copied. In cases where the getter returns NULL, the corresponding copier returns 0.
      
-     All object names must be unique.
+     All object names must be unique within their region.
  */
 
 /*
@@ -106,14 +106,6 @@
 
 */
 
-enum DataFileType
-{
-    TYPE_UNKNOWN,
-    TYPE_TEXT,                  // Text file with CSV/space delimited numbers. Offset is numbers.
-    TYPE_LINES,                 // Formatted text file. Offset is lines. CSV/space delimited numbers expected at offset.
-};
-
-
 enum DataDescriptionType
 {
     DESCRIPTION_UNKNOWN,
@@ -121,11 +113,11 @@ enum DataDescriptionType
 };
 
 
-enum DataLocationType
+enum DataSourceType
 {
-    LOCATION_UNKNOWN,
-    LOCATION_INLINE,
-    LOCATION_FILE,
+    SOURCE_UNKNOWN,
+    SOURCE_INLINE,
+    SOURCE_TEXT_FILE,
 };
 
 
@@ -143,6 +135,7 @@ enum FieldmlHandleType
     FHT_PIECEWISE_EVALUATOR,
     FHT_AGGREGATE_EVALUATOR,
     FHT_ELEMENT_SEQUENCE,
+    FHT_DATA_OBJECT,
 };
 
 
@@ -199,8 +192,8 @@ int Fieldml_WriteFile( FmlHandle handle, const char *filename );
 
 
 /**
- *      Frees all resources associated with the given handle. The handle should
- *      not be used after this call.
+ *      Frees all resources associated with the given handle. The handle will
+ *      become invalid after this call.
  */
 void Fieldml_Destroy( FmlHandle handle );
 
@@ -257,11 +250,16 @@ FieldmlHandleType Fieldml_GetObjectType( FmlHandle handle, FmlObjectHandle objec
 
 
 /**
- *      Returns a handle to the object with the given name, or FML_INVALID_HANDLE if
+ *      Returns a handle to the object with the given local name, or FML_INVALID_HANDLE if
  *      there is no such object.
  */
 FmlObjectHandle Fieldml_GetObjectByName( FmlHandle handle, const char * name );
 
+
+/**
+ * Returns a handle to the given declared name. This may differ from the object's
+ * local name if the object has been imported.
+ */
 FmlObjectHandle Fieldml_GetObjectByDeclaredName( FmlHandle handle, const char * name );
 
 /**
@@ -280,6 +278,10 @@ const char * Fieldml_GetObjectName( FmlHandle handle, FmlObjectHandle objectHand
 int Fieldml_CopyObjectName( FmlHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength );
 
 
+/**
+ * Returns the given object's declared name. This is the name the object was given in the
+ * region in which is was declared, and may differ from the the object's local name.
+ */
 const char * Fieldml_GetObjectDeclaredName( FmlHandle handle, FmlObjectHandle objectHandle );
 int Fieldml_CopyObjectDeclaredName( FmlHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength );
 
@@ -419,82 +421,28 @@ FmlObjectHandle Fieldml_CreateParametersEvaluator( FmlHandle handle, const char 
 
 
 /**
- * Returns the location of the raw data used by the parameter set.
- */
-DataLocationType Fieldml_GetParameterDataLocation( FmlHandle handle, FmlObjectHandle objectHandle );
-
-
-/**
- * Set the location of the raw data used by the parameter set. At the moment, only LOCATION_FILE and
- * LOCATION_INLINE is supported.
- */
-int Fieldml_SetParameterDataLocation( FmlHandle handle, FmlObjectHandle objectHandle, DataLocationType location );
-
-
-/**
- * Appends some data to the parameter set's inline data. The parameter set's data location must have previously
- * been set to LOCATION_INLINE.
- */
-int Fieldml_AddParameterInlineData( FmlHandle handle, FmlObjectHandle objectHandle, const char *data, const int length );
-
-
-/**
- * Returns the number of characters in the parameter set's inline data.
- */
-int Fieldml_GetParameterInlineDataLength( FmlHandle handle, FmlObjectHandle objectHandle );
-
-
-/**
- * Returns a pointer to the parameter set's inline data.
- */
-const char *Fieldml_GetParameterInlineData( FmlHandle handle, FmlObjectHandle objectHandle );
-
-
-/**
- * Copies a section of the parameter set's inline data into the given buffer, starting from the given offset, and ending
- * either when the buffer is full, or the end of the inline data is reached.
- */
-int Fieldml_CopyInlineParameterData( FmlHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength, int offset );
-
-/**
- * Sets the information for the parameter set's file data. The parameter set's data location must have previously
- * been set to LOCATION_FILE. Currently, the offset value only works for TYPE_LINES files when reading. It is up
- * to the caller to correctly set the offset when writing files. TYPE_TEXT is only partially supported.
- * TYPE_BINARY is not yet supported.
- */
-int Fieldml_SetParameterFileData( FmlHandle handle, FmlObjectHandle objectHandle, const char * filename, DataFileType type, int offset );
-
-
-/**
- * Returns the filename of the parameter set's file data. The parameter set's data location must have previously
- * been set to LOCATION_FILE.
- */
-const char *Fieldml_GetParameterDataFilename( FmlHandle handle, FmlObjectHandle objectHandle );
-int Fieldml_CopyParameterDataFilename( FmlHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength );
-
-
-/**
- * Returns the offset for the parameter set's file data. The parameter set's data location must have previously
- * been set to LOCATION_FILE.
- */
-int Fieldml_GetParameterDataOffset( FmlHandle handle, FmlObjectHandle objectHandle );
-
-
-/**
- * Returns the file type for the parameter set's file data. The parameter set's data location must have previously
- * been set to LOCATION_FILE.
- */
-DataFileType Fieldml_GetParameterDataFileType( FmlHandle handle, FmlObjectHandle objectHandle );
-
-
-/**
  * Sets the description of the parameter set's raw data. At the moment, only DESCRIPTION_SEMIDENSE is supported.
  */
 int Fieldml_SetParameterDataDescription( FmlHandle handle, FmlObjectHandle objectHandle, DataDescriptionType description );
 
+/**
+ * Returns the data object used by the given object.
+ * 
+ * NOTE: Currently, only parameter evaluators use data objects.
+ */
+FmlObjectHandle Fieldml_GetDataObject( FmlHandle handle, FmlObjectHandle objectHandle );
+
+/**
+ * Set the data object to be used by the given object.
+ * 
+ * NOTE: Currently, only parameter evaluators use data objects.
+ */
+FmlObjectHandle Fieldml_SetDataObject( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle dataObject );
 
 /**
  *  Returns the data description type of the given parameter evaluator.
+ *  
+ *  NOTE: Currently, only DESCRIPTION_SEMIDENSE is valid.
  */
 DataDescriptionType Fieldml_GetParameterDataDescription( FmlHandle handle, FmlObjectHandle objectHandle );
 
@@ -524,31 +472,6 @@ FmlObjectHandle Fieldml_GetSemidenseIndexEvaluator( FmlHandle handle, FmlObjectH
 
 
 /**
- * Sets the swizzle indexes for the given parameter set. The swizzle is only applied to the innermost dense index.
- * 
- * NOTE: Swizzles are an experiment feature, and are likely to be removed.
- */
-int Fieldml_SetSwizzle( FmlHandle handle, FmlObjectHandle objectHandle, const int *buffer, int count );
-
-
-/**
- * Gets the number of swizzle indexes for the given parameter set, or zero if no swizzle is defined.
- * 
- * NOTE: Swizzles are an experiment feature, and are likely to be removed.
- */
-int Fieldml_GetSwizzleCount( FmlHandle handle, FmlObjectHandle objectHandle );
-
-
-/**
- * Returns the swizzle indexes, if present.
- * 
- * NOTE: Swizzles are an experiment feature, and are likely to be removed.
- */
-const int *Fieldml_GetSwizzleData( FmlHandle handle, FmlObjectHandle objectHandle );
-int Fieldml_CopySwizzleData( FmlHandle handle, FmlObjectHandle objectHandle, int *buffer, int bufferLength );
-
-
-/**
  * Creates a new piecewise evaluator. Evaluators used by the piecewise evaluator
  * must all have the same value type as the piecewise itself. Piecewise evaluators need not be defined for all
  * possible index values.
@@ -571,20 +494,6 @@ FmlObjectHandle Fieldml_CreateAggregateEvaluator( FmlHandle handle, const char *
  * The aggregate's index evaluator must have the same ensemble type as the component ensemble of its value type.
  */
 int Fieldml_SetIndexEvaluator( FmlHandle handle, FmlObjectHandle valueType, int index, FmlObjectHandle indexHandle );
-
-/*
- * Experimental.
- */
-/*
-int Fieldml_GetSemidenseIndexSet( FmlHandle handle, FmlObjectHandle parametersHandle, int index );
-*/
-
-/*
- * Experimental.
- */
-/*
-int Fieldml_SetSemidenseIndexSet( FmlHandle handle, FmlObjectHandle parametersHandle, int index, FmlObjectHandle setHandle );
-*/
 
 /**
  * Sets the default evaluator for the given piecewise or aggregate evaluator.
@@ -756,24 +665,13 @@ int Fieldml_GetElementEntries( FmlHandle handle, FmlObjectHandle setHandle, cons
 
 
 /**
- * Creates a new reader for the given parameter evaluator's raw data.
+ * Creates a new reader for the given data object's raw data.
  */
 FmlReaderHandle Fieldml_OpenReader( FmlHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- * Read in the indexes corresponding to the next block of dense data. If there are no sparse indexes
- * associated with this parameter set, this method can only be called once, and will leave the index
- * buffer untouched. Only valid for a parameters object using DESCRIPTION_SEMIDENSE data.
- * 
- * Returns an error code, or FML_ERR_NO_ERROR on success.
- */
-int Fieldml_ReadIndexSet( FmlHandle handle, FmlReaderHandle reader, int *indexBuffer );
-
-
-/**
- * Reads in some values from the current block of dense data. If the first dense index's value type is a component
- * ensemble, the buffer must be big enough to hold a complete set of values indexable by that component ensemble.
+ * Reads in some values from the current block of dense data.
  * 
  * Returns the number of values read, or -1 on error.
  */
@@ -781,8 +679,7 @@ int Fieldml_ReadIntValues( FmlHandle handle, FmlReaderHandle reader, int *valueB
 
 
 /**
- * Reads in some values from the current block of dense data. If the first dense index's value type is a component
- * ensemble, the buffer must be big enough to hold a complete set of values indexable by that component ensemble.
+ * Reads in some values from the current block of dense data.
  * 
  * Returns the number of values read, or -1 on error.
  */
@@ -790,30 +687,19 @@ int Fieldml_ReadDoubleValues( FmlHandle handle, FmlReaderHandle reader, double *
 
 
 /**
- * Closes the given raw data reader.
+ * Closes the given data reader.
  */
 int Fieldml_CloseReader( FmlHandle handle, FmlReaderHandle reader );
 
 
 /**
- * Creates a new writer for the given parameter evaluator's raw data.
+ * Creates a new writer for the given data object's raw data.
  */
 FmlWriterHandle Fieldml_OpenWriter( FmlHandle handle, FmlObjectHandle objectHandle, int append );
 
 
 /**
- * Write out the indexes corresponding to the next block of dense data. If there are no sparse indexes
- * associated with this parameter set, this method can only be called once, and will do nothing.
- * Only valid for a parameters object using DESCRIPTION_SEMIDENSE data.
- * 
- * Returns an error code, or FML_ERR_NO_ERROR on success.
- */
-int Fieldml_WriteIndexSet( FmlHandle handle, FmlWriterHandle writer, int *indexBuffer );
-
-
-/**
- * Write out some values for the current block of dense data. If the first dense index's value type is a component
- * ensemble, the buffer must be big enough to hold a complete set of values indexable by that component ensemble.
+ * Write out some values for the current block of dense data.
  * 
  * Returns the number of values written, or -1 on error.
  */
@@ -821,8 +707,7 @@ int Fieldml_WriteIntValues( FmlHandle handle, FmlWriterHandle writer, int *index
 
 
 /**
- * Write out some values from the current block of dense data. If the first dense index's value type is a component
- * ensemble, the buffer must be big enough to hold a complete set of values indexable by that component ensemble.
+ * Write out some values from the current block of dense data.
  * 
  * Returns the number of values written, or -1 on error.
  */
@@ -835,31 +720,165 @@ int Fieldml_WriteDoubleValues( FmlHandle handle, FmlWriterHandle writer, double 
 int Fieldml_CloseWriter( FmlHandle handle, FmlWriterHandle writer );
 
 
-int Fieldml_AddImportSource( FmlHandle handle, const char *location, const char *name );
+/**
+ * Add an import source for the current region. The location will typically be the location of
+ * another FieldML resource. The string "library_0.3.xml" is also permitted, and refers to the
+ * built-in library.
+ * 
+ * Returns an import index to use with subsequent import API calls, or -1 on error.
+ * 
+ * NOTE: Attempting to add the same import source more than once will succeed, but will result
+ * in the same index being returned each time.
+ */
+int Fieldml_AddImportSource( FmlHandle handle, const char *location, const char *regionName );
 
 
-int Fieldml_AddImport( FmlHandle handle, int importSourceIndex, const char *localName, const char *sourceName );
+/**
+ * Import a FieldML object from the given import source into the current region. The local name must
+ * be unique (i.e. no other local names or imports may have that name). The remote name must be an
+ * object that has either been declared in, or imported into the import source region.
+ */
+int Fieldml_AddImport( FmlHandle handle, int importSourceIndex, const char *localName, const char *remoteName );
 
 
+/**
+ * Returns the number of import sources used by the current region.
+ */
 int Fieldml_GetImportSourceCount( FmlHandle handle );
 
 
+/**
+ * Returns the location of the FieldML resource used by the given indexed import source. This will typically
+ * be a FieldML document.
+ */
 int Fieldml_CopyImportSourceLocation( FmlHandle handle, int importSourceIndex, char *buffer, int bufferLength );
 
 
+/**
+ * Returns the region name used by the given indexed import source.
+ */
 int Fieldml_CopyImportSourceRegionName( FmlHandle handle, int importSourceIndex, char *buffer, int bufferLength );
 
 
+/**
+ * Returns the number of objects imported into the current region from the given import source.
+ */
 int Fieldml_GetImportCount( FmlHandle handle, int importSourceIndex );
 
 
+/**
+ * Copies the local name of the given imported object into the given buffer.
+ */
 int Fieldml_CopyImportLocalName( FmlHandle handle, int importSourceIndex, int importIndex, char *buffer, int bufferLength );
 
 
-int Fieldml_CopyImportSourceName( FmlHandle handle, int importSourceIndex, int importIndex, char *buffer, int bufferLength );
+/**
+ * Copies the remote name of the given imported object into the given buffer.
+ */
+int Fieldml_CopyImportRemoteName( FmlHandle handle, int importSourceIndex, int importIndex, char *buffer, int bufferLength );
 
 
+/**
+ * Returns the handle for given imported object.
+ */
 int Fieldml_GetImportObject( FmlHandle handle, int importSourceIndex, int importIndex );
+
+
+/**
+ * Creates a new data object with the given name.
+ */
+FmlObjectHandle Fieldml_CreateDataObject( FmlHandle handle, const char *name );
+
+
+/**
+ * Sets the entry info for the given data object.
+ */
+int Fieldml_SetDataObjectEntryInfo( FmlHandle handle, FmlObjectHandle objectHandle, int count, int length, int head, int tail );
+
+
+/**
+ * Returns the entry count for the given data object.
+ */
+int Fieldml_GetDataObjectEntryCount( FmlHandle handle, FmlObjectHandle objectHandle );
+
+
+/**
+ * Returns the entry length for the given data object.
+ */
+int Fieldml_GetDataObjectEntryLength( FmlHandle handle, FmlObjectHandle objectHandle );
+
+
+/**
+ * Returns the entry head length for the given data object.
+ */
+int Fieldml_GetDataObjectEntryHead( FmlHandle handle, FmlObjectHandle objectHandle );
+
+
+/**
+ * Returns the entry tail length for the given data object.
+ */
+int Fieldml_GetDataObjectEntryTail( FmlHandle handle, FmlObjectHandle objectHandle );
+
+/**
+ * Returns the data source type of the given data object.
+ */
+DataSourceType Fieldml_GetDataObjectSourceType( FmlHandle handle, FmlObjectHandle objectHandle );
+
+
+/**
+ * Set the data source type of the given data object.
+ */
+int Fieldml_SetDataObjectSourceType( FmlHandle handle, FmlObjectHandle objectHandle, DataSourceType sourceType );
+
+
+/**
+ * Appends some data to the given data object's inline data. The data object's type must have previously
+ * been set to SOURCE_INLINE.
+ */
+int Fieldml_AddInlineData( FmlHandle handle, FmlObjectHandle objectHandle, const char *data, const int length );
+
+
+/**
+ * Returns the number of characters in the data object's inline data.
+ */
+int Fieldml_GetInlineDataLength( FmlHandle handle, FmlObjectHandle objectHandle );
+
+
+/**
+ * Returns a pointer to the data object's inline data.
+ */
+const char *Fieldml_GetInlineData( FmlHandle handle, FmlObjectHandle objectHandle );
+
+
+/**
+ * Copies a section of the data object's inline data into the given buffer, starting from the given offset, and ending
+ * either when the buffer is full, or the end of the inline data is reached.
+ */
+int Fieldml_CopyInlineData( FmlHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength, int offset );
+
+/**
+ * Sets the information for the parameter set's file data. The parameter set's data location must have previously
+ * been set to LOCATION_FILE. Currently, the offset value only works for TYPE_LINES files when reading. It is up
+ * to the caller to correctly set the offset when writing files. TYPE_TEXT is only partially supported.
+ * TYPE_BINARY is not yet supported.
+ */
+int Fieldml_SetDataObjectTextFileInfo( FmlHandle handle, FmlObjectHandle objectHandle, const char * filename, int offset );
+
+
+/**
+ * Returns the filename of the parameter set's file data. The parameter set's data location must have previously
+ * been set to LOCATION_FILE.
+ */
+const char *Fieldml_GetDataObjectFilename( FmlHandle handle, FmlObjectHandle objectHandle );
+int Fieldml_CopyDataObjectFilename( FmlHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength );
+
+
+/**
+ * Returns the offset for the parameter set's file data. The parameter set's data location must have previously
+ * been set to LOCATION_FILE.
+ */
+int Fieldml_GetDataObjectFileOffset( FmlHandle handle, FmlObjectHandle objectHandle );
+
 }
 #endif // __cplusplus
 

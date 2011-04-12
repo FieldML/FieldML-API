@@ -39,38 +39,51 @@
  *
  */
 
-#ifndef H_PARAMETER_WRITER
-#define H_PARAMETER_WRITER
+#ifndef H_DATA_READER
+#define H_DATA_READER
 
-#include "OutputStream.h"
-
+#include "InputStream.h"
 #include "FieldmlErrorHandler.h"
+
 #include "fieldml_structs.h"
 
-class ParameterWriter
+class DataReader
 {
 private:
+    FieldmlErrorHandler *eHandler;
+    
+    const int entryCount;
+    
+    const int entryLength;
+    
+    const int head;
+    
+    const int tail;
+    
     long handle;
+    
+    int entryCounter;
+    
+    int dataCounter;
+    
+    FieldmlInputStream *const stream;
 
-    static FmlWriterHandle addWriter( ParameterWriter *writer );
-
-protected:
-    const DataFileType dataType;
-    const FmlOutputStream stream;
-
-    ParameterWriter( FmlOutputStream stream, DataFileType streamFormat );
+    static FmlReaderHandle addReader( DataReader *reader );
+    
+    DataReader( FieldmlInputStream *_stream, FieldmlErrorHandler *_eHandler, int _count, int _length, int _head, int _tail );
+    
+    void skip( int amount );
 
 public:
-    static FmlWriterHandle create( FmlHandle sessionHandle, FieldmlErrorHandler *eHandler, const char *root, ParameterEvaluator *parameters, bool append );
+    static FmlReaderHandle create( FieldmlErrorHandler *eHandler, const char *root, DataObject *dataObject );
     
-    static ParameterWriter *handleToWriter( FmlWriterHandle handle );
-
-    virtual int writeNextIndexSet( int *indexBuffer ) = 0;
-    virtual int writeIntValues( int *values, int count ) = 0;
-    virtual int writeDoubleValues( double *values, int count ) = 0;
+    static DataReader *handleToReader( FmlReaderHandle handle );
     
-    virtual ~ParameterWriter();
+    virtual int readIntValues( int *values, int count );
+    virtual int readDoubleValues( double *value, int count ); 
+    
+    virtual ~DataReader();
 };
 
 
-#endif //H_PARAMETER_WRITER
+#endif //H_DATA_READER

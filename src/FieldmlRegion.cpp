@@ -220,7 +220,7 @@ void FieldmlRegion::addImportSource( int importSourceIndex, string location, str
 }
 
 
-void FieldmlRegion::addImport( int importSourceIndex, string localName, string sourceName, FmlObjectHandle handle )
+void FieldmlRegion::addImport( int importSourceIndex, string localName, string remoteName, FmlObjectHandle handle )
 {
     ImportInfo *import = getImportInfo( importSourceIndex );
     if( import == NULL )
@@ -229,7 +229,7 @@ void FieldmlRegion::addImport( int importSourceIndex, string localName, string s
         return;
     }
     
-    import->addImport( localName, sourceName, handle );
+    import->addImport( localName, remoteName, handle );
 }
 
 
@@ -287,7 +287,7 @@ const string FieldmlRegion::getImportLocalName( int importSourceIndex, int impor
 }
 
 
-const string FieldmlRegion::getImportSourceName( int importSourceIndex, int importIndex )
+const string FieldmlRegion::getImportRemoteName( int importSourceIndex, int importIndex )
 {
     ImportInfo *import = getImportInfo( importSourceIndex );
     if( import == NULL )
@@ -295,7 +295,7 @@ const string FieldmlRegion::getImportSourceName( int importSourceIndex, int impo
         return "";
     }
     
-    return import->getSourceNameByIndex( importIndex );
+    return import->getRemoteNameByIndex( importIndex );
 }
 
 

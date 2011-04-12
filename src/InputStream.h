@@ -44,8 +44,6 @@
 
 #include <string>
 
-typedef class FieldmlInputStream *FmlInputStream;
-
 class FieldmlInputStream
 {
 protected:
@@ -64,8 +62,8 @@ public:
     bool eof();
     virtual ~FieldmlInputStream();
     
-    static FieldmlInputStream *create( const std::string filename );
-    static FieldmlInputStream *create( const char *string );
+    static FieldmlInputStream *createTextFileStream( const std::string filename );
+    static FieldmlInputStream *createStringStream( const char *string );
 };
 
 #endif //H_FIELDML_INPUT_STREAM

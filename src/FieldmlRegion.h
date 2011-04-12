@@ -93,7 +93,7 @@ public:
 
     void addImportSource( int importSourceIndex, std::string location, std::string name );
 
-    void addImport( int importSourceIndex, std::string localName, std::string sourceName, FmlObjectHandle object );
+    void addImport( int importSourceIndex, std::string localName, std::string remoteName, FmlObjectHandle object );
     
     int getImportSourceCount();
     
@@ -105,7 +105,7 @@ public:
     
     const std::string getImportLocalName( int importSourceIndex, int importIndex );
     
-    const std::string getImportSourceName( int importSourceIndex, int importIndex );
+    const std::string getImportRemoteName( int importSourceIndex, int importIndex );
     
     FmlObjectHandle getImportObject( int importSourceIndex, int importIndex );
 };

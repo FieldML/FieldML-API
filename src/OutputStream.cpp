@@ -75,10 +75,11 @@ class StringOutputStream :
 {
 private:
     char ** const destination;
+    const bool append;
     stringstream buffer;
     
 public:
-    StringOutputStream( char **_destination );
+    StringOutputStream( char **_destination, bool _append );
     int writeInt( int value );
     int writeDouble( double value );
     int writeNewline();
@@ -102,7 +103,7 @@ FileOutputStream::FileOutputStream( FILE *_file ) :
 }
 
 
-FieldmlOutputStream *FieldmlOutputStream::create( const string filename, bool append )
+FieldmlOutputStream *FieldmlOutputStream::createTextFileStream( const string filename, bool append )
 {
     FILE *file;
     
@@ -125,14 +126,14 @@ FieldmlOutputStream *FieldmlOutputStream::create( const string filename, bool ap
 }
 
 
-FieldmlOutputStream *FieldmlOutputStream::create( char ** const destination )
+FieldmlOutputStream *FieldmlOutputStream::createStringStream( char ** const destination, bool append )
 {
     if( destination == NULL )
     {
         return NULL;
     }
     
-    return new StringOutputStream( destination );
+    return new StringOutputStream( destination, append );
 }
 
 
@@ -169,8 +170,9 @@ FileOutputStream::~FileOutputStream()
 }
 
 
-StringOutputStream::StringOutputStream( char ** _destination ) :
-    destination( _destination )
+StringOutputStream::StringOutputStream( char ** _destination, bool _append ) :
+    destination( _destination ),
+    append( _append )
 {
 }
 

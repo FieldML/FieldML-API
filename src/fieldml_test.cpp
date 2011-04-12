@@ -71,7 +71,7 @@ static int validate( char *filename )
 
     xmlSubstituteEntitiesDefault( 1 );
 
-    schema = "Fieldml_0.3.xsd";
+    schema = "Fieldml.xsd";
 
     buffer = xmlParserInputBufferCreateFilename( filename, XML_CHAR_ENCODING_NONE );
     if( buffer == NULL )
@@ -119,7 +119,6 @@ void testRead( const char * filename )
     int i, j, count, count2;
     FmlObjectHandle oHandle;
     FmlHandle handle;
-    const int *swizzle;
     const char *shape;
 
     handle = Fieldml_CreateFromFile( filename );
@@ -222,18 +221,6 @@ void testRead( const char * filename )
         for( j = 1; j <= count2; j++ )
         {
             fprintf( stdout, "    dense: %s\n", Fieldml_GetObjectName( handle, Fieldml_GetSemidenseIndexEvaluator( handle, oHandle, j, 0 ) ) );
-        }
-        
-        count2 = Fieldml_GetSwizzleCount( handle, oHandle );
-        if( count2 > 0 )
-        {
-            swizzle = Fieldml_GetSwizzleData( handle, oHandle );
-            fprintf( stdout, "    swizzle: " );
-            for( j = 0; j < count2; j++ )
-            {
-                fprintf( stdout, "%d ", swizzle[j] );
-            }
-            fprintf( stdout, "\n" );
         }
     }
 
@@ -393,7 +380,7 @@ int testWrite( const char *filename )
 
 void testStream()
 {
-    FmlInputStream stream;
+    FieldmlInputStream *stream;
     int iActual;
     int iExpected[7] = { 129, 24, 333, 456, -512, 6324, 123 };
     double dExpected[10] = { 129, 24.1, -78.239, -21.34, 65.12, 3.0, 3.2, 0.092, -0.873, 0.005 };
@@ -401,7 +388,7 @@ void testStream()
     int i;
     bool testOk = true;
     
-    stream = FieldmlInputStream::create( "129 24 ,, 333 .. 456 -512  \n 6324 \r\n asc123asc" );
+    stream = FieldmlInputStream::createStringStream( "129 24 ,, 333 .. 456 -512  \n 6324 \r\n asc123asc" );
     for( i = 0; i < 7; i++ )
     {
         iActual = stream->readInt();
@@ -415,7 +402,7 @@ void testStream()
     
     delete stream;
     
-    stream = FieldmlInputStream::create( "129 ,, 24.1 -78.239 -21.34 65.12,,\r\n\t asf3asf3.2asf.092xxx-.873 0.5e-02" );
+    stream = FieldmlInputStream::createStringStream( "129 ,, 24.1 -78.239 -21.34 65.12,,\r\n\t asf3asf3.2asf.092xxx-.873 0.5e-02" );
 
     for( i = 0; i < 10; i++ )
     {
@@ -446,7 +433,6 @@ void testMisc()
     bool testOk = true;
     int i;
     FmlHandle handle;
-    FmlObjectHandle o1, o2, o3, aa1, aa2, aa3, aa4, aa5;
     FmlReaderHandle reader;
     FmlWriterHandle writer;
     double values[] = { 45.3, 67.0, -12.8 };
@@ -460,10 +446,10 @@ void testMisc()
     
     handle = Fieldml_Create( "", "test" );
     
-    o1 = Fieldml_CreateEnsembleType( handle, "example.component_ensemble", true );
-    Fieldml_AddEnsembleElementRange( handle, o1, 1, 3, 1 );
+    FmlObjectHandle componentEnsemble = Fieldml_CreateEnsembleType( handle, "example.component_ensemble", true );
+    Fieldml_AddEnsembleElementRange( handle, componentEnsemble, 1, 3, 1 );
     
-    o2 = Fieldml_CreateContinuousType( handle, "example.continuous_type", o1 );
+    FmlObjectHandle continousType = Fieldml_CreateContinuousType( handle, "example.continuous_type", componentEnsemble );
     
     Fieldml_WriteFile( handle, "foo.xml" );
     
@@ -472,21 +458,25 @@ void testMisc()
     handle = Fieldml_Create( "", "test" );
     
     int importHandle = Fieldml_AddImportSource( handle, "library_0.3.xml", "library" );
-    o1 = Fieldml_AddImport( handle, importHandle, "library.ensemble.rc.3d", "library.ensemble.rc.3d" );
-    o2 = Fieldml_AddImport( handle, importHandle, "library.real.1d", "library.real.1d" );
+    FmlObjectHandle rc3Ensemble = Fieldml_AddImport( handle, importHandle, "library.ensemble.rc.3d", "library.ensemble.rc.3d" );
+    FmlObjectHandle realType = Fieldml_AddImport( handle, importHandle, "library.real.1d", "library.real.1d" );
     
-    o3 = Fieldml_CreateParametersEvaluator( handle, "test.ensemble_parameters", o2 );
-    Fieldml_SetParameterDataDescription( handle, o3, DESCRIPTION_SEMIDENSE );
-    Fieldml_SetParameterDataLocation( handle, o3, LOCATION_INLINE );
+    FmlObjectHandle parametersData = Fieldml_CreateDataObject( handle, "test.parameters_data" );
+    Fieldml_SetDataObjectSourceType( handle, parametersData, SOURCE_INLINE );
+    Fieldml_SetDataObjectEntryInfo( handle, parametersData, 1, 3, 0, 0 );
     
-    aa1 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract", o1 );
-    Fieldml_AddDenseIndexEvaluator( handle, o3, aa1, FML_INVALID_HANDLE );
+    FmlObjectHandle parameters = Fieldml_CreateParametersEvaluator( handle, "test.ensemble_parameters", realType );
+    Fieldml_SetParameterDataDescription( handle, parameters, DESCRIPTION_SEMIDENSE );
+    Fieldml_SetDataObject( handle, parameters, parametersData );
     
-    writer = Fieldml_OpenWriter( handle, o3, 1 );
+    FmlObjectHandle rc3Index = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract", rc3Ensemble );
+    Fieldml_AddDenseIndexEvaluator( handle, parameters, rc3Index, FML_INVALID_HANDLE );
+    
+    writer = Fieldml_OpenWriter( handle, parametersData, 1 );
     Fieldml_WriteDoubleValues( handle, writer, values, 3 );
     Fieldml_CloseWriter( handle, writer );
     
-    reader = Fieldml_OpenReader( handle, o3 );
+    reader = Fieldml_OpenReader( handle, parametersData );
     Fieldml_ReadDoubleValues( handle, reader, readValues, 3 );
     Fieldml_CloseReader( handle, reader );
     
@@ -495,40 +485,44 @@ void testMisc()
         if( values[i] != readValues[i] ) 
         {
             testOk = false;
-            printf("Parameter stream test failed: %d %g != %g\n", i, values[i], readValues[i] );
+            printf("Parameter stream simple test failed: %d %g != %g\n", i, values[i], readValues[i] );
         }
     }
     
-    o3 = Fieldml_CreateParametersEvaluator( handle, "test.ensemble_parameters.2", o2 );
-    Fieldml_SetParameterDataDescription( handle, o3, DESCRIPTION_SEMIDENSE );
-    Fieldml_SetParameterDataLocation( handle, o3, LOCATION_INLINE );
+    FmlObjectHandle parametersData2 = Fieldml_CreateDataObject( handle, "test.parameters_data2" );
+    Fieldml_SetDataObjectSourceType( handle, parametersData2, SOURCE_INLINE );
+    Fieldml_SetDataObjectEntryInfo( handle, parametersData2, 2, 11, 0, 0 );
     
-    aa2 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract.21", o1 );
-    Fieldml_AddDenseIndexEvaluator( handle, o3, aa2, FML_INVALID_HANDLE );
+    FmlObjectHandle parameters2 = Fieldml_CreateParametersEvaluator( handle, "test.ensemble_parameters.2", realType );
+    Fieldml_SetParameterDataDescription( handle, parameters2, DESCRIPTION_SEMIDENSE );
+    Fieldml_SetDataObject( handle, parameters2, parametersData2 );
     
-    aa3 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract.22", o1 );
-    Fieldml_AddDenseIndexEvaluator( handle, o3, aa3, FML_INVALID_HANDLE );
+    FmlObjectHandle rc3Index1 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract.21", rc3Ensemble );
+    Fieldml_AddDenseIndexEvaluator( handle, parameters2, rc3Index1, FML_INVALID_HANDLE );
+    
+    FmlObjectHandle rc3Index2 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract.22", rc3Ensemble );
+    Fieldml_AddDenseIndexEvaluator( handle, parameters2, rc3Index2, FML_INVALID_HANDLE );
 
-    aa4 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract.23", o1 );
-    Fieldml_AddSparseIndexEvaluator( handle, o3, aa4 );
+    FmlObjectHandle rc3Index3 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract.23", rc3Ensemble );
+    Fieldml_AddSparseIndexEvaluator( handle, parameters2, rc3Index3 );
     
-    aa5 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract.24", o1 );
-    Fieldml_AddSparseIndexEvaluator( handle, o3, aa5 );
+    FmlObjectHandle rc3Index4 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract.24", rc3Ensemble );
+    Fieldml_AddSparseIndexEvaluator( handle, parameters2, rc3Index4 );
     
-    writer = Fieldml_OpenWriter( handle, o3, 1 );
-    Fieldml_WriteIndexSet( handle, writer, indexValues1 );
+    writer = Fieldml_OpenWriter( handle, parametersData2, 1 );
+    Fieldml_WriteIntValues( handle, writer, indexValues1, 2 );
     Fieldml_WriteDoubleValues( handle, writer, rawValues1, 9 );
-    Fieldml_WriteIndexSet( handle, writer, indexValues2 );
+    Fieldml_WriteIntValues( handle, writer, indexValues2, 2 );
     Fieldml_WriteDoubleValues( handle, writer, rawValues2, 9 );
     Fieldml_CloseWriter( handle, writer );
     
-    reader = Fieldml_OpenReader( handle, o3 );
+    reader = Fieldml_OpenReader( handle, parametersData2 );
 
-    Fieldml_ReadIndexSet( handle, reader, readIndexes );
+    Fieldml_ReadIntValues( handle, reader, readIndexes, 2 );
     if( ( indexValues1[0] != readIndexes[0] ) && ( indexValues1[1] != readIndexes[1] ) ) 
     {
         testOk = false;
-        printf("Parameter stream test failed: index %d %d != %d\n", i, indexValues1[i], readIndexes[i] );
+        printf("Parameter stream semidense first index read failed: index %d %d != %d\n", i, indexValues1[i], readIndexes[i] );
     }
 
     Fieldml_ReadDoubleValues( handle, reader, readValues, 3 );
@@ -539,15 +533,15 @@ void testMisc()
         if( rawValues1[i] != readValues[i] ) 
         {
             testOk = false;
-            printf("Parameter stream test failed: %d %g != %g\n", i, rawValues1[i], readValues[i] );
+            printf("Parameter stream semidense first values read failed: %d %g != %g\n", i, rawValues1[i], readValues[i] );
         }
     }
     
-    Fieldml_ReadIndexSet( handle, reader, readIndexes );
+    Fieldml_ReadIntValues( handle, reader, readIndexes, 2 );
     if( ( indexValues2[0] != readIndexes[0] ) && ( indexValues2[1] != readIndexes[1] ) ) 
     {
         testOk = false;
-        printf("Parameter stream test failed: index %d %d != %d\n", i, indexValues2[i], readIndexes[i] );
+        printf("Parameter stream test second index read failed: index %d %d != %d\n", i, indexValues2[i], readIndexes[i] );
     }
 
     Fieldml_ReadDoubleValues( handle, reader, readValues, 9 );
@@ -557,7 +551,7 @@ void testMisc()
         if( rawValues2[i] != readValues[i] ) 
         {
             testOk = false;
-            printf("Parameter stream test failed: %d %g != %g\n", i, rawValues2[i], readValues[i] );
+            printf("Parameter stream test second values read failed: %d %g != %g\n", i, rawValues2[i], readValues[i] );
         }
     }
     
@@ -567,11 +561,11 @@ void testMisc()
     Fieldml_Destroy( handle );
     if( testOk ) 
     {
-        printf("testMisc - ok\n" );
+        printf("TestMisc - ok\n" );
     }
     else
     {
-        printf("testMisc - failed\n" );
+        printf("TestMisc - failed\n" );
     }
 }
 

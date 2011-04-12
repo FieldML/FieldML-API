@@ -330,6 +330,51 @@ static int writeMeshType( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHa
 }
 
 
+static int writeDataObject( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHandle object )
+{
+    char tBuffer[tBufferLength];
+
+    xmlTextWriterStartElement( writer, DATA_OBJECT_TAG );
+    writeObjectName( writer, NAME_ATTRIB, handle, object );
+
+    xmlTextWriterStartElement( writer, SOURCE_TAG );
+    
+    DataSourceType type = Fieldml_GetDataObjectSourceType( handle, object );
+    if( type == SOURCE_INLINE )
+    {
+        xmlTextWriterStartElement( writer, INLINE_SOURCE_TAG );
+        
+        xmlTextWriterEndElement( writer );
+    }
+    else if( type == SOURCE_TEXT_FILE )
+    {
+        xmlTextWriterStartElement( writer, TEXT_FILE_SOURCE_TAG );
+        
+        Fieldml_CopyDataObjectFilename( handle, object, tBuffer, tBufferLength );
+        xmlTextWriterWriteAttribute( writer, FILENAME_ATTRIB, (const xmlChar*)tBuffer );
+
+        xmlTextWriterWriteFormatAttribute( writer, FIRST_LINE_ATTRIB, "%d", Fieldml_GetDataObjectFileOffset( handle, object ) );
+        
+        xmlTextWriterEndElement( writer );
+    }
+    
+    xmlTextWriterEndElement( writer );
+
+    xmlTextWriterStartElement( writer, ENTRIES_TAG );
+
+    xmlTextWriterWriteFormatAttribute( writer, COUNT_ATTRIB, "%d", Fieldml_GetDataObjectEntryCount( handle, object ) );
+    xmlTextWriterWriteFormatAttribute( writer, LENGTH_ATTRIB, "%d", Fieldml_GetDataObjectEntryLength( handle, object ) );
+    xmlTextWriterWriteFormatAttribute( writer, HEAD_ATTRIB, "%d", Fieldml_GetDataObjectEntryHead( handle, object ) );
+    xmlTextWriterWriteFormatAttribute( writer, TAIL_ATTRIB, "%d", Fieldml_GetDataObjectEntryTail( handle, object ) );
+    
+    xmlTextWriterEndElement( writer );
+
+    xmlTextWriterEndElement( writer );
+    
+    return 0;
+}
+
+
 static int writeElementSequence( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHandle object )
 {
     xmlTextWriterStartElement( writer, ELEMENT_SEQUENCE_TAG );
@@ -519,46 +564,11 @@ static void writeSemidenseData( xmlTextWriterPtr writer, FmlHandle handle, FmlOb
 {
     xmlTextWriterStartElement( writer, SEMI_DENSE_DATA_TAG );
     
+    FmlObjectHandle dataObject = Fieldml_GetDataObject( handle, object );
+    xmlTextWriterWriteAttribute( writer, DATA_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, dataObject ) );
+    
     writeSemidenseIndexes( writer, handle, object, 1 );
     writeSemidenseIndexes( writer, handle, object, 0 );
-
-    int swizzleCount = Fieldml_GetSwizzleCount( handle, object );
-    if( swizzleCount > 0 )
-    {
-        writeIntArray( writer, SWIZZLE_TAG, swizzleCount, Fieldml_GetSwizzleData( handle, object ) );
-    }
-    
-    xmlTextWriterStartElement( writer, DATA_LOCATION_TAG );
-    
-    DataLocationType location = Fieldml_GetParameterDataLocation( handle, object );
-    if( location == LOCATION_FILE )
-    {
-        xmlTextWriterStartElement( writer, FILE_DATA_TAG );
-        xmlTextWriterWriteAttribute( writer, FILE_ATTRIB, (const xmlChar*)Fieldml_GetParameterDataFilename( handle, object ) );
-        
-        DataFileType fileType = Fieldml_GetParameterDataFileType( handle, object );
-        if( fileType == TYPE_TEXT )
-        {
-            xmlTextWriterWriteAttribute( writer, TYPE_ATTRIB, (const xmlChar*)STRING_TYPE_TEXT );
-        }
-        else if( fileType == TYPE_LINES )
-        {
-            xmlTextWriterWriteAttribute( writer, TYPE_ATTRIB, (const xmlChar*)STRING_TYPE_LINES );
-        }
-
-        int offset = Fieldml_GetParameterDataOffset( handle, object );
-        xmlTextWriterWriteFormatAttribute( writer, OFFSET_ATTRIB, "%d", offset );
-        xmlTextWriterEndElement( writer );
-        
-    }
-    else if( location == LOCATION_INLINE )
-    {
-        xmlTextWriterStartElement( writer, INLINE_DATA_TAG );
-        xmlTextWriterWriteString( writer, (const xmlChar*)Fieldml_GetParameterInlineData( handle, object ) );
-        xmlTextWriterEndElement( writer );
-    }
-    
-    xmlTextWriterEndElement( writer );
 
     xmlTextWriterEndElement( writer );
 }
@@ -642,6 +652,8 @@ static int writeFieldmlObject( xmlTextWriterPtr writer, FmlHandle handle, FmlObj
         return writeEnsembleType( writer, handle, object );
     case FHT_MESH_TYPE:
         return writeMeshType( writer, handle, object );
+    case FHT_DATA_OBJECT:
+        return writeDataObject( writer, handle, object );
 //NYI    case FHT_ELEMENT_SEQUENCE:
 //        return writeElementSequence( writer, handle, object );
     case FHT_ABSTRACT_EVALUATOR:
@@ -684,7 +696,7 @@ int writeFieldmlFile( FmlHandle handle, const char *filename )
 
     xmlTextWriterStartElement( writer, FIELDML_TAG );
     xmlTextWriterWriteAttribute( writer, VERSION_ATTRIB, (const xmlChar*)FML_VERSION_STRING );
-    xmlTextWriterWriteAttribute( writer, (const xmlChar*)"xsi:noNamespaceSchemaLocation", (const xmlChar*)"Fieldml_0.3.xsd" );
+    xmlTextWriterWriteAttribute( writer, (const xmlChar*)"xsi:noNamespaceSchemaLocation", (const xmlChar*)"Fieldml_0.3.5.xsd" );
     xmlTextWriterWriteAttribute( writer, (const xmlChar*)"xmlns:xsi", (const xmlChar*)"http://www.w3.org/2001/XMLSchema-instance" );        
     xmlTextWriterStartElement( writer, REGION_TAG );
     
@@ -744,10 +756,10 @@ int writeFieldmlFile( FmlHandle handle, const char *filename )
                 xmlTextWriterWriteAttribute( writer, LOCAL_NAME_ATTRIB, (const xmlChar*)tBuffer );
             }
 
-            length = Fieldml_CopyImportSourceName( handle, importSourceIndex, importIndex, tBuffer, tBufferLength );
+            length = Fieldml_CopyImportRemoteName( handle, importSourceIndex, importIndex, tBuffer, tBufferLength );
             if( length > 0 )
             {
-                xmlTextWriterWriteAttribute( writer, SOURCE_NAME_ATTRIB, (const xmlChar*)tBuffer );
+                xmlTextWriterWriteAttribute( writer, REMOTE_NAME_ATTRIB, (const xmlChar*)tBuffer );
             }
 
             xmlTextWriterEndElement( writer );

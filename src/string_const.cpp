@@ -53,7 +53,7 @@ const char NIX_PATH_SEP = '/';
 #define DEFAULT_SEP NIX_PATH_SEP
 #endif
 
-const char * const FML_VERSION_STRING                  = "0.3.2_alpha";
+const char * const FML_VERSION_STRING                  = "0.3.5_alpha";
 
 const xmlChar * const FIELDML_TAG                      = (const xmlChar* const)"Fieldml";
 
@@ -104,11 +104,11 @@ const xmlChar * const AGGREGATE_EVALUATOR_TAG          = (const xmlChar* const)"
 const xmlChar * const COMPONENT_EVALUATORS_TAG         = (const xmlChar* const)"ComponentEvaluators";
 const xmlChar * const COMPONENT_EVALUATOR_TAG          = (const xmlChar* const)"ComponentEvaluator";
 
-const xmlChar * const DATA_LOCATION_TAG                = (const xmlChar* const)"DataLocation";
-
-const xmlChar * const INLINE_DATA_TAG                  = (const xmlChar* const)"InlineData";
-const xmlChar * const FILE_DATA_TAG                    = (const xmlChar* const)"FileData";
-const xmlChar * const SWIZZLE_TAG                      = (const xmlChar* const)"Swizzle";
+const xmlChar * const DATA_OBJECT_TAG                  = (const xmlChar* const)"DataObject";
+const xmlChar * const SOURCE_TAG                       = (const xmlChar* const)"Source";
+const xmlChar * const TEXT_FILE_SOURCE_TAG             = (const xmlChar* const)"TextFileSource";
+const xmlChar * const INLINE_SOURCE_TAG                = (const xmlChar* const)"InlineSource";
+const xmlChar * const ENTRIES_TAG                      = (const xmlChar* const)"Entries";
 
 
 
@@ -119,7 +119,7 @@ const xmlChar * const NAME_ATTRIB                      = (const xmlChar* const)"
 const xmlChar * const LOCATION_ATTRIB                  = (const xmlChar* const)"location";
 const xmlChar * const REGION_ATTRIB                    = (const xmlChar* const)"region";
 const xmlChar * const LOCAL_NAME_ATTRIB                = (const xmlChar* const)"localName";
-const xmlChar * const SOURCE_NAME_ATTRIB               = (const xmlChar* const)"sourceName";
+const xmlChar * const REMOTE_NAME_ATTRIB               = (const xmlChar* const)"remoteName";
 
 const xmlChar * const VARIABLE_ATTRIB                  = (const xmlChar* const)"variable";
 const xmlChar * const INDEX_NUMBER_ATTRIB              = (const xmlChar* const)"indexNumber";
@@ -150,6 +150,15 @@ const xmlChar * const INDEX_EVALUATOR_ATTRIB            = (const xmlChar* const)
 const xmlChar * const FILE_ATTRIB                       = (const xmlChar* const)"file";
 const xmlChar * const TYPE_ATTRIB                       = (const xmlChar* const)"type";
 const xmlChar * const OFFSET_ATTRIB                     = (const xmlChar* const)"offset";
+
+const xmlChar * const DATA_ATTRIB                       = (const xmlChar* const)"data";
+
+const xmlChar * const FILENAME_ATTRIB                   = (const xmlChar* const)"filename";
+const xmlChar * const FIRST_LINE_ATTRIB                 = (const xmlChar* const)"firstLine";
+const xmlChar * const COUNT_ATTRIB                      = (const xmlChar* const)"count";
+const xmlChar * const LENGTH_ATTRIB                     = (const xmlChar* const)"length";
+const xmlChar * const HEAD_ATTRIB                       = (const xmlChar* const)"head";
+const xmlChar * const TAIL_ATTRIB                       = (const xmlChar* const)"tail";
 
 const char * const STRING_TYPE_TEXT                 = "text";
 const char * const STRING_TYPE_LINES                = "lines";

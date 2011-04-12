@@ -177,50 +177,68 @@ public:
 };
 
 
-class DataLocation
+class DataSource
 {
 public:
-    const DataLocationType locationType;
+    const DataSourceType sourceType;
     
-    virtual ~DataLocation();
+    virtual ~DataSource();
 
 protected:
-    DataLocation( DataLocationType _locationType );
+    DataSource( DataSourceType _sourceType );
 };
 
 
-class UnknownDataLocation :
-    public DataLocation
+class UnknownDataSource :
+    public DataSource
 {
 public:
-    UnknownDataLocation();
+    UnknownDataSource();
 };
 
 
-class InlineDataLocation :
-     public DataLocation
+class InlineDataSource :
+     public DataSource
 {
 public:
-    const char *data;
+    char *data;
     int length;
     
-    InlineDataLocation();
+    InlineDataSource();
     
-    virtual ~InlineDataLocation();
+    virtual ~InlineDataSource();
 };
 
 
-class FileDataLocation :
-    public DataLocation
+class TextFileDataSource :
+    public DataSource
 {
 public:
     std::string filename;
-    int offset;
-    DataFileType fileType;
+    int lineOffset;
 
-    FileDataLocation();
+    TextFileDataSource();
 };
 
+    
+class DataObject :
+    public FieldmlObject
+{
+public:
+    int entryCount;
+    
+    int entryLength;
+    
+    int entryHead;
+    
+    int entryTail;
+    
+    DataSource *source;
+    
+    DataObject( const std::string _name );
+    
+    virtual ~DataObject();
+};
 
 class DataDescription
 {
@@ -250,11 +268,6 @@ public:
     std::vector<FmlObjectHandle> denseIndexes;
     std::vector<FmlObjectHandle> denseSets;
     
-    const int *swizzle;
-    int swizzleCount;
-
-    DataLocation *dataLocation;
-    
     SemidenseDataDescription();
     
     virtual ~SemidenseDataDescription();
@@ -265,6 +278,8 @@ class ParameterEvaluator :
     public Evaluator
 {
 public:
+    FmlObjectHandle dataObject;
+    
     DataDescription *dataDescription;
     
     ParameterEvaluator( const std::string _name, FmlObjectHandle _valueType, bool _isVirtual );

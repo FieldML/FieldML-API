@@ -194,6 +194,14 @@ bool SaxAttributes::getBooleanAttribute( const xmlChar *attribute )
 }
 
 
+int SaxAttributes::getIntAttribute( const xmlChar *attribute, int defaultValue )
+{
+    const char *rawAttribute = getAttribute( attribute );
+    
+    return ( rawAttribute != NULL ) ? atoi( rawAttribute ) : defaultValue;
+}
+
+
 FmlObjectHandle SaxAttributes::getObjectAttribute( FmlHandle sessionHandle, const xmlChar *attribute )
 {
     const char *rawAttribute = getAttribute( attribute );
@@ -317,6 +325,10 @@ SaxHandler *RegionSaxHandler::onElementStart( const xmlChar *elementName, SaxAtt
     {
         return new ImportSaxHandler( this, elementName, attributes );
     }
+    if( xmlStrcmp( elementName, DATA_OBJECT_TAG ) == 0 )
+    {
+        return new DataObjectSaxHandler( this, elementName, attributes );
+    }
     if( xmlStrcmp( elementName, ENSEMBLE_TYPE_TAG ) == 0 )
     {
         return new EnsembleTypeSaxHandler( this, elementName, attributes ); 
@@ -424,6 +436,110 @@ SaxHandler *ContinuousTypeSaxHandler::onElementStart( const xmlChar *elementName
 }
 
 
+DataSourceSaxHandler::DataSourceSaxHandler( DataObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
+    SaxHandler( elementName ),
+    parent( _parent )
+{
+}
+
+
+void DataSourceSaxHandler::onTextFileSource( SaxAttributes &attributes )
+{
+    const char * name =  Fieldml_GetObjectName( parent->getSessionHandle(), parent->handle );
+    const char *filename = attributes.getAttribute( FILENAME_ATTRIB );
+    int lineCount = attributes.getIntAttribute( FIRST_LINE_ATTRIB, 0 );
+
+    if( filename == NULL )
+    {
+        parent->getSession()->logError( "FileSource must have a file name", name );
+        return;
+    }
+
+    Fieldml_SetDataObjectSourceType( parent->getSessionHandle(), parent->handle, SOURCE_TEXT_FILE );
+    Fieldml_SetDataObjectTextFileInfo( parent->getSessionHandle(), parent->handle, filename, lineCount );
+}
+
+
+SaxHandler *DataSourceSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
+{
+    if( xmlStrcmp( elementName, INLINE_SOURCE_TAG ) == 0 )
+    {
+        Fieldml_SetDataObjectSourceType( parent->getSessionHandle(), parent->handle, SOURCE_INLINE );
+        return new CharacterBufferSaxHandler( this, elementName, this, 0 );
+    }
+    else if( xmlStrcmp( elementName, TEXT_FILE_SOURCE_TAG ) == 0 )
+    {
+        onTextFileSource( attributes );
+    }
+    
+    return this;
+}
+
+
+void DataSourceSaxHandler::onCharacterBuffer( const char *buffer, int count, int id )
+{
+    if( id == 0 )
+    {
+        Fieldml_AddInlineData( parent->getSessionHandle(), parent->handle, buffer, count );
+    }
+}
+
+
+DataObjectSaxHandler *DataSourceSaxHandler::getParent()
+{
+    return parent;
+}
+
+
+DataObjectSaxHandler::DataObjectSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
+    FieldmlObjectSaxHandler( _parent, elementName )
+{
+    handle = FML_INVALID_HANDLE;
+        
+    const char *name = attributes.getAttribute( NAME_ATTRIB );
+    if( name == NULL )
+    {
+        getSession()->logError( "DataObject has no name" );
+        return;
+    }
+    
+    handle = Fieldml_CreateDataObject( getSessionHandle(), name );
+    if( handle == FML_INVALID_HANDLE )
+    {
+        getSession()->logError( "DataObject creation failed", name );
+    }
+}
+
+
+SaxHandler *DataObjectSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
+{
+    if( xmlStrcmp( elementName, SOURCE_TAG ) == 0 )
+    {
+        return new DataSourceSaxHandler( this, elementName, attributes );
+    }
+    else if( xmlStrcmp( elementName, ENTRIES_TAG ) == 0 )
+    {
+        const char *countAttrib = attributes.getAttribute( COUNT_ATTRIB );
+        const char *lengthAttrib = attributes.getAttribute( LENGTH_ATTRIB );
+        int head = attributes.getIntAttribute( HEAD_ATTRIB, 0 );
+        int tail = attributes.getIntAttribute( TAIL_ATTRIB, 0 );
+        
+        if( ( countAttrib == NULL ) || ( lengthAttrib == NULL ) )
+        {
+            getSession()->logError( "Malformed DataObject entry data" );
+            return this;
+        }
+        
+        int count = atoi( countAttrib );
+        int length = atoi( lengthAttrib );
+        
+        Fieldml_SetDataObjectEntryInfo( getSessionHandle(), handle, count, length, head, tail );
+    }
+
+    return this;
+}
+
+
 ImportSaxHandler::ImportSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
     SaxHandler( elementName ),
     parent( _parent )
@@ -451,16 +567,16 @@ SaxHandler *ImportSaxHandler::onElementStart( const xmlChar *elementName, SaxAtt
     if( xmlStrcmp( elementName, IMPORT_TYPE_TAG ) == 0 )
     {
         const char *localName = attributes.getAttribute( LOCAL_NAME_ATTRIB );
-        const char *sourceName = attributes.getAttribute( SOURCE_NAME_ATTRIB );
+        const char *remoteName = attributes.getAttribute( REMOTE_NAME_ATTRIB );
         
-        Fieldml_AddImport( getSessionHandle(), importIndex, localName, sourceName );
+        Fieldml_AddImport( getSessionHandle(), importIndex, localName, remoteName );
     }
     else if( xmlStrcmp( elementName, IMPORT_EVALUATOR_TAG ) == 0 )
     {
         const char *localName = attributes.getAttribute( LOCAL_NAME_ATTRIB );
-        const char *sourceName = attributes.getAttribute( SOURCE_NAME_ATTRIB );
+        const char *remoteName = attributes.getAttribute( REMOTE_NAME_ATTRIB );
         
-        Fieldml_AddImport( getSessionHandle(), importIndex, localName, sourceName );
+        Fieldml_AddImport( getSessionHandle(), importIndex, localName, remoteName );
     }
 
     return this;
@@ -915,7 +1031,7 @@ SaxHandler *EnsembleElementsHandler::onElementStart( const xmlChar *elementName,
     {
         const char *min = attributes.getAttribute( MIN_ATTRIB );
         const char *max = attributes.getAttribute( MAX_ATTRIB );
-        const char *stride = attributes.getAttribute( STRIDE_ATTRIB );
+        int stride = attributes.getIntAttribute( STRIDE_ATTRIB, 1 );
         
         if( ( min == NULL ) || ( max == NULL ) )
         {
@@ -924,13 +1040,7 @@ SaxHandler *EnsembleElementsHandler::onElementStart( const xmlChar *elementName,
             return this;
         }
         
-        int strideCount = 1;
-        if( stride != NULL )
-        {
-            strideCount = atoi( stride );
-        }
-        
-        Fieldml_AddEnsembleElementRange( parent->getSessionHandle(), parent->handle, atoi( min ), atoi( max ), strideCount );
+        Fieldml_AddEnsembleElementRange( parent->getSessionHandle(), parent->handle, atoi( min ), atoi( max ), stride );
     }
     else if( xmlStrcmp( elementName, MEMBER_LIST_TAG ) == 0 )
     {
@@ -1048,12 +1158,7 @@ SaxHandler *BindsSaxHandler::onElementStart( const xmlChar *elementName, SaxAttr
             return this;
         }
 
-        const char *indexString = attributes.getAttribute( INDEX_NUMBER_ATTRIB );
-        int index = -1;
-        if( indexString != NULL )
-        {
-            index = atoi( indexString );
-        }
+        int index = attributes.getIntAttribute( INDEX_NUMBER_ATTRIB, FML_INVALID_HANDLE );
 
         Fieldml_SetIndexEvaluator( parent->getSessionHandle(), parent->handle, index, indexHandle );
     }
@@ -1066,57 +1171,10 @@ SaxHandler *BindsSaxHandler::onElementStart( const xmlChar *elementName, SaxAttr
 SemidenseSaxHandler::SemidenseSaxHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
     ObjectMemberSaxHandler( _parent, elementName )
 {
+    FmlObjectHandle dataObject = attributes.getObjectAttribute( parent->getSessionHandle(), DATA_ATTRIB );
+
     Fieldml_SetParameterDataDescription( parent->getSessionHandle(), parent->handle, DESCRIPTION_SEMIDENSE );
-}
-
-
-void SemidenseSaxHandler::onFileData( SaxAttributes &attributes )
-{
-    const char *file = attributes.getAttribute( FILE_ATTRIB );
-    const char *type = attributes.getAttribute( TYPE_ATTRIB );
-    const char *offset = attributes.getAttribute( OFFSET_ATTRIB );
-    DataFileType fileType;
-    int offsetAmount;
-    
-    if( file == NULL )
-    {
-        const char * name =  Fieldml_GetObjectName( parent->getSessionHandle(), parent->handle );
-        parent->getSession()->logError( "Parameters file data for must have a file name", name );
-        return;
-    }
-    
-    if( type == NULL )
-    {
-        const char * name =  Fieldml_GetObjectName( parent->getSessionHandle(), parent->handle );
-        parent->getSession()->logError( "Parameters file data for must have a file type", name );
-        return;
-    }
-    else if( strcmp( type, STRING_TYPE_TEXT ) == 0 )
-    {
-        fileType = TYPE_TEXT;
-    }
-    else if( strcmp( type, STRING_TYPE_LINES ) == 0 )
-    {
-        fileType = TYPE_LINES;
-    }
-    else 
-    {
-        const char * name =  Fieldml_GetObjectName( parent->getSessionHandle(), parent->handle );
-        parent->getSession()->logError( "Parameters file data for must have a known file type", name );
-        return;
-    }
-    
-    if( offset == NULL )
-    {
-        offsetAmount = 0;
-    }
-    else
-    {
-        offsetAmount = atoi( offset );
-    }
-    
-    Fieldml_SetParameterDataLocation( parent->getSessionHandle(), parent->handle, LOCATION_FILE );
-    Fieldml_SetParameterFileData( parent->getSessionHandle(), parent->handle, file, fileType, offsetAmount );
+    Fieldml_SetDataObject( parent->getSessionHandle(), parent->handle, dataObject );
 }
 
 
@@ -1130,42 +1188,8 @@ SaxHandler *SemidenseSaxHandler::onElementStart( const xmlChar *elementName, Sax
     {
         return new IndexEvaluatorListSaxHandler( this, elementName, parent->getRegion(), this, 1 );
     }
-    else if( xmlStrcmp( elementName, INLINE_DATA_TAG ) == 0 )
-    {
-        Fieldml_SetParameterDataLocation( parent->getSessionHandle(), parent->handle, LOCATION_INLINE );
-        return new CharacterBufferSaxHandler( this, elementName, this, 0 );
-    }
-    else if( xmlStrcmp( elementName, FILE_DATA_TAG ) == 0 )
-    {
-        onFileData( attributes );
-    }
-    else if( xmlStrcmp( elementName, SWIZZLE_TAG ) == 0 )
-    {
-        return new CharacterAccumulatorSaxHandler( this, elementName, this, 1 );
-    }
     
     return this;
-}
-
-
-void SemidenseSaxHandler::onCharacterBuffer( const char *buffer, int count, int id )
-{
-    if( id == 0 )
-    {
-        Fieldml_AddParameterInlineData( parent->getSessionHandle(), parent->handle, buffer, count );
-    }
-    else if( id == 1 )
-    {
-        int intCount;
-        const int *ints;
-        
-        intCount = intParserCount( buffer );
-        ints = intParserInts( buffer );
-        
-        Fieldml_SetSwizzle( parent->getSessionHandle(), parent->handle, ints, intCount );
-        
-        delete[] ints;
-    }
 }
 
 
@@ -1300,13 +1324,7 @@ SaxHandler *IntObjectMapSaxHandler::onElementStart( const xmlChar *elementName, 
 {
     if( xmlStrcmp( elementName, entryTagName ) == 0 )
     {
-        const char *keyString = attributes.getAttribute( NUMBER_ATTRIB );
-        int key = -1;
-        if( keyString != NULL )
-        {
-            key = atoi( keyString );
-        }
-
+        int key = attributes.getIntAttribute( NUMBER_ATTRIB, -1 );
         FmlObjectHandle value = attributes.getObjectAttribute( getSessionHandle(), EVALUATOR_ATTRIB );
         handler->onIntObjectMapEntry( key, value, mapId );
     }

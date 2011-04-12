@@ -69,6 +69,7 @@ public:
 
     const char *getAttribute( const xmlChar *name );
     bool getBooleanAttribute( const xmlChar *attribute );
+    int getIntAttribute( const xmlChar *attribute, int defaultValue );
     FmlObjectHandle getObjectAttribute( FmlHandle sessionHandle, const xmlChar *attribute );
 };
 
@@ -189,6 +190,34 @@ public:
 };
 
 
+class DataObjectSaxHandler :
+    public FieldmlObjectSaxHandler
+{
+public:
+    DataObjectSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
+
+    virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
+};
+
+
+class DataSourceSaxHandler :
+    public SaxHandler, CharacterBufferHandler
+{
+private:
+    DataObjectSaxHandler * const parent;
+
+    void onTextFileSource( SaxAttributes &attributes );
+public:
+    DataSourceSaxHandler( DataObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
+
+    virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
+
+    virtual DataObjectSaxHandler *getParent();
+
+    virtual void onCharacterBuffer( const char *buffer, int count, int id );
+};
+
+    
 class ContinuousTypeSaxHandler :
     public FieldmlObjectSaxHandler
 {
@@ -203,7 +232,7 @@ class ImportSaxHandler :
     public SaxHandler
 {
 private:
-    RegionSaxHandler *parent;
+    RegionSaxHandler * const parent;
         
     int importIndex;
     
@@ -389,7 +418,7 @@ public:
 
 
 class SemidenseSaxHandler :
-    public ObjectMemberSaxHandler, CharacterBufferHandler
+    public ObjectMemberSaxHandler
 {
 private:
     void onFileData( SaxAttributes &attributes );
@@ -398,8 +427,6 @@ public:
     SemidenseSaxHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
-    
-    virtual void onCharacterBuffer( const char *buffer, int count, int id );
 };
 
 
@@ -410,7 +437,7 @@ private:
     const FieldmlRegion *region;
     SemidenseSaxHandler * const handler;
     const int isSparse;
-    SemidenseSaxHandler *parent;
+    SemidenseSaxHandler * const parent;
 
 public:
     IndexEvaluatorListSaxHandler( SemidenseSaxHandler *_parent, const xmlChar *elementName, FieldmlRegion *_region, SemidenseSaxHandler *_handler, int _listId );
@@ -427,7 +454,7 @@ class CharacterBufferSaxHandler :
 private:
     CharacterBufferHandler * const handler;
     const int bufferId;
-    SaxHandler *parent;
+    SaxHandler * const parent;
 
 public:
     CharacterBufferSaxHandler( SaxHandler *_parent, const xmlChar *elementName, CharacterBufferHandler *_handler, int _listId );
@@ -446,7 +473,7 @@ class CharacterAccumulatorSaxHandler :
 private:
     CharacterBufferHandler * const handler;
     const int bufferId;
-    SaxHandler *parent;
+    SaxHandler * const parent;
     const char *buffer;
     int count;
 
@@ -471,7 +498,7 @@ private:
     const FieldmlRegion *region;
     IntObjectMapHandler * const handler;
     const int mapId;
-    SaxHandler *parent;
+    SaxHandler * const parent;
 
 public:
     IntObjectMapSaxHandler( SaxHandler *_parent, const xmlChar *elementName, const xmlChar * _entryTagName, FieldmlRegion *_region, IntObjectMapHandler *_handler, int _mapId );

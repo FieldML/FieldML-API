@@ -215,7 +215,7 @@ int FieldmlInputStream::skipLine()
 }
 
 
-FieldmlInputStream *FieldmlInputStream::create( const string filename )
+FieldmlInputStream *FieldmlInputStream::createTextFileStream( const string filename )
 {
     FILE *file;
     
@@ -230,7 +230,7 @@ FieldmlInputStream *FieldmlInputStream::create( const string filename )
 }
 
 
-FieldmlInputStream *FieldmlInputStream::create( const char *sourceString )
+FieldmlInputStream *FieldmlInputStream::createStringStream( const char *sourceString )
 {
     return new StringInputStream( sourceString );
 }

@@ -52,19 +52,19 @@ class ObjectImport
 public:
     const string localName;
     
-    const string sourceName;
+    const string remoteName;
     
     const FmlObjectHandle handle;
     
-    ObjectImport( string _localName, string _sourceName, FmlObjectHandle _handle );
+    ObjectImport( string _localName, string _remoteName, FmlObjectHandle _handle );
     
     virtual ~ObjectImport();
 };
 
 
-ObjectImport::ObjectImport( string _localName, string _sourceName, FmlObjectHandle _handle ) :
+ObjectImport::ObjectImport( string _localName, string _remoteName, FmlObjectHandle _handle ) :
     localName( _localName ),
-    sourceName( _sourceName ),
+    remoteName( _remoteName ),
     handle( _handle )
 {
 }
@@ -118,14 +118,14 @@ const string ImportInfo::getLocalName( FmlObjectHandle handle )
 }
 
 
-void ImportInfo::addImport( string localName, string sourceName, FmlObjectHandle handle )
+void ImportInfo::addImport( string localName, string remoteName, FmlObjectHandle handle )
 {
-    if( ( localName == "" ) || ( sourceName == "" ) || ( handle == FML_INVALID_HANDLE ) )
+    if( ( localName == "" ) || ( remoteName == "" ) || ( handle == FML_INVALID_HANDLE ) )
     {
         return;
     }
     
-    imports.push_back( new ObjectImport( localName, sourceName, handle ) );
+    imports.push_back( new ObjectImport( localName, remoteName, handle ) );
 }
 
 
@@ -146,14 +146,14 @@ const string ImportInfo::getLocalNameByIndex( int index )
 }
 
 
-const string ImportInfo::getSourceNameByIndex( int index )
+const string ImportInfo::getRemoteNameByIndex( int index )
 {
     if( ( index <= 0 ) || ( index > imports.size() ) )
     {
         return "";
     }
     
-    return imports[index-1]->sourceName;
+    return imports[index-1]->remoteName;
 }
 
 

@@ -153,34 +153,33 @@ AggregateEvaluator::AggregateEvaluator( const string _name, FmlObjectHandle _val
 }
 
 
-DataLocation::DataLocation( DataLocationType _locationType ) :
-    locationType( _locationType )
+DataSource::DataSource( DataSourceType _sourceType ) :
+    sourceType( _sourceType )
 {
 }
 
 
-DataLocation::~DataLocation()
+DataSource::~DataSource()
 {
 }
 
     
-UnknownDataLocation::UnknownDataLocation() :
-    DataLocation( LOCATION_UNKNOWN )
+UnknownDataSource::UnknownDataSource() :
+    DataSource( SOURCE_UNKNOWN )
 {
 }
 
 
-FileDataLocation::FileDataLocation() :
-    DataLocation( LOCATION_FILE )
+TextFileDataSource::TextFileDataSource() :
+    DataSource( SOURCE_TEXT_FILE )
 {
     filename = "";
-    offset = 0;
-    fileType = TYPE_UNKNOWN;
+    lineOffset = 0;
 }
 
 
-InlineDataLocation::InlineDataLocation() :
-    DataLocation( LOCATION_INLINE )
+InlineDataSource::InlineDataSource() :
+    DataSource( SOURCE_INLINE )
 {
     data = new char[1];
     ((char*)data)[0] = 0; //Dirty hack.
@@ -188,9 +187,9 @@ InlineDataLocation::InlineDataLocation() :
 }
 
 
-InlineDataLocation::~InlineDataLocation()
+InlineDataSource::~InlineDataSource()
 {
-    delete data;
+    delete[] data;
 }
 
 
@@ -212,15 +211,28 @@ UnknownDataDescription::UnknownDataDescription() :
 
 
 SemidenseDataDescription::SemidenseDataDescription() :
-    DataDescription( DESCRIPTION_SEMIDENSE ),
-    dataLocation( new UnknownDataLocation() )
+    DataDescription( DESCRIPTION_SEMIDENSE )
 {
-    swizzle = NULL;
-    swizzleCount = 0;
 }
 
 
 SemidenseDataDescription::~SemidenseDataDescription()
 {
-    delete dataLocation;
+}
+
+
+DataObject::DataObject( const string _name ) :
+    FieldmlObject( _name, FHT_DATA_OBJECT, false ),
+    source( new UnknownDataSource() )
+{
+    entryCount = 0;
+    entryLength = 1;
+    entryHead = 0;
+    entryTail = 0;
+}
+
+
+DataObject::~DataObject()
+{
+    delete source;
 }

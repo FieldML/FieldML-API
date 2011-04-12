@@ -44,8 +44,6 @@
 
 #include <string>
 
-typedef class FieldmlOutputStream *FmlOutputStream;
-
 class FieldmlOutputStream
 {
 protected:
@@ -56,9 +54,9 @@ public:
     virtual int writeNewline() = 0;
     virtual ~FieldmlOutputStream();
     
-    static FieldmlOutputStream *create( const std::string filename, bool append );
+    static FieldmlOutputStream *createTextFileStream( const std::string filename, bool append );
 
-    static FieldmlOutputStream *create( char **const destination );
+    static FieldmlOutputStream *createStringStream( char **const destination, bool append );
 };
 
 #endif //H_FIELDML_OUTPUT_STREAM

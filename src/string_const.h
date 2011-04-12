@@ -112,9 +112,11 @@ extern const xmlChar * const MARKUP_TAG;
 
 extern const xmlChar * const DATA_LOCATION_TAG;
 
-extern const xmlChar * const INLINE_DATA_TAG;
-extern const xmlChar * const FILE_DATA_TAG;
-extern const xmlChar * const SWIZZLE_TAG;
+extern const xmlChar * const DATA_OBJECT_TAG;
+extern const xmlChar * const SOURCE_TAG;
+extern const xmlChar * const TEXT_FILE_SOURCE_TAG;
+extern const xmlChar * const INLINE_SOURCE_TAG;
+extern const xmlChar * const ENTRIES_TAG;
 
 
 
@@ -125,7 +127,7 @@ extern const xmlChar * const NAME_ATTRIB;
 extern const xmlChar * const LOCATION_ATTRIB;
 extern const xmlChar * const REGION_ATTRIB;
 extern const xmlChar * const LOCAL_NAME_ATTRIB;
-extern const xmlChar * const SOURCE_NAME_ATTRIB;
+extern const xmlChar * const REMOTE_NAME_ATTRIB;
 
 extern const xmlChar * const VARIABLE_ATTRIB;
 extern const xmlChar * const INDEX_NUMBER_ATTRIB;
@@ -156,6 +158,15 @@ extern const xmlChar * const INDEX_EVALUATOR_ATTRIB;
 extern const xmlChar * const FILE_ATTRIB;
 extern const xmlChar * const TYPE_ATTRIB;
 extern const xmlChar * const OFFSET_ATTRIB;
+
+extern const xmlChar * const DATA_ATTRIB;
+
+extern const xmlChar * const FILENAME_ATTRIB;
+extern const xmlChar * const FIRST_LINE_ATTRIB;
+extern const xmlChar * const COUNT_ATTRIB;
+extern const xmlChar * const LENGTH_ATTRIB;
+extern const xmlChar * const HEAD_ATTRIB;
+extern const xmlChar * const TAIL_ATTRIB;
 
 extern const char * const STRING_TYPE_TEXT;
 extern const char * const STRING_TYPE_LINES;

@@ -60,13 +60,13 @@ public:
     
     const std::string getLocalName( FmlObjectHandle handle );
     
-    void addImport( std::string localName, std::string sourceName, FmlObjectHandle handle );
+    void addImport( std::string localName, std::string remoteName, FmlObjectHandle handle );
     
     int getImportCount();
     
     const std::string getLocalNameByIndex( int index );
 
-    const std::string getSourceNameByIndex( int index );
+    const std::string getRemoteNameByIndex( int index );
     
     FmlObjectHandle getObjectByIndex( int index );
 

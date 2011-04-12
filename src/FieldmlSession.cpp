@@ -141,7 +141,6 @@ int FieldmlSession::readRegion( FieldmlRegion *readRegion )
         FieldmlRegion *currentRegion = region;
         region = readRegion;
         
-        int result;
         if( location == FML_LIBRARY_0_3_NAME )
         {
             result = parseFieldmlString( FML_LIBRARY_0_3_STRING, "Internal library 0.3", this );
