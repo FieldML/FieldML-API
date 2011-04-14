@@ -119,7 +119,6 @@ void testRead( const char * filename )
     int i, j, count, count2;
     FmlObjectHandle oHandle;
     FmlHandle handle;
-    const char *shape;
 
     handle = Fieldml_CreateFromFile( filename );
     
@@ -160,10 +159,6 @@ void testRead( const char * filename )
         
         count2 = Fieldml_GetElementCount( handle, oHandle );
         fprintf( stdout, "  %d elements:  ", count2 );
-        for( j = 1; j <= count2; j++ )
-        {
-            fprintf( stdout, "%d ", Fieldml_GetElementEntry( handle, oHandle, j ) );
-        }
         fprintf( stdout, "\n" );
     }
 
@@ -183,19 +178,6 @@ void testRead( const char * filename )
         fprintf( stdout, "    " );
         count2 = Fieldml_GetElementCount( handle, oHandle );
         fprintf( stdout, "  %d elements:  ", count2 );
-        for( j = 1; j <= count2; j++ )
-        {
-            fprintf( stdout, "%d", Fieldml_GetElementEntry( handle, oHandle, j ) );
-            shape = Fieldml_GetMeshElementShape( handle, oHandle, j, 0 );
-            if( shape != NULL )
-            {
-                fprintf( stdout, ":%s ",shape );
-            }
-            else
-            {
-                fprintf( stdout, " " );
-            }
-        }
         fprintf( stdout, "\n" );
     }
 
@@ -447,7 +429,7 @@ void testMisc()
     handle = Fieldml_Create( "", "test" );
     
     FmlObjectHandle componentEnsemble = Fieldml_CreateEnsembleType( handle, "example.component_ensemble", true );
-    Fieldml_AddEnsembleElementRange( handle, componentEnsemble, 1, 3, 1 );
+    Fieldml_SetEnsembleElementRange( handle, componentEnsemble, 1, 3, 1 );
     
     FmlObjectHandle continousType = Fieldml_CreateContinuousType( handle, "example.continuous_type", componentEnsemble );
     

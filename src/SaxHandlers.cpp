@@ -693,28 +693,10 @@ SaxHandler *ElementSequenceSaxHandler::onElementStart( const xmlChar *elementNam
 {
     if( xmlStrcmp( elementName, ELEMENTS_TAG ) == 0 )
     {
-        return new CharacterAccumulatorSaxHandler( this, elementName, this, 0 );
+//TODO
     }
     
     return this;
-}
-
-
-void ElementSequenceSaxHandler::onCharacterBuffer( const char *buffer, int count, int id )
-{
-    if( id == 0 )
-    {
-        //TODO This stuff should be streamed in directly from SAX
-        int intCount;
-        int *ints;
-        
-        intCount = intParserCount( buffer );
-        ints = (int*)intParserInts( buffer );
-        
-        Fieldml_AddEnsembleElements( getSessionHandle(), handle, ints, intCount );
-        
-        delete[] ints;
-    }
 }
 
 
@@ -1040,28 +1022,45 @@ SaxHandler *EnsembleElementsHandler::onElementStart( const xmlChar *elementName,
             return this;
         }
         
-        Fieldml_AddEnsembleElementRange( parent->getSessionHandle(), parent->handle, atoi( min ), atoi( max ), stride );
+        Fieldml_SetEnsembleElementRange( parent->getSessionHandle(), parent->handle, atoi( min ), atoi( max ), stride );
     }
-    else if( xmlStrcmp( elementName, MEMBER_LIST_TAG ) == 0 )
+    else if( ( xmlStrcmp( elementName, MEMBER_LIST_DATA_TAG ) == 0 ) ||
+        ( xmlStrcmp( elementName, MEMBER_RANGE_DATA_TAG ) == 0 ) ||
+        ( xmlStrcmp( elementName, MEMBER_STRIDE_RANGE_DATA_TAG ) == 0 ) )
     {
-        return new CharacterAccumulatorSaxHandler( this, elementName, this, 0 );
+        EnsembleMembersType type;
+        
+        if( xmlStrcmp( elementName, MEMBER_LIST_DATA_TAG ) == 0 )
+        {
+            type = MEMBER_LIST_DATA;
+        }
+        else if( xmlStrcmp( elementName, MEMBER_RANGE_DATA_TAG ) == 0 )
+        {
+            type = MEMBER_RANGE_DATA;
+        }
+        else if( xmlStrcmp( elementName, MEMBER_STRIDE_RANGE_DATA_TAG ) == 0 )
+        {
+            type = MEMBER_STRIDE_RANGE_DATA;
+        }
+
+        FmlObjectHandle dataObject = attributes.getObjectAttribute( getSessionHandle(), DATA_ATTRIB );
+        if( dataObject == FML_INVALID_HANDLE )
+        {
+            getSession()->logError( "EnsembleType member range data has no data object" );
+            return this;
+        }
+        
+        int count = attributes.getIntAttribute( COUNT_ATTRIB, -1 );
+        if( count < 1 )
+        {
+            getSession()->logError( "EnsembleType member range data has an invalid count" );
+            return this;
+        }
+        
+        Fieldml_SetEnsembleMembersData( parent->getSessionHandle(), parent->handle, type, count, dataObject );
     }
 
     return this;
-}
-
-
-void EnsembleElementsHandler::onCharacterBuffer( const char *buffer, int count, int id )
-{
-    int intCount;
-    int *ints;
-    
-    intCount = intParserCount( buffer );
-    ints = (int*)intParserInts( buffer );
-    
-    Fieldml_AddEnsembleElements( parent->getSessionHandle(), parent->handle, ints, intCount );
-    
-    delete[] ints;
 }
 
 

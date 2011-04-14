@@ -77,7 +77,9 @@ extern const xmlChar * const ELEMENTS_TAG;
 extern const xmlChar * const MEMBERS_TAG;
 
 extern const xmlChar * const MEMBER_RANGE_TAG;
-extern const xmlChar * const MEMBER_LIST_TAG;
+extern const xmlChar * const MEMBER_LIST_DATA_TAG;
+extern const xmlChar * const MEMBER_RANGE_DATA_TAG;
+extern const xmlChar * const MEMBER_STRIDE_RANGE_DATA_TAG;
 
 extern const xmlChar * const REFERENCE_EVALUATOR_TAG;
 extern const xmlChar * const BINDINGS_TAG;

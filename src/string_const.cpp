@@ -76,7 +76,9 @@ const xmlChar * const ELEMENTS_TAG                     = (const xmlChar* const)"
 const xmlChar * const MEMBERS_TAG                      = (const xmlChar* const)"Members";
 
 const xmlChar * const MEMBER_RANGE_TAG                 = (const xmlChar* const)"MemberRange";
-const xmlChar * const MEMBER_LIST_TAG                  = (const xmlChar* const)"MemberList";
+const xmlChar * const MEMBER_LIST_DATA_TAG             = (const xmlChar* const)"MemberListData";
+const xmlChar * const MEMBER_RANGE_DATA_TAG            = (const xmlChar* const)"MemberRangeData";
+const xmlChar * const MEMBER_STRIDE_RANGE_DATA_TAG     = (const xmlChar* const)"MemberStrideRangeData";
 
 const xmlChar * const REFERENCE_EVALUATOR_TAG          = (const xmlChar* const)"ReferenceEvaluator";
 const xmlChar * const BINDINGS_TAG                     = (const xmlChar* const)"Bindings";

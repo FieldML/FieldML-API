@@ -41,7 +41,7 @@
     </xs:complexType>
 
     <xs:complexType name="DataObject_Type">
-        <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:choice minOccurs="2" maxOccurs="2">
             <xs:element name="Source" type="DataSource_Type" maxOccurs="1" minOccurs="1"/>
             <xs:element name="Entries" type="DataEntries_Type" maxOccurs="1" minOccurs="1"/>
         </xs:choice>
@@ -153,16 +153,16 @@
         <xs:attribute name="stride" type="xs:positiveInteger" use="optional"/>
     </xs:complexType>
 
-    <xs:complexType name="MemberList_Type">
-      <xs:simpleContent>
-        <xs:extension base="xs:string">
-        </xs:extension>
-      </xs:simpleContent>
+    <xs:complexType name="MemberData_Type">
+        <xs:attribute name="count" type="xs:positiveInteger" />
+        <xs:attribute name="data" type="xs:string" />
     </xs:complexType>
 
     <xs:complexType name="EnsembleMembers_Type">
-        <xs:choice minOccurs="1" maxOccurs="unbounded">
-            <xs:element name="MemberList" type="MemberList_Type" />
+        <xs:choice minOccurs="1" maxOccurs="1">
+            <xs:element name="MemberListData" type="MemberData_Type" />
+            <xs:element name="MemberRangesData" type="MemberData_Type" />
+            <xs:element name="MemberStrideRangesData" type="MemberData_Type" />
             <xs:element name="MemberRange" type="MemberRange_Type" />
         </xs:choice>
     </xs:complexType>

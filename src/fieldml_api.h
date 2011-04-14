@@ -106,6 +106,16 @@
 
 */
 
+
+enum EnsembleMembersType
+{
+    MEMBER_RANGE,
+    MEMBER_LIST_DATA,
+    MEMBER_RANGE_DATA,
+    MEMBER_STRIDE_RANGE_DATA,
+    MEMBER_UNKNOWN,
+};
+
 enum DataDescriptionType
 {
     DESCRIPTION_UNKNOWN,
@@ -630,39 +640,28 @@ FmlObjectHandle Fieldml_GetBindByVariable( FmlHandle handle, FmlObjectHandle obj
 FmlObjectHandle Fieldml_CreateEnsembleElementSequence( FmlHandle handle, const char * name, FmlObjectHandle valueType );
 */
 
-/**
- * Add the given elements to the given ensemble.
- */
-int Fieldml_AddEnsembleElements( FmlHandle handle, FmlObjectHandle setHandle, const int * elements, const int elementCount );
 
+EnsembleMembersType Fieldml_GetEnsembleMembersType( FmlHandle handle, FmlObjectHandle objectHandle );
+
+
+int Fieldml_SetEnsembleMembersData( FmlHandle handle, FmlObjectHandle objectHandle, EnsembleMembersType type, int count, FmlObjectHandle dataObjectHandle );
 
 /**
  * Add the given element range to the given ensemble.
  */
-int Fieldml_AddEnsembleElementRange( FmlHandle handle, FmlObjectHandle objectHandle, const int minElement, const int maxElement, const int stride );
+int Fieldml_SetEnsembleElementRange( FmlHandle handle, FmlObjectHandle objectHandle, const int minElement, const int maxElement, const int stride );
 
 
 /**
  * Get the number of elements in the given ensemble
  */
-int Fieldml_GetElementCount( FmlHandle handle, FmlObjectHandle setHandle );
+int Fieldml_GetElementCount( FmlHandle handle, FmlObjectHandle objectHandle );
 
+int Fieldml_GetEnsembleMembersMin( FmlHandle handle, FmlObjectHandle objectHandle );
 
-/**
- * Get the nth element from the given ensemble, or -1 on error.
- */
-int Fieldml_GetElementEntry( FmlHandle handle, FmlObjectHandle setHandle, const int index );
+int Fieldml_GetEnsembleMembersMax( FmlHandle handle, FmlObjectHandle objectHandle );
 
-
-/**
- * Get n element from the given offset. Returns the number of elements actually retrieved, as this may be less
- * than the number requested. 
- */
-int Fieldml_GetElementEntries( FmlHandle handle, FmlObjectHandle setHandle, const int firstIndex, int * elements, const int count );
-
-
-
-
+int Fieldml_GetEnsembleMembersStride( FmlHandle handle, FmlObjectHandle objectHandle );
 
 /**
  * Creates a new reader for the given data object's raw data.

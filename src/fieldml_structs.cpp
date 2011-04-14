@@ -76,6 +76,11 @@ EnsembleType::EnsembleType( const string _name, bool _isComponentEnsemble, bool 
     FieldmlObject( _name, FHT_ENSEMBLE_TYPE, _isVirtual ),
     isComponentEnsemble( _isComponentEnsemble )
 {
+    type = MEMBER_UNKNOWN;
+    count = 0;
+    min = 0;
+    max = 0;
+    stride = 1;
 }
 
 

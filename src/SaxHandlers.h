@@ -266,14 +266,12 @@ public:
 
 
 class ElementSequenceSaxHandler :
-    public FieldmlObjectSaxHandler, CharacterBufferHandler
+    public FieldmlObjectSaxHandler
 {
 public:
     ElementSequenceSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
-    
-    virtual void onCharacterBuffer( const char *buffer, int count, int id );
 };
 
 
@@ -366,14 +364,12 @@ public:
 
 
 class EnsembleElementsHandler :
-    public ObjectMemberSaxHandler, CharacterBufferHandler
+    public ObjectMemberSaxHandler
 {
 public:
     EnsembleElementsHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
-    
-    virtual void onCharacterBuffer( const char *buffer, int count, int id );
 };
 
 

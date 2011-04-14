@@ -201,72 +201,47 @@ static int writeContinuousType( xmlTextWriterPtr writer, FmlHandle handle, FmlOb
 static void writeElements( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHandle object, const xmlChar *tagName )
 {
     xmlTextWriterStartElement( writer, tagName );
-    
-    //Output ranges first, then individuals. It's cleaner that way, even if potentially slower.
-    int index = 1;
-    int firstElement = Fieldml_GetElementEntry( handle, object, index++ );
-    int lastElement = firstElement;
-    int prevElement;
-    bool hasSingles = false; 
-    while( firstElement != -1 )
+
+    EnsembleMembersType type = Fieldml_GetEnsembleMembersType( handle, object );
+    if( type == MEMBER_RANGE )
     {
-        //TODO Use strides greater than 1 to optimize output.
-        prevElement = lastElement;
-        lastElement = Fieldml_GetElementEntry( handle, object, index++ );
-        while( lastElement == prevElement + 1 )
-        {
-            prevElement = lastElement;
-            lastElement = Fieldml_GetElementEntry( handle, object, index++ );
-        }
+        int min = Fieldml_GetEnsembleMembersMin( handle, object );
+        int max = Fieldml_GetEnsembleMembersMax( handle, object );
+        int stride = Fieldml_GetEnsembleMembersStride( handle, object );
         
-        if( prevElement != firstElement )
-        {
-            xmlTextWriterStartElement( writer, MEMBER_RANGE_TAG );
-            xmlTextWriterWriteFormatAttribute( writer, MIN_ATTRIB, "%d", firstElement );
-            xmlTextWriterWriteFormatAttribute( writer, MAX_ATTRIB, "%d", prevElement );
-            xmlTextWriterEndElement( writer );
-        }
-        else
-        {
-            hasSingles = true;
-        }
-        
-        firstElement = lastElement;
-    }
-    
-    if( !hasSingles )
-    {
+        xmlTextWriterStartElement( writer, MEMBER_RANGE_TAG );
+        xmlTextWriterWriteFormatAttribute( writer, MIN_ATTRIB, "%d", min );
+        xmlTextWriterWriteFormatAttribute( writer, MAX_ATTRIB, "%d", max );
+        xmlTextWriterWriteFormatAttribute( writer, STRIDE_ATTRIB, "%d", stride );
         xmlTextWriterEndElement( writer );
-        return;
     }
-    
-    
-    xmlTextWriterStartElement( writer, MEMBER_LIST_TAG );
-
-    index = 1;
-    firstElement = Fieldml_GetElementEntry( handle, object, index++ );
-    lastElement = firstElement;
-    prevElement;
-    while( firstElement != -1 )
+    else if( ( type == MEMBER_LIST_DATA ) || ( type == MEMBER_RANGE_DATA ) || ( type == MEMBER_STRIDE_RANGE_DATA ) )
     {
-        //TODO Use strides greater than 1 to optimize output.
-        prevElement = lastElement;
-        lastElement = Fieldml_GetElementEntry( handle, object, index++ );
-        while( lastElement == prevElement + 1 )
+        if( type == MEMBER_LIST_DATA )
         {
-            prevElement = lastElement;
-            lastElement = Fieldml_GetElementEntry( handle, object, index++ );
+            xmlTextWriterStartElement( writer, MEMBER_LIST_DATA_TAG );
         }
-        
-        if( prevElement == firstElement )
+        else if( type == MEMBER_RANGE_DATA )
         {
-            xmlTextWriterWriteFormatString( writer, "%d ", firstElement );
+            xmlTextWriterStartElement( writer, MEMBER_RANGE_DATA_TAG );
         }
-        
-        firstElement = lastElement;
-    }
+        else if( type == MEMBER_STRIDE_RANGE_DATA )
+        {
+            xmlTextWriterStartElement( writer, MEMBER_STRIDE_RANGE_DATA_TAG );
+        }
 
-    xmlTextWriterEndElement( writer );
+        int count = Fieldml_GetElementCount( handle, object );
+        
+        xmlTextWriterWriteFormatAttribute( writer, COUNT_ATTRIB, "%d", count );
+
+        FmlObjectHandle dataObject = Fieldml_GetDataObject( handle, object );
+        if( dataObject != FML_INVALID_HANDLE )
+        {
+            writeObjectName( writer, DATA_ATTRIB, handle, dataObject );
+        }
+
+        xmlTextWriterEndElement( writer );
+    }
 
     xmlTextWriterEndElement( writer );
 }
@@ -344,6 +319,19 @@ static int writeDataObject( xmlTextWriterPtr writer, FmlHandle handle, FmlObject
     {
         xmlTextWriterStartElement( writer, INLINE_SOURCE_TAG );
         
+        int offset = 0;
+        int length = 1;
+        
+        while( length > 0 )
+        {
+            length = Fieldml_CopyInlineData( handle, object, tBuffer, tBufferLength - 1, offset );
+            if( length > 0 )
+            {
+                xmlTextWriterWriteFormatString( writer, "%s", tBuffer );
+                offset += length;
+            }
+        }
+        
         xmlTextWriterEndElement( writer );
     }
     else if( type == SOURCE_TEXT_FILE )
@@ -382,50 +370,7 @@ static int writeElementSequence( xmlTextWriterPtr writer, FmlHandle handle, FmlO
     writeObjectName( writer, NAME_ATTRIB, handle, object );
     writeObjectName( writer, VALUE_TYPE_ATTRIB, handle, Fieldml_GetValueType( handle, object ) );
 
-    xmlTextWriterStartElement( writer, ELEMENTS_TAG );
-    
-    int elementCount = Fieldml_GetElementCount( handle, object );
-    
-    if( elementCount > 0 )
-    {
-        //TODO This is potentially very inefficient.
-        int lastElement = -1;
-        int rangeStart = -1;
-        int element;
-        for( int i = 1; i <= elementCount; i++ )
-        {
-            element = Fieldml_GetElementEntry( handle, object, i );
-            if( element != lastElement + 1 )
-            {
-                if( rangeStart != -1 )
-                {
-                    xmlTextWriterWriteFormatString( writer, "%d-%d ", rangeStart, lastElement );
-                    rangeStart = -1;
-                }
-                else if( lastElement != -1 )
-                {
-                    xmlTextWriterWriteFormatString( writer, "%d ", lastElement );
-                }
-            }
-            else if( rangeStart == -1 )
-            {
-                rangeStart = lastElement;
-            }
-            
-            lastElement = element;
-        }
-        
-        if( rangeStart == -1 )
-        {
-            xmlTextWriterWriteFormatString( writer, "%d", lastElement );
-        }
-        else
-        {
-            xmlTextWriterWriteFormatString( writer, "%d-%d", rangeStart, lastElement );
-        }
-    }
-
-    xmlTextWriterEndElement( writer );
+    writeElements( writer, handle, object, ELEMENTS_TAG );
     
     xmlTextWriterEndElement( writer );
     

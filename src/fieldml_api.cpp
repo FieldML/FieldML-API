@@ -795,7 +795,7 @@ int Fieldml_GetElementCount( FmlHandle handle, FmlObjectHandle objectHandle )
     if( object->type == FHT_ENSEMBLE_TYPE )
     {
         EnsembleType *ensembleType = (EnsembleType*)object;
-        return ensembleType->members.getCount();
+        return ensembleType->count;
     }
     else if( object->type == FHT_ELEMENT_SEQUENCE )
     {
@@ -811,6 +811,168 @@ int Fieldml_GetElementCount( FmlHandle handle, FmlObjectHandle objectHandle )
 
     session->setError( FML_ERR_INVALID_OBJECT );  
     return -1;
+}
+
+
+int Fieldml_GetEnsembleMembersMin( FmlHandle handle, FmlObjectHandle objectHandle )
+{
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    if( session == NULL )
+    {
+        return -1;
+    }
+        
+    FieldmlObject *object = getObject( session, objectHandle );
+
+    if( object == NULL ) 
+    {
+        return -1;
+    }
+
+    if( object->type == FHT_ENSEMBLE_TYPE )
+    {
+        EnsembleType *ensembleType = (EnsembleType*)object;
+        return ensembleType->min;
+    }
+    else if( object->type == FHT_MESH_TYPE )
+    {
+        MeshType *meshType = (MeshType*)object;
+        return Fieldml_GetEnsembleMembersMin( handle, meshType->elementType );
+    }
+        
+    session->setError( FML_ERR_INVALID_OBJECT );  
+    return -1;
+}
+
+
+int Fieldml_GetEnsembleMembersMax( FmlHandle handle, FmlObjectHandle objectHandle )
+{
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    if( session == NULL )
+    {
+        return -1;
+    }
+        
+    FieldmlObject *object = getObject( session, objectHandle );
+
+    if( object == NULL ) 
+    {
+        return -1;
+    }
+
+    if( object->type == FHT_ENSEMBLE_TYPE )
+    {
+        EnsembleType *ensembleType = (EnsembleType*)object;
+        return ensembleType->max;
+    }
+    else if( object->type == FHT_MESH_TYPE )
+    {
+        MeshType *meshType = (MeshType*)object;
+        return Fieldml_GetEnsembleMembersMax( handle, meshType->elementType );
+    }
+        
+    session->setError( FML_ERR_INVALID_OBJECT );  
+    return -1;
+}
+
+
+int Fieldml_GetEnsembleMembersStride( FmlHandle handle, FmlObjectHandle objectHandle )
+{
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    if( session == NULL )
+    {
+        return -1;
+    }
+        
+    FieldmlObject *object = getObject( session, objectHandle );
+
+    if( object == NULL ) 
+    {
+        return -1;
+    }
+
+    if( object->type == FHT_ENSEMBLE_TYPE )
+    {
+        EnsembleType *ensembleType = (EnsembleType*)object;
+        return ensembleType->stride;
+    }
+    else if( object->type == FHT_MESH_TYPE )
+    {
+        MeshType *meshType = (MeshType*)object;
+        return Fieldml_GetEnsembleMembersStride( handle, meshType->elementType );
+    }
+        
+    session->setError( FML_ERR_INVALID_OBJECT );  
+    return -1;
+}
+
+
+EnsembleMembersType Fieldml_GetEnsembleMembersType( FmlHandle handle, FmlObjectHandle objectHandle )
+{
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    if( session == NULL )
+    {
+        return MEMBER_UNKNOWN;
+    }
+        
+    FieldmlObject *object = getObject( session, objectHandle );
+
+    if( object == NULL ) 
+    {
+        return MEMBER_UNKNOWN;
+    }
+    
+    if( object->type == FHT_ENSEMBLE_TYPE )
+    {
+        EnsembleType *ensembleType = (EnsembleType*)object;
+        return ensembleType->type;
+    }
+    else if( object->type == FHT_MESH_TYPE )
+    {
+        MeshType *meshType = (MeshType *)object;
+        return Fieldml_GetEnsembleMembersType( handle, meshType->elementType );
+    }
+    
+    session->setError( FML_ERR_INVALID_OBJECT );  
+    return MEMBER_UNKNOWN;
+}
+
+
+int Fieldml_SetEnsembleMembersData( FmlHandle handle, FmlObjectHandle objectHandle, EnsembleMembersType type, int count, FmlObjectHandle dataObjectHandle )
+{
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    if( session == NULL )
+    {
+        return FML_ERR_UNKNOWN_HANDLE;
+    }
+        
+    FieldmlObject *object = getObject( session, objectHandle );
+
+    if( object == NULL ) 
+    {
+        return session->getLastError();
+    }
+    else if( object->type == FHT_ENSEMBLE_TYPE )
+    {
+        EnsembleType *ensembleType = (EnsembleType*)object;
+
+        if( ( type != MEMBER_LIST_DATA ) && ( type != MEMBER_RANGE_DATA ) && ( type != MEMBER_STRIDE_RANGE_DATA ) )
+        {
+            return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        }
+        
+        ensembleType->type = type;
+        ensembleType->count = count;
+        ensembleType->dataObject = dataObjectHandle;
+        return session->getLastError();
+    }
+    else if( object->type == FHT_MESH_TYPE )
+    {
+        MeshType *meshType = (MeshType *)object;
+        return Fieldml_SetEnsembleMembersData( handle, meshType->elementType, type, count, dataObjectHandle );
+    }
+    
+    return session->setError( FML_ERR_INVALID_OBJECT );  
 }
 
 
@@ -1284,6 +1446,23 @@ int Fieldml_SetDataObject( FmlHandle handle, FmlObjectHandle objectHandle, FmlOb
     {
         ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
         parameterEvaluator->dataObject = dataObject;
+    }
+    else if( object->type == FHT_ENSEMBLE_TYPE )
+    {
+        EnsembleType *ensembleType = (EnsembleType*)object;
+        EnsembleMembersType type = ensembleType->type;
+        
+        if( ( type != MEMBER_LIST_DATA ) && ( type != MEMBER_RANGE_DATA ) && ( type != MEMBER_STRIDE_RANGE_DATA ) )
+        {
+            return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        }
+        
+        ensembleType->dataObject = dataObject;
+    }
+    else if( object->type == FHT_MESH_TYPE )
+    {
+        MeshType *meshType = (MeshType *)object;
+        return Fieldml_SetDataObject( handle, meshType->elementType, dataObject );
     }
     else
     {
@@ -2494,7 +2673,7 @@ FmlObjectHandle Fieldml_CreateEnsembleElementSequence( FmlHandle handle, const c
 }
 
 
-int Fieldml_AddEnsembleElements( FmlHandle handle, FmlObjectHandle setHandle, const int * elements, const int elementCount )
+int Fieldml_SetEnsembleElementRange( FmlHandle handle, FmlObjectHandle objectHandle, const int minElement, const int maxElement, const int stride )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2502,60 +2681,7 @@ int Fieldml_AddEnsembleElements( FmlHandle handle, FmlObjectHandle setHandle, co
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    FieldmlObject *object = getObject( session, setHandle );
-
-    if( object == NULL )
-    {
-        return session->getLastError();
-    }
-
-    if( object->type == FHT_ELEMENT_SEQUENCE )
-    {
-        ElementSequence *elementSequence = (ElementSequence*)object;
-        
-        for( int i = 0; i < elementCount; i++ )
-        {
-            if( elements[i] >= 0 )
-            {
-                elementSequence->members.setBit( elements[i], true );
-            }
-        }
-        
-        return session->getLastError();
-    }
-    else if( object->type == FHT_ENSEMBLE_TYPE )
-    {
-        EnsembleType *ensemble = (EnsembleType*)object;
-
-        for( int i = 0; i < elementCount; i++ )
-        {
-            if( elements[i] >= 0 )
-            {
-                ensemble->members.setBit( elements[i], true );
-            }
-        }
-        
-        return session->getLastError();
-    }
-    else if( object->type == FHT_MESH_TYPE )
-    {
-        MeshType *meshType = (MeshType*)object;
-        return Fieldml_AddEnsembleElements( handle, meshType->elementType, elements, elementCount );
-    }
-
-    return session->setError( FML_ERR_INVALID_OBJECT );
-}
-
-
-int Fieldml_AddEnsembleElementRange( FmlHandle handle, FmlObjectHandle setHandle, const int minElement, const int maxElement, const int stride )
-{
-    FieldmlSession *session = FieldmlSession::handleToSession( handle );
-    if( session == NULL )
-    {
-        return FML_ERR_UNKNOWN_HANDLE;
-    }
-
-    FieldmlObject *object = getObject( session, setHandle );
+    FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
     {
@@ -2587,132 +2713,21 @@ int Fieldml_AddEnsembleElementRange( FmlHandle handle, FmlObjectHandle setHandle
     {
         EnsembleType *ensemble = (EnsembleType*)object;
 
-        for( int i = minElement; i <= maxElement; i += stride )
-        {
-            ensemble->members.setBit( i, true );
-        }
-        
+        ensemble->type = MEMBER_RANGE;
+        ensemble->min = minElement;
+        ensemble->max = maxElement;
+        ensemble->stride = stride;
+        ensemble->count = ( maxElement - minElement ) + 1;
+
         return session->getLastError();
     }
     else if( object->type == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType*)object;
-        return Fieldml_AddEnsembleElementRange( handle, meshType->elementType, minElement, maxElement, stride );
+        return Fieldml_SetEnsembleElementRange( handle, meshType->elementType, minElement, maxElement, stride );
     }
 
     return session->setError( FML_ERR_INVALID_OBJECT );
-}
-
-
-int Fieldml_GetElementEntry( FmlHandle handle, FmlObjectHandle setHandle, const int index )
-{
-    FieldmlSession *session = FieldmlSession::handleToSession( handle );
-    if( session == NULL )
-    {
-        return -1;
-    }
-
-    FieldmlObject *object = getObject( session, setHandle );
-
-    if( object == NULL )
-    {
-        return -1;
-    }
-
-    if( object->type == FHT_ELEMENT_SEQUENCE )
-    {
-        ElementSequence *elementSequence = (ElementSequence*)object;
-
-        if( ( index < 1 ) || ( index > elementSequence->members.getCount() ) )
-        {
-            session->setError( FML_ERR_INVALID_PARAMETER_3 );  
-            return -1;
-        }
-        
-        return elementSequence->members.getTrueBit( index );
-    }
-    else if( object->type == FHT_ENSEMBLE_TYPE )
-    {
-        EnsembleType *ensemble = (EnsembleType*)object;
-
-        if( ( index < 1 ) || ( index > ensemble->members.getCount() ) )
-        {
-            session->setError( FML_ERR_INVALID_PARAMETER_3 );  
-            return -1;
-        }
-        
-        return ensemble->members.getTrueBit( index );
-    }
-    else if( object->type == FHT_MESH_TYPE )
-    {
-        MeshType *meshType = (MeshType*)object;
-        return Fieldml_GetElementEntry( handle, meshType->elementType, index );
-    }
-
-    session->setError( FML_ERR_INVALID_OBJECT );
-    return -1;
-}
-
-
-int Fieldml_GetElementEntries( FmlHandle handle, FmlObjectHandle setHandle, const int firstIndex, int * elements, const int count )
-{
-    FieldmlSession *session = FieldmlSession::handleToSession( handle );
-    if( session == NULL )
-    {
-        return -1;
-    }
-
-    FieldmlObject *object = getObject( session, setHandle );
-
-    if( object == NULL )
-    {
-        return -1;
-    }
-
-    if( firstIndex < 1 )
-    {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );  
-    }
-    if( count < 1 )
-    {
-        session->setError( FML_ERR_INVALID_PARAMETER_5 );  
-        return -1;
-    }
-
-    if( ( object->type == FHT_ELEMENT_SEQUENCE ) || ( object->type == FHT_ENSEMBLE_TYPE ) || ( object->type == FHT_MESH_TYPE ) )
-    {
-        int ensembleCount = Fieldml_GetElementCount( handle, setHandle );
-        if( firstIndex > ensembleCount )
-        {
-            session->setError( FML_ERR_INVALID_PARAMETER_3 );  
-            return -1;
-        }
-
-        int actualCount = 0;
-        if( count + firstIndex <= ensembleCount + 1 )
-        {
-            actualCount = count;
-        }
-        else
-        {
-            actualCount = ( ensembleCount + 1 ) - firstIndex;
-        }
-        
-        for( int i = 0; i < actualCount; i++ )
-        {
-            elements[i] = Fieldml_GetElementEntry( handle, setHandle, firstIndex + i );
-            if( elements[i] == -1 )
-            {
-                break;
-            }
-        }
-
-        session->setError( FML_ERR_NO_ERROR );
-        return actualCount;
-    }
-
-    session->setError( FML_ERR_INVALID_OBJECT );
-    return -1;
 }
 
 
@@ -3144,6 +3159,23 @@ FmlObjectHandle Fieldml_GetDataObject( FmlHandle handle, FmlObjectHandle objectH
     {
         ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
         dataObjectHandle = parameterEvaluator->dataObject;
+    }
+    else if( object->type == FHT_ENSEMBLE_TYPE )
+    {
+        EnsembleType *ensembleType = (EnsembleType*)object;
+        EnsembleMembersType type = ensembleType->type;
+        
+        if( ( type != MEMBER_LIST_DATA ) && ( type != MEMBER_RANGE_DATA ) && ( type != MEMBER_STRIDE_RANGE_DATA ) )
+        {
+            return session->setError( FML_ERR_INVALID_OBJECT );
+        }
+        
+        return ensembleType->dataObject;
+    }
+    else if( object->type == FHT_MESH_TYPE )
+    {
+        MeshType *meshType = (MeshType *)object;
+        return Fieldml_GetDataObject( handle, meshType->elementType );
     }
     else
     {

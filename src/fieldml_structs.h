@@ -70,7 +70,17 @@ class EnsembleType :
 public:
     const bool isComponentEnsemble;
 
-    SimpleBitset members;
+    EnsembleMembersType type;
+    
+    int min;
+    
+    int max;
+    
+    int stride;
+    
+    int count;
+    
+    FmlObjectHandle dataObject;
     
     EnsembleType( const std::string _name, bool _isComponentEnsemble, bool _isVirtual );
 };
