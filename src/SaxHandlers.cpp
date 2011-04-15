@@ -1207,8 +1207,7 @@ SaxHandler *IndexEvaluatorListSaxHandler::onElementStart( const xmlChar *element
     if( xmlStrcmp( elementName, INDEX_EVALUATOR_TAG ) == 0 )
     {
         FmlObjectHandle handle = attributes.getObjectAttribute( parent->parent->getSessionHandle(), EVALUATOR_ATTRIB );
-        // FmlObjectHandle setHandle = attributes.getObjectAttribute( region, ELEMENT_SEQUENCE_ATTRIB );
-        FmlObjectHandle setHandle = FML_INVALID_HANDLE;
+        FmlObjectHandle orderHandle = attributes.getObjectAttribute( parent->parent->getSessionHandle(), ORDER_ATTRIB );
         if( handle == FML_INVALID_HANDLE )
         {
             parent->parent->getSession()->logError( "Invalid index in semi dense data" );
@@ -1219,7 +1218,7 @@ SaxHandler *IndexEvaluatorListSaxHandler::onElementStart( const xmlChar *element
         }
         else
         {
-            Fieldml_AddDenseIndexEvaluator( parent->parent->getSessionHandle(), parent->parent->handle, handle, setHandle );
+            Fieldml_AddDenseIndexEvaluator( parent->parent->getSessionHandle(), parent->parent->handle, handle, orderHandle );
         }
     }
     

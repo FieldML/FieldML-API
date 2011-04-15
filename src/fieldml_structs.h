@@ -276,7 +276,7 @@ class SemidenseDataDescription :
 public:
     std::vector<FmlObjectHandle> sparseIndexes;
     std::vector<FmlObjectHandle> denseIndexes;
-    std::vector<FmlObjectHandle> denseSets;
+    std::vector<FmlObjectHandle> denseOrders;
     
     SemidenseDataDescription();
     

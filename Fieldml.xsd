@@ -147,6 +147,17 @@
         </xs:choice>
     </xs:complexType>
 
+    <xs:complexType name="OrderedEvaluatorListEntry_Type">
+        <xs:attribute name="evaluator" type="xs:string" />
+        <xs:attribute name="order" type="xs:string" />
+    </xs:complexType>
+
+    <xs:complexType name="OrderedIndexEvaluatorList_Type">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="IndexEvaluator" type="OrderedEvaluatorListEntry_Type" />
+        </xs:choice>
+    </xs:complexType>
+
     <xs:complexType name="MemberRange_Type">
         <xs:attribute name="min" type="xs:nonNegativeInteger" />
         <xs:attribute name="max" type="xs:nonNegativeInteger" />
@@ -245,7 +256,7 @@
 
     <xs:complexType name="SemidenseData_Type">
         <xs:sequence>
-            <xs:element name="DenseIndexes" type="IndexEvaluatorList_Type" minOccurs="0" maxOccurs="1" />
+            <xs:element name="DenseIndexes" type="OrderedIndexEvaluatorList_Type" minOccurs="0" maxOccurs="1" />
             <xs:element name="SparseIndexes" type="IndexEvaluatorList_Type" minOccurs="0" maxOccurs="1" />
         </xs:sequence>
         <xs:attribute name="data" type="xs:string" />

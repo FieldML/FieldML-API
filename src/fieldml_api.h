@@ -458,9 +458,11 @@ DataDescriptionType Fieldml_GetParameterDataDescription( FmlHandle handle, FmlOb
 
 
 /**
- * Adds a dense index evaluator to the given parameter set's semidense data description.
+ * Adds a dense index evaluator to the given parameter set's semidense data description, using the order
+ * specified by the given data object (if not FML_INVALID_HANDLE).
+ * 
  */
-int Fieldml_AddDenseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle, FmlObjectHandle setHandle );
+int Fieldml_AddDenseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle, FmlObjectHandle orderHandle );
 
 /**
  * Adds a sparse index evaluator to the given parameter set's semidense data description.
@@ -480,6 +482,7 @@ int Fieldml_GetSemidenseIndexCount( FmlHandle handle, FmlObjectHandle objectHand
  */
 FmlObjectHandle Fieldml_GetSemidenseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int indexIndex, int isSparse );
 
+FmlObjectHandle Fieldml_GetSemidenseIndexOrder( FmlHandle handle, FmlObjectHandle objectHandle, int index );
 
 /**
  * Creates a new piecewise evaluator. Evaluators used by the piecewise evaluator

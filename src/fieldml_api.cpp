@@ -1473,7 +1473,7 @@ int Fieldml_SetDataObject( FmlHandle handle, FmlObjectHandle objectHandle, FmlOb
 }
 
 
-int Fieldml_AddDenseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle, FmlObjectHandle setHandle )
+int Fieldml_AddDenseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle, FmlObjectHandle orderHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1485,6 +1485,11 @@ int Fieldml_AddDenseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHand
     {
         return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
+    
+    if( ( orderHandle != FML_INVALID_HANDLE ) && ( Fieldml_GetObjectType( handle, orderHandle ) != FHT_DATA_OBJECT ) )
+    {
+        return session->setError( FML_ERR_INVALID_PARAMETER_4 );
+    }
 
     SemidenseDataDescription *semidense = getSemidenseDataDescription( session, objectHandle );
     if( semidense == NULL )
@@ -1493,7 +1498,7 @@ int Fieldml_AddDenseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHand
     }
 
     semidense->denseIndexes.push_back( indexHandle );
-    semidense->denseSets.push_back( setHandle );
+    semidense->denseOrders.push_back( orderHandle );
     
     return session->getLastError();
 }
@@ -2228,7 +2233,7 @@ FmlObjectHandle Fieldml_GetIndexEvaluator( FmlHandle handle, FmlObjectHandle obj
 }
 
 
-int Fieldml_GetSemidenseIndexSet( FmlHandle handle, FmlObjectHandle objectHandle, int index )
+int Fieldml_GetSemidenseIndexOrder( FmlHandle handle, FmlObjectHandle objectHandle, int index )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2255,26 +2260,15 @@ int Fieldml_GetSemidenseIndexSet( FmlHandle handle, FmlObjectHandle objectHandle
         return FML_INVALID_HANDLE;
     }
     
-    int count;
-    
     ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
     if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
     {
         SemidenseDataDescription *semidense = (SemidenseDataDescription *)parameterEvaluator->dataDescription;
-        count = semidense->sparseIndexes.size();
-        
-        if( index <= count )
-        {
-            session->setError( FML_ERR_INVALID_PARAMETER_3 );
-            return FML_INVALID_HANDLE;
-        }
-
-        index -= count;
-        count = semidense->denseIndexes.size();
+        int count = semidense->denseIndexes.size();
 
         if( index <= count )
         {
-            return semidense->denseSets[index - 1];
+            return semidense->denseOrders[index - 1];
         }
         
         session->setError( FML_ERR_INVALID_PARAMETER_3 );
@@ -2285,76 +2279,6 @@ int Fieldml_GetSemidenseIndexSet( FmlHandle handle, FmlObjectHandle objectHandle
     }
 
     return FML_INVALID_HANDLE;
-}
-
-
-
-
-int Fieldml_SetSemidenseIndexSet( FmlHandle handle, FmlObjectHandle objectHandle, int index, FmlObjectHandle setHandle )
-{
-    FieldmlSession *session = FieldmlSession::handleToSession( handle );
-    if( session == NULL )
-    {
-        return FML_ERR_UNKNOWN_HANDLE;
-    }
-
-    FieldmlObject *object = getObject( session, objectHandle );
-
-    if( object == NULL )
-    {
-        return session->getLastError();
-    }
-    
-    if( index <= 0 )
-    {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
-        return session->getLastError();
-    }
-    
-    if( object->type != FHT_PARAMETER_EVALUATOR )
-    {
-        session->setError( FML_ERR_INVALID_OBJECT );
-        return session->getLastError();
-    }
-    
-    FieldmlHandleType type = Fieldml_GetObjectType( handle, setHandle );
-    if( type != FHT_ELEMENT_SEQUENCE )
-    {
-        session->setError( FML_ERR_INVALID_PARAMETER_4 );
-        return session->getLastError();
-    }
-    
-    int count;
-    
-    ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-    if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
-    {
-        SemidenseDataDescription *semidense = (SemidenseDataDescription *)parameterEvaluator->dataDescription;
-        count = semidense->sparseIndexes.size();
-        
-        if( index <= count )
-        {
-            session->setError( FML_ERR_INVALID_PARAMETER_3 );
-            return session->getLastError();
-        }
-
-        index -= count;
-        count = semidense->denseIndexes.size();
-
-        if( index <= count )
-        {
-            semidense->denseSets[index - 1] = setHandle;
-            return FML_ERR_NO_ERROR;
-        }
-        
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
-    }
-    else
-    {
-        session->setError( FML_ERR_UNSUPPORTED );
-    }
-
-    return session->getLastError();
 }
 
 

@@ -150,6 +150,7 @@ extern const xmlChar * const XI_COMPONENT_ATTRIB;
 extern const xmlChar * const NUMBER_ATTRIB;
 extern const xmlChar * const EVALUATOR_ATTRIB;
 extern const xmlChar * const ELEMENT_SEQUENCE_ATTRIB;
+extern const xmlChar * const ORDER_ATTRIB;
 
 extern const xmlChar * const MIN_ATTRIB;
 extern const xmlChar * const MAX_ATTRIB;

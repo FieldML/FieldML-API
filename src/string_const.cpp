@@ -142,6 +142,7 @@ const xmlChar * const XI_COMPONENT_ATTRIB               = (const xmlChar* const)
 const xmlChar * const NUMBER_ATTRIB                     = (const xmlChar* const)"number";
 const xmlChar * const EVALUATOR_ATTRIB                  = (const xmlChar* const)"evaluator";
 const xmlChar * const ELEMENT_SEQUENCE_ATTRIB           = (const xmlChar* const)"elementSequence";
+const xmlChar * const ORDER_ATTRIB                      = (const xmlChar* const)"order";
 
 const xmlChar * const MIN_ATTRIB                        = (const xmlChar* const)"min";
 const xmlChar * const MAX_ATTRIB                        = (const xmlChar* const)"max";

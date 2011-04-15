@@ -491,13 +491,12 @@ static void writeSemidenseIndexes( xmlTextWriterPtr writer, FmlHandle handle, Fm
             xmlTextWriterStartElement( writer, INDEX_EVALUATOR_TAG );
             xmlTextWriterWriteAttribute( writer, EVALUATOR_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, index ) );
 
-#if 0
-            FmlObjectHandle set = Fieldml_GetSemidenseIndexSet( handle, object, i );
-            if( set != FML_INVALID_HANDLE )
+            FmlObjectHandle order = Fieldml_GetSemidenseIndexOrder( handle, object, i );
+            if( order != FML_INVALID_HANDLE )
             {
-                xmlTextWriterWriteAttribute( writer, ELEMENT_SEQUENCE_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, set ) );
+                xmlTextWriterWriteAttribute( writer, ORDER_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, order ) );
             }
-#endif //NYI
+
             xmlTextWriterEndElement( writer );
         }
 
