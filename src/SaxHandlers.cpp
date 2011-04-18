@@ -733,7 +733,7 @@ SaxHandler * AbstractEvaluatorSaxHandler::onElementStart( const xmlChar *element
     }
     else if( xmlStrcmp( elementName, BINDINGS_TAG ) == 0 )
     {
-//        return new BindsSaxHandler( this, elementName, attributes ); //TODO Add binds to abstract evaluators
+//        return new BindsSaxHandler( this, elementName, attributes ); //TODO Add binds to abstract evaluators?
     }
     
     return this;
@@ -899,6 +899,10 @@ SaxHandler * PiecewiseEvaluatorSaxHandler::onElementStart( const xmlChar *elemen
     else if( xmlStrcmp( elementName, BINDINGS_TAG ) == 0 )
     {
         return new BindsSaxHandler( this, elementName, attributes );
+    }
+    else if( xmlStrcmp( elementName, INDEX_EVALUATORS_TAG ) == 0 )
+    {
+        return new IndexEvaluatorsSaxHandler( this, elementName, attributes );
     }
     
     return this;
@@ -1147,7 +1151,7 @@ SaxHandler *BindsSaxHandler::onElementStart( const xmlChar *elementName, SaxAttr
                 attributes.getAttribute( SOURCE_ATTRIB ) );
         }
     }
-    else if( xmlStrcmp( elementName, BIND_INDEX_TAG ) == 0 )
+    else if( ( xmlStrcmp( elementName, BIND_INDEX_TAG ) == 0 ) && ( Fieldml_GetObjectType( parent->getSessionHandle(), parent->handle ) == FHT_AGGREGATE_EVALUATOR ) )
     {
         FmlObjectHandle indexHandle = attributes.getObjectAttribute( parent->getSessionHandle(), VARIABLE_ATTRIB );
         if( indexHandle == FML_INVALID_HANDLE )
@@ -1157,7 +1161,7 @@ SaxHandler *BindsSaxHandler::onElementStart( const xmlChar *elementName, SaxAttr
             return this;
         }
 
-        int index = attributes.getIntAttribute( INDEX_NUMBER_ATTRIB, FML_INVALID_HANDLE );
+        int index = attributes.getIntAttribute( INDEX_NUMBER_ATTRIB, -1 );
 
         Fieldml_SetIndexEvaluator( parent->getSessionHandle(), parent->handle, index, indexHandle );
     }
@@ -1165,6 +1169,32 @@ SaxHandler *BindsSaxHandler::onElementStart( const xmlChar *elementName, SaxAttr
     return this;
 }
 
+
+IndexEvaluatorsSaxHandler::IndexEvaluatorsSaxHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
+    ObjectMemberSaxHandler( _parent, elementName )
+{
+}
+
+
+SaxHandler *IndexEvaluatorsSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
+{
+    if( xmlStrcmp( elementName, INDEX_EVALUATOR_TAG ) == 0 )
+    {
+        FmlObjectHandle indexHandle = attributes.getObjectAttribute( parent->getSessionHandle(), EVALUATOR_ATTRIB );
+        if( indexHandle == FML_INVALID_HANDLE )
+        {
+            const char * name =  Fieldml_GetObjectName( parent->getSessionHandle(), parent->handle );
+            parent->getSession()->logError( "Evaluator has malformed index evaluator", name );
+            return this;
+        }
+
+        int index = attributes.getIntAttribute( INDEX_NUMBER_ATTRIB, -1 );
+
+        Fieldml_SetIndexEvaluator( parent->getSessionHandle(), parent->handle, index, indexHandle );
+    }
+    
+    return this;
+}
 
 
 SemidenseSaxHandler::SemidenseSaxHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :

@@ -403,6 +403,16 @@ public:
 };
 
 
+class IndexEvaluatorsSaxHandler :
+    public ObjectMemberSaxHandler
+{
+public:
+    IndexEvaluatorsSaxHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
+
+    virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
+};
+
+
 class VariablesSaxHandler :
     public ObjectMemberSaxHandler
 {

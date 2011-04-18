@@ -67,6 +67,17 @@
         <xs:attribute name="region" type="xs:string" />
     </xs:complexType>
 
+    <xs:complexType name="NumberedIndexEvaluator_Type">
+        <xs:attribute name="evaluator" type="xs:string" />
+        <xs:attribute name="indexNumber" type="xs:positiveInteger" />
+    </xs:complexType>
+
+    <xs:complexType name="NumberedIndexEvaluatorList_Type">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="IndexEvaluator" type="NumberedIndexEvaluator_Type" />
+        </xs:choice>
+    </xs:complexType>
+
     <xs:complexType name="BindMapEntry_Type">
         <xs:attribute name="variable" type="xs:string" />
         <xs:attribute name="source" type="xs:string" />
@@ -77,10 +88,16 @@
         <xs:attribute name="indexNumber" type="xs:positiveInteger" />
     </xs:complexType>
 
+    <xs:complexType name="BindMapWithIndexes_Type">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="BindIndex" type="BindMapIndexEntry_Type" />
+            <xs:element name="Bind" type="BindMapEntry_Type" />
+        </xs:choice>
+    </xs:complexType>
+
     <xs:complexType name="BindMap_Type">
         <xs:choice minOccurs="0" maxOccurs="unbounded">
             <xs:element name="Bind" type="BindMapEntry_Type" />
-            <xs:element name="BindIndex" type="BindMapIndexEntry_Type" />
         </xs:choice>
     </xs:complexType>
 
@@ -248,6 +265,7 @@
             <xs:extension base="FieldmlEvaluator_Type">
                 <xs:sequence>
                     <xs:element name="Bindings" type="BindMap_Type" minOccurs="0" maxOccurs="1" />
+                    <xs:element name="IndexEvaluators" type="NumberedIndexEvaluatorList_Type" minOccurs="0" maxOccurs="1" />
                     <xs:element name="ElementEvaluators" type="ElementMap_Type" minOccurs="0" maxOccurs="1" />
                 </xs:sequence>
             </xs:extension>
@@ -276,7 +294,7 @@
         <xs:complexContent>
             <xs:extension base="FieldmlEvaluator_Type">
                 <xs:sequence>
-                    <xs:element name="Bindings" type="BindMap_Type" minOccurs="0" maxOccurs="1" />
+                    <xs:element name="Bindings" type="BindMapWithIndexes_Type" minOccurs="0" maxOccurs="1" />
                     <xs:element name="ComponentEvaluators" type="ComponentEvaluators_Type" minOccurs="1" maxOccurs="1" />
                 </xs:sequence>
             </xs:extension>

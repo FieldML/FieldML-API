@@ -98,6 +98,7 @@ extern const xmlChar * const SEMI_DENSE_DATA_TAG;
 extern const xmlChar * const SPARSE_INDEXES_TAG;
 extern const xmlChar * const DENSE_INDEXES_TAG;
 
+extern const xmlChar * const INDEX_EVALUATORS_TAG;
 extern const xmlChar * const INDEX_EVALUATOR_TAG;
 
 extern const xmlChar * const PIECEWISE_EVALUATOR_TAG;

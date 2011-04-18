@@ -107,26 +107,23 @@ static int writeBinds( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHandl
 {
     int count = Fieldml_GetBindCount( handle, object );
 
-    //NOTE index binds are currently handled via a dirty hack. Must clean this up.
-    int type = Fieldml_GetObjectType( handle, object );
-    
-    FmlObjectHandle indexEvaluator = FML_INVALID_HANDLE;
-    if( ( type == FHT_AGGREGATE_EVALUATOR ) || ( type == FHT_PIECEWISE_EVALUATOR ) )
+    FmlObjectHandle indexVariable = FML_INVALID_HANDLE;
+    if( Fieldml_GetObjectType( handle, object ) == FHT_AGGREGATE_EVALUATOR )
     {
-        indexEvaluator = Fieldml_GetIndexEvaluator( handle, object, 1 );
+        indexVariable = Fieldml_GetIndexEvaluator( handle, object, 1 );
     }
     
-    if( ( count <= 0 ) && ( indexEvaluator == FML_INVALID_HANDLE ) )
+    if( ( count <= 0 ) && ( indexVariable == FML_INVALID_HANDLE ) )
     {
         return 0;
     }
 
     xmlTextWriterStartElement( writer, BINDINGS_TAG );
     
-    if( indexEvaluator != FML_INVALID_HANDLE )
+    if( indexVariable != FML_INVALID_HANDLE )
     {
         xmlTextWriterStartElement( writer, BIND_INDEX_TAG );
-        xmlTextWriterWriteAttribute( writer, VARIABLE_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, indexEvaluator ) );
+        xmlTextWriterWriteAttribute( writer, VARIABLE_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, indexVariable ) );
         xmlTextWriterWriteAttribute( writer, INDEX_NUMBER_ATTRIB, (const xmlChar*)"1" );
         xmlTextWriterEndElement( writer );
     }
@@ -436,6 +433,21 @@ static int writePiecewiseEvaluator( xmlTextWriterPtr writer, FmlHandle handle, F
     
     writeBinds( writer, handle, object );
     
+    xmlTextWriterStartElement( writer, INDEX_EVALUATORS_TAG );
+    
+    int indexEvaluator = Fieldml_GetIndexEvaluator( handle, object, 1 );
+    if( indexEvaluator != FML_INVALID_HANDLE )
+    {
+        xmlTextWriterStartElement( writer, INDEX_EVALUATOR_TAG );
+
+        xmlTextWriterWriteFormatAttribute( writer, EVALUATOR_ATTRIB, "%s", Fieldml_GetObjectName( handle, indexEvaluator ) );
+        xmlTextWriterWriteFormatAttribute( writer, INDEX_NUMBER_ATTRIB, "%d", 1 );
+
+        xmlTextWriterEndElement( writer );
+    }
+    
+    xmlTextWriterEndElement( writer );
+
     int count = Fieldml_GetEvaluatorCount( handle, object );
     int defaultEvaluator = Fieldml_GetDefaultEvaluator( handle, object );
     if( ( count > 0 ) || ( defaultEvaluator != FML_INVALID_HANDLE ) )

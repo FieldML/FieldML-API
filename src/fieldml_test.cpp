@@ -178,6 +178,15 @@ void testRead( const char * filename )
         fprintf( stdout, "    " );
         count2 = Fieldml_GetElementCount( handle, oHandle );
         fprintf( stdout, "  %d elements:  ", count2 );
+        //TODO Dirty, dirty hack.
+        for( int e = 1; e <= count2; e++ )
+        {
+            const char *shape = Fieldml_GetMeshElementShape( handle, oHandle, e, 1 );
+            if( shape != NULL )
+            {
+                printf("  %d -> %s\n", e, shape );
+            }
+        }
         fprintf( stdout, "\n" );
     }
 

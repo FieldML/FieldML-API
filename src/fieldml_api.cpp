@@ -2710,7 +2710,7 @@ int Fieldml_AddImport( FmlHandle handle, int importSourceIndex, const char *loca
     }
     if( remoteName == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_4 );  
+        session->setError( FML_ERR_INVALID_PARAMETER_4 );
         return FML_INVALID_HANDLE;
     }
     
