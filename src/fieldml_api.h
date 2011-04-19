@@ -81,6 +81,7 @@
 #define FML_ERR_FILE_READ               1006
 #define FML_ERR_FILE_WRITE              1007
 #define FML_ERR_NAME_COLLISION          1008
+#define FML_ERR_INVALID_REGION          1009
 
 //Used for giving the user precise feedback on bad parameters passed to the API
 //Only used for parameters other than the FieldML handle and object handle parameters.

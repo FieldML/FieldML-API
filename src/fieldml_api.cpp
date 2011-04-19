@@ -79,6 +79,12 @@ static FieldmlObject *getObject( FieldmlSession *session, FmlObjectHandle object
 
 static FmlObjectHandle addObject( FieldmlSession *session, FieldmlObject *object )
 {
+    if( session->region == NULL )
+    {
+        session->setError( FML_ERR_INVALID_REGION );
+        return FML_INVALID_HANDLE;
+    }
+
     FmlObjectHandle handle = session->region->getNamedObject( object->name.c_str() );
     
     if( handle == FML_INVALID_HANDLE )
@@ -479,9 +485,11 @@ FmlHandle Fieldml_CreateFromFile( const char *filename )
     {
         session->setError( FML_ERR_IO_READ_ERR );
     }
-    
-    session->region->setRoot( getDirectory( filename ) );
-    session->region->finalize();
+    else
+    {
+        session->region->setRoot( getDirectory( filename ) );
+        session->region->finalize();
+    }
     
     return session->getHandle();
 }
@@ -530,6 +538,10 @@ int Fieldml_WriteFile( FmlHandle handle, const char *filename )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
+    if( session->region == NULL )
+    {
+        return session->setError( FML_ERR_INVALID_REGION );
+    }
         
     session->setError( FML_ERR_NO_ERROR );
     session->region->setRoot( getDirectory( filename ) );
@@ -555,6 +567,11 @@ const char * Fieldml_GetRegionName( FmlHandle handle )
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
     {
+        return NULL;
+    }
+    if( session->region == NULL )
+    {
+        session->setError( FML_ERR_INVALID_REGION );
         return NULL;
     }
         
@@ -670,6 +687,11 @@ FmlObjectHandle Fieldml_GetObjectByName( FmlHandle handle, const char * name )
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
     {
+        return FML_INVALID_HANDLE;
+    }
+    if( session->region == NULL )
+    {
+        session->setError( FML_ERR_INVALID_REGION );
         return FML_INVALID_HANDLE;
     }
     if( name == NULL )
@@ -1106,6 +1128,11 @@ int Fieldml_IsObjectLocal( FmlHandle handle, FmlObjectHandle objectHandle )
     {
         return -1;
     }
+    if( session->region == NULL )
+    {
+        session->setError( FML_ERR_INVALID_REGION );
+        return 0;
+    }
 
     if( session->region->hasLocalObject( objectHandle, false ) )
     {
@@ -1123,6 +1150,11 @@ const char * Fieldml_GetObjectName( FmlHandle handle, FmlObjectHandle objectHand
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
     {
+        return NULL;
+    }
+    if( session->region == NULL )
+    {
+        session->setError( FML_ERR_INVALID_REGION );
         return NULL;
     }
     
@@ -2445,6 +2477,11 @@ FmlReaderHandle Fieldml_OpenReader( FmlHandle handle, FmlObjectHandle objectHand
     {
         return FML_INVALID_HANDLE;
     }
+    if( session->region == NULL )
+    {
+        session->setError( FML_ERR_INVALID_REGION );
+        return FML_INVALID_HANDLE;
+    }
     
     DataObject *dataObject = getDataObject( session, objectHandle );
 
@@ -2514,6 +2551,11 @@ FmlWriterHandle Fieldml_OpenWriter( FmlHandle handle, FmlObjectHandle objectHand
     if( session == NULL )
     {
         return NULL;
+    }
+    if( session->region == NULL )
+    {
+        session->setError( FML_ERR_INVALID_REGION );
+        return FML_INVALID_HANDLE;
     }
     
     DataObject *dataObject = getDataObject( session, objectHandle );
@@ -2660,6 +2702,11 @@ int Fieldml_AddImportSource( FmlHandle handle, const char *location, const char 
     {
         return -1;
     }
+    if( session->region == NULL )
+    {
+        session->setError( FML_ERR_INVALID_REGION );
+        return -1;
+    }
     
     if( location == NULL )
     {
@@ -2700,6 +2747,11 @@ int Fieldml_AddImport( FmlHandle handle, int importSourceIndex, const char *loca
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
     {
+        return FML_INVALID_HANDLE;
+    }
+    if( session->region == NULL )
+    {
+        session->setError( FML_ERR_INVALID_REGION );
         return FML_INVALID_HANDLE;
     }
 
@@ -2743,6 +2795,11 @@ int Fieldml_GetImportSourceCount( FmlHandle handle )
     {
         return -1;
     }
+    if( session->region == NULL )
+    {
+        session->setError( FML_ERR_INVALID_REGION );
+        return -1;
+    }
     
     return session->region->getImportSourceCount();
 }
@@ -2755,6 +2812,11 @@ int Fieldml_GetImportCount( FmlHandle handle, int importSourceIndex )
     {
         return -1;
     }
+    if( session->region == NULL )
+    {
+        session->setError( FML_ERR_INVALID_REGION );
+        return -1;
+    }
     
     return session->region->getImportCount( importSourceIndex - 1 );
 }
@@ -2765,6 +2827,11 @@ int Fieldml_CopyImportSourceLocation( FmlHandle handle, int importSourceIndex, c
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
     {
+        return -1;
+    }
+    if( session->region == NULL )
+    {
+        session->setError( FML_ERR_INVALID_REGION );
         return -1;
     }
     
@@ -2786,6 +2853,11 @@ int Fieldml_CopyImportSourceRegionName( FmlHandle handle, int importSourceIndex,
     {
         return -1;
     }
+    if( session->region == NULL )
+    {
+        session->setError( FML_ERR_INVALID_REGION );
+        return -1;
+    }
     
     string regionName = session->region->getImportSourceRegionName( importSourceIndex - 1 );
     if( regionName == "" )
@@ -2803,6 +2875,11 @@ int Fieldml_CopyImportLocalName( FmlHandle handle, int importSourceIndex, int im
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
     {
+        return -1;
+    }
+    if( session->region == NULL )
+    {
+        session->setError( FML_ERR_INVALID_REGION );
         return -1;
     }
     
@@ -2824,6 +2901,11 @@ int Fieldml_CopyImportRemoteName( FmlHandle handle, int importSourceIndex, int i
     {
         return -1;
     }
+    if( session->region == NULL )
+    {
+        session->setError( FML_ERR_INVALID_REGION );
+        return -1;
+    }
     
     string remoteName = session->region->getImportRemoteName( importSourceIndex - 1, importIndex );
     if( remoteName == "" )
@@ -2841,8 +2923,14 @@ int Fieldml_GetImportObject( FmlHandle handle, int importSourceIndex, int import
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
     {
-        return -1;
+        return FML_INVALID_HANDLE;
     }
+    if( session->region == NULL )
+    {
+        session->setError( FML_ERR_INVALID_REGION );
+        return FML_INVALID_HANDLE;
+    }
+
     return session->region->getImportObject( importSourceIndex - 1, importIndex );
 }
 
