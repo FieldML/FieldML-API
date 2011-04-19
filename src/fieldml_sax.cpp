@@ -39,6 +39,9 @@
  *
  */
 
+#include <string>
+#include <stdio.h>
+
 #include <libxml/SAX.h>
 #include <libxml/globals.h>
 #include <libxml/xmlerror.h>
@@ -46,7 +49,8 @@
 #include <libxml/xmlmemory.h>
 #include <libxml/xmlschemas.h>
 
-#include "fieldml_library_0.3.h"
+#include "String_InternalLibrary.h"
+#include "String_InternalXSD.h"
 #include "string_const.h"
 
 #include "fieldml_sax.h"
@@ -57,13 +61,76 @@ using namespace std;
 
 //========================================================================
 
+void addSaxContextError( void *context, const char *msg, ... )
+{
+    SaxContext *saxContext = (SaxContext*)context;
+
+    char message[256];
+
+    va_list vargs;  
+    va_start( vargs, msg );  
+    int retval = vsnprintf( message, 255, msg, vargs );  
+    va_end( vargs);
+    
+    if( retval > 0 )
+    {
+        //libxml likes to put \n at the end of its error messages
+        if( message[retval-1] == '\n' )
+        {
+            message[retval-1] = 0;
+        }
+        saxContext->session->addError( message );
+    }
+}
+
+//========================================================================
+
 class SaxParser
 {
 public:
     virtual int parse( xmlSAXHandlerPtr saxHandler, SaxContext *context ) = 0;
     
+    virtual int validate( SaxContext *context, xmlParserInputBufferPtr buffer, const char *resourceName );
+    
     virtual const char *getSource() = 0; 
 };
+
+
+int SaxParser::validate( SaxContext *context, xmlParserInputBufferPtr buffer, const char *resourceName )
+{
+    xmlSchemaPtr schemas = NULL;
+    xmlSchemaParserCtxtPtr sctxt;
+    xmlSchemaValidCtxtPtr vctxt;
+    
+    LIBXML_TEST_VERSION
+
+    xmlSubstituteEntitiesDefault( 1 );
+
+    if( buffer == NULL )
+    {
+        return false;
+    }
+
+    sctxt = xmlSchemaNewMemParserCtxt( FML_STRING_FIELDML_XSD, strlen( FML_STRING_FIELDML_XSD ) );
+    xmlSchemaSetParserErrors( sctxt, (xmlSchemaValidityErrorFunc)addSaxContextError, (xmlSchemaValidityWarningFunc)addSaxContextError, context );
+    schemas = xmlSchemaParse( sctxt );
+    if( schemas == NULL )
+    {
+        xmlGenericError( xmlGenericErrorContext, "Internal schema failed to compile\n" );
+    }
+    xmlSchemaFreeParserCtxt( sctxt );
+
+    vctxt = xmlSchemaNewValidCtxt( schemas );
+    xmlSchemaSetValidErrors( vctxt, (xmlSchemaValidityErrorFunc)addSaxContextError, (xmlSchemaValidityWarningFunc)addSaxContextError, context );
+
+    int result = xmlSchemaValidateStream( vctxt, buffer, (xmlCharEncoding)0, NULL, NULL );
+
+    xmlSchemaFreeValidCtxt( vctxt );
+
+    xmlSchemaFree( schemas );
+    
+    return result;
+}
 
 //========================================================================
 
@@ -90,6 +157,18 @@ SaxFileParser::SaxFileParser( const char *_filename ) :
 
 int SaxFileParser::parse( xmlSAXHandlerPtr saxHandler, SaxContext *context )
 {
+    xmlParserInputBufferPtr buffer = xmlParserInputBufferCreateFilename( filename, XML_CHAR_ENCODING_NONE );
+    
+    int res = validate( context, buffer, filename );
+    
+    if( res != 0 )
+    {
+        string error = filename;
+        error += " failed to validate";
+        context->session->addError( error );
+        return res;
+    }
+
     return xmlSAXUserParseFile( saxHandler, context, filename );
 }
 
@@ -127,6 +206,18 @@ SaxStringParser::SaxStringParser( const char *_string, const char *_stringDescri
 
 int SaxStringParser::parse( xmlSAXHandlerPtr saxHandler, SaxContext *context )
 {
+    xmlParserInputBufferPtr buffer = xmlParserInputBufferCreateMem( string, strlen( string ), XML_CHAR_ENCODING_NONE );
+    
+    int res = validate( context, buffer, stringDescription );
+    
+    if( res != 0 )
+    {
+        std::string error = stringDescription;
+        error += " failed to validate";
+        context->session->addError( error );
+        return res;
+    }
+
     return xmlSAXUserParseMemory( saxHandler, context, string, strlen( string ) );
 }
 

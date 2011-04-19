@@ -44,7 +44,7 @@
 #include "string_const.h"
 #include "fieldml_structs.h"
 #include "fieldml_sax.h"
-#include "fieldml_library_0.3.h"
+#include "String_InternalLibrary.h"
 
 using namespace std;
 
@@ -87,7 +87,7 @@ FieldmlSession::~FieldmlSession()
 }
 
 
-FieldmlRegion *FieldmlSession::addRegion( string location, string name )
+FieldmlRegion *FieldmlSession::getRegion( string location, string name )
 {
     for( vector<FieldmlRegion*>::iterator i = regions.begin(); i != regions.end(); i++ )
     {
@@ -98,10 +98,16 @@ FieldmlRegion *FieldmlSession::addRegion( string location, string name )
         }
     }
     
-    FieldmlRegion *r = new FieldmlRegion( location, name, "", objects );
-    regions.push_back( r );
+    return NULL;
+}
+
+
+FieldmlRegion *FieldmlSession::addNewRegion( string location, string name )
+{
+    FieldmlRegion *region = new FieldmlRegion( location, name, "", objects );
+    regions.push_back( region );
     
-    return r;
+    return region;
 }
 
 
@@ -131,30 +137,41 @@ FieldmlRegion *FieldmlSession::getRegion( int index )
 }
 
 
-int FieldmlSession::readRegion( FieldmlRegion *readRegion )
+FieldmlRegion *FieldmlSession::addResourceRegion( string location, string name )
 {
-    int result = 0;
-    string location = readRegion->getLocation();
-    
-    if( location.length() != 0 )
+    if( location.length() == 0 )
     {
-        FieldmlRegion *currentRegion = region;
-        region = readRegion;
-        
-        if( location == FML_LIBRARY_0_3_NAME )
-        {
-            result = parseFieldmlString( FML_LIBRARY_0_3_STRING, "Internal library 0.3", this );
-        }
-        else
-        {
-            string libraryFile = makeFilename( region->getRoot(), location );
-            result = parseFieldmlFile( libraryFile.c_str(), this );
-        }
-        
-        region = currentRegion;
+        return NULL;
+    }
+
+    FieldmlRegion *resourceRegion = new FieldmlRegion( location, name, "", objects );
+    FieldmlRegion *currentRegion = region;
+    region = resourceRegion;
+    
+    int result = 0;
+    if( location == FML_INTERNAL_LIBRARY_NAME )
+    {
+        result = parseFieldmlString( FML_STRING_INTERNAL_LIBRARY, "Internal library", this );
+    }
+    else
+    {
+        string libraryFile = makeFilename( region->getRoot(), location );
+        result = parseFieldmlFile( libraryFile.c_str(), this );
     }
     
-    return result;
+    region = currentRegion;
+
+    if( result != 0 )
+    {
+        delete resourceRegion;
+        resourceRegion = NULL;
+    }
+    else
+    {
+        regions.push_back( resourceRegion );
+    }
+    
+    return resourceRegion;
 }
 
 

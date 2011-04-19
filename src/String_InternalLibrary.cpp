@@ -39,11 +39,11 @@
  *
  */
 
-#include "fieldml_library_0.3.h"
+#include "String_InternalLibrary.h"
 
-const char * const FML_LIBRARY_0_3_NAME = "library_0.3.xml";
+const char * const FML_INTERNAL_LIBRARY_NAME = "library_0.3.xml";
 
-const char * const FML_LIBRARY_0_3_STRING = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?> \
+const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?> \
 <Fieldml version=\"0.3_alpha\" xsi:noNamespaceSchemaLocation=\"Fieldml_0.3.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"> \
  <Region name=\"library\"> \
   <ContinuousType name=\"library.real.1d\"/> \

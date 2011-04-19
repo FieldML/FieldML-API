@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <xs:schema id="fieldml"
     xmlns:xs="http://www.w3.org/2001/XMLSchema"
-    xmlns:fmlmeta="http://www.fieldml.org/metadata/0.3#"
     >
     
-    <xs:import schemaLocation="Fieldml_0.3_meta.xsd" namespace="http://www.fieldml.org/metadata/0.3#"/>
+    <xs:complexType name="FieldmlRdfTargetType">
+        <xs:attribute name="id" type="xs:string" form="qualified"/>
+    </xs:complexType>
 
     <xs:complexType name="FieldmlObject_Type">
         <xs:complexContent >
-            <xs:extension base="fmlmeta:FieldmlRdfTargetType">
+            <xs:extension base="FieldmlRdfTargetType">
                 <xs:attribute name="name" type="xs:string" />
             </xs:extension>
         </xs:complexContent>
@@ -189,8 +190,8 @@
     <xs:complexType name="EnsembleMembers_Type">
         <xs:choice minOccurs="1" maxOccurs="1">
             <xs:element name="MemberListData" type="MemberData_Type" />
-            <xs:element name="MemberRangesData" type="MemberData_Type" />
-            <xs:element name="MemberStrideRangesData" type="MemberData_Type" />
+            <xs:element name="MemberRangeData" type="MemberData_Type" />
+            <xs:element name="MemberStrideRangeData" type="MemberData_Type" />
             <xs:element name="MemberRange" type="MemberRange_Type" />
         </xs:choice>
     </xs:complexType>
@@ -303,7 +304,7 @@
 
     <xs:complexType name="Region_Type">
         <xs:complexContent >
-            <xs:extension base="fmlmeta:FieldmlRdfTargetType">
+            <xs:extension base="FieldmlRdfTargetType">
                 <xs:choice minOccurs="0" maxOccurs="unbounded">
                     <xs:element name="Import" type="Import_Type" />
                     <xs:element name="DataObject" type="DataObject_Type" />
@@ -325,7 +326,7 @@
 
     <xs:complexType name="Fieldml_Type">
         <xs:complexContent >
-            <xs:extension base="fmlmeta:FieldmlRdfTargetType">
+            <xs:extension base="FieldmlRdfTargetType">
                 <xs:choice minOccurs="1" maxOccurs="1">
                     <xs:element name="Region" type="Region_Type" />
                 </xs:choice>

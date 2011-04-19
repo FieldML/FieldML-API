@@ -39,68 +39,10 @@
  *
  */
 
-#ifndef H_FIELDML_SESSION
-#define H_FIELDML_SESSION
+#ifndef H_STRING_INTERNAL_LIBRARY_H
+#define H_STRING_INTERNAL_LIBRARY_H
 
-#include <vector>
+extern const char * const FML_INTERNAL_LIBRARY_NAME;
+extern const char * const FML_STRING_INTERNAL_LIBRARY;
 
-#include "FieldmlErrorHandler.h"
-#include "FieldmlRegion.h"
-
-class FieldmlSession :
-    public FieldmlErrorHandler
-{
-private:
-    int lastError;
-    
-    int debug;
-    
-    std::vector<std::string> errors;
-    
-    std::vector<FieldmlRegion*> regions;
-    
-    int handle;
-    
-    static FmlHandle addSession( FieldmlSession *session );
-    
-public:
-    FieldmlSession();
-    virtual ~FieldmlSession();
-    
-    int setErrorAndLocation( const char *file, const int line, const int error );
-
-    void addError( const std::string string );
-
-    void setDebug( const int debugValue );
-    
-    const int getErrorCount();
-    
-    const std::string getError( const int index );
-
-    const int getLastError();
-
-    void logError( const char *error, const char *name1 = NULL, const char *name2 = NULL );
-    
-    FmlHandle getHandle();
-    
-    FieldmlObject *getObject( const FmlObjectHandle handle );
-    
-    FieldmlRegion *addResourceRegion( std::string location, std::string name );
-    
-    FieldmlRegion *addNewRegion( std::string location, std::string name );
-    
-    FieldmlRegion *getRegion( std::string location, std::string name );
-    
-    int getRegionIndex( std::string location, std::string name );
-    
-    FieldmlRegion *getRegion( int index );
-    
-    FieldmlRegion *region;
-
-    ObjectStore * const objects;
-
-
-    static FieldmlSession *handleToSession( FmlHandle handle );
-};
-
-#endif //H_FIELDML_SESSION
+#endif // H_STRING_INTERNAL_LIBRARY_H

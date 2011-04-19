@@ -67,6 +67,7 @@ private:
     
 public:
     FieldmlRegion( const std::string location, const std::string name, const std::string root, ObjectStore *_store );
+
     virtual ~FieldmlRegion();
     
     void addLocalObject( FmlObjectHandle handle );

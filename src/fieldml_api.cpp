@@ -43,7 +43,7 @@
 
 #include <string.h>
 
-#include "fieldml_library_0.3.h"
+#include "String_InternalLibrary.h"
 
 #include "fieldml_api.h"
 #include "fieldml_sax.h"
@@ -474,15 +474,13 @@ FmlHandle Fieldml_CreateFromFile( const char *filename )
 {
     FieldmlSession *session = new FieldmlSession();
     
-    session->region = session->addRegion( filename, "" );
-    int err = session->readRegion( session->region );
-    session->region->setRoot( getDirectory( filename ) );
-
-    if( err != 0 )
+    session->region = session->addResourceRegion( filename, "" );
+    if( session->region == NULL )
     {
-        delete session;
-        return FML_INVALID_HANDLE;
+        session->setError( FML_ERR_IO_READ_ERR );
     }
+    
+    session->region->setRoot( getDirectory( filename ) );
     session->region->finalize();
     
     return session->getHandle();
@@ -493,7 +491,7 @@ FmlHandle Fieldml_Create( const char *location, const char *name )
 {
     FieldmlSession *session = new FieldmlSession();
     
-    session->region = session->addRegion( location, name );
+    session->region = session->addNewRegion( location, name );
     
     return session->getHandle();
 }
@@ -2674,12 +2672,14 @@ int Fieldml_AddImportSource( FmlHandle handle, const char *location, const char 
         return -1;
     }
 
-    FieldmlRegion *importedRegion = session->addRegion( location, name );
-    int err = session->readRegion( importedRegion );
-    if( err != 0 )
+    FieldmlRegion *importedRegion = session->getRegion( location, name );
+    if( importedRegion == NULL )
     {
-        delete importedRegion;
-        return -1;
+        importedRegion = session->addResourceRegion( location, name );
+        if( importedRegion == NULL )
+        {
+            return -1;
+        }
     }
     
     int index = session->getRegionIndex( location, name );
