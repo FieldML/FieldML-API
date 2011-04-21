@@ -825,7 +825,7 @@ int Fieldml_GetElementCount( FmlHandle handle, FmlObjectHandle objectHandle )
     else if( object->type == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType*)object;
-        return Fieldml_GetElementCount( handle, meshType->elementType );
+        return Fieldml_GetElementCount( handle, meshType->elementsType );
     }
         
 
@@ -857,7 +857,7 @@ int Fieldml_GetEnsembleMembersMin( FmlHandle handle, FmlObjectHandle objectHandl
     else if( object->type == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType*)object;
-        return Fieldml_GetEnsembleMembersMin( handle, meshType->elementType );
+        return Fieldml_GetEnsembleMembersMin( handle, meshType->elementsType );
     }
         
     session->setError( FML_ERR_INVALID_OBJECT );  
@@ -888,7 +888,7 @@ int Fieldml_GetEnsembleMembersMax( FmlHandle handle, FmlObjectHandle objectHandl
     else if( object->type == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType*)object;
-        return Fieldml_GetEnsembleMembersMax( handle, meshType->elementType );
+        return Fieldml_GetEnsembleMembersMax( handle, meshType->elementsType );
     }
         
     session->setError( FML_ERR_INVALID_OBJECT );  
@@ -919,7 +919,7 @@ int Fieldml_GetEnsembleMembersStride( FmlHandle handle, FmlObjectHandle objectHa
     else if( object->type == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType*)object;
-        return Fieldml_GetEnsembleMembersStride( handle, meshType->elementType );
+        return Fieldml_GetEnsembleMembersStride( handle, meshType->elementsType );
     }
         
     session->setError( FML_ERR_INVALID_OBJECT );  
@@ -950,7 +950,7 @@ EnsembleMembersType Fieldml_GetEnsembleMembersType( FmlHandle handle, FmlObjectH
     else if( object->type == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType *)object;
-        return Fieldml_GetEnsembleMembersType( handle, meshType->elementType );
+        return Fieldml_GetEnsembleMembersType( handle, meshType->elementsType );
     }
     
     session->setError( FML_ERR_INVALID_OBJECT );  
@@ -989,7 +989,7 @@ int Fieldml_SetEnsembleMembersData( FmlHandle handle, FmlObjectHandle objectHand
     else if( object->type == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType *)object;
-        return Fieldml_SetEnsembleMembersData( handle, meshType->elementType, type, count, dataObjectHandle );
+        return Fieldml_SetEnsembleMembersData( handle, meshType->elementsType, type, count, dataObjectHandle );
     }
     
     return session->setError( FML_ERR_INVALID_OBJECT );  
@@ -1022,7 +1022,7 @@ int Fieldml_IsEnsembleComponentType( FmlHandle handle, FmlObjectHandle objectHan
 }
 
 
-FmlObjectHandle Fieldml_GetMeshElementType( FmlHandle handle, FmlObjectHandle objectHandle )
+FmlObjectHandle Fieldml_GetMeshElementsType( FmlHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1039,7 +1039,7 @@ FmlObjectHandle Fieldml_GetMeshElementType( FmlHandle handle, FmlObjectHandle ob
     if( object->type == FHT_MESH_TYPE ) 
     {
         MeshType *meshType = (MeshType *)object;
-        return meshType->elementType;
+        return meshType->elementsType;
     }
     
     session->setError( FML_ERR_INVALID_OBJECT );  
@@ -1313,31 +1313,46 @@ FmlObjectHandle Fieldml_CreateAbstractEvaluator( FmlHandle handle, const char *n
     //specified at bind-time.
     if( Fieldml_GetObjectType( handle, valueType ) == FHT_MESH_TYPE )
     {
-        string xiName, elementName;
+        FmlObjectHandle xiType = Fieldml_GetMeshXiType( handle, valueType );
+        FmlObjectHandle elementsType = Fieldml_GetMeshElementsType( handle, valueType );
         
-        xiName = name;
-        xiName += ".xi";
+        string meshName = Fieldml_GetObjectName( handle, valueType );
+        meshName += ".";
+     
+        string variableName = name;
+        string xiComponentName = Fieldml_GetObjectName( handle, xiType );
+        string elementsComponentName = Fieldml_GetObjectName( handle, elementsType );
         
-        elementName = name;
-        elementName += ".element";
+        string xiSuffix = "xi";
+        if( xiComponentName.compare( 0, meshName.length(), meshName ) == 0 )
+        {
+            xiSuffix = xiComponentName.substr( meshName.length(), xiComponentName.length() );
+        }
+        string xiName = variableName + "." + xiSuffix;
         
         if( Fieldml_GetObjectByName( handle, xiName.c_str() ) != FML_INVALID_HANDLE )
         {
             session->setError( FML_ERR_INVALID_PARAMETER_2 );
             return FML_INVALID_HANDLE;
         }
-        if( Fieldml_GetObjectByName( handle, elementName.c_str() ) != FML_INVALID_HANDLE )
+
+        string elementsSuffix = "elements";
+        if( elementsComponentName.compare( 0, meshName.length(), meshName ) == 0 )
+        {
+            elementsSuffix = elementsComponentName.substr( meshName.length(), elementsComponentName.length() );
+        }
+        string elementsName = variableName + "." + elementsSuffix;
+        
+        if( Fieldml_GetObjectByName( handle, elementsName.c_str() ) != FML_INVALID_HANDLE )
         {
             session->setError( FML_ERR_INVALID_PARAMETER_2 );
             return FML_INVALID_HANDLE;
         }
         
-        FmlObjectHandle xiType = Fieldml_GetMeshXiType( handle, valueType );
         AbstractEvaluator *xiEvaluator = new AbstractEvaluator( xiName.c_str(), xiType, true );
         addObject( session, xiEvaluator );        
         
-        FmlObjectHandle elementType = Fieldml_GetMeshElementType( handle, valueType );
-        AbstractEvaluator *elementEvaluator = new AbstractEvaluator( elementName.c_str(), elementType, true );
+        AbstractEvaluator *elementEvaluator = new AbstractEvaluator( elementsName.c_str(), elementsType, true );
         addObject( session, elementEvaluator );        
     }
     
@@ -1492,7 +1507,7 @@ int Fieldml_SetDataObject( FmlHandle handle, FmlObjectHandle objectHandle, FmlOb
     else if( object->type == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType *)object;
-        return Fieldml_SetDataObject( handle, meshType->elementType, dataObject );
+        return Fieldml_SetDataObject( handle, meshType->elementsType, dataObject );
     }
     else
     {
@@ -2312,7 +2327,7 @@ int Fieldml_GetSemidenseIndexOrder( FmlHandle handle, FmlObjectHandle objectHand
 }
 
 
-FmlObjectHandle Fieldml_CreateContinuousType( FmlHandle handle, const char * name, FmlObjectHandle componentDescriptionHandle )
+FmlObjectHandle Fieldml_CreateContinuousType( FmlHandle handle, const char * name )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2320,32 +2335,53 @@ FmlObjectHandle Fieldml_CreateContinuousType( FmlHandle handle, const char * nam
         return FML_INVALID_HANDLE;
     }
 
-    if( ( componentDescriptionHandle != FML_INVALID_HANDLE ) )
-    {
-        if( !checkIsValueType( session, componentDescriptionHandle, false, true, false ) )
-        {
-            session->setError( FML_ERR_INVALID_PARAMETER_3 );
-            return FML_INVALID_HANDLE;
-        }
-    }
-    
-    if( componentDescriptionHandle != FML_INVALID_HANDLE )
-    {
-        if( Fieldml_IsEnsembleComponentType( handle, componentDescriptionHandle ) != 1 )
-        {
-            session->setError( FML_ERR_INVALID_PARAMETER_3 );
-            return FML_INVALID_HANDLE;
-        }
-    }
-
-    ContinuousType *continuousType = new ContinuousType( name, componentDescriptionHandle, false );
+    ContinuousType *continuousType = new ContinuousType( name, false );
     
     session->setError( FML_ERR_NO_ERROR );
     return addObject( session, continuousType );
 }
 
 
-FmlObjectHandle Fieldml_CreateEnsembleType( FmlHandle handle, const char * name, const int isComponentType )
+FmlObjectHandle Fieldml_CreateContinuousTypeComponents( FmlHandle handle, FmlObjectHandle typeHandle, const char *name, const int count )
+{
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    if( session == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+    
+    FieldmlObject *object = getObject( session, typeHandle );
+    if( object == NULL )
+    {
+        session->setError( FML_ERR_UNKNOWN_OBJECT );
+        return FML_INVALID_HANDLE;
+    }
+    
+    if( object->type != FHT_CONTINUOUS_TYPE )
+    {
+        session->setError( FML_ERR_INVALID_OBJECT );
+        return FML_INVALID_HANDLE;
+    }
+    
+    ContinuousType *type = (ContinuousType*)object;
+    
+    if( count < 1 )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_4 );
+        return FML_INVALID_HANDLE;
+    }
+    
+    EnsembleType *ensembleType = new EnsembleType( name, true, false );
+    FmlObjectHandle componentHandle = addObject( session, ensembleType );
+    Fieldml_SetEnsembleElementRange( handle, componentHandle, 1, count, 1 );
+    
+    type->componentType = componentHandle;
+    
+    return componentHandle;
+}
+
+
+FmlObjectHandle Fieldml_CreateEnsembleType( FmlHandle handle, const char * name )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2353,14 +2389,14 @@ FmlObjectHandle Fieldml_CreateEnsembleType( FmlHandle handle, const char * name,
         return FML_INVALID_HANDLE;
     }
 
-    EnsembleType *ensembleType = new EnsembleType( name, isComponentType == 1, false );
+    EnsembleType *ensembleType = new EnsembleType( name, false, false );
     
     session->setError( FML_ERR_NO_ERROR );
     return addObject( session, ensembleType );
 }
 
 
-FmlObjectHandle Fieldml_CreateMeshType( FmlHandle handle, const char * name, FmlObjectHandle xiEnsembleDescription )
+FmlObjectHandle Fieldml_CreateMeshType( FmlHandle handle, const char * name )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2368,43 +2404,73 @@ FmlObjectHandle Fieldml_CreateMeshType( FmlHandle handle, const char * name, Fml
         return FML_INVALID_HANDLE;
     }
 
-    FmlObjectHandle xiHandle, elementHandle;
-    string xiName, elementsName;
-
-    if( ( xiEnsembleDescription == FML_INVALID_HANDLE ) ||
-        ( Fieldml_GetObjectType( handle, xiEnsembleDescription ) != FHT_ENSEMBLE_TYPE ) )
-    {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
-        return FML_INVALID_HANDLE;
-    }
-
-    xiName = name;
-    xiName += ".xi";
-    if( Fieldml_GetObjectByName( handle, xiName.c_str() ) != FML_INVALID_HANDLE )
-    {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );
-        return FML_INVALID_HANDLE;
-    }
-
-    elementsName = name;
-    elementsName += ".elements";
-    if( Fieldml_GetObjectByName( handle, elementsName.c_str() ) != FML_INVALID_HANDLE )
-    {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );
-        return FML_INVALID_HANDLE;
-    }
-    
-    ContinuousType *xiObject = new ContinuousType( xiName.c_str(), xiEnsembleDescription, true );
-    xiHandle = addObject( session, xiObject );
-    
-    EnsembleType *elementObject = new EnsembleType( elementsName.c_str(), false, true );
-    elementHandle = addObject( session, elementObject );
-    
-    MeshType *meshType = new MeshType( name, xiHandle, elementHandle, false );
+    MeshType *meshType = new MeshType( name, false );
 
     session->setError( FML_ERR_NO_ERROR );
 
     return addObject( session, meshType );
+}
+
+
+FmlObjectHandle Fieldml_CreateMeshElementsType( FmlHandle handle, FmlObjectHandle meshHandle, const char *name )
+{
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    if( session == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+
+    FieldmlObject *object = getObject( session, meshHandle );
+    if( object == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+
+    if( object->type != FHT_MESH_TYPE )
+    {
+        session->setError( FML_ERR_INVALID_OBJECT );
+        return FML_INVALID_HANDLE;
+    }
+    
+    MeshType *meshType = (MeshType*)object;
+
+    EnsembleType *ensembleType = new EnsembleType( meshType->name + "." + name, false, true );
+    FmlObjectHandle elementsHandle = addObject( session, ensembleType );
+    
+    meshType->elementsType = elementsHandle;
+    
+    return elementsHandle;
+}
+
+
+FmlObjectHandle Fieldml_CreateMeshXiType( FmlHandle handle, FmlObjectHandle meshHandle, const char *name )
+{
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    if( session == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+
+    FieldmlObject *object = getObject( session, meshHandle );
+    if( object == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+
+    if( object->type != FHT_MESH_TYPE )
+    {
+        session->setError( FML_ERR_INVALID_OBJECT );
+        return FML_INVALID_HANDLE;
+    }
+    
+    MeshType *meshType = (MeshType*)object;
+
+    ContinuousType *xiType = new ContinuousType( meshType->name + "." + name, true );
+    FmlObjectHandle xiHandle = addObject( session, xiType );
+    
+    meshType->xiType = xiHandle;
+    
+    return xiHandle;
 }
 
 
@@ -2688,7 +2754,7 @@ int Fieldml_SetEnsembleElementRange( FmlHandle handle, FmlObjectHandle objectHan
     else if( object->type == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType*)object;
-        return Fieldml_SetEnsembleElementRange( handle, meshType->elementType, minElement, maxElement, stride );
+        return Fieldml_SetEnsembleElementRange( handle, meshType->elementsType, minElement, maxElement, stride );
     }
 
     return session->setError( FML_ERR_INVALID_OBJECT );
@@ -2777,6 +2843,7 @@ int Fieldml_AddImport( FmlHandle handle, int importSourceIndex, const char *loca
     
     if( object == FML_INVALID_HANDLE )
     {
+        printf("NO REMOTE OBJECT %s\n", remoteName );//CPL
         session->setError( FML_ERR_INVALID_PARAMETER_4 );  
     }
     else
@@ -3187,7 +3254,7 @@ FmlObjectHandle Fieldml_GetDataObject( FmlHandle handle, FmlObjectHandle objectH
     else if( object->type == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType *)object;
-        return Fieldml_GetDataObject( handle, meshType->elementType );
+        return Fieldml_GetDataObject( handle, meshType->elementsType );
     }
     else
     {

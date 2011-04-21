@@ -61,6 +61,21 @@ static void writeObjectName( xmlTextWriterPtr writer, const xmlChar *attribute, 
 }
 
 
+static void writeObjectName( xmlTextWriterPtr writer, const xmlChar *attribute, FmlHandle handle, int object, string parentName )
+{
+    parentName += ".";
+    
+    string objectName = Fieldml_GetObjectName( handle, object );
+    
+    if( objectName.compare( 0, parentName.length(), parentName ) == 0 )
+    {
+        objectName = objectName.substr( parentName.length(), objectName.length() );
+    }
+
+    xmlTextWriterWriteAttribute( writer, attribute, (const xmlChar*)objectName.c_str() );
+}
+
+
 static void writeIntArray( xmlTextWriterPtr writer, const xmlChar *tag, int count, const int *array )
 {
     int i;
@@ -94,10 +109,10 @@ static void writeIntTableEntry( xmlTextWriterPtr writer, const xmlChar *tagName,
 }
 
 
-static void writeComponentEvaluator( xmlTextWriterPtr writer, const xmlChar *tagName, int key, const char *value )
+static void writeComponentEvaluator( xmlTextWriterPtr writer, const xmlChar *tagName, const xmlChar *attribName, int key, const char *value )
 {
     xmlTextWriterStartElement( writer, tagName );
-    xmlTextWriterWriteFormatAttribute( writer, NUMBER_ATTRIB, "%d", key );
+    xmlTextWriterWriteFormatAttribute( writer, attribName, "%d", key );
     xmlTextWriterWriteAttribute( writer, EVALUATOR_ATTRIB, (const xmlChar*) value );
     xmlTextWriterEndElement( writer );
 }
@@ -178,15 +193,22 @@ static int writeVariables( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectH
 }
 
 
-static int writeContinuousType( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHandle object )
+static int writeContinuousType( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHandle object, const xmlChar *tagName, string parentName )
 {
-    xmlTextWriterStartElement( writer, CONTINUOUS_TYPE_TAG );
-    writeObjectName( writer, NAME_ATTRIB, handle, object );
+    xmlTextWriterStartElement( writer, tagName );
+    writeObjectName( writer, NAME_ATTRIB, handle, object, parentName );
 
     FmlObjectHandle componentType = Fieldml_GetTypeComponentEnsemble( handle, object );
     if( componentType != FML_INVALID_HANDLE )
     {
-        writeObjectName( writer, COMPONENT_ENSEMBLE_ATTRIB, handle, componentType );
+        int count = Fieldml_GetElementCount( handle, componentType );
+        if( count > 0 )
+        {
+            xmlTextWriterStartElement( writer, COMPONENTS_TAG );
+            writeObjectName( writer, NAME_ATTRIB, handle, componentType );
+            xmlTextWriterWriteFormatAttribute( writer, COUNT_ATTRIB, "%d", count );
+            xmlTextWriterEndElement( writer );
+        }
     }
 
     xmlTextWriterEndElement( writer );
@@ -209,7 +231,10 @@ static void writeElements( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectH
         xmlTextWriterStartElement( writer, MEMBER_RANGE_TAG );
         xmlTextWriterWriteFormatAttribute( writer, MIN_ATTRIB, "%d", min );
         xmlTextWriterWriteFormatAttribute( writer, MAX_ATTRIB, "%d", max );
-        xmlTextWriterWriteFormatAttribute( writer, STRIDE_ATTRIB, "%d", stride );
+        if( stride != 1 )
+        {
+            xmlTextWriterWriteFormatAttribute( writer, STRIDE_ATTRIB, "%d", stride );
+        }
         xmlTextWriterEndElement( writer );
     }
     else if( ( type == MEMBER_LIST_DATA ) || ( type == MEMBER_RANGE_DATA ) || ( type == MEMBER_STRIDE_RANGE_DATA ) )
@@ -227,15 +252,15 @@ static void writeElements( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectH
             xmlTextWriterStartElement( writer, MEMBER_STRIDE_RANGE_DATA_TAG );
         }
 
-        int count = Fieldml_GetElementCount( handle, object );
-        
-        xmlTextWriterWriteFormatAttribute( writer, COUNT_ATTRIB, "%d", count );
-
         FmlObjectHandle dataObject = Fieldml_GetDataObject( handle, object );
         if( dataObject != FML_INVALID_HANDLE )
         {
             writeObjectName( writer, DATA_ATTRIB, handle, dataObject );
         }
+
+        int count = Fieldml_GetElementCount( handle, object );
+        
+        xmlTextWriterWriteFormatAttribute( writer, COUNT_ATTRIB, "%d", count );
 
         xmlTextWriterEndElement( writer );
     }
@@ -244,15 +269,16 @@ static void writeElements( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectH
 }
 
 
-static int writeEnsembleType( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHandle object )
+static int writeEnsembleType( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHandle object, const xmlChar *tagName, string parentName )
 {
-    xmlTextWriterStartElement( writer, ENSEMBLE_TYPE_TAG );
-    writeObjectName( writer, NAME_ATTRIB, handle, object );
     if( Fieldml_IsEnsembleComponentType( handle, object ) == 1 )
     {
-        xmlTextWriterWriteAttribute( writer, IS_COMPONENT_ENSEMBLE_ATTRIB, (const xmlChar*)STRING_TRUE );
+        return 0;
     }
     
+    xmlTextWriterStartElement( writer, tagName );
+
+    writeObjectName( writer, NAME_ATTRIB, handle, object, parentName );
     writeElements( writer, handle, object, MEMBERS_TAG );
 
     xmlTextWriterEndElement( writer );
@@ -267,18 +293,20 @@ static int writeMeshType( xmlTextWriterPtr writer, FmlHandle handle, FmlObjectHa
     
     writeObjectName( writer, NAME_ATTRIB, handle, object );
     
-    FmlObjectHandle xiType = Fieldml_GetMeshXiType( handle, object );
-    FmlObjectHandle xiComponents = Fieldml_GetTypeComponentEnsemble( handle, xiType );
-    if( xiComponents != FML_INVALID_HANDLE )
+    FmlObjectHandle elementsType = Fieldml_GetMeshElementsType( handle, object );
+    if( elementsType != FML_INVALID_HANDLE )
     {
-        writeObjectName( writer, XI_COMPONENT_ATTRIB, handle, xiComponents );
+        writeEnsembleType( writer, handle, elementsType, ELEMENTS_TAG, Fieldml_GetObjectName( handle, object ) );
+    }
+
+    FmlObjectHandle xiType = Fieldml_GetMeshXiType( handle, object );
+    if( xiType != FML_INVALID_HANDLE )
+    {
+        writeContinuousType( writer, handle, xiType, XI_TAG, Fieldml_GetObjectName( handle, object ) );
     }
     
-    FmlObjectHandle elementType = Fieldml_GetMeshElementType( handle, object );
-    int elementCount = Fieldml_GetElementCount( handle, elementType );
-
-    writeElements( writer, handle, Fieldml_GetMeshElementType( handle, object ), ELEMENTS_TAG );
-
+    int elementCount = Fieldml_GetElementCount( handle, elementsType );
+    
     xmlTextWriterStartElement( writer, MESH_SHAPES_TAG );
     const char *defaultShape = Fieldml_GetMeshDefaultShape( handle, object );
     if( defaultShape != NULL )
@@ -467,7 +495,7 @@ static int writePiecewiseEvaluator( xmlTextWriterPtr writer, FmlHandle handle, F
             {
                 continue;
             }
-            writeComponentEvaluator( writer, ELEMENT_EVALUATOR_TAG, element, Fieldml_GetObjectName( handle, evaluator ) );
+            writeComponentEvaluator( writer, ELEMENT_EVALUATOR_TAG, INDEX_VALUE_ATTRIB, element, Fieldml_GetObjectName( handle, evaluator ) );
         }
 
         xmlTextWriterEndElement( writer );
@@ -586,7 +614,7 @@ static int writeAggregateEvaluator( xmlTextWriterPtr writer, FmlHandle handle, F
             {
                 continue;
             }
-            writeComponentEvaluator( writer, COMPONENT_EVALUATOR_TAG, element, Fieldml_GetObjectName( handle, evaluator ) );
+            writeComponentEvaluator( writer, COMPONENT_EVALUATOR_TAG, COMPONENT_ATTRIB, element, Fieldml_GetObjectName( handle, evaluator ) );
         }
 
         xmlTextWriterEndElement( writer );
@@ -603,9 +631,9 @@ static int writeFieldmlObject( xmlTextWriterPtr writer, FmlHandle handle, FmlObj
     switch( Fieldml_GetObjectType( handle, object ) )
     {
     case FHT_CONTINUOUS_TYPE:
-        return writeContinuousType( writer, handle, object );
+        return writeContinuousType( writer, handle, object, CONTINUOUS_TYPE_TAG, "" );
     case FHT_ENSEMBLE_TYPE:
-        return writeEnsembleType( writer, handle, object );
+        return writeEnsembleType( writer, handle, object, ENSEMBLE_TYPE_TAG, "" );
     case FHT_MESH_TYPE:
         return writeMeshType( writer, handle, object );
     case FHT_DATA_OBJECT:

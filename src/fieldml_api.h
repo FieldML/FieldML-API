@@ -326,13 +326,15 @@ int Fieldml_GetTypeComponentCount( FmlHandle handle, FmlObjectHandle objectHandl
 /**
  *      Creates an ensemble type with the given name.
  */
-FmlObjectHandle Fieldml_CreateEnsembleType( FmlHandle handle, const char * name, const int isComponentEnsemble );
+FmlObjectHandle Fieldml_CreateEnsembleType( FmlHandle handle, const char * name );
 
 
 /**
  *      Creates a continuous type with the given name and component ensemble.
  */
-FmlObjectHandle Fieldml_CreateContinuousType( FmlHandle handle, const char * name, FmlObjectHandle componentHandle );
+FmlObjectHandle Fieldml_CreateContinuousType( FmlHandle handle, const char * name );
+
+FmlObjectHandle Fieldml_CreateContinuousTypeComponents( FmlHandle handle, FmlObjectHandle typeHandle, const char *name, const int count );
 
 /**
  *      Creates a mesh type with the given name, and with the given dimensionality.
@@ -341,7 +343,11 @@ FmlObjectHandle Fieldml_CreateContinuousType( FmlHandle handle, const char * nam
  *      that neither the mesh's name, nor it's element or xi type names are already in use. If they are,
  *      this function will return an error.
  */
-FmlObjectHandle Fieldml_CreateMeshType( FmlHandle handle, const char * name, FmlObjectHandle xiComponentHandle );
+FmlObjectHandle Fieldml_CreateMeshType( FmlHandle handle, const char * name );
+
+FmlObjectHandle Fieldml_CreateMeshElementsType( FmlHandle handle, FmlObjectHandle meshHandle, const char *name );
+
+FmlObjectHandle Fieldml_CreateMeshXiType( FmlHandle handle, FmlObjectHandle meshHandle, const char *name );
 
 
 /**
@@ -363,7 +369,7 @@ FmlObjectHandle Fieldml_GetMeshXiComponentType( FmlHandle handle, FmlObjectHandl
  *     type whose elements are specified by the user. If the mesh's name is "*", the element type's
  *     name is "*.element"
  */
-FmlObjectHandle Fieldml_GetMeshElementType( FmlHandle handle, FmlObjectHandle objectHandle );
+FmlObjectHandle Fieldml_GetMeshElementsType( FmlHandle handle, FmlObjectHandle objectHandle );
 
 
 /**

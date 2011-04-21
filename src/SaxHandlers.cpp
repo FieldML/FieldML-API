@@ -331,11 +331,11 @@ SaxHandler *RegionSaxHandler::onElementStart( const xmlChar *elementName, SaxAtt
     }
     if( xmlStrcmp( elementName, ENSEMBLE_TYPE_TAG ) == 0 )
     {
-        return new EnsembleTypeSaxHandler( this, elementName, attributes ); 
+        return new EnsembleTypeSaxHandler( this, elementName, attributes, FML_INVALID_HANDLE ); 
     }
     if( xmlStrcmp( elementName, CONTINUOUS_TYPE_TAG ) == 0 )
     {
-        return new ContinuousTypeSaxHandler( this, elementName, attributes ); 
+        return new ContinuousTypeSaxHandler( this, elementName, attributes, FML_INVALID_HANDLE ); 
     }
     if( xmlStrcmp( elementName, MESH_TYPE_TAG ) == 0 )
     {
@@ -382,13 +382,7 @@ FieldmlSaxHandler *RegionSaxHandler::getParent()
 }
 
 
-FieldmlRegion *RegionSaxHandler::getRegion()
-{
-    return region;
-}
-
-
-FieldmlObjectSaxHandler::FieldmlObjectSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName ) :
+FieldmlObjectSaxHandler::FieldmlObjectSaxHandler( SaxHandler *_parent, const xmlChar *elementName ) :
     SaxHandler( elementName ),
     parent( _parent ),
     handle( FML_INVALID_HANDLE )
@@ -396,19 +390,13 @@ FieldmlObjectSaxHandler::FieldmlObjectSaxHandler( RegionSaxHandler *_parent, con
 }
 
 
-RegionSaxHandler *FieldmlObjectSaxHandler::getParent()
+SaxHandler *FieldmlObjectSaxHandler::getParent()
 {
     return parent;
 }
 
 
-FieldmlRegion *FieldmlObjectSaxHandler::getRegion()
-{
-    return parent->getRegion();
-}
-
-
-ContinuousTypeSaxHandler::ContinuousTypeSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
+ContinuousTypeSaxHandler::ContinuousTypeSaxHandler( SaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes, FmlObjectHandle mesh ) :
     FieldmlObjectSaxHandler( _parent, elementName )
 {
     handle = FML_INVALID_HANDLE;
@@ -420,9 +408,14 @@ ContinuousTypeSaxHandler::ContinuousTypeSaxHandler( RegionSaxHandler *_parent, c
         return;
     }
 
-    FmlObjectHandle componentHandle = attributes.getObjectAttribute( getSessionHandle(), COMPONENT_ENSEMBLE_ATTRIB );
-
-    handle = Fieldml_CreateContinuousType( getSessionHandle(), name, componentHandle );
+    if( mesh != FML_INVALID_HANDLE )
+    {
+        handle = Fieldml_CreateMeshXiType( getSessionHandle(), mesh, name );
+    }
+    else
+    {
+        handle = Fieldml_CreateContinuousType( getSessionHandle(), name );
+    }
     if( handle == FML_INVALID_HANDLE )
     {
         getSession()->logError( "ContinuousType creation failed", name );
@@ -432,6 +425,21 @@ ContinuousTypeSaxHandler::ContinuousTypeSaxHandler( RegionSaxHandler *_parent, c
 
 SaxHandler *ContinuousTypeSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
+    if( xmlStrcmp( elementName, COMPONENTS_TAG ) == 0 )
+    {
+        const char *name = attributes.getAttribute( NAME_ATTRIB );
+        int count = attributes.getIntAttribute( COUNT_ATTRIB, 0 );
+        
+        if( ( name == NULL ) || ( count < 0 ) )
+        {
+            getSession()->logError( "ContinuousType has invalid component specification", name );
+        }
+        else
+        {
+            Fieldml_CreateContinuousTypeComponents( getSessionHandle(), handle, name, count );
+        }
+    }
+    
     return this;
 }
 
@@ -589,7 +597,7 @@ SaxHandler *ImportSaxHandler::getParent()
 }
 
 
-EnsembleTypeSaxHandler::EnsembleTypeSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
+EnsembleTypeSaxHandler::EnsembleTypeSaxHandler( SaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes, FmlObjectHandle mesh ) :
     FieldmlObjectSaxHandler( _parent, elementName )
 {
     handle = FML_INVALID_HANDLE;
@@ -601,9 +609,15 @@ EnsembleTypeSaxHandler::EnsembleTypeSaxHandler( RegionSaxHandler *_parent, const
         return;
     }
     
-    const bool isComponentEnsemble = attributes.getBooleanAttribute( IS_COMPONENT_ENSEMBLE_ATTRIB );
+    if( mesh != FML_INVALID_HANDLE )
+    {
+        handle = Fieldml_CreateMeshElementsType( getSessionHandle(), mesh, name );
+    }
+    else
+    {
+        handle = Fieldml_CreateEnsembleType( getSessionHandle(), name );
+    }
     
-    handle = Fieldml_CreateEnsembleType( getSessionHandle(), name, isComponentEnsemble ? 1 : 0 );
     if( handle == FML_INVALID_HANDLE )
     {
         getSession()->logError( "EnsembleType creation failed", name );
@@ -632,14 +646,7 @@ MeshTypeSaxHandler::MeshTypeSaxHandler( RegionSaxHandler *_parent, const xmlChar
         return;
     }
 
-    FmlObjectHandle xiComponent = attributes.getObjectAttribute( getSessionHandle(), XI_COMPONENT_ATTRIB );
-    if( xiComponent == FML_INVALID_HANDLE )
-    {
-        getSession()->logError( "MeshType has no xi component", name );
-        return;
-    }
-    
-    handle = Fieldml_CreateMeshType( getSessionHandle(), name, xiComponent );
+    handle = Fieldml_CreateMeshType( getSessionHandle(), name );
     if( handle == FML_INVALID_HANDLE )
     {
         getSession()->logError( "MeshType creation failed", name );
@@ -653,9 +660,13 @@ SaxHandler *MeshTypeSaxHandler::onElementStart( const xmlChar *elementName, SaxA
     {
         return new MeshShapesSaxHandler( this, elementName, attributes );
     }
+    else if( xmlStrcmp( elementName, XI_TAG ) == 0 )
+    {
+        return new ContinuousTypeSaxHandler( this, elementName, attributes, handle );
+    }
     else if( xmlStrcmp( elementName, ELEMENTS_TAG ) == 0 )
     {
-        return new EnsembleElementsHandler( this, elementName, attributes );
+        return new EnsembleTypeSaxHandler( this, elementName, attributes, handle );
     }
     
     return this;
@@ -890,7 +901,7 @@ SaxHandler * PiecewiseEvaluatorSaxHandler::onElementStart( const xmlChar *elemen
         {
             Fieldml_SetDefaultEvaluator( getSessionHandle(), handle, defaultHandle );
         }
-        return new IntObjectMapSaxHandler( this, elementName, ELEMENT_EVALUATOR_TAG, getRegion(), this, 0 );
+        return new IntObjectMapSaxHandler( this, elementName, ELEMENT_EVALUATOR_TAG, INDEX_VALUE_ATTRIB, this, 0 );
     }
     else if( xmlStrcmp( elementName, VARIABLES_TAG ) == 0 )
     {
@@ -960,7 +971,7 @@ SaxHandler * AggregateEvaluatorSaxHandler::onElementStart( const xmlChar *elemen
         {
             Fieldml_SetDefaultEvaluator( getSessionHandle(), handle, defaultHandle );
         }
-        return new IntObjectMapSaxHandler( this, elementName, COMPONENT_EVALUATOR_TAG, getRegion(), this, 0 );
+        return new IntObjectMapSaxHandler( this, elementName, COMPONENT_EVALUATOR_TAG, COMPONENT_ATTRIB, this, 0 );
     }
     else if( xmlStrcmp( elementName, VARIABLES_TAG ) == 0 )
     {
@@ -1211,21 +1222,20 @@ SaxHandler *SemidenseSaxHandler::onElementStart( const xmlChar *elementName, Sax
 {
     if( xmlStrcmp( elementName, DENSE_INDEXES_TAG ) == 0 )
     {
-        return new IndexEvaluatorListSaxHandler( this, elementName, parent->getRegion(), this, 0 );
+        return new IndexEvaluatorListSaxHandler( this, elementName, this, 0 );
     }
     else if( xmlStrcmp( elementName, SPARSE_INDEXES_TAG ) == 0 )
     {
-        return new IndexEvaluatorListSaxHandler( this, elementName, parent->getRegion(), this, 1 );
+        return new IndexEvaluatorListSaxHandler( this, elementName, this, 1 );
     }
     
     return this;
 }
 
 
-IndexEvaluatorListSaxHandler::IndexEvaluatorListSaxHandler( SemidenseSaxHandler *_parent, const xmlChar *elementName, FieldmlRegion *_region, SemidenseSaxHandler *_handler, int _isSparse ) :
+IndexEvaluatorListSaxHandler::IndexEvaluatorListSaxHandler( SemidenseSaxHandler *_parent, const xmlChar *elementName, SemidenseSaxHandler *_handler, int _isSparse ) :
     SaxHandler( elementName ),
     parent( _parent ),
-    region( _region ),
     handler( _handler ),
     isSparse( _isSparse )
 {
@@ -1337,10 +1347,10 @@ CharacterAccumulatorSaxHandler::~CharacterAccumulatorSaxHandler()
 }
 
 
-IntObjectMapSaxHandler::IntObjectMapSaxHandler( SaxHandler *_parent, const xmlChar *elementName, const xmlChar *_entryTagName, FieldmlRegion *_region, IntObjectMapHandler *_handler, int _mapId ) :
+IntObjectMapSaxHandler::IntObjectMapSaxHandler( SaxHandler *_parent, const xmlChar *elementName, const xmlChar *_entryTagName, const xmlChar *_entryAttribName, IntObjectMapHandler *_handler, int _mapId ) :
     SaxHandler( elementName ),
     entryTagName( _entryTagName ),
-    region( _region ),
+    entryAttribName( _entryAttribName ),
     parent( _parent ),
     handler( _handler ),
     mapId( _mapId )
@@ -1352,7 +1362,7 @@ SaxHandler *IntObjectMapSaxHandler::onElementStart( const xmlChar *elementName, 
 {
     if( xmlStrcmp( elementName, entryTagName ) == 0 )
     {
-        int key = attributes.getIntAttribute( NUMBER_ATTRIB, -1 );
+        int key = attributes.getIntAttribute( entryAttribName, -1 );
         FmlObjectHandle value = attributes.getObjectAttribute( getSessionHandle(), EVALUATOR_ATTRIB );
         handler->onIntObjectMapEntry( key, value, mapId );
     }

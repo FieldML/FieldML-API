@@ -48,53 +48,48 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
  <Region name=\"library\"> \
   <ContinuousType name=\"library.real.1d\"/> \
   <AbstractEvaluator name=\"library.real.1d.variable\" valueType=\"library.real.1d\"/> \
-  <EnsembleType name=\"library.ensemble.generic.2d\" isComponentEnsemble=\"true\"> \
-   <Members> \
-    <MemberRange min=\"1\" max=\"2\"/> \
-   </Members> \
-  </EnsembleType> \
-  <AbstractEvaluator name=\"library.ensemble.generic.2d.variable\" valueType=\"library.ensemble.generic.2d\"/> \
-  <ContinuousType name=\"library.real.2d\" componentEnsemble=\"library.ensemble.generic.2d\"/> \
+ \
+  <ContinuousType name=\"library.real.2d\"> \
+    <Components name=\"library.real.2d.component\" count=\"2\"/> \
+  </ContinuousType> \
+  <AbstractEvaluator name=\"library.real.2d.component.variable\" valueType=\"library.real.2d.component\"/> \
   <AbstractEvaluator name=\"library.real.2d.variable\" valueType=\"library.real.2d\"/> \
-  <EnsembleType name=\"library.ensemble.generic.3d\" isComponentEnsemble=\"true\"> \
-   <Members> \
-    <MemberRange min=\"1\" max=\"3\"/> \
-   </Members> \
-  </EnsembleType> \
-  <AbstractEvaluator name=\"library.ensemble.generic.3d.variable\" valueType=\"library.ensemble.generic.3d\"/> \
-  <ContinuousType name=\"library.real.3d\" componentEnsemble=\"library.ensemble.generic.3d\"/> \
+ \
+  <ContinuousType name=\"library.real.3d\"> \
+    <Components name=\"library.real.3d.component\" count=\"3\"/> \
+  </ContinuousType> \
+  <AbstractEvaluator name=\"library.real.3d.component.variable\" valueType=\"library.real.3d.component\"/> \
   <AbstractEvaluator name=\"library.real.3d.variable\" valueType=\"library.real.3d\"/> \
-  <EnsembleType name=\"library.ensemble.xi.1d\" isComponentEnsemble=\"true\"> \
-   <Members> \
-    <MemberRange min=\"1\" max=\"1\"/> \
-   </Members> \
-  </EnsembleType> \
-  <AbstractEvaluator name=\"library.ensemble.xi.1d.variable\" valueType=\"library.ensemble.xi.1d\"/> \
-  <ContinuousType name=\"library.xi.1d\" componentEnsemble=\"library.ensemble.xi.1d\"/> \
+ \
+  <ContinuousType name=\"library.xi.1d\"> \
+    <Components name=\"library.xi.1d.component\" count=\"1\"/> \
+  </ContinuousType> \
+  <AbstractEvaluator name=\"library.xi.1d.component.variable\" valueType=\"library.xi.1d.component\"/> \
   <AbstractEvaluator name=\"library.xi.1d.variable\" valueType=\"library.xi.1d\"/> \
-  <EnsembleType name=\"library.ensemble.xi.2d\" isComponentEnsemble=\"true\"> \
-   <Members> \
-    <MemberRange min=\"1\" max=\"2\"/> \
-   </Members> \
-  </EnsembleType> \
-  <AbstractEvaluator name=\"library.ensemble.xi.2d.variable\" valueType=\"library.ensemble.xi.2d\"/> \
-  <ContinuousType name=\"library.xi.2d\" componentEnsemble=\"library.ensemble.xi.2d\"/> \
+ \
+  <ContinuousType name=\"library.xi.2d\"> \
+    <Components name=\"library.xi.2d.component\" count=\"2\"/> \
+  </ContinuousType> \
+  <AbstractEvaluator name=\"library.xi.2d.component.variable\" valueType=\"library.xi.2d.component\"/> \
   <AbstractEvaluator name=\"library.xi.2d.variable\" valueType=\"library.xi.2d\"/> \
-  <EnsembleType name=\"library.ensemble.xi.3d\" isComponentEnsemble=\"true\"> \
-   <Members> \
-    <MemberRange min=\"1\" max=\"3\"/> \
-   </Members> \
-  </EnsembleType> \
-  <AbstractEvaluator name=\"library.ensemble.xi.3d.variable\" valueType=\"library.ensemble.xi.3d\"/> \
-  <ContinuousType name=\"library.xi.3d\" componentEnsemble=\"library.ensemble.xi.3d\"/> \
+ \
+  <ContinuousType name=\"library.xi.3d\"> \
+    <Components name=\"library.xi.3d.component\" count=\"3\"/> \
+  </ContinuousType> \
+  <AbstractEvaluator name=\"library.xi.3d.component.variable\" valueType=\"library.xi.3d.component\"/> \
   <AbstractEvaluator name=\"library.xi.3d.variable\" valueType=\"library.xi.3d\"/> \
-  <EnsembleType name=\"library.localNodes.1d.line2\" isComponentEnsemble=\"true\"> \
+ \
+  <EnsembleType name=\"library.localNodes.1d.line2\"> \
    <Members> \
     <MemberRange min=\"1\" max=\"2\"/> \
    </Members> \
   </EnsembleType> \
   <AbstractEvaluator name=\"library.localNodes.1d.line2.variable\" valueType=\"library.localNodes.1d.line2\"/> \
-  <ContinuousType name=\"library.parameters.1d.linearLagrange\" componentEnsemble=\"library.localNodes.1d.line2\"/> \
+ \
+  <ContinuousType name=\"library.parameters.1d.linearLagrange\"> \
+    <Components name=\"library.parameters.1d.linearLagrange.component\" count=\"2\"/> \
+  </ContinuousType> \
+  <AbstractEvaluator name=\"library.parameters.1d.linearLagrange.component.variable\" valueType=\"library.parameters.1d.linearLagrange.component\"/> \
   <AbstractEvaluator name=\"library.parameters.1d.linearLagrange.variable\" valueType=\"library.parameters.1d.linearLagrange\"/> \
  \
   <ExternalEvaluator name=\"library.interpolator.1d.unit.linearLagrange\" valueType=\"library.real.1d\"> \
@@ -104,13 +99,17 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     </Variables> \
   </ExternalEvaluator> \
  \
-  <EnsembleType name=\"library.localNodes.1d.line3\" isComponentEnsemble=\"true\"> \
+  <EnsembleType name=\"library.localNodes.1d.line3\"> \
    <Members> \
     <MemberRange min=\"1\" max=\"3\"/> \
    </Members> \
   </EnsembleType> \
   <AbstractEvaluator name=\"library.localNodes.1d.line3.variable\" valueType=\"library.localNodes.1d.line3\"/> \
-  <ContinuousType name=\"library.parameters.1d.quadraticLagrange\" componentEnsemble=\"library.localNodes.1d.line3\"/> \
+ \
+  <ContinuousType name=\"library.parameters.1d.quadraticLagrange\"> \
+    <Components name=\"library.parameters.1d.quadraticLagrange.component\" count=\"3\"/> \
+  </ContinuousType> \
+  <AbstractEvaluator name=\"library.parameters.1d.quadraticLagrange.component.variable\" valueType=\"library.parameters.1d.quadraticLagrange.component\"/> \
   <AbstractEvaluator name=\"library.parameters.1d.quadraticLagrange.variable\" valueType=\"library.parameters.1d.quadraticLagrange\"/> \
  \
   <ExternalEvaluator name=\"library.interpolator.1d.unit.quadraticLagrange\" valueType=\"library.real.1d\"> \
@@ -120,14 +119,18 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     </Variables> \
   </ExternalEvaluator> \
  \
-  <EnsembleType name=\"library.localNodes.2d.square2x2\" isComponentEnsemble=\"true\"> \
+  <EnsembleType name=\"library.localNodes.2d.square2x2\"> \
    <Members> \
     <MemberRange min=\"1\" max=\"4\"/> \
    </Members> \
   </EnsembleType> \
   <AbstractEvaluator name=\"library.localNodes.2d.square2x2.variable\" valueType=\"library.localNodes.2d.square2x2\"/> \
-  <ContinuousType name=\"library.parameters.2d.bilinearLagrange\" componentEnsemble=\"library.localNodes.2d.square2x2\"/> \
+ \
+  <ContinuousType name=\"library.parameters.2d.bilinearLagrange\"> \
+    <Components name=\"library.parameters.2d.bilinearLagrange.component\" count=\"4\"/> \
+  </ContinuousType> \
   <AbstractEvaluator name=\"library.parameters.2d.bilinearLagrange.variable\" valueType=\"library.parameters.2d.bilinearLagrange\"/> \
+  <AbstractEvaluator name=\"library.parameters.2d.bilinearLagrange.component.variable\" valueType=\"library.parameters.2d.bilinearLagrange.component\"/> \
  \
   <ExternalEvaluator name=\"library.interpolator.2d.unit.bilinearLagrange\" valueType=\"library.real.1d\"> \
     <Variables> \
@@ -136,14 +139,18 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     </Variables> \
   </ExternalEvaluator> \
  \
-  <EnsembleType name=\"library.localNodes.2d.square3x3\" isComponentEnsemble=\"true\"> \
+  <EnsembleType name=\"library.localNodes.2d.square3x3\"> \
    <Members> \
     <MemberRange min=\"1\" max=\"9\"/> \
    </Members> \
   </EnsembleType> \
   <AbstractEvaluator name=\"library.localNodes.2d.square3x3.variable\" valueType=\"library.localNodes.2d.square3x3\"/> \
-  <ContinuousType name=\"library.parameters.2d.biquadraticLagrange\" componentEnsemble=\"library.localNodes.2d.square3x3\"/> \
+ \
+  <ContinuousType name=\"library.parameters.2d.biquadraticLagrange\"> \
+    <Components name=\"library.parameters.2d.biquadraticLagrange.component\" count=\"9\"/> \
+  </ContinuousType> \
   <AbstractEvaluator name=\"library.parameters.2d.biquadraticLagrange.variable\" valueType=\"library.parameters.2d.biquadraticLagrange\"/> \
+  <AbstractEvaluator name=\"library.parameters.2d.biquadraticLagrange.component.variable\" valueType=\"library.parameters.2d.biquadraticLagrange.component\"/> \
  \
   <ExternalEvaluator name=\"library.interpolator.2d.unit.biquadraticLagrange\" valueType=\"library.real.1d\"> \
     <Variables> \
@@ -152,13 +159,16 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     </Variables> \
   </ExternalEvaluator> \
  \
-  <EnsembleType name=\"library.localNodes.3d.cube2x2x2\" isComponentEnsemble=\"true\"> \
+  <EnsembleType name=\"library.localNodes.3d.cube2x2x2\"> \
    <Members> \
     <MemberRange min=\"1\" max=\"8\"/> \
    </Members> \
   </EnsembleType> \
   <AbstractEvaluator name=\"library.localNodes.3d.cube2x2x2.variable\" valueType=\"library.localNodes.3d.cube2x2x2\"/> \
-  <ContinuousType name=\"library.parameters.3d.trilinearLagrange\" componentEnsemble=\"library.localNodes.3d.cube2x2x2\"/> \
+ \
+  <ContinuousType name=\"library.parameters.3d.trilinearLagrange\"> \
+    <Components name=\"library.parameters.3d.trilinearLagrange.component\" count=\"8\"/> \
+  </ContinuousType> \
   <AbstractEvaluator name=\"library.parameters.3d.trilinearLagrange.variable\" valueType=\"library.parameters.3d.trilinearLagrange\"/> \
  \
   <ExternalEvaluator name=\"library.interpolator.3d.unit.trilinearLagrange\" valueType=\"library.real.1d\"> \
@@ -168,14 +178,18 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     </Variables> \
   </ExternalEvaluator> \
  \
-  <EnsembleType name=\"library.localNodes.3d.cube3x3x3\" isComponentEnsemble=\"true\"> \
+  <EnsembleType name=\"library.localNodes.3d.cube3x3x3\"> \
    <Members> \
     <MemberRange min=\"1\" max=\"27\"/> \
    </Members> \
   </EnsembleType> \
   <AbstractEvaluator name=\"library.localNodes.3d.cube3x3x3.variable\" valueType=\"library.localNodes.3d.cube3x3x3\"/> \
-  <ContinuousType name=\"library.parameters.3d.triquadraticLagrange\" componentEnsemble=\"library.localNodes.3d.cube3x3x3\"/> \
+ \
+  <ContinuousType name=\"library.parameters.3d.triquadraticLagrange\"> \
+    <Components name=\"library.parameters.3d.triquadraticLagrange.component\" count=\"27\"/> \
+  </ContinuousType> \
   <AbstractEvaluator name=\"library.parameters.3d.triquadraticLagrange.variable\" valueType=\"library.parameters.3d.triquadraticLagrange\"/> \
+  <AbstractEvaluator name=\"library.parameters.3d.triquadraticLagrange.component.variable\" valueType=\"library.parameters.3d.triquadraticLagrange.component\"/> \
  \
   <ExternalEvaluator name=\"library.interpolator.3d.unit.triquadraticLagrange\" valueType=\"library.real.1d\"> \
     <Variables> \
@@ -187,32 +201,23 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
   <ContinuousType name=\"library.coordinates.rc.1d\"/> \
   <AbstractEvaluator name=\"library.coordinates.rc.1d.variable\" valueType=\"library.coordinates.rc.1d\"/> \
  \
-  <EnsembleType name=\"library.ensemble.rc.2d\" isComponentEnsemble=\"true\"> \
-   <Members> \
-    <MemberRange min=\"1\" max=\"2\"/> \
-   </Members> \
-  </EnsembleType> \
-  <AbstractEvaluator name=\"library.ensemble.rc.2d.variable\" valueType=\"library.ensemble.rc.2d\"/> \
-  <ContinuousType name=\"library.coordinates.rc.2d\" componentEnsemble=\"library.ensemble.rc.2d\"/> \
+  <ContinuousType name=\"library.coordinates.rc.2d\"> \
+    <Components name=\"library.coordinates.rc.2d.component\" count=\"2\"/> \
+  </ContinuousType> \
   <AbstractEvaluator name=\"library.coordinates.rc.2d.variable\" valueType=\"library.coordinates.rc.2d\"/> \
+  <AbstractEvaluator name=\"library.coordinates.rc.2d.component.variable\" valueType=\"library.coordinates.rc.2d.component\"/> \
  \
-  <EnsembleType name=\"library.ensemble.rc.3d\" isComponentEnsemble=\"true\"> \
-   <Members> \
-    <MemberRange min=\"1\" max=\"3\"/> \
-   </Members> \
-  </EnsembleType> \
-  <AbstractEvaluator name=\"library.ensemble.rc.3d.variable\" valueType=\"library.ensemble.rc.3d\"/> \
-  <ContinuousType name=\"library.coordinates.rc.3d\" componentEnsemble=\"library.ensemble.rc.3d\"/> \
+  <ContinuousType name=\"library.coordinates.rc.3d\"> \
+    <Components name=\"library.coordinates.rc.3d.component\" count=\"3\"/> \
+  </ContinuousType> \
   <AbstractEvaluator name=\"library.coordinates.rc.3d.variable\" valueType=\"library.coordinates.rc.3d\"/> \
+  <AbstractEvaluator name=\"library.coordinates.rc.3d.component.variable\" valueType=\"library.coordinates.rc.3d.component\"/> \
  \
-  <EnsembleType name=\"library.parameters.1d.cubicHermite.ensemble\" isComponentEnsemble=\"true\"> \
-   <Members> \
-    <MemberRange min=\"1\" max=\"4\"/> \
-   </Members> \
-  </EnsembleType> \
-  <AbstractEvaluator name=\"library.parameters.1d.cubicHermite.ensemble.variable\" valueType=\"library.parameters.1d.cubicHermite.ensemble\"/> \
-  <ContinuousType name=\"library.parameters.1d.cubicHermite\" componentEnsemble=\"library.parameters.1d.cubicHermite.ensemble\"/> \
+  <ContinuousType name=\"library.parameters.1d.cubicHermite\"> \
+    <Components name=\"library.parameters.1d.cubicHermite.component\" count=\"4\"/> \
+  </ContinuousType> \
   <AbstractEvaluator name=\"library.parameters.1d.cubicHermite.variable\" valueType=\"library.parameters.1d.cubicHermite\"/> \
+  <AbstractEvaluator name=\"library.parameters.1d.cubicHermite.component.variable\" valueType=\"library.parameters.1d.cubicHermite.component\"/> \
   <AbstractEvaluator name=\"library.parameters.1d.cubicHermiteScaling.variable\" valueType=\"library.parameters.1d.cubicHermite\"/> \
  \
   <ExternalEvaluator name=\"library.interpolator.1d.unit.cubicHermite\" valueType=\"library.real.1d\"> \
@@ -230,14 +235,11 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     </Variables> \
   </ExternalEvaluator> \
  \
-  <EnsembleType name=\"library.parameters.2d.bicubicHermite.ensemble\" isComponentEnsemble=\"true\"> \
-   <Members> \
-    <MemberRange min=\"1\" max=\"16\"/> \
-   </Members> \
-  </EnsembleType> \
-  <AbstractEvaluator name=\"library.parameters.2d.bicubicHermite.ensemble.variable\" valueType=\"library.parameters.2d.bicubicHermite.ensemble\"/> \
-  <ContinuousType name=\"library.parameters.2d.bicubicHermite\" componentEnsemble=\"library.parameters.2d.bicubicHermite.ensemble\"/> \
+  <ContinuousType name=\"library.parameters.2d.bicubicHermite\"> \
+    <Components name=\"library.parameters.2d.bicubicHermite.component\" count=\"16\"/> \
+  </ContinuousType> \
   <AbstractEvaluator name=\"library.parameters.2d.bicubicHermite.variable\" valueType=\"library.parameters.2d.bicubicHermite\"/> \
+  <AbstractEvaluator name=\"library.parameters.2d.bicubicHermite.component.variable\" valueType=\"library.parameters.2d.bicubicHermite.component\"/> \
   <AbstractEvaluator name=\"library.parameters.2d.bicubicHermiteScaling.variable\" valueType=\"library.parameters.2d.bicubicHermite\"/> \
  \
   <ExternalEvaluator name=\"library.interpolator.2d.unit.bicubicHermite\" valueType=\"library.real.1d\"> \
@@ -255,14 +257,11 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     </Variables> \
   </ExternalEvaluator> \
  \
-  <EnsembleType name=\"library.parameters.3d.tricubicHermite.ensemble\" isComponentEnsemble=\"true\"> \
-   <Members> \
-    <MemberRange min=\"1\" max=\"64\"/> \
-   </Members> \
-  </EnsembleType> \
-  <AbstractEvaluator name=\"library.parameters.3d.tricubicHermite.ensemble.variable\" valueType=\"library.parameters.3d.tricubicHermite.ensemble\"/> \
-  <ContinuousType name=\"library.parameters.3d.tricubicHermite\" componentEnsemble=\"library.parameters.3d.tricubicHermite.ensemble\"/> \
+  <ContinuousType name=\"library.parameters.3d.tricubicHermite\"> \
+    <Components name=\"library.parameters.3d.tricubicHermite.component\" count=\"64\"/> \
+  </ContinuousType> \
   <AbstractEvaluator name=\"library.parameters.3d.tricubicHermite.variable\" valueType=\"library.parameters.3d.tricubicHermite\"/> \
+  <AbstractEvaluator name=\"library.parameters.3d.tricubicHermite.component.variable\" valueType=\"library.parameters.3d.tricubicHermite.component\"/> \
   <AbstractEvaluator name=\"library.parameters.3d.tricubicHermiteScaling.variable\" valueType=\"library.parameters.3d.tricubicHermite\"/> \
  \
   <ExternalEvaluator name=\"library.interpolator.3d.unit.tricubicHermite\" valueType=\"library.real.1d\"> \
@@ -283,14 +282,18 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
  \
 <!-- SIMPLEX OBJECTS--> \
  \
-  <EnsembleType name=\"library.localNodes.2d.triangle2x2\" isComponentEnsemble=\"true\"> \
+  <EnsembleType name=\"library.localNodes.2d.triangle2x2\"> \
    <Members> \
     <MemberRange min=\"1\" max=\"3\"/> \
    </Members> \
   </EnsembleType> \
   <AbstractEvaluator name=\"library.localNodes.2d.triangle2x2.variable\" valueType=\"library.localNodes.2d.triangle2x2\"/> \
-  <ContinuousType name=\"library.parameters.2d.bilinearSimplex\" componentEnsemble=\"library.localNodes.2d.triangle2x2\"/> \
+ \
+  <ContinuousType name=\"library.parameters.2d.bilinearSimplex\"> \
+    <Components name=\"library.parameters.2d.bilinearSimplex.component\" count=\"3\"/> \
+  </ContinuousType> \
   <AbstractEvaluator name=\"library.parameters.2d.bilinearSimplex.variable\" valueType=\"library.parameters.2d.bilinearSimplex\"/> \
+  <AbstractEvaluator name=\"library.parameters.2d.bilinearSimplex.component.variable\" valueType=\"library.parameters.2d.bilinearSimplex.component\"/> \
  \
   <ExternalEvaluator name=\"library.interpolator.2d.unit.bilinearSimplex\" valueType=\"library.real.1d\"> \
     <Variables> \

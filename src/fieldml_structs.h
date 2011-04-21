@@ -102,9 +102,9 @@ class ContinuousType :
     public FieldmlObject
 {
 public:
-    const FmlObjectHandle componentType;
+    FmlObjectHandle componentType;
     
-    ContinuousType( const std::string _name, FmlObjectHandle _componentType, bool _isVirtual );
+    ContinuousType( const std::string _name, bool _isVirtual );
 };
 
 
@@ -112,12 +112,12 @@ class MeshType :
     public FieldmlObject
 {
 public:
-    const FmlObjectHandle xiType;
-    const FmlObjectHandle elementType;
+    FmlObjectHandle xiType;
+    FmlObjectHandle elementsType;
     
     SimpleMap<int, std::string> shapes;
     
-    MeshType( const std::string _name, FmlObjectHandle _xiType, FmlObjectHandle _elementType, bool _isVirtual );
+    MeshType( const std::string _name, bool _isVirtual );
 };
 
 

@@ -84,19 +84,19 @@ EnsembleType::EnsembleType( const string _name, bool _isComponentEnsemble, bool 
 }
 
 
-ContinuousType::ContinuousType( const string _name, FmlObjectHandle _componentType, bool _isVirtual ) :
-    FieldmlObject( _name, FHT_CONTINUOUS_TYPE, _isVirtual ),
-    componentType( _componentType )
+ContinuousType::ContinuousType( const string _name, bool _isVirtual ) :
+    FieldmlObject( _name, FHT_CONTINUOUS_TYPE, _isVirtual )
 {
+    componentType = FML_INVALID_HANDLE;
 }
 
 
-MeshType::MeshType( const string _name, FmlObjectHandle _xiType, FmlObjectHandle _elementType, bool _isVirtual ) :
+MeshType::MeshType( const string _name, bool _isVirtual ) :
     FieldmlObject( _name, FHT_MESH_TYPE, _isVirtual ),
-    xiType( _xiType ),
-    elementType( _elementType ),
     shapes("")
 {
+    xiType = FML_INVALID_HANDLE;
+    elementsType = FML_INVALID_HANDLE;
 }
 
 

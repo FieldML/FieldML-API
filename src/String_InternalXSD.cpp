@@ -146,7 +146,7 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
     </xs:complexType> \
  \
     <xs:complexType name=\"ComponentEvaluatorsEntry_Type\"> \
-        <xs:attribute name=\"number\" type=\"xs:positiveInteger\" /> \
+        <xs:attribute name=\"component\" type=\"xs:positiveInteger\" /> \
         <xs:attribute name=\"evaluator\" type=\"xs:string\" /> \
     </xs:complexType> \
  \
@@ -169,7 +169,7 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
     </xs:complexType> \
  \
     <xs:complexType name=\"ElementMapEntry_Type\"> \
-        <xs:attribute name=\"number\" type=\"xs:string\" /> \
+        <xs:attribute name=\"indexValue\" type=\"xs:string\" /> \
         <xs:attribute name=\"evaluator\" type=\"xs:string\" /> \
     </xs:complexType> \
  \
@@ -245,15 +245,21 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
                 <xs:sequence> \
                     <xs:element name=\"Members\" type=\"EnsembleMembers_Type\" minOccurs=\"1\" maxOccurs=\"1\" /> \
                 </xs:sequence> \
-                <xs:attribute name=\"isComponentEnsemble\" type=\"xs:boolean\" use=\"optional\" /> \
             </xs:extension> \
         </xs:complexContent> \
+    </xs:complexType> \
+ \
+    <xs:complexType name=\"ContinuousComponent_Type\"> \
+        <xs:attribute name=\"name\" type=\"xs:string\" /> \
+        <xs:attribute name=\"count\" type=\"xs:positiveInteger\" /> \
     </xs:complexType> \
  \
     <xs:complexType name=\"ContinuousType_Type\"> \
         <xs:complexContent> \
             <xs:extension base=\"FieldmlObject_Type\"> \
-                <xs:attribute name=\"componentEnsemble\" type=\"xs:string\" use=\"optional\" /> \
+                <xs:sequence> \
+                    <xs:element name=\"Components\" type=\"ContinuousComponent_Type\" minOccurs=\"0\" maxOccurs=\"1\" /> \
+                </xs:sequence> \
             </xs:extension> \
         </xs:complexContent> \
     </xs:complexType> \
@@ -262,10 +268,10 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
         <xs:complexContent> \
             <xs:extension base=\"FieldmlObject_Type\"> \
                 <xs:sequence> \
-                    <xs:element name=\"Elements\" type=\"EnsembleMembers_Type\" minOccurs=\"1\" maxOccurs=\"1\" /> \
+                    <xs:element name=\"Elements\" type=\"EnsembleType_Type\" minOccurs=\"1\" maxOccurs=\"1\" /> \
+                    <xs:element name=\"Xi\" type=\"ContinuousType_Type\" minOccurs=\"1\" maxOccurs=\"1\" /> \
                     <xs:element name=\"Shapes\" type=\"DefaultSimpleMap_Type\" minOccurs=\"1\" maxOccurs=\"1\" /> \
                 </xs:sequence> \
-                <xs:attribute name=\"xiComponent\" type=\"xs:string\" /> \
             </xs:extension> \
         </xs:complexContent> \
     </xs:complexType> \

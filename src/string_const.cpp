@@ -66,6 +66,7 @@ const xmlChar * const IMPORT_EVALUATOR_TAG             = (const xmlChar* const)"
 const xmlChar * const ENSEMBLE_TYPE_TAG                = (const xmlChar* const)"EnsembleType";
 
 const xmlChar * const CONTINUOUS_TYPE_TAG              = (const xmlChar* const)"ContinuousType";
+const xmlChar * const COMPONENTS_TAG                   = (const xmlChar* const)"Components";
 
 const xmlChar * const MESH_TYPE_TAG                    = (const xmlChar* const)"MeshType";
 const xmlChar * const MESH_SHAPES_TAG                  = (const xmlChar* const)"Shapes";
@@ -73,6 +74,7 @@ const xmlChar * const MESH_SHAPE_TAG                   = (const xmlChar* const)"
 
 const xmlChar * const ELEMENT_SEQUENCE_TAG             = (const xmlChar* const)"ElementSequence";
 const xmlChar * const ELEMENTS_TAG                     = (const xmlChar* const)"Elements";
+const xmlChar * const XI_TAG                           = (const xmlChar* const)"Xi";
 const xmlChar * const MEMBERS_TAG                      = (const xmlChar* const)"Members";
 
 const xmlChar * const MEMBER_RANGE_TAG                 = (const xmlChar* const)"MemberRange";
@@ -130,39 +132,36 @@ const xmlChar * const SOURCE_ATTRIB                    = (const xmlChar* const)"
 
 const xmlChar * const COMPONENT_ENSEMBLE_ATTRIB        = (const xmlChar* const)"componentEnsemble";
 
-const xmlChar * const IS_COMPONENT_ENSEMBLE_ATTRIB     = (const xmlChar* const)"isComponentEnsemble";
-
 const xmlChar * const VALUE_TYPE_ATTRIB                = (const xmlChar* const)"valueType";
 
 const xmlChar * const KEY_ATTRIB                       = (const xmlChar* const)"key";
 const xmlChar * const VALUE_ATTRIB                     = (const xmlChar* const)"value";
 const xmlChar * const DEFAULT_ATTRIB                   = (const xmlChar* const)"default";
 
-const xmlChar * const XI_COMPONENT_ATTRIB               = (const xmlChar* const)"xiComponent";
+const xmlChar * const INDEX_VALUE_ATTRIB               = (const xmlChar* const)"indexValue";
+const xmlChar * const COMPONENT_ATTRIB                 = (const xmlChar* const)"component";
+const xmlChar * const EVALUATOR_ATTRIB                 = (const xmlChar* const)"evaluator";
+const xmlChar * const ELEMENT_SEQUENCE_ATTRIB          = (const xmlChar* const)"elementSequence";
+const xmlChar * const ORDER_ATTRIB                     = (const xmlChar* const)"order";
 
-const xmlChar * const NUMBER_ATTRIB                     = (const xmlChar* const)"number";
-const xmlChar * const EVALUATOR_ATTRIB                  = (const xmlChar* const)"evaluator";
-const xmlChar * const ELEMENT_SEQUENCE_ATTRIB           = (const xmlChar* const)"elementSequence";
-const xmlChar * const ORDER_ATTRIB                      = (const xmlChar* const)"order";
+const xmlChar * const MIN_ATTRIB                       = (const xmlChar* const)"min";
+const xmlChar * const MAX_ATTRIB                       = (const xmlChar* const)"max";
+const xmlChar * const STRIDE_ATTRIB                    = (const xmlChar* const)"stride";
 
-const xmlChar * const MIN_ATTRIB                        = (const xmlChar* const)"min";
-const xmlChar * const MAX_ATTRIB                        = (const xmlChar* const)"max";
-const xmlChar * const STRIDE_ATTRIB                     = (const xmlChar* const)"stride";
+const xmlChar * const INDEX_EVALUATOR_ATTRIB           = (const xmlChar* const)"indexEvaluator";
 
-const xmlChar * const INDEX_EVALUATOR_ATTRIB            = (const xmlChar* const)"indexEvaluator";
+const xmlChar * const FILE_ATTRIB                      = (const xmlChar* const)"file";
+const xmlChar * const TYPE_ATTRIB                      = (const xmlChar* const)"type";
+const xmlChar * const OFFSET_ATTRIB                    = (const xmlChar* const)"offset";
 
-const xmlChar * const FILE_ATTRIB                       = (const xmlChar* const)"file";
-const xmlChar * const TYPE_ATTRIB                       = (const xmlChar* const)"type";
-const xmlChar * const OFFSET_ATTRIB                     = (const xmlChar* const)"offset";
+const xmlChar * const DATA_ATTRIB                      = (const xmlChar* const)"data";
 
-const xmlChar * const DATA_ATTRIB                       = (const xmlChar* const)"data";
-
-const xmlChar * const FILENAME_ATTRIB                   = (const xmlChar* const)"filename";
-const xmlChar * const FIRST_LINE_ATTRIB                 = (const xmlChar* const)"firstLine";
-const xmlChar * const COUNT_ATTRIB                      = (const xmlChar* const)"count";
-const xmlChar * const LENGTH_ATTRIB                     = (const xmlChar* const)"length";
-const xmlChar * const HEAD_ATTRIB                       = (const xmlChar* const)"head";
-const xmlChar * const TAIL_ATTRIB                       = (const xmlChar* const)"tail";
+const xmlChar * const FILENAME_ATTRIB                  = (const xmlChar* const)"filename";
+const xmlChar * const FIRST_LINE_ATTRIB                = (const xmlChar* const)"firstLine";
+const xmlChar * const COUNT_ATTRIB                     = (const xmlChar* const)"count";
+const xmlChar * const LENGTH_ATTRIB                    = (const xmlChar* const)"length";
+const xmlChar * const HEAD_ATTRIB                      = (const xmlChar* const)"head";
+const xmlChar * const TAIL_ATTRIB                      = (const xmlChar* const)"tail";
 
 const char * const STRING_TYPE_TEXT                 = "text";
 const char * const STRING_TYPE_LINES                = "lines";

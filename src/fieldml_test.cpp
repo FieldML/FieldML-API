@@ -58,62 +58,6 @@
 //
 //========================================================================
 
-static int validate( char *filename )
-{
-    int res;
-    xmlParserInputBufferPtr buffer;
-    char *schema;
-    xmlSchemaPtr schemas = NULL;
-    xmlSchemaParserCtxtPtr sctxt;
-    xmlSchemaValidCtxtPtr vctxt;
-    
-    LIBXML_TEST_VERSION
-
-    xmlSubstituteEntitiesDefault( 1 );
-
-    schema = "Fieldml.xsd";
-
-    buffer = xmlParserInputBufferCreateFilename( filename, XML_CHAR_ENCODING_NONE );
-    if( buffer == NULL )
-    {
-        return 0;
-    }
-
-    sctxt = xmlSchemaNewParserCtxt( schema );
-    xmlSchemaSetParserErrors( sctxt, (xmlSchemaValidityErrorFunc)fprintf, (xmlSchemaValidityWarningFunc)fprintf, stderr );
-    schemas = xmlSchemaParse( sctxt );
-    if( schemas == NULL )
-    {
-        xmlGenericError( xmlGenericErrorContext, "WXS schema %s failed to compile\n", schema );
-        schema = NULL;
-    }
-    xmlSchemaFreeParserCtxt( sctxt );
-
-    vctxt = xmlSchemaNewValidCtxt( schemas );
-    xmlSchemaSetValidErrors( vctxt, (xmlSchemaValidityErrorFunc)fprintf, (xmlSchemaValidityWarningFunc)fprintf, stderr );
-
-    res = xmlSchemaValidateStream( vctxt, buffer, (xmlCharEncoding)0, NULL, NULL );
-    if( res == 0 )
-    {
-        fprintf( stderr, "%s validates\n", filename );
-    }
-    else if( res > 0 )
-    {
-        fprintf( stderr, "%s fails to validate\n", filename );
-    }
-    else
-    {
-        fprintf( stderr, "%s validation generated an internal error\n", filename );
-    }
-
-    xmlSchemaFreeValidCtxt( vctxt );
-
-    xmlSchemaFree( schemas );
-    
-    return res == 0;
-}
-
-
 void testRead( const char * filename )
 {
     int i, j, count, count2;
@@ -158,7 +102,7 @@ void testRead( const char * filename )
         fprintf( stdout, "  %d: %s\n", i, Fieldml_GetObjectName( handle, oHandle ) );
         
         count2 = Fieldml_GetElementCount( handle, oHandle );
-        fprintf( stdout, "  %d elements:  ", count2 );
+        fprintf( stdout, "  %d elements: ", count2 );
         fprintf( stdout, "\n" );
     }
 
@@ -173,11 +117,11 @@ void testRead( const char * filename )
         }
         
         fprintf( stdout, "  %d: %s (%s, %s)\n", i, Fieldml_GetObjectName( handle, oHandle ),
-            Fieldml_GetObjectName( handle, Fieldml_GetMeshElementType( handle, oHandle ) ),
+            Fieldml_GetObjectName( handle, Fieldml_GetMeshElementsType( handle, oHandle ) ),
             Fieldml_GetObjectName( handle, Fieldml_GetMeshXiType( handle, oHandle ) ) );
         fprintf( stdout, "    " );
         count2 = Fieldml_GetElementCount( handle, oHandle );
-        fprintf( stdout, "  %d elements:  ", count2 );
+        fprintf( stdout, "  %d elements:  \n", count2 );
         //TODO Dirty, dirty hack.
         for( int e = 1; e <= count2; e++ )
         {
@@ -437,10 +381,8 @@ void testMisc()
     
     handle = Fieldml_Create( "", "test" );
     
-    FmlObjectHandle componentEnsemble = Fieldml_CreateEnsembleType( handle, "example.component_ensemble", true );
-    Fieldml_SetEnsembleElementRange( handle, componentEnsemble, 1, 3, 1 );
-    
-    FmlObjectHandle continousType = Fieldml_CreateContinuousType( handle, "example.continuous_type", componentEnsemble );
+    FmlObjectHandle continousType = Fieldml_CreateContinuousType( handle, "example.continuous_type" );
+    FmlObjectHandle componentEnsemble = Fieldml_CreateContinuousTypeComponents( handle, continousType, "example.component_ensemble", 3 );
     
     Fieldml_WriteFile( handle, "foo.xml" );
     
@@ -449,7 +391,7 @@ void testMisc()
     handle = Fieldml_Create( "", "test" );
     
     int importHandle = Fieldml_AddImportSource( handle, "library_0.3.xml", "library" );
-    FmlObjectHandle rc3Ensemble = Fieldml_AddImport( handle, importHandle, "library.ensemble.rc.3d", "library.ensemble.rc.3d" );
+    FmlObjectHandle rc3Ensemble = Fieldml_AddImport( handle, importHandle, "library.xi.3d.component", "library.xi.3d.component" );
     FmlObjectHandle realType = Fieldml_AddImport( handle, importHandle, "library.real.1d", "library.real.1d" );
     
     FmlObjectHandle parametersData = Fieldml_CreateDataObject( handle, "test.parameters_data" );
@@ -563,10 +505,6 @@ void testMisc()
 
 int main( int argc, char **argv )
 {
-    if( !validate( argv[1] ) )
-    {
-        return 1;
-    }
     testRead( argv[1] );
     testWrite( argv[1] );
     testMisc();
