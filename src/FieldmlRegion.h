@@ -57,7 +57,7 @@ private:
     
     std::string root;
     
-    std::vector<int> localObjects;
+    std::vector<FmlObjectHandle> localObjects;
     
     std::vector<ImportInfo*> imports;
     

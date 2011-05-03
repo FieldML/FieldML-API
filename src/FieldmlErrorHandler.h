@@ -47,7 +47,7 @@
 class FieldmlErrorHandler
 {
 public:
-    virtual int setErrorAndLocation( const char *file, const int line, const int error ) = 0;
+    virtual FmlErrorNumber setErrorAndLocation( const char *file, const int line, const FmlErrorNumber error ) = 0;
 
     virtual void addError( const std::string string ) = 0;
 

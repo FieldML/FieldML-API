@@ -46,8 +46,6 @@
 
 #include "fieldml_structs.h"
 
-typedef int FmlObjectHandle;
-
 class ObjectStore
 {
 private:

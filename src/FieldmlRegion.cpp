@@ -131,7 +131,7 @@ const bool FieldmlRegion::hasLocalObject( FmlObjectHandle handle, bool allowVirt
         }
     }
     
-    for( vector<int>::iterator i = localObjects.begin(); i != localObjects.end(); i++ )
+    for( vector<FmlObjectHandle>::iterator i = localObjects.begin(); i != localObjects.end(); i++ )
     {
         if( *i == handle )
         {
@@ -145,7 +145,7 @@ const bool FieldmlRegion::hasLocalObject( FmlObjectHandle handle, bool allowVirt
 
 const FmlObjectHandle FieldmlRegion::getNamedObject( const string name )
 {
-    for( vector<int>::iterator i = localObjects.begin(); i != localObjects.end(); i++ )
+    for( vector<FmlObjectHandle>::iterator i = localObjects.begin(); i != localObjects.end(); i++ )
     {
         FieldmlObject *object = store->getObject( *i );
         if( object->name == name )
@@ -176,7 +176,7 @@ const FmlObjectHandle FieldmlRegion::getNamedObject( const string name )
 
 const string FieldmlRegion::getObjectName( FmlObjectHandle handle )
 {
-    for( vector<int>::iterator i = localObjects.begin(); i != localObjects.end(); i++ )
+    for( vector<FmlObjectHandle>::iterator i = localObjects.begin(); i != localObjects.end(); i++ )
     {
         if( handle == *i )
         {

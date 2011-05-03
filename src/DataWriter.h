@@ -52,7 +52,7 @@ class DataWriter
 private:
     FieldmlErrorHandler *eHandler;
 
-    long handle;
+    FmlWriterHandle handle;
 
     static FmlWriterHandle addWriter( DataWriter *writer );
 

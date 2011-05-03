@@ -50,7 +50,7 @@ using namespace std;
 
 static vector<FieldmlSession *> sessions;
 
-FieldmlSession *FieldmlSession::handleToSession( FmlHandle handle )
+FieldmlSession *FieldmlSession::handleToSession( FmlSessionHandle handle )
 {
     if( ( handle < 0 ) || ( handle >= sessions.size() ) )
     {
@@ -61,7 +61,7 @@ FieldmlSession *FieldmlSession::handleToSession( FmlHandle handle )
 }
 
 
-long FieldmlSession::addSession( FieldmlSession *session )
+FmlSessionHandle FieldmlSession::addSession( FieldmlSession *session )
 {
     sessions.push_back( session );
     return sessions.size() - 1;
@@ -175,7 +175,7 @@ FieldmlRegion *FieldmlSession::addResourceRegion( string location, string name )
 }
 
 
-int FieldmlSession::setErrorAndLocation( const char *file, const int line, const int error )
+FmlErrorNumber FieldmlSession::setErrorAndLocation( const char *file, const int line, const FmlErrorNumber error )
 {
     lastError = error;
 
@@ -197,7 +197,7 @@ void FieldmlSession::addError( const string string )
 }
 
 
-const int FieldmlSession::getLastError()
+const FmlErrorNumber FieldmlSession::getLastError()
 {
     return lastError;
 }
@@ -226,7 +226,7 @@ void FieldmlSession::setDebug( const int debugValue )
 }
 
 
-FmlHandle FieldmlSession::getHandle()
+FmlSessionHandle FieldmlSession::getHandle()
 {
     return handle;
 }

@@ -202,7 +202,7 @@ int SaxAttributes::getIntAttribute( const xmlChar *attribute, int defaultValue )
 }
 
 
-FmlObjectHandle SaxAttributes::getObjectAttribute( FmlHandle sessionHandle, const xmlChar *attribute )
+FmlObjectHandle SaxAttributes::getObjectAttribute( FmlSessionHandle sessionHandle, const xmlChar *attribute )
 {
     const char *rawAttribute = getAttribute( attribute );
 
@@ -231,7 +231,7 @@ void SaxHandler::onCharacters( const xmlChar *xmlChars, int count )
 }
 
 
-FmlHandle SaxHandler::getSessionHandle()
+FmlSessionHandle SaxHandler::getSessionHandle()
 {
     return getParent()->getSessionHandle();
 }
@@ -267,7 +267,7 @@ SaxHandler *RootSaxHandler::getParent()
 }
 
 
-FmlHandle RootSaxHandler::getSessionHandle()
+FmlSessionHandle RootSaxHandler::getSessionHandle()
 {
     return context->session->getHandle();
 }
@@ -920,7 +920,7 @@ SaxHandler * PiecewiseEvaluatorSaxHandler::onElementStart( const xmlChar *elemen
 }
 
 
-void PiecewiseEvaluatorSaxHandler::onIntObjectMapEntry( int key, FmlObjectHandle value, int mapId )
+void PiecewiseEvaluatorSaxHandler::onIntObjectMapEntry( FmlEnsembleValue key, FmlObjectHandle value, int mapId )
 {
     if( mapId == 0 )
     {
@@ -986,7 +986,7 @@ SaxHandler * AggregateEvaluatorSaxHandler::onElementStart( const xmlChar *elemen
 }
 
 
-void AggregateEvaluatorSaxHandler::onIntObjectMapEntry( int key, FmlObjectHandle value, int mapId )
+void AggregateEvaluatorSaxHandler::onIntObjectMapEntry( FmlEnsembleValue key, FmlObjectHandle value, int mapId )
 {
     if( mapId == 0 )
     {
@@ -1362,7 +1362,7 @@ SaxHandler *IntObjectMapSaxHandler::onElementStart( const xmlChar *elementName, 
 {
     if( xmlStrcmp( elementName, entryTagName ) == 0 )
     {
-        int key = attributes.getIntAttribute( entryAttribName, -1 );
+        FmlEnsembleValue key = attributes.getIntAttribute( entryAttribName, -1 );
         FmlObjectHandle value = attributes.getObjectAttribute( getSessionHandle(), EVALUATOR_ATTRIB );
         handler->onIntObjectMapEntry( key, value, mapId );
     }

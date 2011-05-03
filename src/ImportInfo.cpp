@@ -157,7 +157,7 @@ const string ImportInfo::getRemoteNameByIndex( int index )
 }
 
 
-int ImportInfo::getObjectByIndex( int index )
+FmlObjectHandle ImportInfo::getObjectByIndex( int index )
 {
     if( ( index <= 0 ) || ( index > imports.size() ) )
     {

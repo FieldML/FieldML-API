@@ -60,7 +60,7 @@ private:
     
     const int tail;
     
-    long handle;
+    FmlReaderHandle handle;
     
     int entryCounter;
     

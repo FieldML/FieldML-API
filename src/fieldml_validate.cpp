@@ -43,7 +43,7 @@
 #include "fieldml_structs.h"
 #include "Region.h"
 
-int validateEnsembleType( FieldmlRegion *region, EnsembleType *ensembleType )
+FmlErrorNumber validateEnsembleType( FieldmlRegion *region, EnsembleType *ensembleType )
 {
     if( ensembleType->bounds->boundsType == BOUNDS_UNKNOWN )
     {
@@ -62,7 +62,7 @@ int validateEnsembleType( FieldmlRegion *region, EnsembleType *ensembleType )
     return FML_ERR_NO_ERROR;
 }
 
-int validateFieldmlObject( FieldmlRegion *region, FieldmlObject *object )
+FmlErrorNumber validateFieldmlObject( FieldmlRegion *region, FieldmlObject *object )
 {
     switch( object->type )
     {

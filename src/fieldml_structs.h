@@ -72,9 +72,9 @@ public:
 
     EnsembleMembersType type;
     
-    int min;
+    FmlEnsembleValue min;
     
-    int max;
+    FmlEnsembleValue max;
     
     int stride;
     
@@ -115,7 +115,7 @@ public:
     FmlObjectHandle xiType;
     FmlObjectHandle elementsType;
     
-    SimpleMap<int, std::string> shapes;
+    SimpleMap<FmlEnsembleValue, std::string> shapes;
     
     MeshType( const std::string _name, bool _isVirtual );
 };
@@ -152,7 +152,7 @@ public:
     FmlObjectHandle indexEvaluator;
     
     SimpleMap<FmlObjectHandle, FmlObjectHandle> binds;
-    SimpleMap<int, FmlObjectHandle> evaluators;
+    SimpleMap<FmlEnsembleValue, FmlObjectHandle> evaluators;
     
     PiecewiseEvaluator( const std::string name, FmlObjectHandle valueType, bool _isVirtual );
 };
@@ -163,7 +163,7 @@ class AggregateEvaluator :
 {
 public:
     SimpleMap<FmlObjectHandle, FmlObjectHandle> binds;
-    SimpleMap<int, FmlObjectHandle> evaluators;
+    SimpleMap<FmlEnsembleValue, FmlObjectHandle> evaluators;
     
     FmlObjectHandle indexEvaluator;
     
@@ -296,8 +296,6 @@ public:
     
     virtual ~ParameterEvaluator();
 };
-
-int Fieldml_SetRoot( FmlHandle, const char *root );
 
 
 #endif //H_FIELDML_STRUCTS

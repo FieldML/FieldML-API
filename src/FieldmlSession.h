@@ -51,7 +51,7 @@ class FieldmlSession :
     public FieldmlErrorHandler
 {
 private:
-    int lastError;
+    FmlErrorNumber lastError;
     
     int debug;
     
@@ -59,15 +59,15 @@ private:
     
     std::vector<FieldmlRegion*> regions;
     
-    int handle;
+    FmlSessionHandle handle;
     
-    static FmlHandle addSession( FieldmlSession *session );
+    static FmlSessionHandle addSession( FieldmlSession *session );
     
 public:
     FieldmlSession();
     virtual ~FieldmlSession();
     
-    int setErrorAndLocation( const char *file, const int line, const int error );
+    FmlObjectHandle setErrorAndLocation( const char *file, const int line, const FmlObjectHandle error );
 
     void addError( const std::string string );
 
@@ -77,11 +77,11 @@ public:
     
     const std::string getError( const int index );
 
-    const int getLastError();
+    const FmlObjectHandle getLastError();
 
     void logError( const char *error, const char *name1 = NULL, const char *name2 = NULL );
     
-    FmlHandle getHandle();
+    FmlSessionHandle getHandle();
     
     FieldmlObject *getObject( const FmlObjectHandle handle );
     
@@ -100,7 +100,7 @@ public:
     ObjectStore * const objects;
 
 
-    static FieldmlSession *handleToSession( FmlHandle handle );
+    static FieldmlSession *handleToSession( FmlSessionHandle handle );
 };
 
 #endif //H_FIELDML_SESSION

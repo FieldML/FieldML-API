@@ -39,11 +39,11 @@
  *
  */
 
-#include "FieldmlErrorHandler.h"
-#include "DataReader.h"
-
 #include "fieldml_api.h"
 #include "string_const.h"
+
+#include "FieldmlErrorHandler.h"
+#include "DataReader.h"
 
 using namespace std;
 

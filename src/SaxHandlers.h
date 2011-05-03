@@ -70,7 +70,7 @@ public:
     const char *getAttribute( const xmlChar *name );
     bool getBooleanAttribute( const xmlChar *attribute );
     int getIntAttribute( const xmlChar *attribute, int defaultValue );
-    FmlObjectHandle getObjectAttribute( FmlHandle sessionHandle, const xmlChar *attribute );
+    FmlObjectHandle getObjectAttribute( FmlSessionHandle sessionHandle, const xmlChar *attribute );
 };
 
 
@@ -84,7 +84,7 @@ public:
 class IntObjectMapHandler
 {
 public:
-    virtual void onIntObjectMapEntry( int key, FmlObjectHandle value, int mapId ) = 0;
+    virtual void onIntObjectMapEntry( FmlEnsembleValue key, FmlObjectHandle value, int mapId ) = 0;
 };
 
 
@@ -103,7 +103,7 @@ public:
     
     virtual void onCharacters( const xmlChar *xmlChars, int count );
     
-    virtual FmlHandle getSessionHandle();
+    virtual FmlSessionHandle getSessionHandle();
     
     virtual FieldmlSession *getSession();
 };
@@ -131,7 +131,7 @@ public:
 
     virtual SaxHandler *getParent();
     
-    virtual FmlHandle getSessionHandle();
+    virtual FmlSessionHandle getSessionHandle();
     
     virtual FieldmlSession *getSession();
 };
@@ -329,7 +329,7 @@ public:
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
 
-    virtual void onIntObjectMapEntry( int key, FmlObjectHandle object, int mapId );
+    virtual void onIntObjectMapEntry( FmlEnsembleValue key, FmlObjectHandle object, int mapId );
 };
 
 
@@ -341,7 +341,7 @@ public:
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
 
-    virtual void onIntObjectMapEntry( int key, FmlObjectHandle object, int mapId );
+    virtual void onIntObjectMapEntry( FmlEnsembleValue key, FmlObjectHandle object, int mapId );
 };
 
 

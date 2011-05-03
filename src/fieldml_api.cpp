@@ -105,7 +105,7 @@ static FmlObjectHandle addObject( FieldmlSession *session, FieldmlObject *object
 }
 
 
-static SimpleMap<int, FmlObjectHandle> *getEvaluatorMap( FieldmlSession *session, FmlObjectHandle objectHandle )
+static SimpleMap<FmlEnsembleValue, FmlObjectHandle> *getEvaluatorMap( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
     FieldmlObject *object = getObject( session, objectHandle );
 
@@ -209,7 +209,7 @@ static vector<FmlObjectHandle> *getVariableList( FieldmlSession *session, FmlObj
 }
 
 
-static SimpleMap<int, string> *getShapeMap( FieldmlSession *session, FmlObjectHandle objectHandle )
+static SimpleMap<FmlEnsembleValue, string> *getShapeMap( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
     FieldmlObject *object = getObject( session, objectHandle );
 
@@ -266,14 +266,12 @@ static const char* cstrCopy( const string &s )
 
 static int cappedCopy( const char *source, char *buffer, int bufferLength )
 {
-    int length;
-    
     if( ( bufferLength <= 0 ) || ( source == NULL ) )
     {
         return 0;
     }
     
-    length = strlen( source );
+    int length = strlen( source );
     
     if( length >= bufferLength )
     {
@@ -476,7 +474,7 @@ static bool checkIsEvaluatorTypeCompatible( FieldmlSession *session, FmlObjectHa
 //
 //========================================================================
 
-FmlHandle Fieldml_CreateFromFile( const char *filename )
+FmlSessionHandle Fieldml_CreateFromFile( const char *filename )
 {
     FieldmlSession *session = new FieldmlSession();
     
@@ -495,7 +493,7 @@ FmlHandle Fieldml_CreateFromFile( const char *filename )
 }
 
 
-FmlHandle Fieldml_Create( const char *location, const char *name )
+FmlSessionHandle Fieldml_Create( const char *location, const char *name )
 {
     FieldmlSession *session = new FieldmlSession();
     
@@ -505,7 +503,7 @@ FmlHandle Fieldml_Create( const char *location, const char *name )
 }
 
 
-int Fieldml_SetDebug( FmlHandle handle, const int debug )
+FmlErrorNumber Fieldml_SetDebug( FmlSessionHandle handle, const int debug )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -519,7 +517,7 @@ int Fieldml_SetDebug( FmlHandle handle, const int debug )
 }
 
 
-int Fieldml_GetLastError( FmlHandle handle )
+FmlErrorNumber Fieldml_GetLastError( FmlSessionHandle handle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -531,7 +529,7 @@ int Fieldml_GetLastError( FmlHandle handle )
 }
 
 
-int Fieldml_WriteFile( FmlHandle handle, const char *filename )
+FmlErrorNumber Fieldml_WriteFile( FmlSessionHandle handle, const char *filename )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -550,7 +548,7 @@ int Fieldml_WriteFile( FmlHandle handle, const char *filename )
 }
 
 
-void Fieldml_Destroy( FmlHandle handle )
+void Fieldml_Destroy( FmlSessionHandle handle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -562,7 +560,7 @@ void Fieldml_Destroy( FmlHandle handle )
 }
 
 
-const char * Fieldml_GetRegionName( FmlHandle handle )
+const char * Fieldml_GetRegionName( FmlSessionHandle handle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -580,13 +578,24 @@ const char * Fieldml_GetRegionName( FmlHandle handle )
 }
 
 
-int Fieldml_CopyRegionName( FmlHandle handle, char *buffer, int bufferLength )
+FmlErrorNumber Fieldml_FreeString( char *string )
+{
+    if( string != NULL )
+    {
+        free( string );
+    }
+    
+    return FML_ERR_NO_ERROR;
+}
+
+
+int Fieldml_CopyRegionName( FmlSessionHandle handle, char *buffer, int bufferLength )
 {
     return cappedCopyAndFree( Fieldml_GetRegionName( handle ), buffer, bufferLength );
 }
 
 
-int Fieldml_GetErrorCount( FmlHandle handle )
+int Fieldml_GetErrorCount( FmlSessionHandle handle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -599,7 +608,7 @@ int Fieldml_GetErrorCount( FmlHandle handle )
 }
 
 
-const char * Fieldml_GetError( FmlHandle handle, int index )
+const char * Fieldml_GetError( FmlSessionHandle handle, int index )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -612,13 +621,13 @@ const char * Fieldml_GetError( FmlHandle handle, int index )
 }
 
 
-int Fieldml_CopyError( FmlHandle handle, int index, char *buffer, int bufferLength )
+int Fieldml_CopyError( FmlSessionHandle handle, int index, char *buffer, int bufferLength )
 {
     return cappedCopyAndFree( Fieldml_GetError( handle, index ), buffer, bufferLength );
 }
 
 
-int Fieldml_GetTotalObjectCount( FmlHandle handle )
+int Fieldml_GetTotalObjectCount( FmlSessionHandle handle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -631,7 +640,7 @@ int Fieldml_GetTotalObjectCount( FmlHandle handle )
 }
 
 
-FmlObjectHandle Fieldml_GetObjectByIndex( FmlHandle handle, const int index )
+FmlObjectHandle Fieldml_GetObjectByIndex( FmlSessionHandle handle, const int index )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -644,7 +653,7 @@ FmlObjectHandle Fieldml_GetObjectByIndex( FmlHandle handle, const int index )
 }
 
 
-int Fieldml_GetObjectCount( FmlHandle handle, FieldmlHandleType type )
+int Fieldml_GetObjectCount( FmlSessionHandle handle, FieldmlHandleType type )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -662,7 +671,7 @@ int Fieldml_GetObjectCount( FmlHandle handle, FieldmlHandleType type )
 }
 
 
-FmlObjectHandle Fieldml_GetObject( FmlHandle handle, FieldmlHandleType type, int index )
+FmlObjectHandle Fieldml_GetObject( FmlSessionHandle handle, FieldmlHandleType type, int index )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -682,7 +691,7 @@ FmlObjectHandle Fieldml_GetObject( FmlHandle handle, FieldmlHandleType type, int
 }
 
 
-FmlObjectHandle Fieldml_GetObjectByName( FmlHandle handle, const char * name )
+FmlObjectHandle Fieldml_GetObjectByName( FmlSessionHandle handle, const char * name )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -706,7 +715,7 @@ FmlObjectHandle Fieldml_GetObjectByName( FmlHandle handle, const char * name )
 }
 
 
-FmlObjectHandle Fieldml_GetObjectByDeclaredName( FmlHandle handle, const char *name )
+FmlObjectHandle Fieldml_GetObjectByDeclaredName( FmlSessionHandle handle, const char *name )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -725,7 +734,7 @@ FmlObjectHandle Fieldml_GetObjectByDeclaredName( FmlHandle handle, const char *n
 }
 
 
-FieldmlHandleType Fieldml_GetObjectType( FmlHandle handle, FmlObjectHandle objectHandle )
+FieldmlHandleType Fieldml_GetObjectType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -744,7 +753,7 @@ FieldmlHandleType Fieldml_GetObjectType( FmlHandle handle, FmlObjectHandle objec
 }
 
 
-FmlObjectHandle Fieldml_GetTypeComponentEnsemble( FmlHandle handle, FmlObjectHandle objectHandle )
+FmlObjectHandle Fieldml_GetTypeComponentEnsemble( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -774,7 +783,7 @@ FmlObjectHandle Fieldml_GetTypeComponentEnsemble( FmlHandle handle, FmlObjectHan
 }
 
 
-int Fieldml_GetTypeComponentCount( FmlHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetTypeComponentCount( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -797,7 +806,7 @@ int Fieldml_GetTypeComponentCount( FmlHandle handle, FmlObjectHandle objectHandl
 }
 
 
-int Fieldml_GetElementCount( FmlHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetElementCount( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -834,7 +843,7 @@ int Fieldml_GetElementCount( FmlHandle handle, FmlObjectHandle objectHandle )
 }
 
 
-int Fieldml_GetEnsembleMembersMin( FmlHandle handle, FmlObjectHandle objectHandle )
+FmlEnsembleValue Fieldml_GetEnsembleMembersMin( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -865,7 +874,7 @@ int Fieldml_GetEnsembleMembersMin( FmlHandle handle, FmlObjectHandle objectHandl
 }
 
 
-int Fieldml_GetEnsembleMembersMax( FmlHandle handle, FmlObjectHandle objectHandle )
+FmlEnsembleValue Fieldml_GetEnsembleMembersMax( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -896,7 +905,7 @@ int Fieldml_GetEnsembleMembersMax( FmlHandle handle, FmlObjectHandle objectHandl
 }
 
 
-int Fieldml_GetEnsembleMembersStride( FmlHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetEnsembleMembersStride( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -927,7 +936,7 @@ int Fieldml_GetEnsembleMembersStride( FmlHandle handle, FmlObjectHandle objectHa
 }
 
 
-EnsembleMembersType Fieldml_GetEnsembleMembersType( FmlHandle handle, FmlObjectHandle objectHandle )
+EnsembleMembersType Fieldml_GetEnsembleMembersType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -958,7 +967,7 @@ EnsembleMembersType Fieldml_GetEnsembleMembersType( FmlHandle handle, FmlObjectH
 }
 
 
-int Fieldml_SetEnsembleMembersData( FmlHandle handle, FmlObjectHandle objectHandle, EnsembleMembersType type, int count, FmlObjectHandle dataObjectHandle )
+FmlErrorNumber Fieldml_SetEnsembleMembersData( FmlSessionHandle handle, FmlObjectHandle objectHandle, EnsembleMembersType type, int count, FmlObjectHandle dataObjectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -996,7 +1005,7 @@ int Fieldml_SetEnsembleMembersData( FmlHandle handle, FmlObjectHandle objectHand
 }
 
 
-int Fieldml_IsEnsembleComponentType( FmlHandle handle, FmlObjectHandle objectHandle )
+FmlBoolean Fieldml_IsEnsembleComponentType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1022,7 +1031,7 @@ int Fieldml_IsEnsembleComponentType( FmlHandle handle, FmlObjectHandle objectHan
 }
 
 
-FmlObjectHandle Fieldml_GetMeshElementsType( FmlHandle handle, FmlObjectHandle objectHandle )
+FmlObjectHandle Fieldml_GetMeshElementsType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1047,7 +1056,7 @@ FmlObjectHandle Fieldml_GetMeshElementsType( FmlHandle handle, FmlObjectHandle o
 }
 
 
-const char * Fieldml_GetMeshElementShape( FmlHandle handle, FmlObjectHandle objectHandle, int elementNumber, int allowDefault )
+const char * Fieldml_GetMeshElementShape( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlEnsembleValue elementNumber, FmlBoolean allowDefault )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1055,7 +1064,7 @@ const char * Fieldml_GetMeshElementShape( FmlHandle handle, FmlObjectHandle obje
         return NULL;
     }
         
-    SimpleMap<int, string> *map = getShapeMap( session, objectHandle ); 
+    SimpleMap<FmlEnsembleValue, string> *map = getShapeMap( session, objectHandle ); 
     if( map == NULL )
     {
         return NULL;
@@ -1065,13 +1074,13 @@ const char * Fieldml_GetMeshElementShape( FmlHandle handle, FmlObjectHandle obje
 }
 
 
-int Fieldml_CopyMeshElementShape( FmlHandle handle, FmlObjectHandle objectHandle, int elementNumber, int allowDefault, char *buffer, int bufferLength )
+int Fieldml_CopyMeshElementShape( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlEnsembleValue elementNumber, FmlBoolean allowDefault, char *buffer, int bufferLength )
 {
     return cappedCopyAndFree( Fieldml_GetMeshElementShape( handle, objectHandle, elementNumber, allowDefault ), buffer, bufferLength );
 }
 
 
-FmlObjectHandle Fieldml_GetMeshXiType( FmlHandle handle, FmlObjectHandle objectHandle )
+FmlObjectHandle Fieldml_GetMeshXiType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1096,7 +1105,7 @@ FmlObjectHandle Fieldml_GetMeshXiType( FmlHandle handle, FmlObjectHandle objectH
 }
 
 
-FmlObjectHandle Fieldml_GetMeshXiComponentType( FmlHandle handle, FmlObjectHandle objectHandle )
+FmlObjectHandle Fieldml_GetMeshXiComponentType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1121,7 +1130,7 @@ FmlObjectHandle Fieldml_GetMeshXiComponentType( FmlHandle handle, FmlObjectHandl
 }
 
 
-int Fieldml_IsObjectLocal( FmlHandle handle, FmlObjectHandle objectHandle )
+FmlBoolean Fieldml_IsObjectLocal( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1145,7 +1154,7 @@ int Fieldml_IsObjectLocal( FmlHandle handle, FmlObjectHandle objectHandle )
 }
 
 
-const char * Fieldml_GetObjectName( FmlHandle handle, FmlObjectHandle objectHandle )
+const char * Fieldml_GetObjectName( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1168,13 +1177,13 @@ const char * Fieldml_GetObjectName( FmlHandle handle, FmlObjectHandle objectHand
 }
 
 
-int Fieldml_CopyObjectName( FmlHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength )
+int Fieldml_CopyObjectName( FmlSessionHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength )
 {
     return cappedCopyAndFree( Fieldml_GetObjectName( handle, objectHandle ), buffer, bufferLength );
 }
 
 
-const char * Fieldml_GetObjectDeclaredName( FmlHandle handle, FmlObjectHandle objectHandle )
+const char * Fieldml_GetObjectDeclaredName( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1192,13 +1201,13 @@ const char * Fieldml_GetObjectDeclaredName( FmlHandle handle, FmlObjectHandle ob
 }
 
 
-int Fieldml_CopyObjectDeclaredName( FmlHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength )
+int Fieldml_CopyObjectDeclaredName( FmlSessionHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength )
 {
     return cappedCopyAndFree( Fieldml_GetObjectDeclaredName( handle, objectHandle ), buffer, bufferLength );
 }
 
 
-int Fieldml_SetObjectInt( FmlHandle handle, FmlObjectHandle objectHandle, int value )
+FmlErrorNumber Fieldml_SetObjectInt( FmlSessionHandle handle, FmlObjectHandle objectHandle, int value )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1218,7 +1227,7 @@ int Fieldml_SetObjectInt( FmlHandle handle, FmlObjectHandle objectHandle, int va
 }
 
 
-int Fieldml_GetObjectInt( FmlHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetObjectInt( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1237,7 +1246,7 @@ int Fieldml_GetObjectInt( FmlHandle handle, FmlObjectHandle objectHandle )
 }
 
 
-FmlObjectHandle Fieldml_GetValueType( FmlHandle handle, FmlObjectHandle objectHandle )
+FmlObjectHandle Fieldml_GetValueType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1295,7 +1304,7 @@ FmlObjectHandle Fieldml_GetValueType( FmlHandle handle, FmlObjectHandle objectHa
 }
 
 
-FmlObjectHandle Fieldml_CreateAbstractEvaluator( FmlHandle handle, const char *name, FmlObjectHandle valueType )
+FmlObjectHandle Fieldml_CreateAbstractEvaluator( FmlSessionHandle handle, const char *name, FmlObjectHandle valueType )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1363,7 +1372,7 @@ FmlObjectHandle Fieldml_CreateAbstractEvaluator( FmlHandle handle, const char *n
 }
 
 
-FmlObjectHandle Fieldml_CreateExternalEvaluator( FmlHandle handle, const char *name, FmlObjectHandle valueType )
+FmlObjectHandle Fieldml_CreateExternalEvaluator( FmlSessionHandle handle, const char *name, FmlObjectHandle valueType )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1384,7 +1393,7 @@ FmlObjectHandle Fieldml_CreateExternalEvaluator( FmlHandle handle, const char *n
 }
 
 
-FmlObjectHandle Fieldml_CreateParametersEvaluator( FmlHandle handle, const char *name, FmlObjectHandle valueType )
+FmlObjectHandle Fieldml_CreateParametersEvaluator( FmlSessionHandle handle, const char *name, FmlObjectHandle valueType )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1405,7 +1414,7 @@ FmlObjectHandle Fieldml_CreateParametersEvaluator( FmlHandle handle, const char 
 }
 
 
-int Fieldml_SetParameterDataDescription( FmlHandle handle, FmlObjectHandle objectHandle, DataDescriptionType description )
+FmlErrorNumber Fieldml_SetParameterDataDescription( FmlSessionHandle handle, FmlObjectHandle objectHandle, DataDescriptionType description )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1443,7 +1452,7 @@ int Fieldml_SetParameterDataDescription( FmlHandle handle, FmlObjectHandle objec
     return session->setError( FML_ERR_INVALID_OBJECT );
 }
 
-DataDescriptionType Fieldml_GetParameterDataDescription( FmlHandle handle, FmlObjectHandle objectHandle )
+DataDescriptionType Fieldml_GetParameterDataDescription( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1469,7 +1478,7 @@ DataDescriptionType Fieldml_GetParameterDataDescription( FmlHandle handle, FmlOb
 }
 
 
-int Fieldml_SetDataObject( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle dataObject )
+FmlErrorNumber Fieldml_SetDataObject( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle dataObject )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1518,7 +1527,7 @@ int Fieldml_SetDataObject( FmlHandle handle, FmlObjectHandle objectHandle, FmlOb
 }
 
 
-int Fieldml_AddDenseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle, FmlObjectHandle orderHandle )
+FmlErrorNumber Fieldml_AddDenseIndexEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle, FmlObjectHandle orderHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1549,7 +1558,7 @@ int Fieldml_AddDenseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHand
 }
 
 
-int Fieldml_AddSparseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle )
+FmlErrorNumber Fieldml_AddSparseIndexEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1574,7 +1583,7 @@ int Fieldml_AddSparseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHan
 }
 
 
-int Fieldml_GetSemidenseIndexCount( FmlHandle handle, FmlObjectHandle objectHandle, int isSparse )
+int Fieldml_GetSemidenseIndexCount( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlBoolean isSparse )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1599,7 +1608,7 @@ int Fieldml_GetSemidenseIndexCount( FmlHandle handle, FmlObjectHandle objectHand
 }
 
 
-FmlObjectHandle Fieldml_GetSemidenseIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int index, int isSparse )
+FmlObjectHandle Fieldml_GetSemidenseIndexEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index, FmlBoolean isSparse )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1634,7 +1643,7 @@ FmlObjectHandle Fieldml_GetSemidenseIndexEvaluator( FmlHandle handle, FmlObjectH
 }
 
 
-FmlObjectHandle Fieldml_CreatePiecewiseEvaluator( FmlHandle handle, const char * name, FmlObjectHandle valueType )
+FmlObjectHandle Fieldml_CreatePiecewiseEvaluator( FmlSessionHandle handle, const char * name, FmlObjectHandle valueType )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1655,7 +1664,7 @@ FmlObjectHandle Fieldml_CreatePiecewiseEvaluator( FmlHandle handle, const char *
 }
 
 
-FmlObjectHandle Fieldml_CreateAggregateEvaluator( FmlHandle handle, const char * name, FmlObjectHandle valueType )
+FmlObjectHandle Fieldml_CreateAggregateEvaluator( FmlSessionHandle handle, const char * name, FmlObjectHandle valueType )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1676,7 +1685,7 @@ FmlObjectHandle Fieldml_CreateAggregateEvaluator( FmlHandle handle, const char *
 }
 
 
-int Fieldml_SetDefaultEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle evaluator )
+FmlErrorNumber Fieldml_SetDefaultEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle evaluator )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1697,7 +1706,7 @@ int Fieldml_SetDefaultEvaluator( FmlHandle handle, FmlObjectHandle objectHandle,
     }
 
     FieldmlObject *object = getObject( session, objectHandle );
-    SimpleMap<int, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
+    SimpleMap<FmlEnsembleValue, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
  
     if( map == NULL )
     {
@@ -1716,7 +1725,7 @@ int Fieldml_SetDefaultEvaluator( FmlHandle handle, FmlObjectHandle objectHandle,
 }
 
 
-int Fieldml_GetDefaultEvaluator( FmlHandle handle, FmlObjectHandle objectHandle )
+FmlObjectHandle Fieldml_GetDefaultEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1725,7 +1734,7 @@ int Fieldml_GetDefaultEvaluator( FmlHandle handle, FmlObjectHandle objectHandle 
     }
 
     FieldmlObject *object = getObject( session, objectHandle );
-    SimpleMap<int, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
+    SimpleMap<FmlEnsembleValue, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
  
     if( map == NULL )
     {
@@ -1744,7 +1753,7 @@ int Fieldml_GetDefaultEvaluator( FmlHandle handle, FmlObjectHandle objectHandle 
 }
 
 
-int Fieldml_SetEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int element, FmlObjectHandle evaluator )
+FmlErrorNumber Fieldml_SetEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlEnsembleValue element, FmlObjectHandle evaluator )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1764,7 +1773,7 @@ int Fieldml_SetEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int el
         return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
 
-    SimpleMap<int, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
+    SimpleMap<FmlEnsembleValue, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
  
     if( map != NULL )
     {
@@ -1775,7 +1784,7 @@ int Fieldml_SetEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int el
 }
 
 
-int Fieldml_GetEvaluatorCount( FmlHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetEvaluatorCount( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1783,7 +1792,7 @@ int Fieldml_GetEvaluatorCount( FmlHandle handle, FmlObjectHandle objectHandle )
         return -1;
     }
 
-    SimpleMap<int, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
+    SimpleMap<FmlEnsembleValue, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
  
     if( map == NULL )
     {
@@ -1794,7 +1803,7 @@ int Fieldml_GetEvaluatorCount( FmlHandle handle, FmlObjectHandle objectHandle )
 }
 
 
-int Fieldml_GetEvaluatorElement( FmlHandle handle, FmlObjectHandle objectHandle, int index )
+FmlEnsembleValue Fieldml_GetEvaluatorElement( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1802,7 +1811,7 @@ int Fieldml_GetEvaluatorElement( FmlHandle handle, FmlObjectHandle objectHandle,
         return -1;
     }
 
-    SimpleMap<int, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
+    SimpleMap<FmlEnsembleValue, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
  
     if( map == NULL )
     {
@@ -1813,7 +1822,7 @@ int Fieldml_GetEvaluatorElement( FmlHandle handle, FmlObjectHandle objectHandle,
 }
 
 
-FmlObjectHandle Fieldml_GetEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int index )
+FmlObjectHandle Fieldml_GetEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1821,7 +1830,7 @@ FmlObjectHandle Fieldml_GetEvaluator( FmlHandle handle, FmlObjectHandle objectHa
         return FML_INVALID_HANDLE;
     }
 
-    SimpleMap<int, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
+    SimpleMap<FmlEnsembleValue, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
  
     if( map == NULL )
     {
@@ -1832,7 +1841,7 @@ FmlObjectHandle Fieldml_GetEvaluator( FmlHandle handle, FmlObjectHandle objectHa
 }
 
 
-FmlObjectHandle Fieldml_GetElementEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int elementNumber, int allowDefault )
+FmlObjectHandle Fieldml_GetElementEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlEnsembleValue elementNumber, FmlBoolean allowDefault )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1840,7 +1849,7 @@ FmlObjectHandle Fieldml_GetElementEvaluator( FmlHandle handle, FmlObjectHandle o
         return FML_INVALID_HANDLE;
     }
 
-    SimpleMap<int, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
+    SimpleMap<FmlEnsembleValue, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
  
     if( map == NULL )
     {
@@ -1851,7 +1860,7 @@ FmlObjectHandle Fieldml_GetElementEvaluator( FmlHandle handle, FmlObjectHandle o
 }
 
 
-FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlHandle handle, const char * name, FmlObjectHandle sourceEvaluator )
+FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlSessionHandle handle, const char * name, FmlObjectHandle sourceEvaluator )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1868,7 +1877,7 @@ FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlHandle handle, const char *
 }
 
 
-FmlObjectHandle Fieldml_GetReferenceSourceEvaluator( FmlHandle handle, FmlObjectHandle objectHandle )
+FmlObjectHandle Fieldml_GetReferenceSourceEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1894,7 +1903,7 @@ FmlObjectHandle Fieldml_GetReferenceSourceEvaluator( FmlHandle handle, FmlObject
 }
 
 
-int Fieldml_GetVariableCount( FmlHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetVariableCount( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1912,7 +1921,7 @@ int Fieldml_GetVariableCount( FmlHandle handle, FmlObjectHandle objectHandle )
 }
 
 
-FmlObjectHandle Fieldml_GetVariable( FmlHandle handle, FmlObjectHandle objectHandle, int variableIndex )
+FmlObjectHandle Fieldml_GetVariable( FmlSessionHandle handle, FmlObjectHandle objectHandle, int variableIndex )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1936,7 +1945,7 @@ FmlObjectHandle Fieldml_GetVariable( FmlHandle handle, FmlObjectHandle objectHan
 }
 
 
-int Fieldml_AddVariable( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle evaluatorHandle )
+FmlErrorNumber Fieldml_AddVariable( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle evaluatorHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1959,7 +1968,7 @@ int Fieldml_AddVariable( FmlHandle handle, FmlObjectHandle objectHandle, FmlObje
 }
 
 
-int Fieldml_GetBindCount( FmlHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetBindCount( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1977,7 +1986,7 @@ int Fieldml_GetBindCount( FmlHandle handle, FmlObjectHandle objectHandle )
 }
 
 
-FmlObjectHandle Fieldml_GetBindVariable( FmlHandle handle, FmlObjectHandle objectHandle, int index )
+FmlObjectHandle Fieldml_GetBindVariable( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1995,7 +2004,7 @@ FmlObjectHandle Fieldml_GetBindVariable( FmlHandle handle, FmlObjectHandle objec
 }
 
 
-FmlObjectHandle Fieldml_GetBindEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int index )
+FmlObjectHandle Fieldml_GetBindEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2013,7 +2022,7 @@ FmlObjectHandle Fieldml_GetBindEvaluator( FmlHandle handle, FmlObjectHandle obje
 }
 
 
-FmlObjectHandle Fieldml_GetBindByVariable( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle variableHandle )
+FmlObjectHandle Fieldml_GetBindByVariable( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle variableHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2039,7 +2048,7 @@ FmlObjectHandle Fieldml_GetBindByVariable( FmlHandle handle, FmlObjectHandle obj
 }
 
 
-int Fieldml_SetBind( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle variableHandle, FmlObjectHandle sourceHandle )
+FmlErrorNumber Fieldml_SetBind( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle variableHandle, FmlObjectHandle sourceHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2064,7 +2073,7 @@ int Fieldml_SetBind( FmlHandle handle, FmlObjectHandle objectHandle, FmlObjectHa
 
 
 
-int Fieldml_GetIndexCount( FmlHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetIndexCount( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2105,7 +2114,7 @@ int Fieldml_GetIndexCount( FmlHandle handle, FmlObjectHandle objectHandle )
 }
 
 
-int Fieldml_SetIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int index, FmlObjectHandle evaluatorHandle )
+FmlErrorNumber Fieldml_SetIndexEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index, FmlObjectHandle evaluatorHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2194,7 +2203,7 @@ int Fieldml_SetIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, i
 }
 
 
-FmlObjectHandle Fieldml_GetIndexEvaluator( FmlHandle handle, FmlObjectHandle objectHandle, int index )
+FmlObjectHandle Fieldml_GetIndexEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2278,7 +2287,7 @@ FmlObjectHandle Fieldml_GetIndexEvaluator( FmlHandle handle, FmlObjectHandle obj
 }
 
 
-int Fieldml_GetSemidenseIndexOrder( FmlHandle handle, FmlObjectHandle objectHandle, int index )
+FmlObjectHandle Fieldml_GetSemidenseIndexOrder( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2327,7 +2336,7 @@ int Fieldml_GetSemidenseIndexOrder( FmlHandle handle, FmlObjectHandle objectHand
 }
 
 
-FmlObjectHandle Fieldml_CreateContinuousType( FmlHandle handle, const char * name )
+FmlObjectHandle Fieldml_CreateContinuousType( FmlSessionHandle handle, const char * name )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2342,7 +2351,7 @@ FmlObjectHandle Fieldml_CreateContinuousType( FmlHandle handle, const char * nam
 }
 
 
-FmlObjectHandle Fieldml_CreateContinuousTypeComponents( FmlHandle handle, FmlObjectHandle typeHandle, const char *name, const int count )
+FmlObjectHandle Fieldml_CreateContinuousTypeComponents( FmlSessionHandle handle, FmlObjectHandle typeHandle, const char *name, const int count )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2381,7 +2390,7 @@ FmlObjectHandle Fieldml_CreateContinuousTypeComponents( FmlHandle handle, FmlObj
 }
 
 
-FmlObjectHandle Fieldml_CreateEnsembleType( FmlHandle handle, const char * name )
+FmlObjectHandle Fieldml_CreateEnsembleType( FmlSessionHandle handle, const char * name )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2396,7 +2405,7 @@ FmlObjectHandle Fieldml_CreateEnsembleType( FmlHandle handle, const char * name 
 }
 
 
-FmlObjectHandle Fieldml_CreateMeshType( FmlHandle handle, const char * name )
+FmlObjectHandle Fieldml_CreateMeshType( FmlSessionHandle handle, const char * name )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2412,7 +2421,7 @@ FmlObjectHandle Fieldml_CreateMeshType( FmlHandle handle, const char * name )
 }
 
 
-FmlObjectHandle Fieldml_CreateMeshElementsType( FmlHandle handle, FmlObjectHandle meshHandle, const char *name )
+FmlObjectHandle Fieldml_CreateMeshElementsType( FmlSessionHandle handle, FmlObjectHandle meshHandle, const char *name )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2443,7 +2452,7 @@ FmlObjectHandle Fieldml_CreateMeshElementsType( FmlHandle handle, FmlObjectHandl
 }
 
 
-FmlObjectHandle Fieldml_CreateMeshXiType( FmlHandle handle, FmlObjectHandle meshHandle, const char *name )
+FmlObjectHandle Fieldml_CreateMeshXiType( FmlSessionHandle handle, FmlObjectHandle meshHandle, const char *name )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2474,7 +2483,7 @@ FmlObjectHandle Fieldml_CreateMeshXiType( FmlHandle handle, FmlObjectHandle mesh
 }
 
 
-int Fieldml_SetMeshDefaultShape( FmlHandle handle, FmlObjectHandle objectHandle, const char * shape )
+FmlErrorNumber Fieldml_SetMeshDefaultShape( FmlSessionHandle handle, FmlObjectHandle objectHandle, const char * shape )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2482,7 +2491,7 @@ int Fieldml_SetMeshDefaultShape( FmlHandle handle, FmlObjectHandle objectHandle,
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    SimpleMap<int, string> *map = getShapeMap( session, objectHandle ); 
+    SimpleMap<FmlEnsembleValue, string> *map = getShapeMap( session, objectHandle ); 
     if( map == NULL )
     {
         return session->getLastError();
@@ -2493,7 +2502,7 @@ int Fieldml_SetMeshDefaultShape( FmlHandle handle, FmlObjectHandle objectHandle,
 }
 
 
-const char * Fieldml_GetMeshDefaultShape( FmlHandle handle, FmlObjectHandle objectHandle )
+const char * Fieldml_GetMeshDefaultShape( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2501,7 +2510,7 @@ const char * Fieldml_GetMeshDefaultShape( FmlHandle handle, FmlObjectHandle obje
         return NULL;
     }
 
-    SimpleMap<int, string> *map = getShapeMap( session, objectHandle ); 
+    SimpleMap<FmlEnsembleValue, string> *map = getShapeMap( session, objectHandle ); 
     if( map == NULL )
     {
         return NULL;
@@ -2511,13 +2520,13 @@ const char * Fieldml_GetMeshDefaultShape( FmlHandle handle, FmlObjectHandle obje
 }
 
 
-int Fieldml_CopyMeshDefaultShape( FmlHandle handle, FmlObjectHandle objectHandle, char * buffer, int bufferLength )
+int Fieldml_CopyMeshDefaultShape( FmlSessionHandle handle, FmlObjectHandle objectHandle, char * buffer, int bufferLength )
 {
     return cappedCopyAndFree( Fieldml_GetMeshDefaultShape( handle, objectHandle ), buffer, bufferLength );
 }
 
 
-int Fieldml_SetMeshElementShape( FmlHandle handle, FmlObjectHandle objectHandle, int elementNumber, const char * shape )
+FmlErrorNumber Fieldml_SetMeshElementShape( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlEnsembleValue elementNumber, const char * shape )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2525,7 +2534,7 @@ int Fieldml_SetMeshElementShape( FmlHandle handle, FmlObjectHandle objectHandle,
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    SimpleMap<int, string> *map = getShapeMap( session, objectHandle ); 
+    SimpleMap<FmlEnsembleValue, string> *map = getShapeMap( session, objectHandle ); 
     if( map == NULL )
     {
         return session->getLastError();
@@ -2536,7 +2545,7 @@ int Fieldml_SetMeshElementShape( FmlHandle handle, FmlObjectHandle objectHandle,
 }
 
 
-FmlReaderHandle Fieldml_OpenReader( FmlHandle handle, FmlObjectHandle objectHandle )
+FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2555,7 +2564,7 @@ FmlReaderHandle Fieldml_OpenReader( FmlHandle handle, FmlObjectHandle objectHand
 }
 
 
-int Fieldml_ReadIntValues( FmlHandle handle, FmlReaderHandle readerHandle, int *valueBuffer, int bufferSize )
+FmlErrorNumber Fieldml_ReadIntValues( FmlSessionHandle handle, FmlReaderHandle readerHandle, int *valueBuffer, int bufferSize )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2573,7 +2582,7 @@ int Fieldml_ReadIntValues( FmlHandle handle, FmlReaderHandle readerHandle, int *
 }
 
 
-int Fieldml_ReadDoubleValues( FmlHandle handle, FmlReaderHandle readerHandle, double *valueBuffer, int bufferSize )
+FmlErrorNumber Fieldml_ReadDoubleValues( FmlSessionHandle handle, FmlReaderHandle readerHandle, double *valueBuffer, int bufferSize )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2591,7 +2600,7 @@ int Fieldml_ReadDoubleValues( FmlHandle handle, FmlReaderHandle readerHandle, do
 }
 
 
-int Fieldml_CloseReader( FmlHandle handle, FmlReaderHandle readerHandle )
+FmlErrorNumber Fieldml_CloseReader( FmlSessionHandle handle, FmlReaderHandle readerHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2611,7 +2620,7 @@ int Fieldml_CloseReader( FmlHandle handle, FmlReaderHandle readerHandle )
 }
 
 
-FmlWriterHandle Fieldml_OpenWriter( FmlHandle handle, FmlObjectHandle objectHandle, int append )
+FmlWriterHandle Fieldml_OpenWriter( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlBoolean append )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2630,7 +2639,7 @@ FmlWriterHandle Fieldml_OpenWriter( FmlHandle handle, FmlObjectHandle objectHand
 }
 
 
-int Fieldml_WriteIntValues( FmlHandle handle, FmlWriterHandle writerHandle, int *valueBuffer, int valueCount )
+FmlErrorNumber Fieldml_WriteIntValues( FmlSessionHandle handle, FmlWriterHandle writerHandle, int *valueBuffer, int valueCount )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2649,7 +2658,7 @@ int Fieldml_WriteIntValues( FmlHandle handle, FmlWriterHandle writerHandle, int 
 }
 
 
-int Fieldml_WriteDoubleValues( FmlHandle handle, FmlWriterHandle writerHandle, double *valueBuffer, int valueCount )
+FmlErrorNumber Fieldml_WriteDoubleValues( FmlSessionHandle handle, FmlWriterHandle writerHandle, double *valueBuffer, int valueCount )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2668,7 +2677,7 @@ int Fieldml_WriteDoubleValues( FmlHandle handle, FmlWriterHandle writerHandle, d
 }
 
 
-int Fieldml_CloseWriter( FmlHandle handle, FmlWriterHandle writerHandle )
+FmlErrorNumber Fieldml_CloseWriter( FmlSessionHandle handle, FmlWriterHandle writerHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2688,7 +2697,7 @@ int Fieldml_CloseWriter( FmlHandle handle, FmlWriterHandle writerHandle )
 }
 
 
-FmlObjectHandle Fieldml_CreateEnsembleElementSequence( FmlHandle handle, const char * name, FmlObjectHandle valueType )
+FmlObjectHandle Fieldml_CreateEnsembleElementSequence( FmlSessionHandle handle, const char * name, FmlObjectHandle valueType )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2703,7 +2712,7 @@ FmlObjectHandle Fieldml_CreateEnsembleElementSequence( FmlHandle handle, const c
 }
 
 
-int Fieldml_SetEnsembleElementRange( FmlHandle handle, FmlObjectHandle objectHandle, const int minElement, const int maxElement, const int stride )
+FmlErrorNumber Fieldml_SetEnsembleElementRange( FmlSessionHandle handle, FmlObjectHandle objectHandle, const FmlEnsembleValue minElement, const FmlEnsembleValue maxElement, const int stride )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2732,7 +2741,7 @@ int Fieldml_SetEnsembleElementRange( FmlHandle handle, FmlObjectHandle objectHan
     {
         ElementSequence *elementSequence = (ElementSequence*)object;
 
-        for( int i = minElement; i <= maxElement; i += stride )
+        for( FmlEnsembleValue i = minElement; i <= maxElement; i += stride )
         {
             elementSequence->members.setBit( i, true );
         }
@@ -2761,7 +2770,7 @@ int Fieldml_SetEnsembleElementRange( FmlHandle handle, FmlObjectHandle objectHan
 }
 
 
-int Fieldml_AddImportSource( FmlHandle handle, const char *location, const char *name )
+int Fieldml_AddImportSource( FmlSessionHandle handle, const char *location, const char *name )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2808,7 +2817,7 @@ int Fieldml_AddImportSource( FmlHandle handle, const char *location, const char 
 }
 
 
-int Fieldml_AddImport( FmlHandle handle, int importSourceIndex, const char *localName, const char *remoteName )
+FmlObjectHandle Fieldml_AddImport( FmlSessionHandle handle, int importSourceIndex, const char *localName, const char *remoteName )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2843,7 +2852,6 @@ int Fieldml_AddImport( FmlHandle handle, int importSourceIndex, const char *loca
     
     if( object == FML_INVALID_HANDLE )
     {
-        printf("NO REMOTE OBJECT %s\n", remoteName );//CPL
         session->setError( FML_ERR_INVALID_PARAMETER_4 );  
     }
     else
@@ -2855,7 +2863,7 @@ int Fieldml_AddImport( FmlHandle handle, int importSourceIndex, const char *loca
 }
 
 
-int Fieldml_GetImportSourceCount( FmlHandle handle )
+int Fieldml_GetImportSourceCount( FmlSessionHandle handle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2872,7 +2880,7 @@ int Fieldml_GetImportSourceCount( FmlHandle handle )
 }
 
 
-int Fieldml_GetImportCount( FmlHandle handle, int importSourceIndex )
+int Fieldml_GetImportCount( FmlSessionHandle handle, int importSourceIndex )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2889,7 +2897,7 @@ int Fieldml_GetImportCount( FmlHandle handle, int importSourceIndex )
 }
 
 
-int Fieldml_CopyImportSourceLocation( FmlHandle handle, int importSourceIndex, char *buffer, int bufferLength )
+int Fieldml_CopyImportSourceLocation( FmlSessionHandle handle, int importSourceIndex, char *buffer, int bufferLength )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2913,7 +2921,7 @@ int Fieldml_CopyImportSourceLocation( FmlHandle handle, int importSourceIndex, c
 }
 
 
-int Fieldml_CopyImportSourceRegionName( FmlHandle handle, int importSourceIndex, char *buffer, int bufferLength )
+int Fieldml_CopyImportSourceRegionName( FmlSessionHandle handle, int importSourceIndex, char *buffer, int bufferLength )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2937,7 +2945,7 @@ int Fieldml_CopyImportSourceRegionName( FmlHandle handle, int importSourceIndex,
 }
 
 
-int Fieldml_CopyImportLocalName( FmlHandle handle, int importSourceIndex, int importIndex, char *buffer, int bufferLength )
+int Fieldml_CopyImportLocalName( FmlSessionHandle handle, int importSourceIndex, int importIndex, char *buffer, int bufferLength )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2961,7 +2969,7 @@ int Fieldml_CopyImportLocalName( FmlHandle handle, int importSourceIndex, int im
 }
 
 
-int Fieldml_CopyImportRemoteName( FmlHandle handle, int importSourceIndex, int importIndex, char *buffer, int bufferLength )
+int Fieldml_CopyImportRemoteName( FmlSessionHandle handle, int importSourceIndex, int importIndex, char *buffer, int bufferLength )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2985,7 +2993,7 @@ int Fieldml_CopyImportRemoteName( FmlHandle handle, int importSourceIndex, int i
 }
 
 
-int Fieldml_GetImportObject( FmlHandle handle, int importSourceIndex, int importIndex )
+FmlObjectHandle Fieldml_GetImportObject( FmlSessionHandle handle, int importSourceIndex, int importIndex )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3002,7 +3010,7 @@ int Fieldml_GetImportObject( FmlHandle handle, int importSourceIndex, int import
 }
 
 
-FmlObjectHandle Fieldml_CreateDataObject( FmlHandle handle, const char * name )
+FmlObjectHandle Fieldml_CreateDataObject( FmlSessionHandle handle, const char * name )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3017,7 +3025,7 @@ FmlObjectHandle Fieldml_CreateDataObject( FmlHandle handle, const char * name )
 }
 
 
-int Fieldml_AddInlineData( FmlHandle handle, FmlObjectHandle objectHandle, const char *data, const int length )
+FmlErrorNumber Fieldml_AddInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandle, const char *data, const int length )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3045,7 +3053,7 @@ int Fieldml_AddInlineData( FmlHandle handle, FmlObjectHandle objectHandle, const
 }
 
 
-int Fieldml_GetInlineDataLength( FmlHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetInlineDataLength( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3063,7 +3071,7 @@ int Fieldml_GetInlineDataLength( FmlHandle handle, FmlObjectHandle objectHandle 
 }
 
 
-const char * Fieldml_GetInlineData( FmlHandle handle, FmlObjectHandle objectHandle )
+const char * Fieldml_GetInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3081,7 +3089,7 @@ const char * Fieldml_GetInlineData( FmlHandle handle, FmlObjectHandle objectHand
 }
 
 
-int Fieldml_CopyInlineData( FmlHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength, int offset )
+int Fieldml_CopyInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength, int offset )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3104,7 +3112,7 @@ int Fieldml_CopyInlineData( FmlHandle handle, FmlObjectHandle objectHandle, char
 }
 
 
-DataSourceType Fieldml_GetDataObjectSourceType( FmlHandle handle, FmlObjectHandle objectHandle )
+DataSourceType Fieldml_GetDataObjectSourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3122,7 +3130,7 @@ DataSourceType Fieldml_GetDataObjectSourceType( FmlHandle handle, FmlObjectHandl
 }
 
 
-int Fieldml_SetDataObjectSourceType( FmlHandle handle, FmlObjectHandle objectHandle, DataSourceType source )
+FmlErrorNumber Fieldml_SetDataObjectSourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle, DataSourceType source )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3155,7 +3163,7 @@ int Fieldml_SetDataObjectSourceType( FmlHandle handle, FmlObjectHandle objectHan
 }
 
 
-int Fieldml_SetDataObjectTextFileInfo( FmlHandle handle, FmlObjectHandle objectHandle, const char * filename, int lineOffset )
+FmlErrorNumber Fieldml_SetDataObjectTextFileInfo( FmlSessionHandle handle, FmlObjectHandle objectHandle, const char * filename, int lineOffset )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3176,7 +3184,7 @@ int Fieldml_SetDataObjectTextFileInfo( FmlHandle handle, FmlObjectHandle objectH
 }
 
 
-const char * Fieldml_GetDataObjectFilename( FmlHandle handle, FmlObjectHandle objectHandle )
+const char * Fieldml_GetDataObjectFilename( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3194,13 +3202,13 @@ const char * Fieldml_GetDataObjectFilename( FmlHandle handle, FmlObjectHandle ob
 }
 
 
-int Fieldml_CopyDataObjectFilename( FmlHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength )
+int Fieldml_CopyDataObjectFilename( FmlSessionHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength )
 {
     return cappedCopyAndFree( Fieldml_GetDataObjectFilename( handle, objectHandle ), buffer, bufferLength );
 }
 
 
-int Fieldml_GetDataObjectFileOffset( FmlHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetDataObjectFileOffset( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3218,7 +3226,7 @@ int Fieldml_GetDataObjectFileOffset( FmlHandle handle, FmlObjectHandle objectHan
 }
 
 
-FmlObjectHandle Fieldml_GetDataObject( FmlHandle handle, FmlObjectHandle objectHandle )
+FmlObjectHandle Fieldml_GetDataObject( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3266,12 +3274,12 @@ FmlObjectHandle Fieldml_GetDataObject( FmlHandle handle, FmlObjectHandle objectH
 }
 
 
-int Fieldml_SetDataObjectEntryInfo( FmlHandle handle, FmlObjectHandle objectHandle, int count, int length, int head, int tail )
+FmlErrorNumber Fieldml_SetDataObjectEntryInfo( FmlSessionHandle handle, FmlObjectHandle objectHandle, int count, int length, int head, int tail )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
     {
-        return FML_INVALID_HANDLE;
+        return FML_ERR_UNKNOWN_HANDLE;
     }
     
     DataObject *dataObject = getDataObject( session, objectHandle );
@@ -3289,7 +3297,7 @@ int Fieldml_SetDataObjectEntryInfo( FmlHandle handle, FmlObjectHandle objectHand
 }
 
 
-int Fieldml_GetDataObjectEntryCount( FmlHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetDataObjectEntryCount( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3307,7 +3315,7 @@ int Fieldml_GetDataObjectEntryCount( FmlHandle handle, FmlObjectHandle objectHan
 }
 
 
-int Fieldml_GetDataObjectEntryLength( FmlHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetDataObjectEntryLength( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3325,7 +3333,7 @@ int Fieldml_GetDataObjectEntryLength( FmlHandle handle, FmlObjectHandle objectHa
 }
 
 
-int Fieldml_GetDataObjectEntryHead( FmlHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetDataObjectEntryHead( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3343,7 +3351,7 @@ int Fieldml_GetDataObjectEntryHead( FmlHandle handle, FmlObjectHandle objectHand
 }
 
 
-int Fieldml_GetDataObjectEntryTail( FmlHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetDataObjectEntryTail( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )

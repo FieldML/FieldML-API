@@ -62,7 +62,7 @@ void testRead( const char * filename )
 {
     int i, j, count, count2;
     FmlObjectHandle oHandle;
-    FmlHandle handle;
+    FmlSessionHandle handle;
 
     handle = Fieldml_CreateFromFile( filename );
     
@@ -293,7 +293,7 @@ void testRead( const char * filename )
 
 int testWrite( const char *filename )
 {
-    FmlHandle handle;
+    FmlSessionHandle handle;
     char *outputFilename;
     int result;
 
@@ -367,7 +367,7 @@ void testMisc()
 {
     bool testOk = true;
     int i;
-    FmlHandle handle;
+    FmlSessionHandle handle;
     FmlReaderHandle reader;
     FmlWriterHandle writer;
     double values[] = { 45.3, 67.0, -12.8 };
