@@ -46,6 +46,8 @@
 
 #include "FieldmlErrorHandler.h"
 #include "FieldmlRegion.h"
+#include "DataReader.h"
+#include "DataWriter.h"
 
 class FieldmlSession :
     public FieldmlErrorHandler
@@ -57,6 +59,10 @@ private:
     
     std::vector<std::string> errors;
     
+    std::vector<DataReader *> readers;
+    
+    std::vector<DataWriter *> writers;
+
     std::vector<FieldmlRegion*> regions;
     
     FmlSessionHandle handle;
@@ -99,6 +105,18 @@ public:
 
     ObjectStore * const objects;
 
+    FmlReaderHandle addReader( DataReader *reader );
+    
+    void removeReader( FmlReaderHandle handle );
+    
+    DataReader *handleToReader( FmlReaderHandle handle );
+    
+    FmlWriterHandle addWriter( DataWriter *writer );
+    
+    void removeWriter( FmlWriterHandle handle );
+    
+    DataWriter *handleToWriter( FmlWriterHandle handle );
+    
 
     static FieldmlSession *handleToSession( FmlSessionHandle handle );
 };

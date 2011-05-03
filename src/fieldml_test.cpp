@@ -390,7 +390,7 @@ void testMisc()
     
     handle = Fieldml_Create( "", "test" );
     
-    int importHandle = Fieldml_AddImportSource( handle, "library_0.3.xml", "library" );
+    int importHandle = Fieldml_AddImportSource( handle, "library.xml", "library" );
     FmlObjectHandle rc3Ensemble = Fieldml_AddImport( handle, importHandle, "library.xi.3d.component", "library.xi.3d.component" );
     FmlObjectHandle realType = Fieldml_AddImport( handle, importHandle, "library.real.1d", "library.real.1d" );
     

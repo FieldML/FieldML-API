@@ -52,19 +52,13 @@ class DataWriter
 private:
     FieldmlErrorHandler *eHandler;
 
-    FmlWriterHandle handle;
-
-    static FmlWriterHandle addWriter( DataWriter *writer );
-
     FieldmlOutputStream * const stream;
 
     DataWriter( FieldmlOutputStream *_stream, FieldmlErrorHandler *_eHandler );
 
 public:
-    static FmlWriterHandle create( FieldmlErrorHandler *eHandler, const char *root, DataObject *dataObject, int append );
+    static DataWriter * create( FieldmlErrorHandler *eHandler, const char *root, DataObject *dataObject, int append );
     
-    static DataWriter *handleToWriter( FmlWriterHandle handle );
-
     virtual int writeIntValues( int *values, int count );
     virtual int writeDoubleValues( double *values, int count );
     

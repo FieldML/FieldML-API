@@ -78,7 +78,7 @@ typedef int32_t FmlObjectHandle;
 
 typedef int32_t FmlErrorNumber;
 
-//NOTE When used as a return value, FmlBoolean-valued functions are ternary-value result, with -1 indictating error.
+//NOTE When used as a return value, FmlBoolean-valued functions are ternary, with -1 indictating error.
 typedef int32_t FmlBoolean;
 
 //NOTE It may be necessary to support 64-bit ensemble values in the future.
@@ -93,8 +93,8 @@ typedef int32_t FmlEnsembleValue;
 #define FML_INVALID_HANDLE -1
 
 #define FML_MAJOR_VERSION               0
-#define FML_MINOR_VERSION               3
-#define FML_DOT_VERSION                 1
+#define FML_MINOR_VERSION               4
+#define FML_DOT_VERSION                 0
 
 #define FML_ERR_NO_ERROR                0
 #define FML_ERR_UNKNOWN_HANDLE          1000

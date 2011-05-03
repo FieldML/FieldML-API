@@ -60,24 +60,18 @@ private:
     
     const int tail;
     
-    FmlReaderHandle handle;
-    
     int entryCounter;
     
     int dataCounter;
     
     FieldmlInputStream *const stream;
 
-    static FmlReaderHandle addReader( DataReader *reader );
-    
     DataReader( FieldmlInputStream *_stream, FieldmlErrorHandler *_eHandler, int _count, int _length, int _head, int _tail );
     
     void skip( int amount );
 
 public:
-    static FmlReaderHandle create( FieldmlErrorHandler *eHandler, const char *root, DataObject *dataObject );
-    
-    static DataReader *handleToReader( FmlReaderHandle handle );
+    static DataReader *create( FieldmlErrorHandler *eHandler, const char *root, DataObject *dataObject );
     
     virtual int readIntValues( int *values, int count );
     virtual int readDoubleValues( double *value, int count ); 

@@ -266,7 +266,7 @@ static const char* cstrCopy( const string &s )
 
 static int cappedCopy( const char *source, char *buffer, int bufferLength )
 {
-    if( ( bufferLength <= 0 ) || ( source == NULL ) )
+    if( ( bufferLength <= 1 ) || ( source == NULL ) )
     {
         return 0;
     }
@@ -773,10 +773,6 @@ FmlObjectHandle Fieldml_GetTypeComponentEnsemble( FmlSessionHandle handle, FmlOb
         ContinuousType *continuousType = (ContinuousType*)object;
         return continuousType->componentType;
     }
-    else if( object->type == FHT_ENSEMBLE_TYPE )
-    {
-        return FML_INVALID_HANDLE;
-    }
 
     session->setError( FML_ERR_INVALID_OBJECT );  
     return FML_INVALID_HANDLE;
@@ -973,6 +969,11 @@ FmlErrorNumber Fieldml_SetEnsembleMembersData( FmlSessionHandle handle, FmlObjec
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
+    }
+    
+    if( Fieldml_GetObjectType( handle, dataObjectHandle ) != FHT_DATA_OBJECT )
+    {
+        return session->setError( FML_ERR_INVALID_PARAMETER_5 );
     }
         
     FieldmlObject *object = getObject( session, objectHandle );
@@ -2560,7 +2561,14 @@ FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle obj
     
     DataObject *dataObject = getDataObject( session, objectHandle );
 
-    return DataReader::create( session, session->region->getRoot().c_str(), dataObject );
+    DataReader *reader = DataReader::create( session, session->region->getRoot().c_str(), dataObject );
+    
+    if( reader == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+    
+    return session->addReader( reader );
 }
 
 
@@ -2572,7 +2580,7 @@ FmlErrorNumber Fieldml_ReadIntValues( FmlSessionHandle handle, FmlReaderHandle r
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    DataReader *reader = DataReader::handleToReader( readerHandle );
+    DataReader *reader = session->handleToReader( readerHandle );
     if( reader == NULL )
     {
         return session->setError( FML_ERR_INVALID_OBJECT );
@@ -2590,7 +2598,7 @@ FmlErrorNumber Fieldml_ReadDoubleValues( FmlSessionHandle handle, FmlReaderHandl
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    DataReader *reader = DataReader::handleToReader( readerHandle );
+    DataReader *reader = session->handleToReader( readerHandle );
     if( reader == NULL )
     {
         return session->setError( FML_ERR_INVALID_OBJECT );
@@ -2608,12 +2616,14 @@ FmlErrorNumber Fieldml_CloseReader( FmlSessionHandle handle, FmlReaderHandle rea
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    DataReader *reader = DataReader::handleToReader( readerHandle );
+    DataReader *reader = session->handleToReader( readerHandle );
     if( reader == NULL )
     {
         return session->setError( FML_ERR_INVALID_OBJECT );
     }
 
+    session->removeReader( readerHandle );
+    
     delete reader;
     
     return session->setError( FML_ERR_NO_ERROR );
@@ -2635,7 +2645,14 @@ FmlWriterHandle Fieldml_OpenWriter( FmlSessionHandle handle, FmlObjectHandle obj
     
     DataObject *dataObject = getDataObject( session, objectHandle );
 
-    return DataWriter::create( session, session->region->getRoot().c_str(), dataObject, ( append == 1 ));
+    DataWriter *writer = DataWriter::create( session, session->region->getRoot().c_str(), dataObject, ( append == 1 ));
+
+    if( writer == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+    
+    return session->addWriter( writer );
 }
 
 
@@ -2647,7 +2664,7 @@ FmlErrorNumber Fieldml_WriteIntValues( FmlSessionHandle handle, FmlWriterHandle 
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    DataWriter *writer = DataWriter::handleToWriter( writerHandle );
+    DataWriter *writer = session->handleToWriter( writerHandle );
     if( writer == NULL )
     {
         session->setError( FML_ERR_INVALID_OBJECT );
@@ -2666,7 +2683,7 @@ FmlErrorNumber Fieldml_WriteDoubleValues( FmlSessionHandle handle, FmlWriterHand
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    DataWriter *writer = DataWriter::handleToWriter( writerHandle );
+    DataWriter *writer = session->handleToWriter( writerHandle );
     if( writer == NULL )
     {
         session->setError( FML_ERR_INVALID_OBJECT );
@@ -2685,11 +2702,13 @@ FmlErrorNumber Fieldml_CloseWriter( FmlSessionHandle handle, FmlWriterHandle wri
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    DataWriter *writer = DataWriter::handleToWriter( writerHandle );
+    DataWriter *writer = session->handleToWriter( writerHandle );
     if( writer == NULL )
     {
         return session->setError( FML_ERR_INVALID_OBJECT );
     }
+
+    session->removeWriter( writerHandle );
 
     delete writer;
     
@@ -2704,7 +2723,12 @@ FmlObjectHandle Fieldml_CreateEnsembleElementSequence( FmlSessionHandle handle, 
     {
         return FML_INVALID_HANDLE;
     }
-
+    if( !checkIsValueType( session, valueType, false, true, false ) )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        return FML_INVALID_HANDLE;
+    }
+    
     ElementSequence *elementSequence = new ElementSequence( name, valueType );
     
     session->setError( FML_ERR_NO_ERROR );
@@ -2848,18 +2872,24 @@ FmlObjectHandle Fieldml_AddImport( FmlSessionHandle handle, int importSourceInde
         return FML_INVALID_HANDLE;
     }
     
-    FmlObjectHandle object = region->getNamedObject( remoteName );
+    FmlObjectHandle remoteObject = region->getNamedObject( remoteName );
+    FmlObjectHandle localObject = session->region->getNamedObject( localName );
     
-    if( object == FML_INVALID_HANDLE )
+    if( remoteObject == FML_INVALID_HANDLE )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_4 );  
     }
+    else if( localObject != FML_INVALID_HANDLE )
+    {
+        remoteObject = FML_INVALID_HANDLE;
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );  
+    }
     else
     {
-        session->region->addImport( importSourceIndex - 1, localName, remoteName, object );
+        session->region->addImport( importSourceIndex - 1, localName, remoteName, remoteObject );
     }
     
-    return object;
+    return remoteObject;
 }
 
 
@@ -3286,6 +3316,23 @@ FmlErrorNumber Fieldml_SetDataObjectEntryInfo( FmlSessionHandle handle, FmlObjec
     if( dataObject == NULL )
     {
         return session->getLastError();
+    }
+    
+    if( count <= 0 )
+    {
+        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+    }
+    if( length <= 0 )
+    {
+        return session->setError( FML_ERR_INVALID_PARAMETER_4 );
+    }
+    if( head <= -1 )
+    {
+        return session->setError( FML_ERR_INVALID_PARAMETER_5 );
+    }
+    if( tail <= -1 )
+    {
+        return session->setError( FML_ERR_INVALID_PARAMETER_6 );
     }
     
     dataObject->entryCount = count;

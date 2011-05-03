@@ -47,26 +47,6 @@
 
 using namespace std;
 
-static vector<DataReader *> readers;
-
-DataReader *DataReader::handleToReader( FmlReaderHandle handle )
-{
-    if( ( handle < 0 ) || ( handle >= readers.size() ) )
-    {
-        return NULL;
-    }
-    
-    return readers.at( handle );
-}
-
-
-FmlReaderHandle DataReader::addReader( DataReader *reader )
-{
-    readers.push_back( reader );
-    return readers.size() - 1;
-}
-
-
 DataReader::DataReader( FieldmlInputStream *_stream, FieldmlErrorHandler *_eHandler, int _count, int _length, int _head, int _tail ) :
     eHandler( _eHandler ),
     stream( _stream ),
@@ -75,7 +55,6 @@ DataReader::DataReader( FieldmlInputStream *_stream, FieldmlErrorHandler *_eHand
     head( _head ),
     tail( _tail )
 {
-    handle = addReader( this );
     dataCounter = 0;
     entryCounter = 0;
     
@@ -83,13 +62,13 @@ DataReader::DataReader( FieldmlInputStream *_stream, FieldmlErrorHandler *_eHand
 }
 
 
-FmlReaderHandle DataReader::create( FieldmlErrorHandler *eHandler, const char *root, DataObject *dataObject )
+DataReader *DataReader::create( FieldmlErrorHandler *eHandler, const char *root, DataObject *dataObject )
 {
     FieldmlInputStream *stream = NULL;
     
     if( ( dataObject == NULL ) || ( root == NULL ) || ( eHandler == NULL ) )
     {
-        return FML_INVALID_HANDLE;
+        return NULL;
     }
     else if( dataObject->source->sourceType == SOURCE_TEXT_FILE )
     {
@@ -114,11 +93,10 @@ FmlReaderHandle DataReader::create( FieldmlErrorHandler *eHandler, const char *r
     
     if( stream == NULL )
     {
-        return FML_INVALID_HANDLE;
+        return NULL;
     }
     
-    DataReader *reader = new DataReader( stream, eHandler, dataObject->entryCount, dataObject->entryLength, dataObject->entryHead, dataObject->entryTail );
-    return reader->handle;
+    return new DataReader( stream, eHandler, dataObject->entryCount, dataObject->entryLength, dataObject->entryHead, dataObject->entryTail );
 }
 
 
@@ -208,6 +186,4 @@ int DataReader::readDoubleValues( double *valueBuffer, int count )
 DataReader::~DataReader()
 {
     delete stream;
-    
-    readers[handle] = NULL;
 }

@@ -255,3 +255,51 @@ FieldmlObject *FieldmlSession::getObject( const FmlObjectHandle handle )
 {
     return objects->getObject( handle );
 }
+
+
+DataReader *FieldmlSession::handleToReader( FmlReaderHandle handle )
+{
+    if( ( handle < 0 ) || ( handle >= readers.size() ) )
+    {
+        return NULL;
+    }
+    
+    return readers.at( handle );
+}
+
+
+FmlReaderHandle FieldmlSession::addReader( DataReader *reader )
+{
+    readers.push_back( reader );
+    return readers.size() - 1;
+}
+
+
+void FieldmlSession::removeReader( FmlReaderHandle handle )
+{
+    readers[handle] = NULL;
+}
+
+
+DataWriter *FieldmlSession::handleToWriter( FmlWriterHandle handle )
+{
+    if( ( handle < 0 ) || ( handle >= writers.size() ) )
+    {
+        return NULL;
+    }
+    
+    return writers.at( handle );
+}
+
+
+FmlWriterHandle FieldmlSession::addWriter( DataWriter *writer )
+{
+    writers.push_back( writer );
+    return writers.size() - 1;
+}
+
+
+void FieldmlSession::removeWriter( FmlWriterHandle handle )
+{
+    writers[handle] = NULL;
+}

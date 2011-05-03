@@ -47,41 +47,20 @@
 
 using namespace std;
 
-static vector<DataWriter *> writers;
-
-DataWriter *DataWriter::handleToWriter( FmlWriterHandle handle )
-{
-    if( ( handle < 0 ) || ( handle >= writers.size() ) )
-    {
-        return NULL;
-    }
-    
-    return writers.at( handle );
-}
-
-
-FmlWriterHandle DataWriter::addWriter( DataWriter *writer )
-{
-    writers.push_back( writer );
-    return writers.size() - 1;
-}
-
-
 DataWriter::DataWriter( FieldmlOutputStream *_stream, FieldmlErrorHandler *_eHandler ) :
     stream( _stream ),
     eHandler( _eHandler )
 {
-    handle = addWriter( this );
 }
     
     
-FmlWriterHandle DataWriter::create( FieldmlErrorHandler *eHandler, const char *root, DataObject *dataObject, int append )
+DataWriter * DataWriter::create( FieldmlErrorHandler *eHandler, const char *root, DataObject *dataObject, int append )
 {
     FieldmlOutputStream *stream = NULL;
     
     if( ( dataObject == NULL ) || ( root == NULL ) || ( eHandler == NULL ) )
     {
-        return FML_INVALID_HANDLE;
+        return NULL;
     }
     else if( dataObject->source->sourceType == SOURCE_TEXT_FILE )
     {
@@ -98,11 +77,10 @@ FmlWriterHandle DataWriter::create( FieldmlErrorHandler *eHandler, const char *r
     
     if( stream == NULL )
     {
-        return FML_INVALID_HANDLE;
+        return NULL;
     }
     
-    DataWriter *writer = new DataWriter( stream, eHandler );
-    return writer->handle;
+    return new DataWriter( stream, eHandler );
 }
 
 
@@ -149,6 +127,4 @@ int DataWriter::writeDoubleValues( double *valueBuffer, int count )
 DataWriter::~DataWriter()
 {
     delete stream;
-    
-    writers[handle] = NULL;
 }
