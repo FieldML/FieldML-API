@@ -64,6 +64,30 @@ using namespace std;
 //========================================================================
 
 
+static bool checkLocal( FieldmlSession *session, FmlObjectHandle objectHandle )
+{
+    if( session->region == NULL )
+    {
+        session->setError( FML_ERR_INVALID_REGION );
+        return false;
+    }
+    
+    if( objectHandle == FML_INVALID_HANDLE )
+    {
+        //Nano-hack. Makes checking legitimate FML_INVALID_HANDLE parameters easier.
+        return true;
+    }
+    
+    if( !session->region->hasLocalObject( objectHandle, true, true ) )
+    {
+        session->setError( FML_ERR_NONLOCAL_OBJECT );
+        return false;
+    }
+    
+    return true;
+}
+
+
 static FieldmlObject *getObject( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
     FieldmlObject *object = session->getObject( objectHandle );
@@ -971,6 +995,11 @@ FmlErrorNumber Fieldml_SetEnsembleMembersData( FmlSessionHandle handle, FmlObjec
         return FML_ERR_UNKNOWN_HANDLE;
     }
     
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
+    }
+    
     if( Fieldml_GetObjectType( handle, dataObjectHandle ) != FHT_DATA_OBJECT )
     {
         return session->setError( FML_ERR_INVALID_PARAMETER_5 );
@@ -1144,7 +1173,7 @@ FmlBoolean Fieldml_IsObjectLocal( FmlSessionHandle handle, FmlObjectHandle objec
         return 0;
     }
 
-    if( session->region->hasLocalObject( objectHandle, false ) )
+    if( session->region->hasLocalObject( objectHandle, false, false ) )
     {
         return 1;
     }
@@ -1313,6 +1342,11 @@ FmlObjectHandle Fieldml_CreateAbstractEvaluator( FmlSessionHandle handle, const 
         return FML_INVALID_HANDLE;
     }
 
+    if( !checkLocal( session, valueType ) )
+    {
+        return session->getLastError();
+    }
+
     if( !checkIsValueType( session, valueType, true, true, true ) )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_3 );
@@ -1381,6 +1415,11 @@ FmlObjectHandle Fieldml_CreateExternalEvaluator( FmlSessionHandle handle, const 
         return FML_INVALID_HANDLE;
     }
 
+    if( !checkLocal( session, valueType ) )
+    {
+        return session->getLastError();
+    }
+
     if( !checkIsValueType( session, valueType, true, true, false ) )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_3 );
@@ -1402,6 +1441,11 @@ FmlObjectHandle Fieldml_CreateParametersEvaluator( FmlSessionHandle handle, cons
         return FML_INVALID_HANDLE;
     }
 
+    if( !checkLocal( session, valueType ) )
+    {
+        return session->getLastError();
+    }
+
     if( !checkIsValueType( session, valueType, true, true, false ) )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_3 );
@@ -1421,6 +1465,11 @@ FmlErrorNumber Fieldml_SetParameterDataDescription( FmlSessionHandle handle, Fml
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
+    }
+
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
     }
 
     FieldmlObject *object = getObject( session, objectHandle );
@@ -1487,9 +1536,18 @@ FmlErrorNumber Fieldml_SetDataObject( FmlSessionHandle handle, FmlObjectHandle o
         return session->setError( FML_ERR_UNKNOWN_HANDLE );
     }
 
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
+    }
+    if( !checkLocal( session, dataObject ) )
+    {
+        return session->getLastError();
+    }
+
     if( Fieldml_GetObjectType( handle, dataObject ) != FHT_DATA_OBJECT )
     {
-        return session->setError( FML_ERR_INVALID_OBJECT );
+        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
 
     FieldmlObject *object = getObject( session, objectHandle );
@@ -1536,6 +1594,19 @@ FmlErrorNumber Fieldml_AddDenseIndexEvaluator( FmlSessionHandle handle, FmlObjec
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
+    }
+    if( !checkLocal( session, indexHandle ) )
+    {
+        return session->getLastError();
+    }
+    if( !checkLocal( session, orderHandle ) )
+    {
+        return session->getLastError();
+    }
+
     if( !checkIsEvaluatorType( session, indexHandle, false, true ) )
     {
         return session->setError( FML_ERR_INVALID_PARAMETER_3 );
@@ -1566,6 +1637,16 @@ FmlErrorNumber Fieldml_AddSparseIndexEvaluator( FmlSessionHandle handle, FmlObje
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
+
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
+    }
+    if( !checkLocal( session, indexHandle ) )
+    {
+        return session->getLastError();
+    }
+
 
     if( !checkIsEvaluatorType( session, indexHandle, false, true ) )
     {
@@ -1652,6 +1733,11 @@ FmlObjectHandle Fieldml_CreatePiecewiseEvaluator( FmlSessionHandle handle, const
         return FML_INVALID_HANDLE;
     }
 
+    if( !checkLocal( session, valueType ) )
+    {
+        return session->getLastError();
+    }
+
     if( !checkIsValueType( session, valueType, true, true, false ) )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_3 );
@@ -1673,6 +1759,11 @@ FmlObjectHandle Fieldml_CreateAggregateEvaluator( FmlSessionHandle handle, const
         return FML_INVALID_HANDLE;
     }
 
+    if( !checkLocal( session, valueType ) )
+    {
+        return session->getLastError();
+    }
+
     if( !checkIsValueType( session, valueType, true, false, false ) )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_3 );
@@ -1692,6 +1783,15 @@ FmlErrorNumber Fieldml_SetDefaultEvaluator( FmlSessionHandle handle, FmlObjectHa
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
+    }
+
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
+    }
+    if( !checkLocal( session, evaluator ) )
+    {
+        return session->getLastError();
     }
 
     if( Fieldml_GetObjectType( handle, objectHandle ) == FHT_AGGREGATE_EVALUATOR )
@@ -1760,6 +1860,15 @@ FmlErrorNumber Fieldml_SetEvaluator( FmlSessionHandle handle, FmlObjectHandle ob
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
+    }
+
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
+    }
+    if( !checkLocal( session, evaluator ) )
+    {
+        return session->getLastError();
     }
 
     if( Fieldml_GetObjectType( handle, objectHandle ) == FHT_AGGREGATE_EVALUATOR )
@@ -1869,6 +1978,11 @@ FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlSessionHandle handle, const
         return FML_INVALID_HANDLE;
     }
 
+    if( !checkLocal( session, sourceEvaluator ) )
+    {
+        return session->getLastError();
+    }
+
     FmlObjectHandle valueType = Fieldml_GetValueType( handle, sourceEvaluator );
 
     ReferenceEvaluator *referenceEvaluator = new ReferenceEvaluator( name, sourceEvaluator, valueType, false );
@@ -1952,6 +2066,15 @@ FmlErrorNumber Fieldml_AddVariable( FmlSessionHandle handle, FmlObjectHandle obj
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
+    }
+
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
+    }
+    if( !checkLocal( session, evaluatorHandle ) )
+    {
+        return session->getLastError();
     }
 
     vector<FmlObjectHandle> *variables = getVariableList( session, objectHandle );
@@ -2057,6 +2180,19 @@ FmlErrorNumber Fieldml_SetBind( FmlSessionHandle handle, FmlObjectHandle objectH
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
+    }
+    if( !checkLocal( session, variableHandle ) )
+    {
+        return session->getLastError();
+    }
+    if( !checkLocal( session, sourceHandle ) )
+    {
+        return session->getLastError();
+    }
+
     if( !checkIsEvaluatorTypeCompatible( session, variableHandle, sourceHandle ) )
     {
         return session->setError( FML_ERR_INVALID_PARAMETER_3 );
@@ -2121,6 +2257,15 @@ FmlErrorNumber Fieldml_SetIndexEvaluator( FmlSessionHandle handle, FmlObjectHand
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
+    }
+
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
+    }
+    if( !checkLocal( session, evaluatorHandle ) )
+    {
+        return session->getLastError();
     }
 
     if( !checkIsEvaluatorType( session, evaluatorHandle, false, true ) )
@@ -2352,7 +2497,7 @@ FmlObjectHandle Fieldml_CreateContinuousType( FmlSessionHandle handle, const cha
 }
 
 
-FmlObjectHandle Fieldml_CreateContinuousTypeComponents( FmlSessionHandle handle, FmlObjectHandle typeHandle, const char *name, const int count )
+FmlObjectHandle Fieldml_CreateContinuousTypeComponents( FmlSessionHandle handle, FmlObjectHandle objectHandle, const char *name, const int count )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2360,7 +2505,12 @@ FmlObjectHandle Fieldml_CreateContinuousTypeComponents( FmlSessionHandle handle,
         return FML_INVALID_HANDLE;
     }
     
-    FieldmlObject *object = getObject( session, typeHandle );
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
+    }
+
+    FieldmlObject *object = getObject( session, objectHandle );
     if( object == NULL )
     {
         session->setError( FML_ERR_UNKNOWN_OBJECT );
@@ -2422,7 +2572,7 @@ FmlObjectHandle Fieldml_CreateMeshType( FmlSessionHandle handle, const char * na
 }
 
 
-FmlObjectHandle Fieldml_CreateMeshElementsType( FmlSessionHandle handle, FmlObjectHandle meshHandle, const char *name )
+FmlObjectHandle Fieldml_CreateMeshElementsType( FmlSessionHandle handle, FmlObjectHandle objectHandle, const char *name )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2430,7 +2580,12 @@ FmlObjectHandle Fieldml_CreateMeshElementsType( FmlSessionHandle handle, FmlObje
         return FML_INVALID_HANDLE;
     }
 
-    FieldmlObject *object = getObject( session, meshHandle );
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
+    }
+
+    FieldmlObject *object = getObject( session, objectHandle );
     if( object == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -2453,7 +2608,7 @@ FmlObjectHandle Fieldml_CreateMeshElementsType( FmlSessionHandle handle, FmlObje
 }
 
 
-FmlObjectHandle Fieldml_CreateMeshXiType( FmlSessionHandle handle, FmlObjectHandle meshHandle, const char *name )
+FmlObjectHandle Fieldml_CreateMeshXiType( FmlSessionHandle handle, FmlObjectHandle objectHandle, const char *name )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2461,7 +2616,12 @@ FmlObjectHandle Fieldml_CreateMeshXiType( FmlSessionHandle handle, FmlObjectHand
         return FML_INVALID_HANDLE;
     }
 
-    FieldmlObject *object = getObject( session, meshHandle );
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
+    }
+
+    FieldmlObject *object = getObject( session, objectHandle );
     if( object == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -2490,6 +2650,11 @@ FmlErrorNumber Fieldml_SetMeshDefaultShape( FmlSessionHandle handle, FmlObjectHa
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
+    }
+
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
     }
 
     SimpleMap<FmlEnsembleValue, string> *map = getShapeMap( session, objectHandle ); 
@@ -2535,6 +2700,11 @@ FmlErrorNumber Fieldml_SetMeshElementShape( FmlSessionHandle handle, FmlObjectHa
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
+    }
+
     SimpleMap<FmlEnsembleValue, string> *map = getShapeMap( session, objectHandle ); 
     if( map == NULL )
     {
@@ -2559,6 +2729,11 @@ FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle obj
         return FML_INVALID_HANDLE;
     }
     
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
+    }
+
     DataObject *dataObject = getDataObject( session, objectHandle );
 
     DataReader *reader = DataReader::create( session, session->region->getRoot().c_str(), dataObject );
@@ -2643,6 +2818,11 @@ FmlWriterHandle Fieldml_OpenWriter( FmlSessionHandle handle, FmlObjectHandle obj
         return FML_INVALID_HANDLE;
     }
     
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
+    }
+
     DataObject *dataObject = getDataObject( session, objectHandle );
 
     DataWriter *writer = DataWriter::create( session, session->region->getRoot().c_str(), dataObject, ( append == 1 ));
@@ -2723,6 +2903,11 @@ FmlObjectHandle Fieldml_CreateEnsembleElementSequence( FmlSessionHandle handle, 
     {
         return FML_INVALID_HANDLE;
     }
+    if( !checkLocal( session, valueType ) )
+    {
+        return session->getLastError();
+    }
+
     if( !checkIsValueType( session, valueType, false, true, false ) )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_3 );
@@ -2742,6 +2927,11 @@ FmlErrorNumber Fieldml_SetEnsembleElementRange( FmlSessionHandle handle, FmlObje
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
+    }
+
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
     }
 
     FieldmlObject *object = getObject( session, objectHandle );
@@ -3063,7 +3253,12 @@ FmlErrorNumber Fieldml_AddInlineData( FmlSessionHandle handle, FmlObjectHandle o
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    InlineDataSource *source = getInlineDataSource( session, objectHandle );
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
+    }
+
+   InlineDataSource *source = getInlineDataSource( session, objectHandle );
     if( source == NULL )
     {
         return session->getLastError();
@@ -3168,6 +3363,11 @@ FmlErrorNumber Fieldml_SetDataObjectSourceType( FmlSessionHandle handle, FmlObje
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
+    }
+
     DataObject *dataObject = getDataObject( session, objectHandle );
     if( dataObject == NULL )
     {
@@ -3199,6 +3399,11 @@ FmlErrorNumber Fieldml_SetDataObjectTextFileInfo( FmlSessionHandle handle, FmlOb
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
+    }
+
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
     }
 
     TextFileDataSource *source = getTextFileDataSource( session, objectHandle );
@@ -3312,6 +3517,11 @@ FmlErrorNumber Fieldml_SetDataObjectEntryInfo( FmlSessionHandle handle, FmlObjec
         return FML_ERR_UNKNOWN_HANDLE;
     }
     
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
+    }
+
     DataObject *dataObject = getDataObject( session, objectHandle );
     if( dataObject == NULL )
     {

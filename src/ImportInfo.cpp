@@ -118,6 +118,21 @@ const string ImportInfo::getLocalName( FmlObjectHandle handle )
 }
 
 
+bool ImportInfo::hasObject( FmlObjectHandle handle )
+{
+    for( vector<ObjectImport*>::iterator i = imports.begin(); i != imports.end(); i++ )
+    {
+        ObjectImport *import = *i;
+        if( import->handle == handle )
+        {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+
 void ImportInfo::addImport( string localName, string remoteName, FmlObjectHandle handle )
 {
     if( ( localName == "" ) || ( remoteName == "" ) || ( handle == FML_INVALID_HANDLE ) )

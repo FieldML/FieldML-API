@@ -7,6 +7,9 @@
  */
 %apply int[] {int *}
 %apply double[] {double *}
+%apply short {int16_t}
+%apply int {int32_t}
+%apply long {int64_t}
 
 %javaconst(1);
 
@@ -84,6 +87,7 @@
 
 
 %{
+typedef int int32_t;
 #include "Fieldml_api.h"
 %}
 

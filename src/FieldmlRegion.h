@@ -72,7 +72,7 @@ public:
     
     void addLocalObject( FmlObjectHandle handle );
 
-    const bool hasLocalObject( FmlObjectHandle handle, bool allowVirtual );
+    const bool hasLocalObject( FmlObjectHandle handle, bool allowVirtual, bool allowImport );
 
     const FmlObjectHandle getNamedObject( const std::string name );
     

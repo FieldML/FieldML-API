@@ -120,7 +120,7 @@ void FieldmlRegion::addLocalObject( FmlObjectHandle handle )
 }
 
 
-const bool FieldmlRegion::hasLocalObject( FmlObjectHandle handle, bool allowVirtual )
+const bool FieldmlRegion::hasLocalObject( FmlObjectHandle handle, bool allowVirtual, bool allowImport )
 {
     if( !allowVirtual )
     {
@@ -136,6 +136,24 @@ const bool FieldmlRegion::hasLocalObject( FmlObjectHandle handle, bool allowVirt
         if( *i == handle )
         {
             return true;
+        }
+    }
+    
+    if( allowImport )
+    {
+        for( vector<ImportInfo*>::iterator i = imports.begin(); i != imports.end(); i++ )
+        {
+            ImportInfo *info = *i;
+            
+            if( info == NULL )
+            {
+                continue;
+            }
+            
+            if( info->hasObject( handle ) )
+            {
+                return true;
+            }
         }
     }
     

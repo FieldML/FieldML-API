@@ -69,6 +69,8 @@ public:
     const std::string getRemoteNameByIndex( int index );
     
     FmlObjectHandle getObjectByIndex( int index );
+    
+    bool hasObject( FmlObjectHandle handle );
 
     const std::string location;
     
