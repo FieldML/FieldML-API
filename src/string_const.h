@@ -75,7 +75,7 @@ extern const xmlChar * const MESH_CONNECTIVITY_TAG;
 
 extern const xmlChar * const ELEMENT_SEQUENCE_TAG;
 extern const xmlChar * const ELEMENTS_TAG;
-extern const xmlChar * const XI_TAG;
+extern const xmlChar * const CHART_TAG;
 extern const xmlChar * const MEMBERS_TAG;
 
 extern const xmlChar * const MEMBER_RANGE_TAG;
@@ -164,7 +164,8 @@ extern const xmlChar * const OFFSET_ATTRIB;
 
 extern const xmlChar * const DATA_ATTRIB;
 
-extern const xmlChar * const FILENAME_ATTRIB;
+extern const xmlChar * const HREF_ATTRIB;
+extern const xmlChar * const QUALIFIED_HREF_ATTRIB;
 extern const xmlChar * const FIRST_LINE_ATTRIB;
 extern const xmlChar * const COUNT_ATTRIB;
 extern const xmlChar * const LENGTH_ATTRIB;

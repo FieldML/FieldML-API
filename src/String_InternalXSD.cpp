@@ -44,7 +44,11 @@
 const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"utf-8\"?> \
 <xs:schema id=\"fieldml\" \
     xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" \
+    xmlns:xlink=\"http://www.w3.org/1999/xlink\" \
     > \
+ \
+    <xs:import namespace=\"http://www.w3.org/1999/xlink\" \
+            schemaLocation=\"http://www.cellml.org/tools/cellml_1_1_schema/common/xlink-href.xsd\" /> \
  \
     <xs:complexType name=\"FieldmlRdfTargetType\"> \
         <xs:attribute name=\"id\" type=\"xs:string\" form=\"qualified\"/> \
@@ -59,7 +63,7 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
     </xs:complexType> \
  \
     <xs:complexType name=\"TextFileSource_Type\"> \
-        <xs:attribute name=\"filename\" type=\"xs:string\" /> \
+        <xs:attribute ref=\"xlink:href\" /> \
         <xs:attribute name=\"firstLine\" type=\"xs:positiveInteger\" use=\"optional\" /> \
     </xs:complexType> \
  \
@@ -269,7 +273,7 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
             <xs:extension base=\"FieldmlObject_Type\"> \
                 <xs:sequence> \
                     <xs:element name=\"Elements\" type=\"EnsembleType_Type\" minOccurs=\"1\" maxOccurs=\"1\" /> \
-                    <xs:element name=\"Xi\" type=\"ContinuousType_Type\" minOccurs=\"1\" maxOccurs=\"1\" /> \
+                    <xs:element name=\"Chart\" type=\"ContinuousType_Type\" minOccurs=\"1\" maxOccurs=\"1\" /> \
                     <xs:element name=\"Shapes\" type=\"DefaultSimpleMap_Type\" minOccurs=\"1\" maxOccurs=\"1\" /> \
                 </xs:sequence> \
             </xs:extension> \

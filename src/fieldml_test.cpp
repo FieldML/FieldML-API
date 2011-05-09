@@ -118,7 +118,7 @@ void testRead( const char * filename )
         
         fprintf( stdout, "  %d: %s (%s, %s)\n", i, Fieldml_GetObjectName( handle, oHandle ),
             Fieldml_GetObjectName( handle, Fieldml_GetMeshElementsType( handle, oHandle ) ),
-            Fieldml_GetObjectName( handle, Fieldml_GetMeshXiType( handle, oHandle ) ) );
+            Fieldml_GetObjectName( handle, Fieldml_GetMeshChartType( handle, oHandle ) ) );
         fprintf( stdout, "    " );
         count2 = Fieldml_GetElementCount( handle, oHandle );
         fprintf( stdout, "  %d elements:  \n", count2 );
@@ -391,7 +391,7 @@ void testMisc()
     handle = Fieldml_Create( "", "test" );
     
     int importHandle = Fieldml_AddImportSource( handle, "library.xml", "library" );
-    FmlObjectHandle rc3Ensemble = Fieldml_AddImport( handle, importHandle, "library.xi.3d.component", "library.xi.3d.component" );
+    FmlObjectHandle rc3Ensemble = Fieldml_AddImport( handle, importHandle, "library.chart.3d.component", "library.chart.3d.component" );
     FmlObjectHandle realType = Fieldml_AddImport( handle, importHandle, "library.real.1d", "library.real.1d" );
     
     FmlObjectHandle parametersData = Fieldml_CreateDataObject( handle, "test.parameters_data" );

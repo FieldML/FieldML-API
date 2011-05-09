@@ -61,23 +61,23 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
   <AbstractEvaluator name=\"library.real.3d.component.variable\" valueType=\"library.real.3d.component\"/> \
   <AbstractEvaluator name=\"library.real.3d.variable\" valueType=\"library.real.3d\"/> \
  \
-  <ContinuousType name=\"library.xi.1d\"> \
-    <Components name=\"library.xi.1d.component\" count=\"1\"/> \
+  <ContinuousType name=\"library.chart.1d\"> \
+    <Components name=\"library.chart.1d.component\" count=\"1\"/> \
   </ContinuousType> \
-  <AbstractEvaluator name=\"library.xi.1d.component.variable\" valueType=\"library.xi.1d.component\"/> \
-  <AbstractEvaluator name=\"library.xi.1d.variable\" valueType=\"library.xi.1d\"/> \
+  <AbstractEvaluator name=\"library.chart.1d.component.variable\" valueType=\"library.chart.1d.component\"/> \
+  <AbstractEvaluator name=\"library.chart.1d.variable\" valueType=\"library.chart.1d\"/> \
  \
-  <ContinuousType name=\"library.xi.2d\"> \
-    <Components name=\"library.xi.2d.component\" count=\"2\"/> \
+  <ContinuousType name=\"library.chart.2d\"> \
+    <Components name=\"library.chart.2d.component\" count=\"2\"/> \
   </ContinuousType> \
-  <AbstractEvaluator name=\"library.xi.2d.component.variable\" valueType=\"library.xi.2d.component\"/> \
-  <AbstractEvaluator name=\"library.xi.2d.variable\" valueType=\"library.xi.2d\"/> \
+  <AbstractEvaluator name=\"library.chart.2d.component.variable\" valueType=\"library.chart.2d.component\"/> \
+  <AbstractEvaluator name=\"library.chart.2d.variable\" valueType=\"library.chart.2d\"/> \
  \
-  <ContinuousType name=\"library.xi.3d\"> \
-    <Components name=\"library.xi.3d.component\" count=\"3\"/> \
+  <ContinuousType name=\"library.chart.3d\"> \
+    <Components name=\"library.chart.3d.component\" count=\"3\"/> \
   </ContinuousType> \
-  <AbstractEvaluator name=\"library.xi.3d.component.variable\" valueType=\"library.xi.3d.component\"/> \
-  <AbstractEvaluator name=\"library.xi.3d.variable\" valueType=\"library.xi.3d\"/> \
+  <AbstractEvaluator name=\"library.chart.3d.component.variable\" valueType=\"library.chart.3d.component\"/> \
+  <AbstractEvaluator name=\"library.chart.3d.variable\" valueType=\"library.chart.3d\"/> \
  \
   <EnsembleType name=\"library.localNodes.1d.line2\"> \
    <Members> \
@@ -94,7 +94,7 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
  \
   <ExternalEvaluator name=\"library.interpolator.1d.unit.linearLagrange\" valueType=\"library.real.1d\"> \
     <Variables> \
-      <Variable name=\"library.xi.1d.variable\"/> \
+      <Variable name=\"library.chart.1d.variable\"/> \
       <Variable name=\"library.parameters.1d.linearLagrange.variable\"/> \
     </Variables> \
   </ExternalEvaluator> \
@@ -114,7 +114,7 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
  \
   <ExternalEvaluator name=\"library.interpolator.1d.unit.quadraticLagrange\" valueType=\"library.real.1d\"> \
     <Variables> \
-      <Variable name=\"library.xi.1d.variable\"/> \
+      <Variable name=\"library.chart.1d.variable\"/> \
       <Variable name=\"library.parameters.1d.quadraticLagrange.variable\"/> \
     </Variables> \
   </ExternalEvaluator> \
@@ -134,7 +134,7 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
  \
   <ExternalEvaluator name=\"library.interpolator.2d.unit.bilinearLagrange\" valueType=\"library.real.1d\"> \
     <Variables> \
-      <Variable name=\"library.xi.2d.variable\"/> \
+      <Variable name=\"library.chart.2d.variable\"/> \
       <Variable name=\"library.parameters.2d.bilinearLagrange.variable\"/> \
     </Variables> \
   </ExternalEvaluator> \
@@ -154,7 +154,7 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
  \
   <ExternalEvaluator name=\"library.interpolator.2d.unit.biquadraticLagrange\" valueType=\"library.real.1d\"> \
     <Variables> \
-      <Variable name=\"library.xi.2d.variable\"/> \
+      <Variable name=\"library.chart.2d.variable\"/> \
       <Variable name=\"library.parameters.2d.biquadraticLagrange.variable\"/> \
     </Variables> \
   </ExternalEvaluator> \
@@ -173,7 +173,7 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
  \
   <ExternalEvaluator name=\"library.interpolator.3d.unit.trilinearLagrange\" valueType=\"library.real.1d\"> \
     <Variables> \
-      <Variable name=\"library.xi.3d.variable\"/> \
+      <Variable name=\"library.chart.3d.variable\"/> \
       <Variable name=\"library.parameters.3d.trilinearLagrange.variable\"/> \
     </Variables> \
   </ExternalEvaluator> \
@@ -193,7 +193,7 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
  \
   <ExternalEvaluator name=\"library.interpolator.3d.unit.triquadraticLagrange\" valueType=\"library.real.1d\"> \
     <Variables> \
-      <Variable name=\"library.xi.3d.variable\"/> \
+      <Variable name=\"library.chart.3d.variable\"/> \
       <Variable name=\"library.parameters.3d.triquadraticLagrange.variable\"/> \
     </Variables> \
   </ExternalEvaluator> \
@@ -222,14 +222,14 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
  \
   <ExternalEvaluator name=\"library.interpolator.1d.unit.cubicHermite\" valueType=\"library.real.1d\"> \
     <Variables> \
-      <Variable name=\"library.xi.1d.variable\"/> \
+      <Variable name=\"library.chart.1d.variable\"/> \
       <Variable name=\"library.parameters.1d.cubicHermite.variable\"/> \
     </Variables> \
   </ExternalEvaluator> \
  \
   <ExternalEvaluator name=\"library.interpolator.1d.unit.cubicHermiteScaled\" valueType=\"library.real.1d\"> \
     <Variables> \
-      <Variable name=\"library.xi.1d.variable\"/> \
+      <Variable name=\"library.chart.1d.variable\"/> \
       <Variable name=\"library.parameters.1d.cubicHermite.variable\"/> \
       <Variable name=\"library.parameters.1d.cubicHermiteScaling.variable\"/> \
     </Variables> \
@@ -244,14 +244,14 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
  \
   <ExternalEvaluator name=\"library.interpolator.2d.unit.bicubicHermite\" valueType=\"library.real.1d\"> \
     <Variables> \
-      <Variable name=\"library.xi.2d.variable\"/> \
+      <Variable name=\"library.chart.2d.variable\"/> \
       <Variable name=\"library.parameters.2d.bicubicHermite.variable\"/> \
     </Variables> \
   </ExternalEvaluator> \
  \
   <ExternalEvaluator name=\"library.interpolator.2d.unit.bicubicHermiteScaled\" valueType=\"library.real.1d\"> \
     <Variables> \
-      <Variable name=\"library.xi.2d.variable\"/> \
+      <Variable name=\"library.chart.2d.variable\"/> \
       <Variable name=\"library.parameters.2d.bicubicHermite.variable\"/> \
       <Variable name=\"library.parameters.2d.bicubicHermiteScaling.variable\"/> \
     </Variables> \
@@ -266,14 +266,14 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
  \
   <ExternalEvaluator name=\"library.interpolator.3d.unit.tricubicHermite\" valueType=\"library.real.1d\"> \
     <Variables> \
-      <Variable name=\"library.xi.3d.variable\"/> \
+      <Variable name=\"library.chart.3d.variable\"/> \
       <Variable name=\"library.parameters.3d.tricubicHermite.variable\"/> \
     </Variables> \
   </ExternalEvaluator> \
  \
   <ExternalEvaluator name=\"library.interpolator.3d.unit.tricubicHermiteScaled\" valueType=\"library.real.1d\"> \
     <Variables> \
-      <Variable name=\"library.xi.3d.variable\"/> \
+      <Variable name=\"library.chart.3d.variable\"/> \
       <Variable name=\"library.parameters.3d.tricubicHermite.variable\"/> \
       <Variable name=\"library.parameters.3d.tricubicHermiteScaling.variable\"/> \
     </Variables> \
@@ -297,7 +297,7 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
  \
   <ExternalEvaluator name=\"library.interpolator.2d.unit.bilinearSimplex\" valueType=\"library.real.1d\"> \
     <Variables> \
-      <Variable name=\"library.xi.2d.variable\"/> \
+      <Variable name=\"library.chart.2d.variable\"/> \
       <Variable name=\"library.parameters.2d.bilinearSimplex.variable\"/> \
     </Variables> \
   </ExternalEvaluator> \

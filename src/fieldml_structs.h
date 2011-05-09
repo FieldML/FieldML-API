@@ -112,7 +112,7 @@ class MeshType :
     public FieldmlObject
 {
 public:
-    FmlObjectHandle xiType;
+    FmlObjectHandle chartType;
     FmlObjectHandle elementsType;
     
     SimpleMap<FmlEnsembleValue, std::string> shapes;

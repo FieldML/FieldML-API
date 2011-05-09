@@ -410,7 +410,7 @@ ContinuousTypeSaxHandler::ContinuousTypeSaxHandler( SaxHandler *_parent, const x
 
     if( mesh != FML_INVALID_HANDLE )
     {
-        handle = Fieldml_CreateMeshXiType( getSessionHandle(), mesh, name );
+        handle = Fieldml_CreateMeshChartType( getSessionHandle(), mesh, name );
     }
     else
     {
@@ -454,7 +454,7 @@ DataSourceSaxHandler::DataSourceSaxHandler( DataObjectSaxHandler *_parent, const
 void DataSourceSaxHandler::onTextFileSource( SaxAttributes &attributes )
 {
     const char * name =  Fieldml_GetObjectName( parent->getSessionHandle(), parent->handle );
-    const char *filename = attributes.getAttribute( FILENAME_ATTRIB );
+    const char *filename = attributes.getAttribute( HREF_ATTRIB );
     int lineCount = attributes.getIntAttribute( FIRST_LINE_ATTRIB, 0 );
 
     if( filename == NULL )
@@ -660,7 +660,7 @@ SaxHandler *MeshTypeSaxHandler::onElementStart( const xmlChar *elementName, SaxA
     {
         return new MeshShapesSaxHandler( this, elementName, attributes );
     }
-    else if( xmlStrcmp( elementName, XI_TAG ) == 0 )
+    else if( xmlStrcmp( elementName, CHART_TAG ) == 0 )
     {
         return new ContinuousTypeSaxHandler( this, elementName, attributes, handle );
     }

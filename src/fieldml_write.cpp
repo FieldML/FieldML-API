@@ -275,10 +275,10 @@ static int writeMeshType( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlO
         writeEnsembleType( writer, handle, elementsType, ELEMENTS_TAG, Fieldml_GetObjectName( handle, object ) );
     }
 
-    FmlObjectHandle xiType = Fieldml_GetMeshXiType( handle, object );
-    if( xiType != FML_INVALID_HANDLE )
+    FmlObjectHandle chartType = Fieldml_GetMeshChartType( handle, object );
+    if( chartType != FML_INVALID_HANDLE )
     {
-        writeContinuousType( writer, handle, xiType, XI_TAG, Fieldml_GetObjectName( handle, object ) );
+        writeContinuousType( writer, handle, chartType, CHART_TAG, Fieldml_GetObjectName( handle, object ) );
     }
     
     int elementCount = Fieldml_GetElementCount( handle, elementsType );
@@ -342,7 +342,7 @@ static int writeDataObject( xmlTextWriterPtr writer, FmlSessionHandle handle, Fm
         xmlTextWriterStartElement( writer, TEXT_FILE_SOURCE_TAG );
         
         Fieldml_CopyDataObjectFilename( handle, object, tBuffer, tBufferLength );
-        xmlTextWriterWriteAttribute( writer, FILENAME_ATTRIB, (const xmlChar*)tBuffer );
+        xmlTextWriterWriteAttribute( writer, QUALIFIED_HREF_ATTRIB, (const xmlChar*)tBuffer );
 
         xmlTextWriterWriteFormatAttribute( writer, FIRST_LINE_ATTRIB, "%d", Fieldml_GetDataObjectFileOffset( handle, object ) );
         

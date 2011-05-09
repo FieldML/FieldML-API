@@ -362,36 +362,34 @@ FmlObjectHandle Fieldml_CreateContinuousTypeComponents( FmlSessionHandle handle,
 
 /**
  *      Creates a mesh type with the given name, and with the given dimensionality.
- *      Each mesh has its own unique element and xi type, which can be accessed by the relevant functions.
- *      Because the xi and element types have a name based on the mesh name, care must be taken to ensure
- *      that neither the mesh's name, nor it's element or xi type names are already in use. If they are,
+ *      Each mesh has its own unique element and chart type, which can be accessed by the relevant functions.
+ *      Because the chart and element types have a name based on the mesh name, care must be taken to ensure
+ *      that neither the mesh's name, nor it's element or chart type names are already in use. If they are,
  *      this function will return an error.
  */
 FmlObjectHandle Fieldml_CreateMeshType( FmlSessionHandle handle, const char * name );
 
 FmlObjectHandle Fieldml_CreateMeshElementsType( FmlSessionHandle handle, FmlObjectHandle meshHandle, const char *name );
 
-FmlObjectHandle Fieldml_CreateMeshXiType( FmlSessionHandle handle, FmlObjectHandle meshHandle, const char *name );
+FmlObjectHandle Fieldml_CreateMeshChartType( FmlSessionHandle handle, FmlObjectHandle meshHandle, const char *name );
 
 
 /**
- *      Returns the handle of the given mesh type's xi type. This is a unique, n-dimensional
- *      continuous type with the component type specified when the mesh was created. If the
- *      mesh's name is "*", the xi type's name is "*.xi"
+ *      Returns the handle of the given mesh type's chart type. This is a unique, n-dimensional
+ *      continuous type with the component type specified when the mesh was created.
  */
-FmlObjectHandle Fieldml_GetMeshXiType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+FmlObjectHandle Fieldml_GetMeshChartType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- *      Returns the component handle of the given mesh type's xi type.
+ *      Returns the component handle of the given mesh type's chart type.
  */
-FmlObjectHandle Fieldml_GetMeshXiComponentType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+FmlObjectHandle Fieldml_GetMeshChartComponentType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
  *     Returns the handle of the given mesh type's element type. This is a unique ensemble
- *     type whose elements are specified by the user. If the mesh's name is "*", the element type's
- *     name is "*.element"
+ *     type whose elements are specified by the user.
  */
 FmlObjectHandle Fieldml_GetMeshElementsType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 

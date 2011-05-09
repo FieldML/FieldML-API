@@ -95,7 +95,7 @@ MeshType::MeshType( const string _name, bool _isVirtual ) :
     FieldmlObject( _name, FHT_MESH_TYPE, _isVirtual ),
     shapes("")
 {
-    xiType = FML_INVALID_HANDLE;
+    chartType = FML_INVALID_HANDLE;
     elementsType = FML_INVALID_HANDLE;
 }
 

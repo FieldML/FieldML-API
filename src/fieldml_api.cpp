@@ -1110,7 +1110,7 @@ int Fieldml_CopyMeshElementShape( FmlSessionHandle handle, FmlObjectHandle objec
 }
 
 
-FmlObjectHandle Fieldml_GetMeshXiType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+FmlObjectHandle Fieldml_GetMeshChartType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1127,7 +1127,7 @@ FmlObjectHandle Fieldml_GetMeshXiType( FmlSessionHandle handle, FmlObjectHandle 
     if( object->type == FHT_MESH_TYPE ) 
     {
         MeshType *meshType = (MeshType *)object;
-        return meshType->xiType;
+        return meshType->chartType;
     }
     
     session->setError( FML_ERR_INVALID_OBJECT );  
@@ -1135,7 +1135,7 @@ FmlObjectHandle Fieldml_GetMeshXiType( FmlSessionHandle handle, FmlObjectHandle 
 }
 
 
-FmlObjectHandle Fieldml_GetMeshXiComponentType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+FmlObjectHandle Fieldml_GetMeshChartComponentType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1152,7 +1152,7 @@ FmlObjectHandle Fieldml_GetMeshXiComponentType( FmlSessionHandle handle, FmlObje
     if( object->type == FHT_MESH_TYPE ) 
     {
         MeshType *meshType = (MeshType *)object;
-        return Fieldml_GetTypeComponentEnsemble( handle, meshType->xiType );
+        return Fieldml_GetTypeComponentEnsemble( handle, meshType->chartType );
     }
     
     session->setError( FML_ERR_INVALID_OBJECT );  
@@ -1357,24 +1357,24 @@ FmlObjectHandle Fieldml_CreateAbstractEvaluator( FmlSessionHandle handle, const 
     //specified at bind-time.
     if( Fieldml_GetObjectType( handle, valueType ) == FHT_MESH_TYPE )
     {
-        FmlObjectHandle xiType = Fieldml_GetMeshXiType( handle, valueType );
+        FmlObjectHandle chartType = Fieldml_GetMeshChartType( handle, valueType );
         FmlObjectHandle elementsType = Fieldml_GetMeshElementsType( handle, valueType );
         
         string meshName = Fieldml_GetObjectName( handle, valueType );
         meshName += ".";
      
         string variableName = name;
-        string xiComponentName = Fieldml_GetObjectName( handle, xiType );
+        string chartComponentName = Fieldml_GetObjectName( handle, chartType );
         string elementsComponentName = Fieldml_GetObjectName( handle, elementsType );
         
-        string xiSuffix = "xi";
-        if( xiComponentName.compare( 0, meshName.length(), meshName ) == 0 )
+        string chartSuffix = "chart";
+        if( chartComponentName.compare( 0, meshName.length(), meshName ) == 0 )
         {
-            xiSuffix = xiComponentName.substr( meshName.length(), xiComponentName.length() );
+            chartSuffix = chartComponentName.substr( meshName.length(), chartComponentName.length() );
         }
-        string xiName = variableName + "." + xiSuffix;
+        string chartName = variableName + "." + chartSuffix;
         
-        if( Fieldml_GetObjectByName( handle, xiName.c_str() ) != FML_INVALID_HANDLE )
+        if( Fieldml_GetObjectByName( handle, chartName.c_str() ) != FML_INVALID_HANDLE )
         {
             session->setError( FML_ERR_INVALID_PARAMETER_2 );
             return FML_INVALID_HANDLE;
@@ -1393,8 +1393,8 @@ FmlObjectHandle Fieldml_CreateAbstractEvaluator( FmlSessionHandle handle, const 
             return FML_INVALID_HANDLE;
         }
         
-        AbstractEvaluator *xiEvaluator = new AbstractEvaluator( xiName.c_str(), xiType, true );
-        addObject( session, xiEvaluator );        
+        AbstractEvaluator *chartEvaluator = new AbstractEvaluator( chartName.c_str(), chartType, true );
+        addObject( session, chartEvaluator );        
         
         AbstractEvaluator *elementEvaluator = new AbstractEvaluator( elementsName.c_str(), elementsType, true );
         addObject( session, elementEvaluator );        
@@ -2608,7 +2608,7 @@ FmlObjectHandle Fieldml_CreateMeshElementsType( FmlSessionHandle handle, FmlObje
 }
 
 
-FmlObjectHandle Fieldml_CreateMeshXiType( FmlSessionHandle handle, FmlObjectHandle objectHandle, const char *name )
+FmlObjectHandle Fieldml_CreateMeshChartType( FmlSessionHandle handle, FmlObjectHandle objectHandle, const char *name )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2635,12 +2635,12 @@ FmlObjectHandle Fieldml_CreateMeshXiType( FmlSessionHandle handle, FmlObjectHand
     
     MeshType *meshType = (MeshType*)object;
 
-    ContinuousType *xiType = new ContinuousType( meshType->name + "." + name, true );
-    FmlObjectHandle xiHandle = addObject( session, xiType );
+    ContinuousType *chartType = new ContinuousType( meshType->name + "." + name, true );
+    FmlObjectHandle chartHandle = addObject( session, chartType );
     
-    meshType->xiType = xiHandle;
+    meshType->chartType = chartHandle;
     
-    return xiHandle;
+    return chartHandle;
 }
 
 

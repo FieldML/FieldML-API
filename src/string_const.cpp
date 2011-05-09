@@ -74,7 +74,7 @@ const xmlChar * const MESH_SHAPE_TAG                   = (const xmlChar* const)"
 
 const xmlChar * const ELEMENT_SEQUENCE_TAG             = (const xmlChar* const)"ElementSequence";
 const xmlChar * const ELEMENTS_TAG                     = (const xmlChar* const)"Elements";
-const xmlChar * const XI_TAG                           = (const xmlChar* const)"Xi";
+const xmlChar * const CHART_TAG                        = (const xmlChar* const)"Chart";
 const xmlChar * const MEMBERS_TAG                      = (const xmlChar* const)"Members";
 
 const xmlChar * const MEMBER_RANGE_TAG                 = (const xmlChar* const)"MemberRange";
@@ -156,7 +156,8 @@ const xmlChar * const OFFSET_ATTRIB                    = (const xmlChar* const)"
 
 const xmlChar * const DATA_ATTRIB                      = (const xmlChar* const)"data";
 
-const xmlChar * const FILENAME_ATTRIB                  = (const xmlChar* const)"filename";
+const xmlChar * const HREF_ATTRIB                      = (const xmlChar* const)"href";
+const xmlChar * const QUALIFIED_HREF_ATTRIB            = (const xmlChar* const)"xlink:href";
 const xmlChar * const FIRST_LINE_ATTRIB                = (const xmlChar* const)"firstLine";
 const xmlChar * const COUNT_ATTRIB                     = (const xmlChar* const)"count";
 const xmlChar * const LENGTH_ATTRIB                    = (const xmlChar* const)"length";
