@@ -394,13 +394,12 @@ void testMisc()
     FmlObjectHandle rc3Ensemble = Fieldml_AddImport( handle, importHandle, "library.chart.3d.component", "library.chart.3d.component" );
     FmlObjectHandle realType = Fieldml_AddImport( handle, importHandle, "library.real.1d", "library.real.1d" );
     
-    FmlObjectHandle parametersData = Fieldml_CreateDataObject( handle, "test.parameters_data" );
-    Fieldml_SetDataObjectSourceType( handle, parametersData, SOURCE_INLINE );
-    Fieldml_SetDataObjectEntryInfo( handle, parametersData, 1, 3, 0, 0 );
+    FmlObjectHandle parametersResource = Fieldml_CreateTextInlineDataResource( handle, "test.resource.parameters_data" );
+    FmlObjectHandle parametersData = Fieldml_CreateTextDataSource( handle, "test.parameters_data", parametersResource, 1, 1, 3, 0, 0 );
     
     FmlObjectHandle parameters = Fieldml_CreateParametersEvaluator( handle, "test.ensemble_parameters", realType );
     Fieldml_SetParameterDataDescription( handle, parameters, DESCRIPTION_SEMIDENSE );
-    Fieldml_SetDataObject( handle, parameters, parametersData );
+    Fieldml_SetDataSource( handle, parameters, parametersData );
     
     FmlObjectHandle rc3Index = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract", rc3Ensemble );
     Fieldml_AddDenseIndexEvaluator( handle, parameters, rc3Index, FML_INVALID_HANDLE );
@@ -412,7 +411,7 @@ void testMisc()
     reader = Fieldml_OpenReader( handle, parametersData );
     Fieldml_ReadDoubleValues( handle, reader, readValues, 3 );
     Fieldml_CloseReader( handle, reader );
-    
+
     for( i = 0; i < 3; i++ )
     {
         if( values[i] != readValues[i] ) 
@@ -422,17 +421,16 @@ void testMisc()
         }
     }
     
-    FmlObjectHandle parametersData2 = Fieldml_CreateDataObject( handle, "test.parameters_data2" );
-    Fieldml_SetDataObjectSourceType( handle, parametersData2, SOURCE_INLINE );
-    Fieldml_SetDataObjectEntryInfo( handle, parametersData2, 2, 11, 0, 0 );
+    FmlObjectHandle parametersResource2 = Fieldml_CreateTextInlineDataResource( handle, "test.resource.parameters_data2" );
+    FmlObjectHandle parametersData2 = Fieldml_CreateTextDataSource( handle, "test.parameters_data2", parametersResource2, 1, 2, 11, 0, 0 );
     
     FmlObjectHandle parameters2 = Fieldml_CreateParametersEvaluator( handle, "test.ensemble_parameters.2", realType );
     Fieldml_SetParameterDataDescription( handle, parameters2, DESCRIPTION_SEMIDENSE );
-    Fieldml_SetDataObject( handle, parameters2, parametersData2 );
+    Fieldml_SetDataSource( handle, parameters2, parametersData2 );
     
     FmlObjectHandle rc3Index1 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract.21", rc3Ensemble );
     Fieldml_AddDenseIndexEvaluator( handle, parameters2, rc3Index1, FML_INVALID_HANDLE );
-    
+
     FmlObjectHandle rc3Index2 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract.22", rc3Ensemble );
     Fieldml_AddDenseIndexEvaluator( handle, parameters2, rc3Index2, FML_INVALID_HANDLE );
 
@@ -441,7 +439,7 @@ void testMisc()
     
     FmlObjectHandle rc3Index4 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract.24", rc3Ensemble );
     Fieldml_AddSparseIndexEvaluator( handle, parameters2, rc3Index4 );
-    
+
     writer = Fieldml_OpenWriter( handle, parametersData2, 1 );
     Fieldml_WriteIntValues( handle, writer, indexValues1, 2 );
     Fieldml_WriteDoubleValues( handle, writer, rawValues1, 9 );

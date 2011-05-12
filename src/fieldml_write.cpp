@@ -228,10 +228,10 @@ static void writeElements( xmlTextWriterPtr writer, FmlSessionHandle handle, Fml
             xmlTextWriterStartElement( writer, MEMBER_STRIDE_RANGE_DATA_TAG );
         }
 
-        FmlObjectHandle dataObject = Fieldml_GetDataObject( handle, object );
-        if( dataObject != FML_INVALID_HANDLE )
+        FmlObjectHandle dataSource = Fieldml_GetDataSource( handle, object );
+        if( dataSource != FML_INVALID_HANDLE )
         {
-            writeObjectName( writer, DATA_ATTRIB, handle, dataObject );
+            writeObjectName( writer, DATA_ATTRIB, handle, dataSource );
         }
 
         int count = Fieldml_GetElementCount( handle, object );
@@ -308,19 +308,62 @@ static int writeMeshType( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlO
 }
 
 
-static int writeDataObject( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObjectHandle object )
+static int writeDataSource( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObjectHandle object )
+{
+    DataSourceType type = Fieldml_GetDataSourceType( handle, object );
+    
+    if( type == DATA_SOURCE_TEXT )
+    {
+        xmlTextWriterStartElement( writer, TEXT_DATA_SOURCE_TAG );
+        
+        writeObjectName( writer, NAME_ATTRIB, handle, object );
+
+        int firstLine = Fieldml_GetTextDataSourceFirstLine( handle, object );
+        int count = Fieldml_GetTextDataSourceCount( handle, object );
+        int length = Fieldml_GetTextDataSourceLength( handle, object );
+        int head = Fieldml_GetTextDataSourceHead( handle, object );
+        int tail = Fieldml_GetTextDataSourceTail( handle, object );
+        
+        if( firstLine != 1 )
+        {
+            xmlTextWriterWriteFormatAttribute( writer, FIRST_LINE_ATTRIB, "%d", firstLine );
+        }
+        xmlTextWriterWriteFormatAttribute( writer, COUNT_ATTRIB, "%d", count );
+        xmlTextWriterWriteFormatAttribute( writer, LENGTH_ATTRIB, "%d", length );
+        if( head != 0 )
+        {
+            xmlTextWriterWriteFormatAttribute( writer, HEAD_ATTRIB, "%d", head );
+        }
+        if( tail != 0 )
+        {
+            xmlTextWriterWriteFormatAttribute( writer, TAIL_ATTRIB, "%d", tail );
+        }
+        
+        xmlTextWriterEndElement( writer );
+    }
+    
+    return 0;
+}
+
+
+static int writeDataResource( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObjectHandle object )
 {
     char tBuffer[tBufferLength];
 
-    xmlTextWriterStartElement( writer, DATA_OBJECT_TAG );
-    writeObjectName( writer, NAME_ATTRIB, handle, object );
-
-    xmlTextWriterStartElement( writer, SOURCE_TAG );
-    
-    DataSourceType type = Fieldml_GetDataObjectSourceType( handle, object );
-    if( type == SOURCE_INLINE )
+    DataResourceType type = Fieldml_GetDataResourceType( handle, object );
+    if( type == DATA_RESOURCE_TEXT_FILE )
     {
-        xmlTextWriterStartElement( writer, INLINE_SOURCE_TAG );
+        xmlTextWriterStartElement( writer, TEXT_FILE_RESOURCE_TAG );
+        writeObjectName( writer, NAME_ATTRIB, handle, object );
+
+        xmlTextWriterWriteAttribute( writer, QUALIFIED_HREF_ATTRIB, (const xmlChar*)Fieldml_GetDataResourceHref( handle, object ) );
+    }
+    else if( type == DATA_RESOURCE_TEXT_INLINE )
+    {
+        xmlTextWriterStartElement( writer, TEXT_INLINE_RESOURCE_TAG );
+        writeObjectName( writer, NAME_ATTRIB, handle, object );
+
+        xmlTextWriterStartElement( writer, TEXT_STRING_TAG );
         
         int offset = 0;
         int length = 1;
@@ -337,28 +380,22 @@ static int writeDataObject( xmlTextWriterPtr writer, FmlSessionHandle handle, Fm
         
         xmlTextWriterEndElement( writer );
     }
-    else if( type == SOURCE_TEXT_FILE )
+    else
     {
-        xmlTextWriterStartElement( writer, TEXT_FILE_SOURCE_TAG );
-        
-        Fieldml_CopyDataObjectFilename( handle, object, tBuffer, tBufferLength );
-        xmlTextWriterWriteAttribute( writer, QUALIFIED_HREF_ATTRIB, (const xmlChar*)tBuffer );
-
-        xmlTextWriterWriteFormatAttribute( writer, FIRST_LINE_ATTRIB, "%d", Fieldml_GetDataObjectFileOffset( handle, object ) );
-        
-        xmlTextWriterEndElement( writer );
+        return 1;
     }
-    
-    xmlTextWriterEndElement( writer );
 
-    xmlTextWriterStartElement( writer, ENTRIES_TAG );
-
-    xmlTextWriterWriteFormatAttribute( writer, COUNT_ATTRIB, "%d", Fieldml_GetDataObjectEntryCount( handle, object ) );
-    xmlTextWriterWriteFormatAttribute( writer, LENGTH_ATTRIB, "%d", Fieldml_GetDataObjectEntryLength( handle, object ) );
-    xmlTextWriterWriteFormatAttribute( writer, HEAD_ATTRIB, "%d", Fieldml_GetDataObjectEntryHead( handle, object ) );
-    xmlTextWriterWriteFormatAttribute( writer, TAIL_ATTRIB, "%d", Fieldml_GetDataObjectEntryTail( handle, object ) );
-    
-    xmlTextWriterEndElement( writer );
+    int count = Fieldml_GetDataSourceCount( handle, object );
+    for( int i = 0; i < count; i++ )
+    {
+        FmlObjectHandle source = Fieldml_GetDataSourceByIndex( handle, object, i );
+        if( source == FML_INVALID_HANDLE )
+        {
+            continue;
+        }
+        
+        writeDataSource( writer, handle, source );
+    }
 
     xmlTextWriterEndElement( writer );
     
@@ -526,7 +563,7 @@ static void writeSemidenseData( xmlTextWriterPtr writer, FmlSessionHandle handle
 {
     xmlTextWriterStartElement( writer, SEMI_DENSE_DATA_TAG );
     
-    FmlObjectHandle dataObject = Fieldml_GetDataObject( handle, object );
+    FmlObjectHandle dataObject = Fieldml_GetDataSource( handle, object );
     xmlTextWriterWriteAttribute( writer, DATA_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, dataObject ) );
     
     writeSemidenseIndexes( writer, handle, object, 1 );
@@ -614,8 +651,8 @@ static int writeFieldmlObject( xmlTextWriterPtr writer, FmlSessionHandle handle,
         return writeEnsembleType( writer, handle, object, ENSEMBLE_TYPE_TAG, "" );
     case FHT_MESH_TYPE:
         return writeMeshType( writer, handle, object );
-    case FHT_DATA_OBJECT:
-        return writeDataObject( writer, handle, object );
+    case FHT_DATA_RESOURCE:
+        return writeDataResource( writer, handle, object );
 //NYI    case FHT_ELEMENT_SEQUENCE:
 //        return writeElementSequence( writer, handle, object );
     case FHT_ABSTRACT_EVALUATOR:

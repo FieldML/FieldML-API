@@ -158,43 +158,41 @@ AggregateEvaluator::AggregateEvaluator( const string _name, FmlObjectHandle _val
 }
 
 
-DataSource::DataSource( DataSourceType _sourceType ) :
-    sourceType( _sourceType )
+DataResource::DataResource( const string _name, DataResourceType _resourceType ) :
+    FieldmlObject( _name, FHT_DATA_RESOURCE, false ),
+    type( _resourceType )
 {
 }
 
 
-DataSource::~DataSource()
+DataResource::~DataResource()
 {
 }
 
     
-UnknownDataSource::UnknownDataSource() :
-    DataSource( SOURCE_UNKNOWN )
+TextFileDataResource::TextFileDataResource( const string _name, const string _href ) :
+    DataResource( _name, DATA_RESOURCE_TEXT_FILE ),
+    href( _href )
 {
 }
 
 
-TextFileDataSource::TextFileDataSource() :
-    DataSource( SOURCE_TEXT_FILE )
+TextFileDataResource::~TextFileDataResource()
 {
-    filename = "";
-    lineOffset = 0;
 }
 
 
-InlineDataSource::InlineDataSource() :
-    DataSource( SOURCE_INLINE )
+TextInlineDataResource::TextInlineDataResource( const string _name ) : 
+    DataResource( _name, DATA_RESOURCE_TEXT_INLINE )
 {
-    data = new char[1];
-    ((char*)data)[0] = 0; //Dirty hack.
+    inlineString = new char[1];
+    ((char*)inlineString)[0] = 0; //Dirty hack.
     length = 0;
 }
 
-
-InlineDataSource::~InlineDataSource()
+TextInlineDataResource::~TextInlineDataResource()
 {
-    delete[] data;
+    delete[] inlineString;
 }
 
 
@@ -226,18 +224,30 @@ SemidenseDataDescription::~SemidenseDataDescription()
 }
 
 
-DataObject::DataObject( const string _name ) :
-    FieldmlObject( _name, FHT_DATA_OBJECT, false ),
-    source( new UnknownDataSource() )
+DataSource::DataSource( const string _name, DataResource *_resource, DataSourceType _type ) :
+    FieldmlObject( _name, FHT_DATA_SOURCE, false ),
+    resource( _resource ),
+    type( _type )
 {
-    entryCount = 0;
-    entryLength = 1;
-    entryHead = 0;
-    entryTail = 0;
 }
 
 
-DataObject::~DataObject()
+DataSource::~DataSource()
 {
-    delete source;
+}
+
+
+TextDataSource::TextDataSource( const string _name, DataResource *_resource, int _firstLine, int _count, int _length, int _head, int _tail ) :
+    DataSource( _name, _resource, DATA_SOURCE_TEXT ),
+    firstLine( _firstLine ),
+    count( _count ),
+    length( _length ),
+    head( _head ),
+    tail( _tail )
+{
+}
+
+
+TextDataSource::~TextDataSource()
+{
 }

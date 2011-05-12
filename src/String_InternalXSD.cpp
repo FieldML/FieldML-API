@@ -51,59 +51,56 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
             schemaLocation=\"http://www.cellml.org/tools/cellml_1_1_schema/common/xlink-href.xsd\" /> \
  \
     <xs:complexType name=\"FieldmlRdfTargetType\"> \
-        <xs:attribute name=\"id\" type=\"xs:string\" form=\"qualified\"/> \
+        <xs:attribute name=\"id\" type=\"xs:string\" form=\"qualified\" use=\"optional\"/> \
     </xs:complexType> \
  \
     <xs:complexType name=\"FieldmlObject_Type\"> \
-        <xs:complexContent > \
+        <xs:complexContent> \
             <xs:extension base=\"FieldmlRdfTargetType\"> \
-                <xs:attribute name=\"name\" type=\"xs:string\" /> \
+                <xs:attribute name=\"name\" type=\"xs:string\" use=\"required\" /> \
             </xs:extension> \
         </xs:complexContent> \
     </xs:complexType> \
  \
-    <xs:complexType name=\"TextFileSource_Type\"> \
-        <xs:attribute ref=\"xlink:href\" /> \
-        <xs:attribute name=\"firstLine\" type=\"xs:positiveInteger\" use=\"optional\" /> \
+    <xs:complexType name=\"TextDataSource_Type\"> \
+        <xs:attribute name=\"name\" type=\"xs:string\" use=\"required\" /> \
+        <xs:attribute name=\"firstLine\" type=\"xs:positiveInteger\" /> \
+        <xs:attribute name=\"count\" type=\"xs:nonNegativeInteger\" use=\"required\" /> \
+        <xs:attribute name=\"length\" type=\"xs:positiveInteger\" use=\"required\" /> \
+        <xs:attribute name=\"head\" type=\"xs:nonNegativeInteger\" /> \
+        <xs:attribute name=\"tail\" type=\"xs:nonNegativeInteger\" /> \
     </xs:complexType> \
  \
-    <xs:complexType name=\"InlineSource_Type\"> \
+    <xs:complexType name=\"TextFileResource_Type\"> \
+      <xs:choice minOccurs=\"1\" maxOccurs=\"unbounded\"> \
+          <xs:element name=\"TextDataSource\" type=\"TextDataSource_Type\" /> \
+      </xs:choice> \
+      <xs:attribute name=\"name\" type=\"xs:string\" use=\"required\" /> \
+      <xs:attribute ref=\"xlink:href\" use=\"required\" /> \
+    </xs:complexType> \
+ \
+    <xs:complexType name=\"TextString_Type\"> \
       <xs:simpleContent> \
-        <xs:extension base=\"xs:string\"> \
-        </xs:extension> \
+        <xs:extension base=\"xs:string\" /> \
       </xs:simpleContent> \
     </xs:complexType> \
  \
-    <xs:complexType name=\"DataSource_Type\"> \
-        <xs:choice minOccurs=\"1\" maxOccurs=\"1\"> \
-            <xs:element name=\"TextFileSource\" type=\"TextFileSource_Type\" /> \
-            <xs:element name=\"InlineSource\" type=\"InlineSource_Type\" /> \
-        </xs:choice> \
-    </xs:complexType> \
- \
-    <xs:complexType name=\"DataEntries_Type\"> \
-        <xs:attribute name=\"count\" type=\"xs:nonNegativeInteger\" /> \
-        <xs:attribute name=\"length\" type=\"xs:positiveInteger\" /> \
-        <xs:attribute name=\"head\" type=\"xs:nonNegativeInteger\" use=\"optional\" /> \
-        <xs:attribute name=\"tail\" type=\"xs:nonNegativeInteger\" use=\"optional\" /> \
-    </xs:complexType> \
- \
-    <xs:complexType name=\"DataObject_Type\"> \
-        <xs:choice minOccurs=\"2\" maxOccurs=\"2\"> \
-            <xs:element name=\"Source\" type=\"DataSource_Type\" maxOccurs=\"1\" minOccurs=\"1\"/> \
-            <xs:element name=\"Entries\" type=\"DataEntries_Type\" maxOccurs=\"1\" minOccurs=\"1\"/> \
-        </xs:choice> \
-        <xs:attribute name=\"name\" type=\"xs:string\" /> \
+    <xs:complexType name=\"TextInlineResource_Type\"> \
+      <xs:choice minOccurs=\"2\" maxOccurs=\"unbounded\"> \
+        <xs:element name=\"TextString\" type=\"TextString_Type\" minOccurs=\"1\" maxOccurs=\"1\" /> \
+        <xs:element name=\"TextDataSource\" type=\"TextDataSource_Type\" minOccurs=\"1\" /> \
+      </xs:choice> \
+      <xs:attribute name=\"name\" type=\"xs:string\" use=\"required\" /> \
     </xs:complexType> \
  \
     <xs:complexType name=\"ImportTypeEntry_Type\"> \
-        <xs:attribute name=\"localName\" type=\"xs:string\" /> \
-        <xs:attribute name=\"remoteName\" type=\"xs:string\" /> \
+        <xs:attribute name=\"localName\" type=\"xs:string\" use=\"required\" /> \
+        <xs:attribute name=\"remoteName\" type=\"xs:string\" use=\"required\" /> \
     </xs:complexType> \
  \
     <xs:complexType name=\"ImportEvaluatorEntry_Type\"> \
-        <xs:attribute name=\"localName\" type=\"xs:string\" /> \
-        <xs:attribute name=\"remoteName\" type=\"xs:string\" /> \
+        <xs:attribute name=\"localName\" type=\"xs:string\" use=\"required\" /> \
+        <xs:attribute name=\"remoteName\" type=\"xs:string\" use=\"required\" /> \
     </xs:complexType> \
  \
     <xs:complexType name=\"Import_Type\"> \
@@ -111,13 +108,13 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
             <xs:element name=\"ImportType\" type=\"ImportTypeEntry_Type\" /> \
             <xs:element name=\"ImportEvaluator\" type=\"ImportEvaluatorEntry_Type\" /> \
         </xs:choice> \
-        <xs:attribute name=\"location\" type=\"xs:string\" /> \
-        <xs:attribute name=\"region\" type=\"xs:string\" /> \
+        <xs:attribute name=\"location\" type=\"xs:string\" use=\"required\" /> \
+        <xs:attribute name=\"region\" type=\"xs:string\" use=\"required\" /> \
     </xs:complexType> \
  \
     <xs:complexType name=\"NumberedIndexEvaluator_Type\"> \
-        <xs:attribute name=\"evaluator\" type=\"xs:string\" /> \
-        <xs:attribute name=\"indexNumber\" type=\"xs:positiveInteger\" /> \
+        <xs:attribute name=\"evaluator\" type=\"xs:string\" use=\"required\" /> \
+        <xs:attribute name=\"indexNumber\" type=\"xs:positiveInteger\" use=\"required\" /> \
     </xs:complexType> \
  \
     <xs:complexType name=\"NumberedIndexEvaluatorList_Type\"> \
@@ -127,13 +124,13 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
     </xs:complexType> \
  \
     <xs:complexType name=\"BindMapEntry_Type\"> \
-        <xs:attribute name=\"variable\" type=\"xs:string\" /> \
-        <xs:attribute name=\"source\" type=\"xs:string\" /> \
+        <xs:attribute name=\"variable\" type=\"xs:string\" use=\"required\" /> \
+        <xs:attribute name=\"source\" type=\"xs:string\" use=\"required\" /> \
     </xs:complexType> \
  \
     <xs:complexType name=\"BindMapIndexEntry_Type\"> \
-        <xs:attribute name=\"variable\" type=\"xs:string\" /> \
-        <xs:attribute name=\"indexNumber\" type=\"xs:positiveInteger\" /> \
+        <xs:attribute name=\"variable\" type=\"xs:string\" use=\"required\" /> \
+        <xs:attribute name=\"indexNumber\" type=\"xs:positiveInteger\" use=\"required\" /> \
     </xs:complexType> \
  \
     <xs:complexType name=\"BindMapWithIndexes_Type\"> \
@@ -150,20 +147,20 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
     </xs:complexType> \
  \
     <xs:complexType name=\"ComponentEvaluatorsEntry_Type\"> \
-        <xs:attribute name=\"component\" type=\"xs:positiveInteger\" /> \
-        <xs:attribute name=\"evaluator\" type=\"xs:string\" /> \
+        <xs:attribute name=\"component\" type=\"xs:positiveInteger\" use=\"required\" /> \
+        <xs:attribute name=\"evaluator\" type=\"xs:string\" use=\"required\" /> \
     </xs:complexType> \
  \
     <xs:complexType name=\"ComponentEvaluators_Type\"> \
         <xs:choice minOccurs=\"0\" maxOccurs=\"unbounded\"> \
             <xs:element name=\"ComponentEvaluator\" type=\"ComponentEvaluatorsEntry_Type\" /> \
         </xs:choice> \
-        <xs:attribute name=\"default\" type=\"xs:string\" /> \
+        <xs:attribute name=\"default\" type=\"xs:string\" use=\"optional\" /> \
     </xs:complexType> \
  \
     <xs:complexType name=\"SimpleMapEntry_Type\"> \
-        <xs:attribute name=\"key\" type=\"xs:string\" /> \
-        <xs:attribute name=\"value\" type=\"xs:string\" /> \
+        <xs:attribute name=\"key\" type=\"xs:string\" use=\"required\" /> \
+        <xs:attribute name=\"value\" type=\"xs:string\" use=\"required\" /> \
     </xs:complexType> \
  \
     <xs:complexType name=\"SimpleMap_Type\"> \
@@ -173,8 +170,8 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
     </xs:complexType> \
  \
     <xs:complexType name=\"ElementMapEntry_Type\"> \
-        <xs:attribute name=\"indexValue\" type=\"xs:string\" /> \
-        <xs:attribute name=\"evaluator\" type=\"xs:string\" /> \
+        <xs:attribute name=\"indexValue\" type=\"xs:string\" use=\"required\" /> \
+        <xs:attribute name=\"evaluator\" type=\"xs:string\" use=\"required\" /> \
     </xs:complexType> \
  \
     <xs:complexType name=\"ElementMap_Type\"> \
@@ -193,7 +190,7 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
     </xs:complexType> \
  \
     <xs:complexType name=\"VariableListEntry_Type\"> \
-        <xs:attribute name=\"name\" type=\"xs:string\" /> \
+        <xs:attribute name=\"name\" type=\"xs:string\" use=\"required\" /> \
     </xs:complexType> \
  \
     <xs:complexType name=\"VariableList_Type\"> \
@@ -203,7 +200,7 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
     </xs:complexType> \
  \
     <xs:complexType name=\"EvaluatorListEntry_Type\"> \
-        <xs:attribute name=\"evaluator\" type=\"xs:string\" /> \
+        <xs:attribute name=\"evaluator\" type=\"xs:string\" use=\"required\" /> \
     </xs:complexType> \
  \
     <xs:complexType name=\"IndexEvaluatorList_Type\"> \
@@ -213,8 +210,8 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
     </xs:complexType> \
  \
     <xs:complexType name=\"OrderedEvaluatorListEntry_Type\"> \
-        <xs:attribute name=\"evaluator\" type=\"xs:string\" /> \
-        <xs:attribute name=\"order\" type=\"xs:string\" /> \
+        <xs:attribute name=\"evaluator\" type=\"xs:string\" use=\"required\" /> \
+        <xs:attribute name=\"order\" type=\"xs:string\" use=\"optional\" /> \
     </xs:complexType> \
  \
     <xs:complexType name=\"OrderedIndexEvaluatorList_Type\"> \
@@ -224,14 +221,14 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
     </xs:complexType> \
  \
     <xs:complexType name=\"MemberRange_Type\"> \
-        <xs:attribute name=\"min\" type=\"xs:nonNegativeInteger\" /> \
-        <xs:attribute name=\"max\" type=\"xs:nonNegativeInteger\" /> \
+        <xs:attribute name=\"min\" type=\"xs:nonNegativeInteger\" use=\"required\" /> \
+        <xs:attribute name=\"max\" type=\"xs:nonNegativeInteger\" use=\"required\" /> \
         <xs:attribute name=\"stride\" type=\"xs:positiveInteger\" use=\"optional\"/> \
     </xs:complexType> \
  \
     <xs:complexType name=\"MemberData_Type\"> \
-        <xs:attribute name=\"count\" type=\"xs:positiveInteger\" /> \
-        <xs:attribute name=\"data\" type=\"xs:string\" /> \
+        <xs:attribute name=\"count\" type=\"xs:positiveInteger\" use=\"required\" /> \
+        <xs:attribute name=\"data\" type=\"xs:string\" use=\"required\" /> \
     </xs:complexType> \
  \
     <xs:complexType name=\"EnsembleMembers_Type\"> \
@@ -254,8 +251,8 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
     </xs:complexType> \
  \
     <xs:complexType name=\"ContinuousComponent_Type\"> \
-        <xs:attribute name=\"name\" type=\"xs:string\" /> \
-        <xs:attribute name=\"count\" type=\"xs:positiveInteger\" /> \
+        <xs:attribute name=\"name\" type=\"xs:string\" use=\"required\" /> \
+        <xs:attribute name=\"count\" type=\"xs:positiveInteger\" use=\"required\" /> \
     </xs:complexType> \
  \
     <xs:complexType name=\"ContinuousType_Type\"> \
@@ -286,7 +283,7 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
                 <xs:sequence> \
                     <xs:element name=\"Variables\" type=\"VariableList_Type\" minOccurs=\"0\" maxOccurs=\"1\" /> \
                 </xs:sequence> \
-                <xs:attribute name=\"valueType\" type=\"xs:string\" /> \
+                <xs:attribute name=\"valueType\" type=\"xs:string\" use=\"required\" /> \
             </xs:extension> \
         </xs:complexContent> \
     </xs:complexType> \
@@ -305,11 +302,13 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
  \
     <xs:complexType name=\"ReferenceEvaluator_Type\"> \
         <xs:complexContent> \
-            <xs:extension base=\"FieldmlEvaluator_Type\"> \
+            <xs:extension base=\"FieldmlObject_Type\"> \
                 <xs:sequence> \
+                    <xs:element name=\"Variables\" type=\"VariableList_Type\" minOccurs=\"0\" maxOccurs=\"1\" /> \
                     <xs:element name=\"Bindings\" type=\"BindMap_Type\" minOccurs=\"0\" maxOccurs=\"1\" /> \
                 </xs:sequence> \
-                <xs:attribute name=\"evaluator\" type=\"xs:string\" /> \
+                <xs:attribute name=\"valueType\" type=\"xs:string\" use=\"optional\" /> \
+                <xs:attribute name=\"evaluator\" type=\"xs:string\" use=\"required\" /> \
             </xs:extension> \
         </xs:complexContent> \
     </xs:complexType> \
@@ -331,7 +330,7 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
             <xs:element name=\"DenseIndexes\" type=\"OrderedIndexEvaluatorList_Type\" minOccurs=\"0\" maxOccurs=\"1\" /> \
             <xs:element name=\"SparseIndexes\" type=\"IndexEvaluatorList_Type\" minOccurs=\"0\" maxOccurs=\"1\" /> \
         </xs:sequence> \
-        <xs:attribute name=\"data\" type=\"xs:string\" /> \
+        <xs:attribute name=\"data\" type=\"xs:string\" use=\"required\" /> \
     </xs:complexType> \
  \
     <xs:complexType name=\"ParameterEvaluator_Type\"> \
@@ -360,7 +359,8 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
             <xs:extension base=\"FieldmlRdfTargetType\"> \
                 <xs:choice minOccurs=\"0\" maxOccurs=\"unbounded\"> \
                     <xs:element name=\"Import\" type=\"Import_Type\" /> \
-                    <xs:element name=\"DataObject\" type=\"DataObject_Type\" /> \
+                    <xs:element name=\"TextFileResource\" type=\"TextFileResource_Type\" /> \
+                    <xs:element name=\"TextInlineResource\" type=\"TextInlineResource_Type\" /> \
                     <xs:element name=\"EnsembleType\" type=\"EnsembleType_Type\" /> \
                     <xs:element name=\"ContinuousType\" type=\"ContinuousType_Type\" /> \
                     <xs:element name=\"MeshType\" type=\"MeshType_Type\" /> \
@@ -371,8 +371,7 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
                     <xs:element name=\"ParametersEvaluator\" type=\"ParameterEvaluator_Type\" /> \
                     <xs:element name=\"AggregateEvaluator\" type=\"AggregateEvaluator_Type\" /> \
                 </xs:choice> \
-                <xs:attribute name=\"name\" type=\"xs:string\" /> \
-                <xs:attribute name=\"library\" type=\"xs:string\" /> \
+                <xs:attribute name=\"name\" type=\"xs:string\" use=\"required\" /> \
             </xs:extension> \
         </xs:complexContent> \
     </xs:complexType> \

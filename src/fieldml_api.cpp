@@ -317,7 +317,7 @@ static int cappedCopyAndFree( const char *source, char *buffer, int bufferLength
 }
 
 
-static DataObject *getDataObject( FieldmlSession *session, FmlObjectHandle objectHandle )
+static DataSource *getDataSource( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
     FieldmlObject *object = getObject( session, objectHandle );
 
@@ -326,60 +326,90 @@ static DataObject *getDataObject( FieldmlSession *session, FmlObjectHandle objec
         return NULL;
     }
 
-    if( object->type != FHT_DATA_OBJECT )
+    if( object->type != FHT_DATA_SOURCE )
     {
         session->setError( FML_ERR_INVALID_OBJECT );
         return NULL;
     }
     
-    return (DataObject*)object;
+    return (DataSource*)object;
 }
 
 
-static InlineDataSource *getInlineDataSource( FieldmlSession *session, FmlObjectHandle objectHandle )
+static TextDataSource *getTextDataSource( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
-    DataObject *dataObject = getDataObject( session, objectHandle );
+    DataSource *dataSource = getDataSource( session, objectHandle );
     
-    if( dataObject == NULL )
+    if( dataSource == NULL )
     {
         return NULL;
     }
 
-    if( dataObject->source->sourceType != SOURCE_INLINE )
+    if( dataSource->type != DATA_SOURCE_TEXT )
     {
         session->setError( FML_ERR_INVALID_OBJECT );
         return NULL;
     }
 
-    InlineDataSource *inlineSource = (InlineDataSource*)dataObject->source;
+    TextDataSource *textSource = (TextDataSource*)dataSource;
+    return textSource;
+}
+
+
+static DataResource *getDataResource( FieldmlSession *session, FmlObjectHandle objectHandle )
+{
+    FieldmlObject *object = getObject( session, objectHandle );
+
+    if( object == NULL )
+    {
+        return NULL;
+    }
+
+    if( object->type != FHT_DATA_RESOURCE )
+    {
+        session->setError( FML_ERR_INVALID_OBJECT );
+        return NULL;
+    }
+    
+    return (DataResource*)object;
+}
+
+
+static TextInlineDataResource *getTextInlineDataResource( FieldmlSession *session, FmlObjectHandle objectHandle )
+{
+    DataResource *dataResource = getDataResource( session, objectHandle );
+    if( dataResource == NULL )
+    {
+        return NULL;
+    }
+
+    if( dataResource->type != DATA_RESOURCE_TEXT_INLINE )
+    {
+        session->setError( FML_ERR_INVALID_OBJECT );
+        return NULL;
+    }
+
+    TextInlineDataResource *inlineSource = (TextInlineDataResource*)dataResource;
     return inlineSource;
 }
 
 
-static TextFileDataSource *getTextFileDataSource( FieldmlSession *session, FmlObjectHandle objectHandle )
+static TextFileDataResource *getTextFileDataResource( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
-    FieldmlObject *object = getObject( session, objectHandle );
-
-    if( object == NULL )
+    DataResource *dataResource = getDataResource( session, objectHandle );
+    
+    if( dataResource == NULL )
     {
         return NULL;
     }
-
-    if( object->type != FHT_DATA_OBJECT )
-    {
-        session->setError( FML_ERR_INVALID_OBJECT );
-        return NULL;
-    }
     
-    DataObject *dataObject = (DataObject*)object;
-    
-    if( dataObject->source->sourceType != SOURCE_TEXT_FILE )
+    if( dataResource->type != DATA_RESOURCE_TEXT_FILE )
     {
         session->setError( FML_ERR_INVALID_OBJECT );
         return NULL;
     }
 
-    TextFileDataSource *fileSource = (TextFileDataSource*)dataObject->source;
+    TextFileDataResource *fileSource = (TextFileDataResource*)dataResource;
     return fileSource;
 }
 
@@ -987,7 +1017,7 @@ EnsembleMembersType Fieldml_GetEnsembleMembersType( FmlSessionHandle handle, Fml
 }
 
 
-FmlErrorNumber Fieldml_SetEnsembleMembersData( FmlSessionHandle handle, FmlObjectHandle objectHandle, EnsembleMembersType type, int count, FmlObjectHandle dataObjectHandle )
+FmlErrorNumber Fieldml_SetEnsembleMembersData( FmlSessionHandle handle, FmlObjectHandle objectHandle, EnsembleMembersType type, int count, FmlObjectHandle dataSourceHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1000,7 +1030,7 @@ FmlErrorNumber Fieldml_SetEnsembleMembersData( FmlSessionHandle handle, FmlObjec
         return session->getLastError();
     }
     
-    if( Fieldml_GetObjectType( handle, dataObjectHandle ) != FHT_DATA_OBJECT )
+    if( Fieldml_GetObjectType( handle, dataSourceHandle ) != FHT_DATA_SOURCE )
     {
         return session->setError( FML_ERR_INVALID_PARAMETER_5 );
     }
@@ -1022,13 +1052,13 @@ FmlErrorNumber Fieldml_SetEnsembleMembersData( FmlSessionHandle handle, FmlObjec
         
         ensembleType->type = type;
         ensembleType->count = count;
-        ensembleType->dataObject = dataObjectHandle;
+        ensembleType->dataSource = dataSourceHandle;
         return session->getLastError();
     }
     else if( object->type == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType *)object;
-        return Fieldml_SetEnsembleMembersData( handle, meshType->elementsType, type, count, dataObjectHandle );
+        return Fieldml_SetEnsembleMembersData( handle, meshType->elementsType, type, count, dataSourceHandle );
     }
     
     return session->setError( FML_ERR_INVALID_OBJECT );  
@@ -1528,7 +1558,7 @@ DataDescriptionType Fieldml_GetParameterDataDescription( FmlSessionHandle handle
 }
 
 
-FmlErrorNumber Fieldml_SetDataObject( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle dataObject )
+FmlErrorNumber Fieldml_SetDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle dataSource )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1540,12 +1570,12 @@ FmlErrorNumber Fieldml_SetDataObject( FmlSessionHandle handle, FmlObjectHandle o
     {
         return session->getLastError();
     }
-    if( !checkLocal( session, dataObject ) )
+    if( !checkLocal( session, dataSource ) )
     {
         return session->getLastError();
     }
 
-    if( Fieldml_GetObjectType( handle, dataObject ) != FHT_DATA_OBJECT )
+    if( Fieldml_GetObjectType( handle, dataSource ) != FHT_DATA_SOURCE )
     {
         return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
@@ -1558,7 +1588,7 @@ FmlErrorNumber Fieldml_SetDataObject( FmlSessionHandle handle, FmlObjectHandle o
     else if( object->type == FHT_PARAMETER_EVALUATOR )
     {
         ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        parameterEvaluator->dataObject = dataObject;
+        parameterEvaluator->dataSource = dataSource;
     }
     else if( object->type == FHT_ENSEMBLE_TYPE )
     {
@@ -1570,12 +1600,12 @@ FmlErrorNumber Fieldml_SetDataObject( FmlSessionHandle handle, FmlObjectHandle o
             return session->setError( FML_ERR_INVALID_PARAMETER_3 );
         }
         
-        ensembleType->dataObject = dataObject;
+        ensembleType->dataSource = dataSource;
     }
     else if( object->type == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType *)object;
-        return Fieldml_SetDataObject( handle, meshType->elementsType, dataObject );
+        return Fieldml_SetDataSource( handle, meshType->elementsType, dataSource );
     }
     else
     {
@@ -1612,7 +1642,7 @@ FmlErrorNumber Fieldml_AddDenseIndexEvaluator( FmlSessionHandle handle, FmlObjec
         return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
     
-    if( ( orderHandle != FML_INVALID_HANDLE ) && ( Fieldml_GetObjectType( handle, orderHandle ) != FHT_DATA_OBJECT ) )
+    if( ( orderHandle != FML_INVALID_HANDLE ) && ( Fieldml_GetObjectType( handle, orderHandle ) != FHT_DATA_SOURCE ) )
     {
         return session->setError( FML_ERR_INVALID_PARAMETER_4 );
     }
@@ -2734,9 +2764,9 @@ FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle obj
         return session->getLastError();
     }
 
-    DataObject *dataObject = getDataObject( session, objectHandle );
+    DataSource *dataSource = getDataSource( session, objectHandle );
 
-    DataReader *reader = DataReader::create( session, session->region->getRoot().c_str(), dataObject );
+    DataReader *reader = DataReader::create( session, session->region->getRoot().c_str(), dataSource );
     
     if( reader == NULL )
     {
@@ -2823,9 +2853,9 @@ FmlWriterHandle Fieldml_OpenWriter( FmlSessionHandle handle, FmlObjectHandle obj
         return session->getLastError();
     }
 
-    DataObject *dataObject = getDataObject( session, objectHandle );
+    DataSource *dataSource = getDataSource( session, objectHandle );
 
-    DataWriter *writer = DataWriter::create( session, session->region->getRoot().c_str(), dataObject, ( append == 1 ));
+    DataWriter *writer = DataWriter::create( session, session->region->getRoot().c_str(), dataSource, ( append == 1 ));
 
     if( writer == NULL )
     {
@@ -3230,7 +3260,7 @@ FmlObjectHandle Fieldml_GetImportObject( FmlSessionHandle handle, int importSour
 }
 
 
-FmlObjectHandle Fieldml_CreateDataObject( FmlSessionHandle handle, const char * name )
+FmlObjectHandle Fieldml_CreateTextFileDataResource( FmlSessionHandle handle, const char * name, const char * href )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3238,10 +3268,45 @@ FmlObjectHandle Fieldml_CreateDataObject( FmlSessionHandle handle, const char * 
         return FML_INVALID_HANDLE;
     }
 
-    DataObject *dataObject = new DataObject( name );
+    DataResource *dataResource = new TextFileDataResource( name, href );
     
     session->setError( FML_ERR_NO_ERROR );
-    return addObject( session, dataObject );
+    return addObject( session, dataResource );
+}
+
+
+FmlObjectHandle Fieldml_CreateTextInlineDataResource( FmlSessionHandle handle, const char * name )
+{
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    if( session == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+
+    DataResource *dataResource = new TextInlineDataResource( name );
+    
+    session->setError( FML_ERR_NO_ERROR );
+    return addObject( session, dataResource );
+}
+
+
+DataResourceType Fieldml_GetDataResourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+{
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    if( session == NULL )
+    {
+        return DATA_RESOURCE_UNKNOWN;
+    }
+    
+    FieldmlObject *object = getObject( session, objectHandle );
+    if( object->type != FHT_DATA_RESOURCE )
+    {
+        session->setError( FML_ERR_INVALID_OBJECT );
+        return DATA_RESOURCE_UNKNOWN;
+    }
+    
+    DataResource *resource = (DataResource*)object;
+    return resource->type;
 }
 
 
@@ -3258,21 +3323,21 @@ FmlErrorNumber Fieldml_AddInlineData( FmlSessionHandle handle, FmlObjectHandle o
         return session->getLastError();
     }
 
-   InlineDataSource *source = getInlineDataSource( session, objectHandle );
+    TextInlineDataResource *source = getTextInlineDataResource( session, objectHandle );
     if( source == NULL )
     {
         return session->getLastError();
     }
 
-    char *newData = new char[source->length + length + 1];
-    memcpy( newData, source->data, source->length );
-    memcpy( newData + source->length, data, length );
+    char *newString = new char[source->length + length + 1];
+    memcpy( newString, source->inlineString, source->length );
+    memcpy( newString + source->length, data, length );
 
-    delete[] source->data;
-    source->data = newData;
+    delete[] source->inlineString;
+    source->inlineString = newString;
     
     source->length += length;
-    newData[source->length] = 0;
+    newString[source->length] = 0;
     
     return session->getLastError();
 }
@@ -3286,7 +3351,7 @@ int Fieldml_GetInlineDataLength( FmlSessionHandle handle, FmlObjectHandle object
         return -1;
     }
 
-    InlineDataSource *source = getInlineDataSource( session, objectHandle );
+    TextInlineDataResource *source = getTextInlineDataResource( session, objectHandle );
     if( source == NULL )
     {
         return -1;
@@ -3304,13 +3369,13 @@ const char * Fieldml_GetInlineData( FmlSessionHandle handle, FmlObjectHandle obj
         return NULL;
     }
 
-    InlineDataSource *source = getInlineDataSource( session, objectHandle );
+    TextInlineDataResource *source = getTextInlineDataResource( session, objectHandle );
     if( source == NULL )
     {
         return NULL;
     }
     
-    return strdupS( source->data );
+    return strdupS( source->inlineString );
 }
 
 
@@ -3322,7 +3387,7 @@ int Fieldml_CopyInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandl
         return -1;
     }
 
-    InlineDataSource *source = getInlineDataSource( session, objectHandle );
+    TextInlineDataResource *source = getTextInlineDataResource( session, objectHandle );
     if( source == NULL )
     {
         return -1;
@@ -3333,93 +3398,29 @@ int Fieldml_CopyInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandl
         return 0;
     }
     
-    return cappedCopy( source->data + offset, buffer, bufferLength );
+    return cappedCopy( source->inlineString + offset, buffer, bufferLength );
 }
 
 
-DataSourceType Fieldml_GetDataObjectSourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+DataSourceType Fieldml_GetDataSourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
     {
-        return SOURCE_UNKNOWN;
+        return DATA_SOURCE_UNKNOWN;
     }
     
-    DataObject *dataObject = getDataObject( session, objectHandle );
-    if( dataObject == NULL )
+    DataSource *dataSource = getDataSource( session, objectHandle );
+    if( dataSource == NULL )
     {
-        return SOURCE_UNKNOWN;
+        return DATA_SOURCE_UNKNOWN;
     }
     
-    return dataObject->source->sourceType;
+    return dataSource->type;
 }
 
 
-FmlErrorNumber Fieldml_SetDataObjectSourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle, DataSourceType source )
-{
-    FieldmlSession *session = FieldmlSession::handleToSession( handle );
-    if( session == NULL )
-    {
-        return FML_ERR_UNKNOWN_HANDLE;
-    }
-
-    if( !checkLocal( session, objectHandle ) )
-    {
-        return session->getLastError();
-    }
-
-    DataObject *dataObject = getDataObject( session, objectHandle );
-    if( dataObject == NULL )
-    {
-        return session->getLastError();
-    }
-
-    if( source == SOURCE_INLINE )
-    {
-        delete dataObject->source;
-        dataObject->source = new InlineDataSource();
-        return session->setError( FML_ERR_NO_ERROR );
-    }
-    else if( source == SOURCE_TEXT_FILE )
-    {
-        delete dataObject->source;
-        dataObject->source = new TextFileDataSource();
-        return session->setError( FML_ERR_NO_ERROR );
-    }
-    else
-    {
-        return session->setError( FML_ERR_UNSUPPORTED );
-    }
-}
-
-
-FmlErrorNumber Fieldml_SetDataObjectTextFileInfo( FmlSessionHandle handle, FmlObjectHandle objectHandle, const char * filename, int lineOffset )
-{
-    FieldmlSession *session = FieldmlSession::handleToSession( handle );
-    if( session == NULL )
-    {
-        return FML_ERR_UNKNOWN_HANDLE;
-    }
-
-    if( !checkLocal( session, objectHandle ) )
-    {
-        return session->getLastError();
-    }
-
-    TextFileDataSource *source = getTextFileDataSource( session, objectHandle );
-    if( source == NULL )
-    {
-        return session->getLastError();
-    }
-
-    source->filename = filename;
-    source->lineOffset = lineOffset;
-    
-    return session->getLastError();
-}
-
-
-const char * Fieldml_GetDataObjectFilename( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+const char * Fieldml_GetDataResourceHref( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3427,41 +3428,23 @@ const char * Fieldml_GetDataObjectFilename( FmlSessionHandle handle, FmlObjectHa
         return NULL;
     }
 
-    TextFileDataSource *source = getTextFileDataSource( session, objectHandle );
+    TextFileDataResource *source = getTextFileDataResource( session, objectHandle );
     if( source == NULL )
     {
         return NULL;
     }
 
-    return cstrCopy( source->filename );
+    return cstrCopy( source->href );
 }
 
 
-int Fieldml_CopyDataObjectFilename( FmlSessionHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength )
+int Fieldml_CopyDataResourceHref( FmlSessionHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength )
 {
-    return cappedCopyAndFree( Fieldml_GetDataObjectFilename( handle, objectHandle ), buffer, bufferLength );
+    return cappedCopyAndFree( Fieldml_GetDataResourceHref( handle, objectHandle ), buffer, bufferLength );
 }
 
 
-int Fieldml_GetDataObjectFileOffset( FmlSessionHandle handle, FmlObjectHandle objectHandle )
-{
-    FieldmlSession *session = FieldmlSession::handleToSession( handle );
-    if( session == NULL )
-    {
-        return -1;
-    }
-
-    TextFileDataSource *source = getTextFileDataSource( session, objectHandle );
-    if( source == NULL )
-    {
-        return -1;
-    }
-
-    return source->lineOffset;
-}
-
-
-FmlObjectHandle Fieldml_GetDataObject( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+FmlObjectHandle Fieldml_GetDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3471,16 +3454,16 @@ FmlObjectHandle Fieldml_GetDataObject( FmlSessionHandle handle, FmlObjectHandle 
 
     FieldmlObject *object = getObject( session, objectHandle );
     
-    FmlObjectHandle dataObjectHandle;
+    FmlObjectHandle dataSourceHandle;
 
     if( object == NULL )
     {
-        dataObjectHandle = FML_INVALID_HANDLE;
+        dataSourceHandle = FML_INVALID_HANDLE;
     }
     else if( object->type == FHT_PARAMETER_EVALUATOR )
     {
         ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        dataObjectHandle = parameterEvaluator->dataObject;
+        dataSourceHandle = parameterEvaluator->dataSource;
     }
     else if( object->type == FHT_ENSEMBLE_TYPE )
     {
@@ -3492,24 +3475,24 @@ FmlObjectHandle Fieldml_GetDataObject( FmlSessionHandle handle, FmlObjectHandle 
             return session->setError( FML_ERR_INVALID_OBJECT );
         }
         
-        return ensembleType->dataObject;
+        return ensembleType->dataSource;
     }
     else if( object->type == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType *)object;
-        return Fieldml_GetDataObject( handle, meshType->elementsType );
+        return Fieldml_GetDataSource( handle, meshType->elementsType );
     }
     else
     {
         session->setError( FML_ERR_INVALID_OBJECT );
-        dataObjectHandle = FML_INVALID_HANDLE;
+        dataSourceHandle = FML_INVALID_HANDLE;
     }
     
-    return dataObjectHandle;;
+    return dataSourceHandle;;
 }
 
 
-FmlErrorNumber Fieldml_SetDataObjectEntryInfo( FmlSessionHandle handle, FmlObjectHandle objectHandle, int count, int length, int head, int tail )
+int Fieldml_GetDataSourceCount( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3517,44 +3500,144 @@ FmlErrorNumber Fieldml_SetDataObjectEntryInfo( FmlSessionHandle handle, FmlObjec
         return FML_ERR_UNKNOWN_HANDLE;
     }
     
-    if( !checkLocal( session, objectHandle ) )
+    DataResource *resource = getDataResource( session, objectHandle );
+    if( resource == NULL )
     {
-        return session->getLastError();
+        return -1;
     }
+    
+    return resource->dataSources.size();
+}
 
-    DataObject *dataObject = getDataObject( session, objectHandle );
-    if( dataObject == NULL )
+
+FmlObjectHandle Fieldml_GetDataSourceByIndex( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index )
+{
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    if( session == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+    
+    DataResource *resource = getDataResource( session, objectHandle );
+    if( resource == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+    
+    if( ( index < 0 ) || ( index >= resource->dataSources.size() ) )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        return FML_INVALID_HANDLE;
+    }
+    
+    return resource->dataSources[index];
+}
+
+
+FmlObjectHandle Fieldml_GetDataSourceResource( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+{
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    if( session == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+    if( session->region == NULL )
+    {
+        session->setError( FML_ERR_INVALID_REGION );
+        return FML_INVALID_HANDLE;
+    }
+    
+    DataSource *source = getDataSource( session, objectHandle );
+    if( source == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+    
+    if( source->resource == NULL )
+    {
+        return FML_ERR_MISCONFIGURED_OBJECT;
+    }
+    
+    return session->region->getNamedObject( source->resource->name );
+}
+
+
+FmlErrorNumber Fieldml_CreateTextDataSource( FmlSessionHandle handle, const char *name, FmlObjectHandle resource, int firstLine, int count, int length, int head, int tail )
+{
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    if( session == NULL )
+    {
+        return FML_ERR_UNKNOWN_HANDLE;
+    }
+    
+    if( !checkLocal( session, resource ) )
     {
         return session->getLastError();
     }
     
-    if( count <= 0 )
+    FieldmlObject *object = getObject( session, resource );
+    if( object->type != FHT_DATA_RESOURCE )
+    {
+        return session->setError( FML_ERR_INVALID_OBJECT );
+    }
+    
+    DataResource *dataResource = (DataResource*)object;
+    if( ( dataResource->type != DATA_RESOURCE_TEXT_FILE ) && ( dataResource->type != DATA_RESOURCE_TEXT_INLINE ) )
+    {
+        return session->setError( FML_ERR_INVALID_OBJECT );
+    }
+
+    if( firstLine <= 0 )
     {
         return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
-    if( length <= 0 )
+    if( count <= 0 )
     {
         return session->setError( FML_ERR_INVALID_PARAMETER_4 );
     }
-    if( head <= -1 )
+    if( length <= 0 )
     {
         return session->setError( FML_ERR_INVALID_PARAMETER_5 );
     }
-    if( tail <= -1 )
+    if( head <= -1 )
     {
         return session->setError( FML_ERR_INVALID_PARAMETER_6 );
     }
+    if( tail <= -1 )
+    {
+        return session->setError( FML_ERR_INVALID_PARAMETER_7 );
+    }
     
-    dataObject->entryCount = count;
-    dataObject->entryLength = length;
-    dataObject->entryHead = head;
-    dataObject->entryTail = tail;
+    DataSource *source = new TextDataSource( name, dataResource, firstLine, count, length, head, tail );
+
+    session->setError( FML_ERR_NO_ERROR );
+    FmlObjectHandle sourceHandle = addObject( session, source );
     
-    return session->getLastError();
+    dataResource->dataSources.push_back( sourceHandle );
+    
+    return sourceHandle;
 }
 
 
-int Fieldml_GetDataObjectEntryCount( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetTextDataSourceFirstLine( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+{
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    if( session == NULL )
+    {
+        return -1;
+    }
+
+    TextDataSource *source = getTextDataSource( session, objectHandle );
+    if( source == NULL )
+    {
+        return -1;
+    }
+
+    return source->firstLine;
+}
+
+
+int Fieldml_GetTextDataSourceCount( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3562,17 +3645,17 @@ int Fieldml_GetDataObjectEntryCount( FmlSessionHandle handle, FmlObjectHandle ob
         return -1;
     }
     
-    DataObject *dataObject = getDataObject( session, objectHandle );
-    if( dataObject == NULL )
+    TextDataSource *source = getTextDataSource( session, objectHandle );
+    if( source == NULL )
     {
         return -1;
     }
     
-    return dataObject->entryCount;
+    return source->count;
 }
 
 
-int Fieldml_GetDataObjectEntryLength( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetTextDataSourceLength( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3580,17 +3663,17 @@ int Fieldml_GetDataObjectEntryLength( FmlSessionHandle handle, FmlObjectHandle o
         return -1;
     }
     
-    DataObject *dataObject = getDataObject( session, objectHandle );
-    if( dataObject == NULL )
+    TextDataSource *source = getTextDataSource( session, objectHandle );
+    if( source == NULL )
     {
         return -1;
     }
     
-    return dataObject->entryLength;
+    return source->length;
 }
 
 
-int Fieldml_GetDataObjectEntryHead( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetTextDataSourceHead( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3598,17 +3681,17 @@ int Fieldml_GetDataObjectEntryHead( FmlSessionHandle handle, FmlObjectHandle obj
         return -1;
     }
     
-    DataObject *dataObject = getDataObject( session, objectHandle );
-    if( dataObject == NULL )
+    TextDataSource *source = getTextDataSource( session, objectHandle );
+    if( source == NULL )
     {
         return -1;
     }
     
-    return dataObject->entryHead;
+    return source->head;
 }
 
 
-int Fieldml_GetDataObjectEntryTail( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetTextDataSourceTail( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3616,11 +3699,11 @@ int Fieldml_GetDataObjectEntryTail( FmlSessionHandle handle, FmlObjectHandle obj
         return -1;
     }
     
-    DataObject *dataObject = getDataObject( session, objectHandle );
-    if( dataObject == NULL )
+    TextDataSource *source = getTextDataSource( session, objectHandle );
+    if( source == NULL )
     {
         return -1;
     }
     
-    return dataObject->entryTail;
+    return source->tail;
 }

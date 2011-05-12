@@ -47,6 +47,59 @@
 
 using namespace std;
 
+
+DataReader *DataReader::createTextReader( FieldmlErrorHandler *eHandler, const char *root, TextDataSource *dataSource )
+{
+    FieldmlInputStream *stream = NULL;
+    
+    if( dataSource->resource->type == DATA_RESOURCE_TEXT_FILE )
+    {
+        TextFileDataResource *fileDataResource = (TextFileDataResource*)dataSource->resource;
+
+        //Resolve this href properly, perhaps at parse-time?
+        const string filename = makeFilename( root, fileDataResource->href );
+        stream = FieldmlInputStream::createTextFileStream( filename );
+
+        if( stream != NULL )
+        {
+            for( int i = 0; i < dataSource->firstLine - 1; i++ )
+            {
+                stream->skipLine();
+            }
+        }
+    }
+    else if( dataSource->resource->type == DATA_RESOURCE_TEXT_INLINE )
+    {
+        TextInlineDataResource *inlineDataResource = (TextInlineDataResource*)dataSource->resource;
+        stream = FieldmlInputStream::createStringStream( inlineDataResource->inlineString );
+    }
+    
+    if( stream == NULL )
+    {
+        return NULL;
+    }
+    
+    return new DataReader( stream, eHandler, dataSource->count, dataSource->length, dataSource->head, dataSource->tail );
+}
+
+
+DataReader *DataReader::create( FieldmlErrorHandler *eHandler, const char *root, DataSource *dataSource )
+{
+    if( ( dataSource == NULL ) || ( root == NULL ) || ( eHandler == NULL ) )
+    {
+        return NULL;
+    }
+
+    if( dataSource->type == DATA_SOURCE_TEXT )
+    {
+        TextDataSource *textSource = (TextDataSource*)dataSource;
+        return createTextReader( eHandler, root, textSource );
+    }
+    
+    return NULL;
+}
+
+
 DataReader::DataReader( FieldmlInputStream *_stream, FieldmlErrorHandler *_eHandler, int _count, int _length, int _head, int _tail ) :
     eHandler( _eHandler ),
     stream( _stream ),
@@ -59,44 +112,6 @@ DataReader::DataReader( FieldmlInputStream *_stream, FieldmlErrorHandler *_eHand
     entryCounter = 0;
     
     skip( head );
-}
-
-
-DataReader *DataReader::create( FieldmlErrorHandler *eHandler, const char *root, DataObject *dataObject )
-{
-    FieldmlInputStream *stream = NULL;
-    
-    if( ( dataObject == NULL ) || ( root == NULL ) || ( eHandler == NULL ) )
-    {
-        return NULL;
-    }
-    else if( dataObject->source->sourceType == SOURCE_TEXT_FILE )
-    {
-        TextFileDataSource *fileDataSource = (TextFileDataSource*)dataObject->source;
-
-        const string filename = makeFilename( root, fileDataSource->filename );
-        stream = FieldmlInputStream::createTextFileStream( filename );
-
-        if( stream != NULL )
-        {
-            for( int i = 0; i < fileDataSource->lineOffset - 1; i++ )
-            {
-                stream->skipLine();
-            }
-        }
-    }
-    else if( dataObject->source->sourceType == SOURCE_INLINE )
-    {
-        InlineDataSource *inlineDataSource = (InlineDataSource*)dataObject->source;
-        stream = FieldmlInputStream::createStringStream( inlineDataSource->data );
-    }
-    
-    if( stream == NULL )
-    {
-        return NULL;
-    }
-    
-    return new DataReader( stream, eHandler, dataObject->entryCount, dataObject->entryLength, dataObject->entryHead, dataObject->entryTail );
 }
 
 

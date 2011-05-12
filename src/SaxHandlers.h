@@ -186,34 +186,21 @@ public:
 };
 
 
-class DataObjectSaxHandler :
-    public FieldmlObjectSaxHandler
-{
-public:
-    DataObjectSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
-
-    virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
-};
-
-
-class DataSourceSaxHandler :
-    public SaxHandler, CharacterBufferHandler
+class DataResourceSaxHandler :
+    public FieldmlObjectSaxHandler, CharacterBufferHandler
 {
 private:
-    DataObjectSaxHandler * const parent;
+    const DataResourceType type;
 
-    void onTextFileSource( SaxAttributes &attributes );
 public:
-    DataSourceSaxHandler( DataObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
+    DataResourceSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes, DataResourceType _type );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
-
-    virtual DataObjectSaxHandler *getParent();
 
     virtual void onCharacterBuffer( const char *buffer, int count, int id );
 };
 
-    
+
 class ContinuousTypeSaxHandler :
     public FieldmlObjectSaxHandler
 {

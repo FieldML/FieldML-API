@@ -54,25 +54,25 @@ DataWriter::DataWriter( FieldmlOutputStream *_stream, FieldmlErrorHandler *_eHan
 }
     
     
-DataWriter * DataWriter::create( FieldmlErrorHandler *eHandler, const char *root, DataObject *dataObject, int append )
+DataWriter * DataWriter::create( FieldmlErrorHandler *eHandler, const char *root, DataSource *dataSource, int append )
 {
     FieldmlOutputStream *stream = NULL;
     
-    if( ( dataObject == NULL ) || ( root == NULL ) || ( eHandler == NULL ) )
+    if( ( dataSource == NULL ) || ( root == NULL ) || ( eHandler == NULL ) )
     {
         return NULL;
     }
-    else if( dataObject->source->sourceType == SOURCE_TEXT_FILE )
+    else if( dataSource->resource->type == DATA_RESOURCE_TEXT_FILE )
     {
-        TextFileDataSource *fileDataSource = (TextFileDataSource*)dataObject->source;
+        TextFileDataResource *fileDataResource = (TextFileDataResource*)dataSource->resource;
 
-        const string filename = makeFilename( root, fileDataSource->filename );
+        const string filename = makeFilename( root, fileDataResource->href );
         stream = FieldmlOutputStream::createTextFileStream( filename, append != 0 );
     }
-    else if( dataObject->source->sourceType == SOURCE_INLINE )
+    else if( dataSource->resource->type == DATA_RESOURCE_TEXT_INLINE )
     {
-        InlineDataSource *inlineDataSource = (InlineDataSource*)dataObject->source;
-        stream = FieldmlOutputStream::createStringStream( &inlineDataSource->data, append != 0 );
+        TextInlineDataResource *inlineDataResource = (TextInlineDataResource*)dataSource->resource;
+        stream = FieldmlOutputStream::createStringStream( &inlineDataResource->inlineString, append != 0 );
     }
     
     if( stream == NULL )

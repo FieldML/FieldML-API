@@ -57,7 +57,7 @@ private:
     DataWriter( FieldmlOutputStream *_stream, FieldmlErrorHandler *_eHandler );
 
 public:
-    static DataWriter * create( FieldmlErrorHandler *eHandler, const char *root, DataObject *dataObject, int append );
+    static DataWriter * create( FieldmlErrorHandler *eHandler, const char *root, DataSource *dataSource, int append );
     
     virtual int writeIntValues( int *values, int count );
     virtual int writeDoubleValues( double *values, int count );

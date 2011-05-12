@@ -80,7 +80,7 @@ public:
     
     int count;
     
-    FmlObjectHandle dataObject;
+    FmlObjectHandle dataSource;
     
     EnsembleType( const std::string _name, bool _isComponentEnsemble, bool _isVirtual );
 };
@@ -187,68 +187,80 @@ public:
 };
 
 
-class DataSource
-{
-public:
-    const DataSourceType sourceType;
-    
-    virtual ~DataSource();
-
-protected:
-    DataSource( DataSourceType _sourceType );
-};
-
-
-class UnknownDataSource :
-    public DataSource
-{
-public:
-    UnknownDataSource();
-};
-
-
-class InlineDataSource :
-     public DataSource
-{
-public:
-    char *data;
-    int length;
-    
-    InlineDataSource();
-    
-    virtual ~InlineDataSource();
-};
-
-
-class TextFileDataSource :
-    public DataSource
-{
-public:
-    std::string filename;
-    int lineOffset;
-
-    TextFileDataSource();
-};
-
-    
-class DataObject :
+class DataResource :
     public FieldmlObject
 {
+protected:
+    DataResource( const std::string _name, DataResourceType _type );
+        
 public:
-    int entryCount;
+    std::vector<FmlObjectHandle> dataSources;
+
+    const DataResourceType type;
     
-    int entryLength;
-    
-    int entryHead;
-    
-    int entryTail;
-    
-    DataSource *source;
-    
-    DataObject( const std::string _name );
-    
-    virtual ~DataObject();
+    virtual ~DataResource();
 };
+ 
+    
+class TextFileDataResource :
+    public DataResource
+{
+public:
+    const std::string href;
+        
+    TextFileDataResource( const std::string _name, const std::string _href );
+    
+    virtual ~TextFileDataResource(); 
+};
+
+
+class TextInlineDataResource :
+    public DataResource
+{
+public:
+    char *inlineString;
+    int length;
+
+    TextInlineDataResource( const std::string _name );
+    
+    virtual ~TextInlineDataResource();
+};
+
+    
+class DataSource :
+    public FieldmlObject
+{
+protected:
+    DataSource( const std::string _name, DataResource *_resource, DataSourceType _type );
+    
+public:
+    const DataSourceType type;
+    
+    const DataResource *resource;
+
+    virtual ~DataSource();
+};
+
+    
+class TextDataSource :
+    public DataSource
+{
+public:
+    const int firstLine;
+    
+    const int count;
+    
+    const int length;
+    
+    const int head;
+    
+    const int tail;
+    
+    TextDataSource( const std::string _name, DataResource *_resource, int _firstLine, int _count, int _length, int _head, int _tail );
+    
+    virtual ~TextDataSource();
+};
+
 
 class DataDescription
 {
@@ -288,7 +300,7 @@ class ParameterEvaluator :
     public Evaluator
 {
 public:
-    FmlObjectHandle dataObject;
+    FmlObjectHandle dataSource;
     
     DataDescription *dataDescription;
     

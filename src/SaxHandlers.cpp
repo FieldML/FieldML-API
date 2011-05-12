@@ -325,9 +325,13 @@ SaxHandler *RegionSaxHandler::onElementStart( const xmlChar *elementName, SaxAtt
     {
         return new ImportSaxHandler( this, elementName, attributes );
     }
-    if( xmlStrcmp( elementName, DATA_OBJECT_TAG ) == 0 )
+    if( xmlStrcmp( elementName, TEXT_FILE_RESOURCE_TAG ) == 0 )
     {
-        return new DataObjectSaxHandler( this, elementName, attributes );
+        return new DataResourceSaxHandler( this, elementName, attributes, DATA_RESOURCE_TEXT_FILE );
+    }
+    if( xmlStrcmp( elementName, TEXT_INLINE_RESOURCE_TAG ) == 0 )
+    {
+        return new DataResourceSaxHandler( this, elementName, attributes, DATA_RESOURCE_TEXT_INLINE );
     }
     if( xmlStrcmp( elementName, ENSEMBLE_TYPE_TAG ) == 0 )
     {
@@ -444,104 +448,74 @@ SaxHandler *ContinuousTypeSaxHandler::onElementStart( const xmlChar *elementName
 }
 
 
-DataSourceSaxHandler::DataSourceSaxHandler( DataObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
-    SaxHandler( elementName ),
-    parent( _parent )
-{
-}
-
-
-void DataSourceSaxHandler::onTextFileSource( SaxAttributes &attributes )
-{
-    const char * name =  Fieldml_GetObjectName( parent->getSessionHandle(), parent->handle );
-    const char *filename = attributes.getAttribute( HREF_ATTRIB );
-    int lineCount = attributes.getIntAttribute( FIRST_LINE_ATTRIB, 0 );
-
-    if( filename == NULL )
-    {
-        parent->getSession()->logError( "FileSource must have a file name", name );
-        return;
-    }
-
-    Fieldml_SetDataObjectSourceType( parent->getSessionHandle(), parent->handle, SOURCE_TEXT_FILE );
-    Fieldml_SetDataObjectTextFileInfo( parent->getSessionHandle(), parent->handle, filename, lineCount );
-}
-
-
-SaxHandler *DataSourceSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
-{
-    if( xmlStrcmp( elementName, INLINE_SOURCE_TAG ) == 0 )
-    {
-        Fieldml_SetDataObjectSourceType( parent->getSessionHandle(), parent->handle, SOURCE_INLINE );
-        return new CharacterBufferSaxHandler( this, elementName, this, 0 );
-    }
-    else if( xmlStrcmp( elementName, TEXT_FILE_SOURCE_TAG ) == 0 )
-    {
-        onTextFileSource( attributes );
-    }
-    
-    return this;
-}
-
-
-void DataSourceSaxHandler::onCharacterBuffer( const char *buffer, int count, int id )
+void DataResourceSaxHandler::onCharacterBuffer( const char *buffer, int count, int id )
 {
     if( id == 0 )
     {
-        Fieldml_AddInlineData( parent->getSessionHandle(), parent->handle, buffer, count );
+        Fieldml_AddInlineData( parent->getSessionHandle(), handle, buffer, count );
     }
 }
 
 
-DataObjectSaxHandler *DataSourceSaxHandler::getParent()
-{
-    return parent;
-}
-
-
-DataObjectSaxHandler::DataObjectSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
-    FieldmlObjectSaxHandler( _parent, elementName )
+DataResourceSaxHandler::DataResourceSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes, DataResourceType _type ) :
+    FieldmlObjectSaxHandler( _parent, elementName ),
+    type( _type )
 {
     handle = FML_INVALID_HANDLE;
         
     const char *name = attributes.getAttribute( NAME_ATTRIB );
     if( name == NULL )
     {
-        getSession()->logError( "DataObject has no name" );
+        getSession()->logError( "DataResource has no name" );
         return;
     }
     
-    handle = Fieldml_CreateDataObject( getSessionHandle(), name );
-    if( handle == FML_INVALID_HANDLE )
+    if( type == DATA_RESOURCE_TEXT_FILE )
     {
-        getSession()->logError( "DataObject creation failed", name );
+        const char *href = attributes.getAttribute( HREF_ATTRIB );
+
+        if( href == NULL )
+        {
+            parent->getSession()->logError( "FileSource has no href", name );
+        }
+        else
+        {
+            handle = Fieldml_CreateTextFileDataResource( parent->getSessionHandle(), name, href );
+        }
+    }
+    else if( type == DATA_RESOURCE_TEXT_INLINE )
+    {
+        handle = Fieldml_CreateTextInlineDataResource( parent->getSessionHandle(), name );
+    }
+    else
+    {
+        parent->getSession()->logError( "Invalid type for data resource", name );
     }
 }
 
 
-SaxHandler *DataObjectSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
+SaxHandler *DataResourceSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
-    if( xmlStrcmp( elementName, SOURCE_TAG ) == 0 )
+    if( ( xmlStrcmp( elementName, TEXT_STRING_TAG ) == 0 ) && ( type == DATA_RESOURCE_TEXT_INLINE ) )
     {
-        return new DataSourceSaxHandler( this, elementName, attributes );
+        return new CharacterBufferSaxHandler( this, elementName, this, 0 );
     }
-    else if( xmlStrcmp( elementName, ENTRIES_TAG ) == 0 )
+    else if( xmlStrcmp( elementName, TEXT_DATA_SOURCE_TAG ) == 0 )
     {
-        const char *countAttrib = attributes.getAttribute( COUNT_ATTRIB );
-        const char *lengthAttrib = attributes.getAttribute( LENGTH_ATTRIB );
+        const char *name = attributes.getAttribute( NAME_ATTRIB );
+        int firstLine = attributes.getIntAttribute( FIRST_LINE_ATTRIB, 1 );
+        int count = attributes.getIntAttribute( COUNT_ATTRIB, -1 );
+        int length = attributes.getIntAttribute( LENGTH_ATTRIB, -1 );
         int head = attributes.getIntAttribute( HEAD_ATTRIB, 0 );
         int tail = attributes.getIntAttribute( TAIL_ATTRIB, 0 );
         
-        if( ( countAttrib == NULL ) || ( lengthAttrib == NULL ) )
+        if( ( name == NULL ) || ( count == -1 ) || ( length == -1 ) )
         {
-            getSession()->logError( "Malformed DataObject entry data" );
+            getSession()->logError( "Malformed TextDataSource entry data" );
             return this;
         }
         
-        int count = atoi( countAttrib );
-        int length = atoi( lengthAttrib );
-        
-        Fieldml_SetDataObjectEntryInfo( getSessionHandle(), handle, count, length, head, tail );
+        Fieldml_CreateTextDataSource( getSessionHandle(), name, handle, firstLine, count, length, head, tail );
     }
 
     return this;
@@ -1061,7 +1035,7 @@ SaxHandler *EnsembleElementsHandler::onElementStart( const xmlChar *elementName,
         FmlObjectHandle dataObject = attributes.getObjectAttribute( getSessionHandle(), DATA_ATTRIB );
         if( dataObject == FML_INVALID_HANDLE )
         {
-            getSession()->logError( "EnsembleType member range data has no data object" );
+            getSession()->logError( "EnsembleType member range data has no data source" );
             return this;
         }
         
@@ -1214,7 +1188,7 @@ SemidenseSaxHandler::SemidenseSaxHandler( FieldmlObjectSaxHandler *_parent, cons
     FmlObjectHandle dataObject = attributes.getObjectAttribute( parent->getSessionHandle(), DATA_ATTRIB );
 
     Fieldml_SetParameterDataDescription( parent->getSessionHandle(), parent->handle, DESCRIPTION_SEMIDENSE );
-    Fieldml_SetDataObject( parent->getSessionHandle(), parent->handle, dataObject );
+    Fieldml_SetDataSource( parent->getSessionHandle(), parent->handle, dataObject );
 }
 
 

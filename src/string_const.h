@@ -71,7 +71,6 @@ extern const xmlChar * const COMPONENTS_TAG;
 extern const xmlChar * const MESH_TYPE_TAG;
 extern const xmlChar * const MESH_SHAPES_TAG;
 extern const xmlChar * const MESH_SHAPE_TAG;
-extern const xmlChar * const MESH_CONNECTIVITY_TAG;
 
 extern const xmlChar * const ELEMENT_SEQUENCE_TAG;
 extern const xmlChar * const ELEMENTS_TAG;
@@ -113,15 +112,10 @@ extern const xmlChar * const AGGREGATE_EVALUATOR_TAG;
 extern const xmlChar * const COMPONENT_EVALUATORS_TAG;
 extern const xmlChar * const COMPONENT_EVALUATOR_TAG;
 
-extern const xmlChar * const MARKUP_TAG;
-
-extern const xmlChar * const DATA_LOCATION_TAG;
-
-extern const xmlChar * const DATA_OBJECT_TAG;
-extern const xmlChar * const SOURCE_TAG;
-extern const xmlChar * const TEXT_FILE_SOURCE_TAG;
-extern const xmlChar * const INLINE_SOURCE_TAG;
-extern const xmlChar * const ENTRIES_TAG;
+extern const xmlChar * const TEXT_FILE_RESOURCE_TAG;
+extern const xmlChar * const TEXT_INLINE_RESOURCE_TAG;
+extern const xmlChar * const TEXT_STRING_TAG;
+extern const xmlChar * const TEXT_DATA_SOURCE_TAG;
 
 
 

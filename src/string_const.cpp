@@ -109,11 +109,10 @@ const xmlChar * const AGGREGATE_EVALUATOR_TAG          = (const xmlChar* const)"
 const xmlChar * const COMPONENT_EVALUATORS_TAG         = (const xmlChar* const)"ComponentEvaluators";
 const xmlChar * const COMPONENT_EVALUATOR_TAG          = (const xmlChar* const)"ComponentEvaluator";
 
-const xmlChar * const DATA_OBJECT_TAG                  = (const xmlChar* const)"DataObject";
-const xmlChar * const SOURCE_TAG                       = (const xmlChar* const)"Source";
-const xmlChar * const TEXT_FILE_SOURCE_TAG             = (const xmlChar* const)"TextFileSource";
-const xmlChar * const INLINE_SOURCE_TAG                = (const xmlChar* const)"InlineSource";
-const xmlChar * const ENTRIES_TAG                      = (const xmlChar* const)"Entries";
+const xmlChar * const TEXT_FILE_RESOURCE_TAG           = (const xmlChar* const)"TextFileResource";
+const xmlChar * const TEXT_INLINE_RESOURCE_TAG         = (const xmlChar* const)"TextInlineResource";
+const xmlChar * const TEXT_STRING_TAG                  = (const xmlChar* const)"TextString";
+const xmlChar * const TEXT_DATA_SOURCE_TAG             = (const xmlChar* const)"TextDataSource";
 
 
 

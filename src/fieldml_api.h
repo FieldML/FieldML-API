@@ -150,11 +150,18 @@ enum DataDescriptionType
 };
 
 
+enum DataResourceType
+{
+    DATA_RESOURCE_UNKNOWN,
+    DATA_RESOURCE_TEXT_INLINE,
+    DATA_RESOURCE_TEXT_FILE,
+};
+
+
 enum DataSourceType
 {
-    SOURCE_UNKNOWN,
-    SOURCE_INLINE,
-    SOURCE_TEXT_FILE,
+    DATA_SOURCE_UNKNOWN,
+    DATA_SOURCE_TEXT,
 };
 
 
@@ -172,7 +179,8 @@ enum FieldmlHandleType
     FHT_PIECEWISE_EVALUATOR,
     FHT_AGGREGATE_EVALUATOR,
     FHT_ELEMENT_SEQUENCE,
-    FHT_DATA_OBJECT,
+    FHT_DATA_RESOURCE,
+    FHT_DATA_SOURCE,
 };
 
 
@@ -465,18 +473,16 @@ FmlObjectHandle Fieldml_CreateParametersEvaluator( FmlSessionHandle handle, cons
 FmlErrorNumber Fieldml_SetParameterDataDescription( FmlSessionHandle handle, FmlObjectHandle objectHandle, DataDescriptionType description );
 
 /**
- * Returns the data object used by the given object.
- * 
- * NOTE: Currently, only parameter evaluators use data objects.
+ * Returns the data source used by the given object.
  */
-FmlObjectHandle Fieldml_GetDataObject( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+FmlObjectHandle Fieldml_GetDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 /**
- * Set the data object to be used by the given object.
+ * Set the data source to be used by the given object.
  * 
- * NOTE: Currently, only parameter evaluators use data objects.
+ * NOTE: Currently, only parameter evaluators use data sources.
  */
-FmlErrorNumber Fieldml_SetDataObject( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle dataObject );
+FmlErrorNumber Fieldml_SetDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle dataSource );
 
 /**
  *  Returns the data description type of the given parameter evaluator.
@@ -488,7 +494,7 @@ DataDescriptionType Fieldml_GetParameterDataDescription( FmlSessionHandle handle
 
 /**
  * Adds a dense index evaluator to the given parameter set's semidense data description, using the order
- * specified by the given data object (if not FML_INVALID_HANDLE).
+ * specified by the given data source (if not FML_INVALID_HANDLE).
  * 
  */
 FmlErrorNumber Fieldml_AddDenseIndexEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle, FmlObjectHandle orderHandle );
@@ -676,7 +682,7 @@ FmlObjectHandle Fieldml_CreateEnsembleElementSequence( FmlSessionHandle handle, 
 EnsembleMembersType Fieldml_GetEnsembleMembersType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
-FmlErrorNumber Fieldml_SetEnsembleMembersData( FmlSessionHandle handle, FmlObjectHandle objectHandle, EnsembleMembersType type, int count, FmlObjectHandle dataObjectHandle );
+FmlErrorNumber Fieldml_SetEnsembleMembersData( FmlSessionHandle handle, FmlObjectHandle objectHandle, EnsembleMembersType type, int count, FmlObjectHandle dataSource );
 
 /**
  * Add the given element range to the given ensemble.
@@ -696,7 +702,7 @@ FmlEnsembleValue Fieldml_GetEnsembleMembersMax( FmlSessionHandle handle, FmlObje
 int Fieldml_GetEnsembleMembersStride( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 /**
- * Creates a new reader for the given data object's raw data.
+ * Creates a new reader for the given data source's raw data.
  */
 FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
@@ -724,7 +730,10 @@ FmlErrorNumber Fieldml_CloseReader( FmlSessionHandle handle, FmlReaderHandle rea
 
 
 /**
- * Creates a new writer for the given data object's raw data.
+ * Creates a new writer for the given data source's raw data.
+ * 
+ * NOTE: It is up to the application to ensure that the data source's description is consistent with the data
+ * actually being written.
  */
 FmlWriterHandle Fieldml_OpenWriter( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlBoolean append );
 
@@ -816,99 +825,94 @@ FmlObjectHandle Fieldml_GetImportObject( FmlSessionHandle handle, int importSour
 
 
 /**
- * Creates a new data object with the given name.
+ * Creates a new data source with the given name.
  */
-FmlObjectHandle Fieldml_CreateDataObject( FmlSessionHandle handle, const char *name );
+FmlObjectHandle Fieldml_CreateTextFileDataResource( FmlSessionHandle handle, const char *name, const char *href );
+FmlObjectHandle Fieldml_CreateTextInlineDataResource( FmlSessionHandle handle, const char *name );
+
+
+DataResourceType Fieldml_GetDataResourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- * Sets the entry info for the given data object.
+ * Sets the entry info for the given data source.
  */
-FmlErrorNumber Fieldml_SetDataObjectEntryInfo( FmlSessionHandle handle, FmlObjectHandle objectHandle, int count, int length, int head, int tail );
+FmlErrorNumber Fieldml_CreateTextDataSource( FmlSessionHandle handle, const char *name, FmlObjectHandle objectHandle, int firstLine, int count, int length, int head, int tail );
+
+int Fieldml_GetDataSourceCount( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+
+
+FmlObjectHandle Fieldml_GetDataSourceByIndex( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index );
+
+FmlObjectHandle Fieldml_GetDataSourceResource( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+
+/**
+ * Returns the first line for the given text data source.
+ */
+int Fieldml_GetTextDataSourceFirstLine( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- * Returns the entry count for the given data object.
+ * Returns the entry count for the given text data source.
  */
-int Fieldml_GetDataObjectEntryCount( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+int Fieldml_GetTextDataSourceCount( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- * Returns the entry length for the given data object.
+ * Returns the entry length for the given text data source.
  */
-int Fieldml_GetDataObjectEntryLength( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+int Fieldml_GetTextDataSourceLength( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- * Returns the entry head length for the given data object.
+ * Returns the entry head length for the given text data source.
  */
-int Fieldml_GetDataObjectEntryHead( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+int Fieldml_GetTextDataSourceHead( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- * Returns the entry tail length for the given data object.
+ * Returns the entry tail length for the given text data source.
  */
-int Fieldml_GetDataObjectEntryTail( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+int Fieldml_GetTextDataSourceTail( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 /**
- * Returns the data source type of the given data object.
+ * Returns the data source type of the given data source.
  */
-DataSourceType Fieldml_GetDataObjectSourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
-
-
-/**
- * Set the data source type of the given data object.
- */
-FmlErrorNumber Fieldml_SetDataObjectSourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle, DataSourceType sourceType );
+DataSourceType Fieldml_GetDataSourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- * Appends some data to the given data object's inline data. The data object's type must have previously
- * been set to SOURCE_INLINE.
+ * Appends some data to the given data resource's inline data. The data resource's type must be
+ * DATA_RESOURCE_TEXT_INLINE.
  */
 FmlErrorNumber Fieldml_AddInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandle, const char *data, const int length );
 
 
 /**
- * Returns the number of characters in the data object's inline data.
+ * Returns the number of characters in the data resource's inline data.
  */
 int Fieldml_GetInlineDataLength( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- * Returns a pointer to the data object's inline data.
+ * Returns a pointer to the data resource's inline data.
+ * 
+ * NOTE: This is obviously dangerous and should be replaced with something more robust.
  */
 const char * Fieldml_GetInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- * Copies a section of the data object's inline data into the given buffer, starting from the given offset, and ending
+ * Copies a section of the data resource's inline data into the given buffer, starting from the given offset, and ending
  * either when the buffer is full, or the end of the inline data is reached.
  */
 int Fieldml_CopyInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength, int offset );
 
 /**
- * Sets the information for the parameter set's file data. The parameter set's data location must have previously
- * been set to LOCATION_FILE. Currently, the offset value only works for TYPE_LINES files when reading. It is up
- * to the caller to correctly set the offset when writing files. TYPE_TEXT is only partially supported.
- * TYPE_BINARY is not yet supported.
+ * Returns the href of the data resource's file. The data resource's type must be DATA_RESOURCE_TEXT_FILE.
  */
-FmlErrorNumber Fieldml_SetDataObjectTextFileInfo( FmlSessionHandle handle, FmlObjectHandle objectHandle, const char * filename, int offset );
-
-
-/**
- * Returns the filename of the parameter set's file data. The parameter set's data location must have previously
- * been set to LOCATION_FILE.
- */
-const char * Fieldml_GetDataObjectFilename( FmlSessionHandle handle, FmlObjectHandle objectHandle );
-int Fieldml_CopyDataObjectFilename( FmlSessionHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength );
-
-
-/**
- * Returns the offset for the parameter set's file data. The parameter set's data location must have previously
- * been set to LOCATION_FILE.
- */
-int Fieldml_GetDataObjectFileOffset( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+const char * Fieldml_GetDataResourceHref( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+int Fieldml_CopyDataResourceHref( FmlSessionHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength );
 
 }
 #endif // __cplusplus

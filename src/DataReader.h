@@ -70,8 +70,10 @@ private:
     
     void skip( int amount );
 
+    static DataReader *createTextReader( FieldmlErrorHandler *eHandler, const char *root, TextDataSource *dataSource );
+
 public:
-    static DataReader *create( FieldmlErrorHandler *eHandler, const char *root, DataObject *dataObject );
+    static DataReader *create( FieldmlErrorHandler *eHandler, const char *root, DataSource *dataSource );
     
     virtual int readIntValues( int *values, int count );
     virtual int readDoubleValues( double *value, int count ); 
