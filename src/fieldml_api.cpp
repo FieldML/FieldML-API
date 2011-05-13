@@ -1017,7 +1017,7 @@ EnsembleMembersType Fieldml_GetEnsembleMembersType( FmlSessionHandle handle, Fml
 }
 
 
-FmlErrorNumber Fieldml_SetEnsembleMembersData( FmlSessionHandle handle, FmlObjectHandle objectHandle, EnsembleMembersType type, int count, FmlObjectHandle dataSourceHandle )
+FmlErrorNumber Fieldml_SetEnsembleMembersDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle, EnsembleMembersType type, int count, FmlObjectHandle dataSourceHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1058,7 +1058,7 @@ FmlErrorNumber Fieldml_SetEnsembleMembersData( FmlSessionHandle handle, FmlObjec
     else if( object->type == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType *)object;
-        return Fieldml_SetEnsembleMembersData( handle, meshType->elementsType, type, count, dataSourceHandle );
+        return Fieldml_SetEnsembleMembersDataSource( handle, meshType->elementsType, type, count, dataSourceHandle );
     }
     
     return session->setError( FML_ERR_INVALID_OBJECT );  

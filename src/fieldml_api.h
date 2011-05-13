@@ -155,6 +155,7 @@ enum DataResourceType
     DATA_RESOURCE_UNKNOWN,
     DATA_RESOURCE_TEXT_INLINE,
     DATA_RESOURCE_TEXT_FILE,
+    //DATA_RESOURCE_HDF5_FILE,
 };
 
 
@@ -366,6 +367,13 @@ FmlObjectHandle Fieldml_CreateEnsembleType( FmlSessionHandle handle, const char 
  */
 FmlObjectHandle Fieldml_CreateContinuousType( FmlSessionHandle handle, const char * name );
 
+
+/**
+ * Create the indexing ensemble for the given continuous type. The result is a newly initialized ensemble type,
+ * which must be configured in the same manner as a 'top level' ensemble.
+ * 
+ * NOTE: A continuous type need not have an indexing ensemble, in which case it is equivalent to a scalar value type.
+ */
 FmlObjectHandle Fieldml_CreateContinuousTypeComponents( FmlSessionHandle handle, FmlObjectHandle typeHandle, const char *name, const int count );
 
 /**
@@ -377,8 +385,21 @@ FmlObjectHandle Fieldml_CreateContinuousTypeComponents( FmlSessionHandle handle,
  */
 FmlObjectHandle Fieldml_CreateMeshType( FmlSessionHandle handle, const char * name );
 
+/**
+ * Create the element ensemble for the given mesh type. The result is a newly initialized ensemble type,
+ * which must be configured in the same manner as a 'top level' ensemble.
+ * 
+ * NOTE: A mesh type must have an element ensemble, and will be considered misconfigured if not.
+ */
 FmlObjectHandle Fieldml_CreateMeshElementsType( FmlSessionHandle handle, FmlObjectHandle meshHandle, const char *name );
 
+/**
+ * Create the chart type for the given mesh type. The result is a newly initialized continuous type,
+ * which must be configured in the same manner as a 'top level' continuous type, including its indexing
+ * ensemble.
+ * 
+ * NOTE: A mesh type must have a chart type, and will be considered misconfigured if not.
+ */
 FmlObjectHandle Fieldml_CreateMeshChartType( FmlSessionHandle handle, FmlObjectHandle meshHandle, const char *name );
 
 
@@ -517,6 +538,13 @@ int Fieldml_GetSemidenseIndexCount( FmlSessionHandle handle, FmlObjectHandle obj
  */
 FmlObjectHandle Fieldml_GetSemidenseIndexEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index, FmlBoolean isSparse );
 
+
+/**
+ * Returns the data source containing the ordering for the given dense index. For an n-member ensemble, the data source
+ * must contain n entries representing valid members of the given ensemble.
+ * 
+ * NOTE: The ordering may be omitted, in which case the integer ordering will be used.
+ */
 FmlObjectHandle Fieldml_GetSemidenseIndexOrder( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index );
 
 /**
@@ -679,26 +707,51 @@ FmlObjectHandle Fieldml_CreateEnsembleElementSequence( FmlSessionHandle handle, 
 */
 
 
+/**
+ * Returns the EnsembleMembersType describing the means by which the members of the given ensemble are specified.
+ */
 EnsembleMembersType Fieldml_GetEnsembleMembersType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
-FmlErrorNumber Fieldml_SetEnsembleMembersData( FmlSessionHandle handle, FmlObjectHandle objectHandle, EnsembleMembersType type, int count, FmlObjectHandle dataSource );
+/**
+ * Sets the data source for the given ensemble's member list. The ensemble type's members type must be one
+ * of MEMBER_LIST_DATA, MEMBER_RANGE_DATA or MEMBER_STRIDE_RANGE_DATA.
+ *  
+ */
+FmlErrorNumber Fieldml_SetEnsembleMembersDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle, EnsembleMembersType type, int count, FmlObjectHandle dataSource );
 
 /**
- * Add the given element range to the given ensemble.
+ * Sets the given ensemble's member list directly via a minimum, maximum and stride triple (the maximum is inclusive).
+ * Also sets the ensemble's members type to MEMBER_RANGE. This is provided as a convenience to define trivial ensembles
+ * without having to use a data source.
  */
 FmlErrorNumber Fieldml_SetEnsembleElementRange( FmlSessionHandle handle, FmlObjectHandle objectHandle, const FmlEnsembleValue minElement, const FmlEnsembleValue maxElement, const int stride );
 
 
 /**
- * Get the number of elements in the given ensemble
+ * Returns the number of members in the given ensemble.
  */
 int Fieldml_GetElementCount( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
+
+/**
+ * Returns the minimum ensemble member used when directly declaring ensemble members.
+ * Only valid if the ensemble's members type is MEMBER_RANGE.
+ */
 FmlEnsembleValue Fieldml_GetEnsembleMembersMin( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
+
+/**
+ * Returns the maximum ensemble member used when directly declaring ensemble members.
+ * Only valid if the ensemble's members type is MEMBER_RANGE.
+ */
 FmlEnsembleValue Fieldml_GetEnsembleMembersMax( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
+
+/**
+ * Returns the stride used when directly declaring ensemble members.
+ * Only valid if the ensemble's members type is MEMBER_RANGE.
+ */
 int Fieldml_GetEnsembleMembersStride( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 /**
@@ -825,25 +878,47 @@ FmlObjectHandle Fieldml_GetImportObject( FmlSessionHandle handle, int importSour
 
 
 /**
- * Creates a new data source with the given name.
+ * Creates a new text-based file data resource with the given name and href.
+ * 
+ * NOTE: Currently, the only valid hrefs supported are local filenames.
  */
 FmlObjectHandle Fieldml_CreateTextFileDataResource( FmlSessionHandle handle, const char *name, const char *href );
+
+
+/**
+ * Creates a new text-based inline data resource. The resource will initially be an empty string, but its contents
+ * can be set either directly via Fieldml_AddInlineData calls, or indirectly via FieldML writer calls.
+ */
 FmlObjectHandle Fieldml_CreateTextInlineDataResource( FmlSessionHandle handle, const char *name );
 
 
+/**
+ * Returns the type of the given data resource.
+ */
 DataResourceType Fieldml_GetDataResourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- * Sets the entry info for the given data source.
+ * Creates a new text-based data source. The given data resource must be text-based.
  */
-FmlErrorNumber Fieldml_CreateTextDataSource( FmlSessionHandle handle, const char *name, FmlObjectHandle objectHandle, int firstLine, int count, int length, int head, int tail );
+FmlErrorNumber Fieldml_CreateTextDataSource( FmlSessionHandle handle, const char *name, FmlObjectHandle dataResource, int firstLine, int count, int length, int head, int tail );
 
+
+/**
+ * Returns the number of data sources associated with the given data resource.
+ */
 int Fieldml_GetDataSourceCount( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
+/**
+ * Returns the nth data source associated with the given data resource. 
+ */
 FmlObjectHandle Fieldml_GetDataSourceByIndex( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index );
 
+
+/**
+ * Returns the data resource used by the given data source.
+ */
 FmlObjectHandle Fieldml_GetDataSourceResource( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 /**

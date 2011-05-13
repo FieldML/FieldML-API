@@ -1046,7 +1046,7 @@ SaxHandler *EnsembleElementsHandler::onElementStart( const xmlChar *elementName,
             return this;
         }
         
-        Fieldml_SetEnsembleMembersData( parent->getSessionHandle(), parent->handle, type, count, dataObject );
+        Fieldml_SetEnsembleMembersDataSource( parent->getSessionHandle(), parent->handle, type, count, dataObject );
     }
 
     return this;
