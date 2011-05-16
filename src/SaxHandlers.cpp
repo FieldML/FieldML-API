@@ -807,21 +807,21 @@ ParametersSaxHandler::ParametersSaxHandler( RegionSaxHandler *_parent, const xml
     const char *name = attributes.getAttribute( NAME_ATTRIB );
     if( name == NULL )
     {
-        getSession()->logError( "ParametersEvaluator has no name" );
+        getSession()->logError( "ParameterEvaluator has no name" );
         return;
     }
 
     FmlObjectHandle valueType = attributes.getObjectAttribute( getSessionHandle(), VALUE_TYPE_ATTRIB );
     if( valueType == FML_INVALID_HANDLE )
     {
-        getSession()->logError( "ParametersEvaluator has no value type", name );
+        getSession()->logError( "ParameterEvaluator has no value type", name );
         return;
     }
 
-    handle = Fieldml_CreateParametersEvaluator( getSessionHandle(), name, valueType );
+    handle = Fieldml_CreateParameterEvaluator( getSessionHandle(), name, valueType );
     if( handle == FML_INVALID_HANDLE )
     {
-        getSession()->logError( "ParametersEvaluator creation failed", name );
+        getSession()->logError( "ParameterEvaluator creation failed", name );
     }
 }
 

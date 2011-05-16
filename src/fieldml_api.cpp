@@ -1463,7 +1463,7 @@ FmlObjectHandle Fieldml_CreateExternalEvaluator( FmlSessionHandle handle, const 
 }
 
 
-FmlObjectHandle Fieldml_CreateParametersEvaluator( FmlSessionHandle handle, const char *name, FmlObjectHandle valueType )
+FmlObjectHandle Fieldml_CreateParameterEvaluator( FmlSessionHandle handle, const char *name, FmlObjectHandle valueType )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )

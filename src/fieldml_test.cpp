@@ -135,7 +135,7 @@ void testRead( const char * filename )
     }
 
     count = Fieldml_GetObjectCount( handle, FHT_PARAMETER_EVALUATOR );
-    fprintf( stdout, "ParametersEvaluators: %d\n", count ); 
+    fprintf( stdout, "ParameterEvaluators: %d\n", count ); 
     for( i = 1; i <= count; i++ )
     {
         oHandle = Fieldml_GetObject( handle, FHT_PARAMETER_EVALUATOR, i );
@@ -397,7 +397,7 @@ void testMisc()
     FmlObjectHandle parametersResource = Fieldml_CreateTextInlineDataResource( handle, "test.resource.parameters_data" );
     FmlObjectHandle parametersData = Fieldml_CreateTextDataSource( handle, "test.parameters_data", parametersResource, 1, 1, 3, 0, 0 );
     
-    FmlObjectHandle parameters = Fieldml_CreateParametersEvaluator( handle, "test.ensemble_parameters", realType );
+    FmlObjectHandle parameters = Fieldml_CreateParameterEvaluator( handle, "test.ensemble_parameters", realType );
     Fieldml_SetParameterDataDescription( handle, parameters, DESCRIPTION_SEMIDENSE );
     Fieldml_SetDataSource( handle, parameters, parametersData );
     
@@ -424,7 +424,7 @@ void testMisc()
     FmlObjectHandle parametersResource2 = Fieldml_CreateTextInlineDataResource( handle, "test.resource.parameters_data2" );
     FmlObjectHandle parametersData2 = Fieldml_CreateTextDataSource( handle, "test.parameters_data2", parametersResource2, 1, 2, 11, 0, 0 );
     
-    FmlObjectHandle parameters2 = Fieldml_CreateParametersEvaluator( handle, "test.ensemble_parameters.2", realType );
+    FmlObjectHandle parameters2 = Fieldml_CreateParameterEvaluator( handle, "test.ensemble_parameters.2", realType );
     Fieldml_SetParameterDataDescription( handle, parameters2, DESCRIPTION_SEMIDENSE );
     Fieldml_SetDataSource( handle, parameters2, parametersData2 );
     

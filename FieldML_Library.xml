@@ -1,259 +1,323 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <Fieldml version="0.3_alpha" xsi:noNamespaceSchemaLocation="Fieldml_0.3.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
  <Region name="library">
-  <ContinuousType name="library.real.1d"/>
-  <AbstractEvaluator name="library.real.1d.variable" valueType="library.real.1d"/>
+  <ContinuousType name="real.1d"/>
+  <AbstractEvaluator name="real.1d.variable" valueType="real.1d"/>
   
-  <ContinuousType name="library.real.2d">
-    <Components name="library.real.2d.component" count="2"/>
+  <ContinuousType name="real.2d">
+    <Components name="real.2d.component" count="2"/>
   </ContinuousType>
-  <AbstractEvaluator name="library.real.2d.component.variable" valueType="library.real.2d.component"/>
-  <AbstractEvaluator name="library.real.2d.variable" valueType="library.real.2d"/>
+  <AbstractEvaluator name="real.2d.component.variable" valueType="real.2d.component"/>
+  <AbstractEvaluator name="real.2d.variable" valueType="real.2d"/>
 
-  <ContinuousType name="library.real.3d">
-    <Components name="library.real.3d.component" count="3"/>
+  <ContinuousType name="real.3d">
+    <Components name="real.3d.component" count="3"/>
   </ContinuousType>
-  <AbstractEvaluator name="library.real.3d.component.variable" valueType="library.real.3d.component"/>
-  <AbstractEvaluator name="library.real.3d.variable" valueType="library.real.3d"/>
+  <AbstractEvaluator name="real.3d.component.variable" valueType="real.3d.component"/>
+  <AbstractEvaluator name="real.3d.variable" valueType="real.3d"/>
 
-  <ContinuousType name="library.chart.1d">
-    <Components name="library.chart.1d.component" count="1"/>
+  <ContinuousType name="chart.1d">
+    <Components name="chart.1d.component" count="1"/>
   </ContinuousType>
-  <AbstractEvaluator name="library.chart.1d.component.variable" valueType="library.chart.1d.component"/>
-  <AbstractEvaluator name="library.chart.1d.variable" valueType="library.chart.1d"/>
+  <AbstractEvaluator name="chart.1d.component.variable" valueType="chart.1d.component"/>
+  <AbstractEvaluator name="chart.1d.variable" valueType="chart.1d"/>
 
-  <ContinuousType name="library.chart.2d">
-    <Components name="library.chart.2d.component" count="2"/>
+  <ContinuousType name="chart.2d">
+    <Components name="chart.2d.component" count="2"/>
   </ContinuousType>
-  <AbstractEvaluator name="library.chart.2d.component.variable" valueType="library.chart.2d.component"/>
-  <AbstractEvaluator name="library.chart.2d.variable" valueType="library.chart.2d"/>
+  <AbstractEvaluator name="chart.2d.component.variable" valueType="chart.2d.component"/>
+  <AbstractEvaluator name="chart.2d.variable" valueType="chart.2d"/>
 
-  <ContinuousType name="library.chart.3d">
-    <Components name="library.chart.3d.component" count="3"/>
+  <ContinuousType name="chart.3d">
+    <Components name="chart.3d.component" count="3"/>
   </ContinuousType>
-  <AbstractEvaluator name="library.chart.3d.component.variable" valueType="library.chart.3d.component"/>
-  <AbstractEvaluator name="library.chart.3d.variable" valueType="library.chart.3d"/>
+  <AbstractEvaluator name="chart.3d.component.variable" valueType="chart.3d.component"/>
+  <AbstractEvaluator name="chart.3d.variable" valueType="chart.3d"/>
 
-  <EnsembleType name="library.localNodes.1d.line2">
+  <EnsembleType name="localNodes.1d.line2">
    <Members>
     <MemberRange min="1" max="2"/>
    </Members>
   </EnsembleType>
-  <AbstractEvaluator name="library.localNodes.1d.line2.variable" valueType="library.localNodes.1d.line2"/>
+  <AbstractEvaluator name="localNodes.1d.line2.variable" valueType="localNodes.1d.line2"/>
 
-  <ContinuousType name="library.parameters.1d.linearLagrange">
-    <Components name="library.parameters.1d.linearLagrange.component" count="2"/>
+  <ContinuousType name="parameters.1d.linearLagrange">
+    <Components name="parameters.1d.linearLagrange.component" count="2"/>
   </ContinuousType>
-  <AbstractEvaluator name="library.parameters.1d.linearLagrange.component.variable" valueType="library.parameters.1d.linearLagrange.component"/>
-  <AbstractEvaluator name="library.parameters.1d.linearLagrange.variable" valueType="library.parameters.1d.linearLagrange"/>
+  <AbstractEvaluator name="parameters.1d.linearLagrange.component.variable" valueType="parameters.1d.linearLagrange.component"/>
+  <AbstractEvaluator name="parameters.1d.linearLagrange.variable" valueType="parameters.1d.linearLagrange"/>
 
-  <ExternalEvaluator name="library.interpolator.1d.unit.linearLagrange" valueType="library.real.1d">
+  <ExternalEvaluator name="interpolator.1d.unit.linearLagrange" valueType="real.1d">
     <Variables>
-      <Variable name="library.chart.1d.variable"/>
-      <Variable name="library.parameters.1d.linearLagrange.variable"/>
+      <Variable name="chart.1d.variable"/>
+      <Variable name="parameters.1d.linearLagrange.variable"/>
     </Variables>
   </ExternalEvaluator>
 
-  <EnsembleType name="library.localNodes.1d.line3">
+  <EnsembleType name="localNodes.1d.line3">
    <Members>
     <MemberRange min="1" max="3"/>
    </Members>
   </EnsembleType>
-  <AbstractEvaluator name="library.localNodes.1d.line3.variable" valueType="library.localNodes.1d.line3"/>
+  <AbstractEvaluator name="localNodes.1d.line3.variable" valueType="localNodes.1d.line3"/>
   
-  <ContinuousType name="library.parameters.1d.quadraticLagrange">
-    <Components name="library.parameters.1d.quadraticLagrange.component" count="3"/>
+  <ContinuousType name="parameters.1d.quadraticLagrange">
+    <Components name="parameters.1d.quadraticLagrange.component" count="3"/>
   </ContinuousType>
-  <AbstractEvaluator name="library.parameters.1d.quadraticLagrange.component.variable" valueType="library.parameters.1d.quadraticLagrange.component"/>
-  <AbstractEvaluator name="library.parameters.1d.quadraticLagrange.variable" valueType="library.parameters.1d.quadraticLagrange"/>
+  <AbstractEvaluator name="parameters.1d.quadraticLagrange.component.variable" valueType="parameters.1d.quadraticLagrange.component"/>
+  <AbstractEvaluator name="parameters.1d.quadraticLagrange.variable" valueType="parameters.1d.quadraticLagrange"/>
 
-  <ExternalEvaluator name="library.interpolator.1d.unit.quadraticLagrange" valueType="library.real.1d">
+  <ExternalEvaluator name="interpolator.1d.unit.quadraticLagrange" valueType="real.1d">
     <Variables>
-      <Variable name="library.chart.1d.variable"/>
-      <Variable name="library.parameters.1d.quadraticLagrange.variable"/>
+      <Variable name="chart.1d.variable"/>
+      <Variable name="parameters.1d.quadraticLagrange.variable"/>
     </Variables>
   </ExternalEvaluator>
 
-  <EnsembleType name="library.localNodes.2d.square2x2">
+  <EnsembleType name="localNodes.2d.square2x2">
    <Members>
     <MemberRange min="1" max="4"/>
    </Members>
   </EnsembleType>
-  <AbstractEvaluator name="library.localNodes.2d.square2x2.variable" valueType="library.localNodes.2d.square2x2"/>
+  <AbstractEvaluator name="localNodes.2d.square2x2.variable" valueType="localNodes.2d.square2x2"/>
 
-  <ContinuousType name="library.parameters.2d.bilinearLagrange">
-    <Components name="library.parameters.2d.bilinearLagrange.component" count="4"/>
+  <ContinuousType name="parameters.2d.bilinearLagrange">
+    <Components name="parameters.2d.bilinearLagrange.component" count="4"/>
   </ContinuousType>
-  <AbstractEvaluator name="library.parameters.2d.bilinearLagrange.variable" valueType="library.parameters.2d.bilinearLagrange"/>
-  <AbstractEvaluator name="library.parameters.2d.bilinearLagrange.component.variable" valueType="library.parameters.2d.bilinearLagrange.component"/>
+  <AbstractEvaluator name="parameters.2d.bilinearLagrange.variable" valueType="parameters.2d.bilinearLagrange"/>
+  <AbstractEvaluator name="parameters.2d.bilinearLagrange.component.variable" valueType="parameters.2d.bilinearLagrange.component"/>
 
-  <ExternalEvaluator name="library.interpolator.2d.unit.bilinearLagrange" valueType="library.real.1d">
+  <ExternalEvaluator name="interpolator.2d.unit.bilinearLagrange" valueType="real.1d">
     <Variables>
-      <Variable name="library.chart.2d.variable"/>
-      <Variable name="library.parameters.2d.bilinearLagrange.variable"/>
+      <Variable name="chart.2d.variable"/>
+      <Variable name="parameters.2d.bilinearLagrange.variable"/>
     </Variables>
   </ExternalEvaluator>
 
-  <EnsembleType name="library.localNodes.2d.square3x3">
+  <EnsembleType name="localNodes.2d.square3x3">
    <Members>
     <MemberRange min="1" max="9"/>
    </Members>
   </EnsembleType>
-  <AbstractEvaluator name="library.localNodes.2d.square3x3.variable" valueType="library.localNodes.2d.square3x3"/>
+  <AbstractEvaluator name="localNodes.2d.square3x3.variable" valueType="localNodes.2d.square3x3"/>
   
-  <ContinuousType name="library.parameters.2d.biquadraticLagrange">
-    <Components name="library.parameters.2d.biquadraticLagrange.component" count="9"/>
+  <ContinuousType name="parameters.2d.biquadraticLagrange">
+    <Components name="parameters.2d.biquadraticLagrange.component" count="9"/>
   </ContinuousType>
-  <AbstractEvaluator name="library.parameters.2d.biquadraticLagrange.variable" valueType="library.parameters.2d.biquadraticLagrange"/>
-  <AbstractEvaluator name="library.parameters.2d.biquadraticLagrange.component.variable" valueType="library.parameters.2d.biquadraticLagrange.component"/>
+  <AbstractEvaluator name="parameters.2d.biquadraticLagrange.variable" valueType="parameters.2d.biquadraticLagrange"/>
+  <AbstractEvaluator name="parameters.2d.biquadraticLagrange.component.variable" valueType="parameters.2d.biquadraticLagrange.component"/>
 
-  <ExternalEvaluator name="library.interpolator.2d.unit.biquadraticLagrange" valueType="library.real.1d">
+  <ExternalEvaluator name="interpolator.2d.unit.biquadraticLagrange" valueType="real.1d">
     <Variables>
-      <Variable name="library.chart.2d.variable"/>
-      <Variable name="library.parameters.2d.biquadraticLagrange.variable"/>
+      <Variable name="chart.2d.variable"/>
+      <Variable name="parameters.2d.biquadraticLagrange.variable"/>
     </Variables>
   </ExternalEvaluator>
 
-  <EnsembleType name="library.localNodes.3d.cube2x2x2">
+  <EnsembleType name="localNodes.3d.cube2x2x2">
    <Members>
     <MemberRange min="1" max="8"/>
    </Members>
   </EnsembleType>
-  <AbstractEvaluator name="library.localNodes.3d.cube2x2x2.variable" valueType="library.localNodes.3d.cube2x2x2"/>
+  <AbstractEvaluator name="localNodes.3d.cube2x2x2.variable" valueType="localNodes.3d.cube2x2x2"/>
 
-  <ContinuousType name="library.parameters.3d.trilinearLagrange">
-    <Components name="library.parameters.3d.trilinearLagrange.component" count="8"/>
+  <ContinuousType name="parameters.3d.trilinearLagrange">
+    <Components name="parameters.3d.trilinearLagrange.component" count="8"/>
   </ContinuousType>
-  <AbstractEvaluator name="library.parameters.3d.trilinearLagrange.variable" valueType="library.parameters.3d.trilinearLagrange"/>
+  <AbstractEvaluator name="parameters.3d.trilinearLagrange.variable" valueType="parameters.3d.trilinearLagrange"/>
 
-  <ExternalEvaluator name="library.interpolator.3d.unit.trilinearLagrange" valueType="library.real.1d">
+  <ExternalEvaluator name="interpolator.3d.unit.trilinearLagrange" valueType="real.1d">
     <Variables>
-      <Variable name="library.chart.3d.variable"/>
-      <Variable name="library.parameters.3d.trilinearLagrange.variable"/>
+      <Variable name="chart.3d.variable"/>
+      <Variable name="parameters.3d.trilinearLagrange.variable"/>
     </Variables>
   </ExternalEvaluator>
 
-  <EnsembleType name="library.localNodes.3d.cube3x3x3">
+  <EnsembleType name="localNodes.3d.cube3x3x3">
    <Members>
     <MemberRange min="1" max="27"/>
    </Members>
   </EnsembleType>
-  <AbstractEvaluator name="library.localNodes.3d.cube3x3x3.variable" valueType="library.localNodes.3d.cube3x3x3"/>
+  <AbstractEvaluator name="localNodes.3d.cube3x3x3.variable" valueType="localNodes.3d.cube3x3x3"/>
   
-  <ContinuousType name="library.parameters.3d.triquadraticLagrange">
-    <Components name="library.parameters.3d.triquadraticLagrange.component" count="27"/>
+  <ContinuousType name="parameters.3d.triquadraticLagrange">
+    <Components name="parameters.3d.triquadraticLagrange.component" count="27"/>
   </ContinuousType>
-  <AbstractEvaluator name="library.parameters.3d.triquadraticLagrange.variable" valueType="library.parameters.3d.triquadraticLagrange"/>
-  <AbstractEvaluator name="library.parameters.3d.triquadraticLagrange.component.variable" valueType="library.parameters.3d.triquadraticLagrange.component"/>
+  <AbstractEvaluator name="parameters.3d.triquadraticLagrange.variable" valueType="parameters.3d.triquadraticLagrange"/>
+  <AbstractEvaluator name="parameters.3d.triquadraticLagrange.component.variable" valueType="parameters.3d.triquadraticLagrange.component"/>
 
-  <ExternalEvaluator name="library.interpolator.3d.unit.triquadraticLagrange" valueType="library.real.1d">
+  <ExternalEvaluator name="interpolator.3d.unit.triquadraticLagrange" valueType="real.1d">
     <Variables>
-      <Variable name="library.chart.3d.variable"/>
-      <Variable name="library.parameters.3d.triquadraticLagrange.variable"/>
+      <Variable name="chart.3d.variable"/>
+      <Variable name="parameters.3d.triquadraticLagrange.variable"/>
     </Variables>
   </ExternalEvaluator>
 
-  <ContinuousType name="library.coordinates.rc.1d"/>
-  <AbstractEvaluator name="library.coordinates.rc.1d.variable" valueType="library.coordinates.rc.1d"/>
+  <ContinuousType name="coordinates.rc.1d"/>
+  <AbstractEvaluator name="coordinates.rc.1d.variable" valueType="coordinates.rc.1d"/>
 
-  <ContinuousType name="library.coordinates.rc.2d">
-    <Components name="library.coordinates.rc.2d.component" count="2"/>
+  <ContinuousType name="coordinates.rc.2d">
+    <Components name="coordinates.rc.2d.component" count="2"/>
   </ContinuousType>
-  <AbstractEvaluator name="library.coordinates.rc.2d.variable" valueType="library.coordinates.rc.2d"/>
-  <AbstractEvaluator name="library.coordinates.rc.2d.component.variable" valueType="library.coordinates.rc.2d.component"/>
+  <AbstractEvaluator name="coordinates.rc.2d.variable" valueType="coordinates.rc.2d"/>
+  <AbstractEvaluator name="coordinates.rc.2d.component.variable" valueType="coordinates.rc.2d.component"/>
 
-  <ContinuousType name="library.coordinates.rc.3d">
-    <Components name="library.coordinates.rc.3d.component" count="3"/>
+  <ContinuousType name="coordinates.rc.3d">
+    <Components name="coordinates.rc.3d.component" count="3"/>
   </ContinuousType>
-  <AbstractEvaluator name="library.coordinates.rc.3d.variable" valueType="library.coordinates.rc.3d"/>
-  <AbstractEvaluator name="library.coordinates.rc.3d.component.variable" valueType="library.coordinates.rc.3d.component"/>
+  <AbstractEvaluator name="coordinates.rc.3d.variable" valueType="coordinates.rc.3d"/>
+  <AbstractEvaluator name="coordinates.rc.3d.component.variable" valueType="coordinates.rc.3d.component"/>
 
-  <ContinuousType name="library.parameters.1d.cubicHermite">
-    <Components name="library.parameters.1d.cubicHermite.component" count="4"/>
+  <ContinuousType name="parameters.1d.cubicHermite">
+    <Components name="parameters.1d.cubicHermite.component" count="4"/>
   </ContinuousType>
-  <AbstractEvaluator name="library.parameters.1d.cubicHermite.variable" valueType="library.parameters.1d.cubicHermite"/>
-  <AbstractEvaluator name="library.parameters.1d.cubicHermite.component.variable" valueType="library.parameters.1d.cubicHermite.component"/>
-  <AbstractEvaluator name="library.parameters.1d.cubicHermiteScaling.variable" valueType="library.parameters.1d.cubicHermite"/>
+  <AbstractEvaluator name="parameters.1d.cubicHermite.variable" valueType="parameters.1d.cubicHermite"/>
+  <AbstractEvaluator name="parameters.1d.cubicHermite.component.variable" valueType="parameters.1d.cubicHermite.component"/>
+  <AbstractEvaluator name="parameters.1d.cubicHermiteScaling.variable" valueType="parameters.1d.cubicHermite"/>
 
-  <ExternalEvaluator name="library.interpolator.1d.unit.cubicHermite" valueType="library.real.1d">
+  <ExternalEvaluator name="interpolator.1d.unit.cubicHermite" valueType="real.1d">
     <Variables>
-      <Variable name="library.chart.1d.variable"/>
-      <Variable name="library.parameters.1d.cubicHermite.variable"/>
+      <Variable name="chart.1d.variable"/>
+      <Variable name="parameters.1d.cubicHermite.variable"/>
     </Variables>
   </ExternalEvaluator>
 
-  <ExternalEvaluator name="library.interpolator.1d.unit.cubicHermiteScaled" valueType="library.real.1d">
+  <ExternalEvaluator name="interpolator.1d.unit.cubicHermiteScaled" valueType="real.1d">
     <Variables>
-      <Variable name="library.chart.1d.variable"/>
-      <Variable name="library.parameters.1d.cubicHermite.variable"/>
-      <Variable name="library.parameters.1d.cubicHermiteScaling.variable"/>
+      <Variable name="chart.1d.variable"/>
+      <Variable name="parameters.1d.cubicHermite.variable"/>
+      <Variable name="parameters.1d.cubicHermiteScaling.variable"/>
     </Variables>
   </ExternalEvaluator>
 
-  <ContinuousType name="library.parameters.2d.bicubicHermite">
-    <Components name="library.parameters.2d.bicubicHermite.component" count="16"/>
+  <ContinuousType name="parameters.2d.bicubicHermite">
+    <Components name="parameters.2d.bicubicHermite.component" count="16"/>
   </ContinuousType>
-  <AbstractEvaluator name="library.parameters.2d.bicubicHermite.variable" valueType="library.parameters.2d.bicubicHermite"/>
-  <AbstractEvaluator name="library.parameters.2d.bicubicHermite.component.variable" valueType="library.parameters.2d.bicubicHermite.component"/>
-  <AbstractEvaluator name="library.parameters.2d.bicubicHermiteScaling.variable" valueType="library.parameters.2d.bicubicHermite"/>
+  <AbstractEvaluator name="parameters.2d.bicubicHermite.variable" valueType="parameters.2d.bicubicHermite"/>
+  <AbstractEvaluator name="parameters.2d.bicubicHermite.component.variable" valueType="parameters.2d.bicubicHermite.component"/>
+  <AbstractEvaluator name="parameters.2d.bicubicHermiteScaling.variable" valueType="parameters.2d.bicubicHermite"/>
 
-  <ExternalEvaluator name="library.interpolator.2d.unit.bicubicHermite" valueType="library.real.1d">
+  <ExternalEvaluator name="interpolator.2d.unit.bicubicHermite" valueType="real.1d">
     <Variables>
-      <Variable name="library.chart.2d.variable"/>
-      <Variable name="library.parameters.2d.bicubicHermite.variable"/>
+      <Variable name="chart.2d.variable"/>
+      <Variable name="parameters.2d.bicubicHermite.variable"/>
     </Variables>
   </ExternalEvaluator>
 
-  <ExternalEvaluator name="library.interpolator.2d.unit.bicubicHermiteScaled" valueType="library.real.1d">
+  <ExternalEvaluator name="interpolator.2d.unit.bicubicHermiteScaled" valueType="real.1d">
     <Variables>
-      <Variable name="library.chart.2d.variable"/>
-      <Variable name="library.parameters.2d.bicubicHermite.variable"/>
-      <Variable name="library.parameters.2d.bicubicHermiteScaling.variable"/>
+      <Variable name="chart.2d.variable"/>
+      <Variable name="parameters.2d.bicubicHermite.variable"/>
+      <Variable name="parameters.2d.bicubicHermiteScaling.variable"/>
     </Variables>
   </ExternalEvaluator>
 
-  <ContinuousType name="library.parameters.3d.tricubicHermite">
-    <Components name="library.parameters.3d.tricubicHermite.component" count="64"/>
+  <ContinuousType name="parameters.3d.tricubicHermite">
+    <Components name="parameters.3d.tricubicHermite.component" count="64"/>
   </ContinuousType>
-  <AbstractEvaluator name="library.parameters.3d.tricubicHermite.variable" valueType="library.parameters.3d.tricubicHermite"/>
-  <AbstractEvaluator name="library.parameters.3d.tricubicHermite.component.variable" valueType="library.parameters.3d.tricubicHermite.component"/>
-  <AbstractEvaluator name="library.parameters.3d.tricubicHermiteScaling.variable" valueType="library.parameters.3d.tricubicHermite"/>
+  <AbstractEvaluator name="parameters.3d.tricubicHermite.variable" valueType="parameters.3d.tricubicHermite"/>
+  <AbstractEvaluator name="parameters.3d.tricubicHermite.component.variable" valueType="parameters.3d.tricubicHermite.component"/>
+  <AbstractEvaluator name="parameters.3d.tricubicHermiteScaling.variable" valueType="parameters.3d.tricubicHermite"/>
 
-  <ExternalEvaluator name="library.interpolator.3d.unit.tricubicHermite" valueType="library.real.1d">
+  <ExternalEvaluator name="interpolator.3d.unit.tricubicHermite" valueType="real.1d">
     <Variables>
-      <Variable name="library.chart.3d.variable"/>
-      <Variable name="library.parameters.3d.tricubicHermite.variable"/>
+      <Variable name="chart.3d.variable"/>
+      <Variable name="parameters.3d.tricubicHermite.variable"/>
     </Variables>
   </ExternalEvaluator>
 
-  <ExternalEvaluator name="library.interpolator.3d.unit.tricubicHermiteScaled" valueType="library.real.1d">
+  <ExternalEvaluator name="interpolator.3d.unit.tricubicHermiteScaled" valueType="real.1d">
     <Variables>
-      <Variable name="library.chart.3d.variable"/>
-      <Variable name="library.parameters.3d.tricubicHermite.variable"/>
-      <Variable name="library.parameters.3d.tricubicHermiteScaling.variable"/>
+      <Variable name="chart.3d.variable"/>
+      <Variable name="parameters.3d.tricubicHermite.variable"/>
+      <Variable name="parameters.3d.tricubicHermiteScaling.variable"/>
     </Variables>
   </ExternalEvaluator>
 
 
 <!-- SIMPLEX OBJECTS-->
 
-  <EnsembleType name="library.localNodes.2d.triangle2x2">
+  <!-- Bilinear Simplex -->
+  <EnsembleType name="localNodes.2d.triangle3">
    <Members>
     <MemberRange min="1" max="3"/>
    </Members>
   </EnsembleType>
-  <AbstractEvaluator name="library.localNodes.2d.triangle2x2.variable" valueType="library.localNodes.2d.triangle2x2"/>
+  <AbstractEvaluator name="localNodes.2d.triangle3.variable" valueType="localNodes.2d.triangle3"/>
 
-  <ContinuousType name="library.parameters.2d.bilinearSimplex">
-    <Components name="library.parameters.2d.bilinearSimplex.component" count="3"/>
+  <ContinuousType name="parameters.2d.bilinearSimplex">
+    <Components name="parameters.2d.bilinearSimplex.component" count="3"/>
   </ContinuousType>
-  <AbstractEvaluator name="library.parameters.2d.bilinearSimplex.variable" valueType="library.parameters.2d.bilinearSimplex"/>
-  <AbstractEvaluator name="library.parameters.2d.bilinearSimplex.component.variable" valueType="library.parameters.2d.bilinearSimplex.component"/>
+  <AbstractEvaluator name="parameters.2d.bilinearSimplex.variable" valueType="parameters.2d.bilinearSimplex"/>
+  <AbstractEvaluator name="parameters.2d.bilinearSimplex.component.variable" valueType="parameters.2d.bilinearSimplex.component"/>
 
-  <ExternalEvaluator name="library.interpolator.2d.unit.bilinearSimplex" valueType="library.real.1d">
+  <ExternalEvaluator name="interpolator.2d.unit.bilinearSimplex" valueType="real.1d">
     <Variables>
-      <Variable name="library.chart.2d.variable"/>
-      <Variable name="library.parameters.2d.bilinearSimplex.variable"/>
+      <Variable name="chart.2d.variable"/>
+      <Variable name="parameters.2d.bilinearSimplex.variable"/>
+    </Variables>
+  </ExternalEvaluator>
+
+  <!-- Biquadratic Simplex -->
+  <EnsembleType name="localNodes.2d.triangle6">
+   <Members>
+    <MemberRange min="1" max="6"/>
+   </Members>
+  </EnsembleType>
+  <AbstractEvaluator name="localNodes.2d.triangle6.variable" valueType="localNodes.2d.triangle6"/>
+
+  <ContinuousType name="parameters.2d.biquadraticSimplex">
+    <Components name="parameters.2d.biquadraticSimplex.component" count="6"/>
+  </ContinuousType>
+  <AbstractEvaluator name="parameters.2d.biquadraticSimplex.variable" valueType="parameters.2d.biquadraticSimplex"/>
+  <AbstractEvaluator name="parameters.2d.biquadraticSimplex.component.variable" valueType="parameters.2d.biquadraticSimplex.component"/>
+
+  <ExternalEvaluator name="interpolator.2d.unit.biquadraticSimplex" valueType="real.1d">
+    <Variables>
+      <Variable name="chart.2d.variable"/>
+      <Variable name="parameters.2d.biquadraticSimplex.variable"/>
+    </Variables>
+  </ExternalEvaluator>
+
+  <!-- Trilinear Simplex -->
+  <EnsembleType name="localNodes.3d.tetrahedron4">
+   <Members>
+    <MemberRange min="1" max="4"/>
+   </Members>
+  </EnsembleType>
+  <AbstractEvaluator name="localNodes.3d.tetrahedron4.variable" valueType="localNodes.3d.tetrahedron4"/>
+
+  <ContinuousType name="parameters.3d.trilinearSimplex">
+    <Components name="parameters.3d.trilinearSimplex.component" count="4"/>
+  </ContinuousType>
+  <AbstractEvaluator name="parameters.3d.trilinearSimplex.variable" valueType="parameters.3d.trilinearSimplex"/>
+  <AbstractEvaluator name="parameters.3d.trilinearSimplex.component.variable" valueType="parameters.3d.trilinearSimplex.component"/>
+
+  <ExternalEvaluator name="interpolator.3d.unit.trilinearSimplex" valueType="real.1d">
+    <Variables>
+      <Variable name="chart.3d.variable"/>
+      <Variable name="parameters.3d.trilinearSimplex.variable"/>
+    </Variables>
+  </ExternalEvaluator>
+
+  <!-- Triquadratic Simplex -->
+  <EnsembleType name="localNodes.3d.tetrahedron10">
+   <Members>
+    <MemberRange min="1" max="10"/>
+   </Members>
+  </EnsembleType>
+  <AbstractEvaluator name="localNodes.3d.tetrahedron10.variable" valueType="localNodes.3d.tetrahedron10"/>
+
+  <ContinuousType name="parameters.3d.triquadraticSimplex">
+    <Components name="parameters.3d.triquadraticSimplex.component" count="10"/>
+  </ContinuousType>
+  <AbstractEvaluator name="parameters.3d.triquadraticSimplex.variable" valueType="parameters.3d.triquadraticSimplex"/>
+  <AbstractEvaluator name="parameters.3d.triquadraticSimplex.component.variable" valueType="parameters.3d.triquadraticSimplex.component"/>
+
+  <ExternalEvaluator name="interpolator.3d.unit.triquadraticSimplex" valueType="real.1d">
+    <Variables>
+      <Variable name="chart.3d.variable"/>
+      <Variable name="parameters.3d.triquadraticSimplex.variable"/>
     </Variables>
   </ExternalEvaluator>
 

@@ -485,7 +485,7 @@ FmlObjectHandle Fieldml_CreateExternalEvaluator( FmlSessionHandle handle, const 
  * and include the ability to describe 3rd-party formats such as HDF5, and allow for locations that
  * refer to inline data, as well as files on the local filesystem, or over the network.
  */
-FmlObjectHandle Fieldml_CreateParametersEvaluator( FmlSessionHandle handle, const char *name, FmlObjectHandle valueType );
+FmlObjectHandle Fieldml_CreateParameterEvaluator( FmlSessionHandle handle, const char *name, FmlObjectHandle valueType );
 
 
 /**

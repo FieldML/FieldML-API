@@ -94,7 +94,7 @@ const xmlChar * const ABSTRACT_EVALUATOR_TAG           = (const xmlChar* const)"
 
 const xmlChar * const EXTERNAL_EVALUATOR_TAG           = (const xmlChar* const)"ExternalEvaluator";
 
-const xmlChar * const PARAMETER_EVALUATOR_TAG          = (const xmlChar* const)"ParametersEvaluator";
+const xmlChar * const PARAMETER_EVALUATOR_TAG          = (const xmlChar* const)"ParameterEvaluator";
 const xmlChar * const SEMI_DENSE_DATA_TAG              = (const xmlChar* const)"SemidenseData";
 const xmlChar * const SPARSE_INDEXES_TAG               = (const xmlChar* const)"SparseIndexes";
 const xmlChar * const DENSE_INDEXES_TAG                = (const xmlChar* const)"DenseIndexes";
