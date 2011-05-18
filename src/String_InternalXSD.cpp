@@ -124,12 +124,12 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
     </xs:complexType> \
  \
     <xs:complexType name=\"BindMapEntry_Type\"> \
-        <xs:attribute name=\"variable\" type=\"xs:string\" use=\"required\" /> \
+        <xs:attribute name=\"argument\" type=\"xs:string\" use=\"required\" /> \
         <xs:attribute name=\"source\" type=\"xs:string\" use=\"required\" /> \
     </xs:complexType> \
  \
     <xs:complexType name=\"BindMapIndexEntry_Type\"> \
-        <xs:attribute name=\"variable\" type=\"xs:string\" use=\"required\" /> \
+        <xs:attribute name=\"argument\" type=\"xs:string\" use=\"required\" /> \
         <xs:attribute name=\"indexNumber\" type=\"xs:positiveInteger\" use=\"required\" /> \
     </xs:complexType> \
  \
@@ -189,13 +189,13 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
         </xs:complexContent> \
     </xs:complexType> \
  \
-    <xs:complexType name=\"VariableListEntry_Type\"> \
+    <xs:complexType name=\"ArgumentListEntry_Type\"> \
         <xs:attribute name=\"name\" type=\"xs:string\" use=\"required\" /> \
     </xs:complexType> \
  \
-    <xs:complexType name=\"VariableList_Type\"> \
+    <xs:complexType name=\"ArgumentList_Type\"> \
         <xs:choice minOccurs=\"0\" maxOccurs=\"unbounded\"> \
-            <xs:element name=\"Variable\" type=\"VariableListEntry_Type\" /> \
+            <xs:element name=\"Argument\" type=\"ArgumentListEntry_Type\" /> \
         </xs:choice> \
     </xs:complexType> \
  \
@@ -281,14 +281,14 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
         <xs:complexContent> \
             <xs:extension base=\"FieldmlObject_Type\"> \
                 <xs:sequence> \
-                    <xs:element name=\"Variables\" type=\"VariableList_Type\" minOccurs=\"0\" maxOccurs=\"1\" /> \
+                    <xs:element name=\"Arguments\" type=\"ArgumentList_Type\" minOccurs=\"0\" maxOccurs=\"1\" /> \
                 </xs:sequence> \
                 <xs:attribute name=\"valueType\" type=\"xs:string\" use=\"required\" /> \
             </xs:extension> \
         </xs:complexContent> \
     </xs:complexType> \
  \
-    <xs:complexType name=\"AbstractEvaluator_Type\"> \
+    <xs:complexType name=\"ArgumentEvaluator_Type\"> \
         <xs:complexContent> \
             <xs:extension base=\"FieldmlEvaluator_Type\" /> \
         </xs:complexContent> \
@@ -304,7 +304,7 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
         <xs:complexContent> \
             <xs:extension base=\"FieldmlObject_Type\"> \
                 <xs:sequence> \
-                    <xs:element name=\"Variables\" type=\"VariableList_Type\" minOccurs=\"0\" maxOccurs=\"1\" /> \
+                    <xs:element name=\"Arguments\" type=\"ArgumentList_Type\" minOccurs=\"0\" maxOccurs=\"1\" /> \
                     <xs:element name=\"Bindings\" type=\"BindMap_Type\" minOccurs=\"0\" maxOccurs=\"1\" /> \
                 </xs:sequence> \
                 <xs:attribute name=\"valueType\" type=\"xs:string\" use=\"optional\" /> \
@@ -364,7 +364,7 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
                     <xs:element name=\"EnsembleType\" type=\"EnsembleType_Type\" /> \
                     <xs:element name=\"ContinuousType\" type=\"ContinuousType_Type\" /> \
                     <xs:element name=\"MeshType\" type=\"MeshType_Type\" /> \
-                    <xs:element name=\"AbstractEvaluator\" type=\"AbstractEvaluator_Type\" /> \
+                    <xs:element name=\"ArgumentEvaluator\" type=\"ArgumentEvaluator_Type\" /> \
                     <xs:element name=\"ExternalEvaluator\" type=\"ExternalEvaluator_Type\" /> \
                     <xs:element name=\"ReferenceEvaluator\" type=\"ReferenceEvaluator_Type\" /> \
                     <xs:element name=\"PiecewiseEvaluator\" type=\"PiecewiseEvaluator_Type\" /> \

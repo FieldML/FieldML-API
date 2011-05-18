@@ -87,10 +87,10 @@ extern const xmlChar * const BINDINGS_TAG;
 extern const xmlChar * const BIND_TAG;
 extern const xmlChar * const BIND_INDEX_TAG;
 
-extern const xmlChar * const VARIABLES_TAG;
-extern const xmlChar * const VARIABLE_TAG;
+extern const xmlChar * const ARGUMENTS_TAG;
+extern const xmlChar * const ARGUMENT_TAG;
 
-extern const xmlChar * const ABSTRACT_EVALUATOR_TAG;
+extern const xmlChar * const ARGUMENT_EVALUATOR_TAG;
 
 extern const xmlChar * const EXTERNAL_EVALUATOR_TAG;
 
@@ -128,7 +128,7 @@ extern const xmlChar * const REGION_ATTRIB;
 extern const xmlChar * const LOCAL_NAME_ATTRIB;
 extern const xmlChar * const REMOTE_NAME_ATTRIB;
 
-extern const xmlChar * const VARIABLE_ATTRIB;
+extern const xmlChar * const ARGUMENT_ATTRIB;
 extern const xmlChar * const INDEX_NUMBER_ATTRIB;
 extern const xmlChar * const SOURCE_ATTRIB;
 

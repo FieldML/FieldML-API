@@ -188,7 +188,7 @@ static SimpleMap<FmlObjectHandle, FmlObjectHandle> *getBindMap( FieldmlSession *
 }
 
 
-static vector<FmlObjectHandle> *getVariableList( FieldmlSession *session, FmlObjectHandle objectHandle )
+static vector<FmlObjectHandle> *getArgumentList( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
     FieldmlObject *object = getObject( session, objectHandle );
 
@@ -200,32 +200,32 @@ static vector<FmlObjectHandle> *getVariableList( FieldmlSession *session, FmlObj
     if( object->type == FHT_REFERENCE_EVALUATOR )
     {
         ReferenceEvaluator *referenceEvaluator = (ReferenceEvaluator *)object;
-        return &referenceEvaluator->variables;
+        return &referenceEvaluator->arguments;
     }
     if( object->type == FHT_AGGREGATE_EVALUATOR )
     {
         AggregateEvaluator *aggregateEvaluator = (AggregateEvaluator *)object;
-        return &aggregateEvaluator->variables;
+        return &aggregateEvaluator->arguments;
     }
     if( object->type == FHT_PARAMETER_EVALUATOR )
     {
         ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        return &parameterEvaluator->variables;
+        return &parameterEvaluator->arguments;
     }
-    if( object->type == FHT_ABSTRACT_EVALUATOR )
+    if( object->type == FHT_ARGUMENT_EVALUATOR )
     {
-        AbstractEvaluator *abstractEvaluator = (AbstractEvaluator *)object;
-        return &abstractEvaluator->variables;
+        ArgumentEvaluator *argumentEvaluator = (ArgumentEvaluator *)object;
+        return &argumentEvaluator->arguments;
     }
     if( object->type == FHT_EXTERNAL_EVALUATOR )
     {
         ExternalEvaluator *externalEvaluator = (ExternalEvaluator *)object;
-        return &externalEvaluator->variables;
+        return &externalEvaluator->arguments;
     }
     if( object->type == FHT_PIECEWISE_EVALUATOR )
     {
         PiecewiseEvaluator *piecewiseEvaluator = (PiecewiseEvaluator *)object;
-        return &piecewiseEvaluator->variables;
+        return &piecewiseEvaluator->arguments;
     }
 
     session->setError( FML_ERR_INVALID_OBJECT );
@@ -453,7 +453,7 @@ static bool checkIsEvaluatorType( FieldmlSession *session, FmlObjectHandle objec
         ( object->type != FHT_AGGREGATE_EVALUATOR ) &&
         ( object->type != FHT_REFERENCE_EVALUATOR ) &&
         ( object->type != FHT_PIECEWISE_EVALUATOR ) &&
-        ( object->type != FHT_ABSTRACT_EVALUATOR ) &&
+        ( object->type != FHT_ARGUMENT_EVALUATOR ) &&
         ( object->type != FHT_EXTERNAL_EVALUATOR ) )
     {
         return false;
@@ -1343,10 +1343,10 @@ FmlObjectHandle Fieldml_GetValueType( FmlSessionHandle handle, FmlObjectHandle o
         PiecewiseEvaluator *piecewise = (PiecewiseEvaluator *)object;
         return piecewise->valueType;
     }
-    else if( object->type == FHT_ABSTRACT_EVALUATOR )
+    else if( object->type == FHT_ARGUMENT_EVALUATOR )
     {
-        AbstractEvaluator *abstractEvaluator = (AbstractEvaluator *)object;
-        return abstractEvaluator->valueType;
+        ArgumentEvaluator *argumentEvaluator = (ArgumentEvaluator *)object;
+        return argumentEvaluator->valueType;
     }
     else if( object->type == FHT_EXTERNAL_EVALUATOR )
     {
@@ -1364,7 +1364,7 @@ FmlObjectHandle Fieldml_GetValueType( FmlSessionHandle handle, FmlObjectHandle o
 }
 
 
-FmlObjectHandle Fieldml_CreateAbstractEvaluator( FmlSessionHandle handle, const char *name, FmlObjectHandle valueType )
+FmlObjectHandle Fieldml_CreateArgumentEvaluator( FmlSessionHandle handle, const char *name, FmlObjectHandle valueType )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -1393,7 +1393,7 @@ FmlObjectHandle Fieldml_CreateAbstractEvaluator( FmlSessionHandle handle, const 
         string meshName = Fieldml_GetObjectName( handle, valueType );
         meshName += ".";
      
-        string variableName = name;
+        string argumentName = name;
         string chartComponentName = Fieldml_GetObjectName( handle, chartType );
         string elementsComponentName = Fieldml_GetObjectName( handle, elementsType );
         
@@ -1402,7 +1402,7 @@ FmlObjectHandle Fieldml_CreateAbstractEvaluator( FmlSessionHandle handle, const 
         {
             chartSuffix = chartComponentName.substr( meshName.length(), chartComponentName.length() );
         }
-        string chartName = variableName + "." + chartSuffix;
+        string chartName = argumentName + "." + chartSuffix;
         
         if( Fieldml_GetObjectByName( handle, chartName.c_str() ) != FML_INVALID_HANDLE )
         {
@@ -1415,7 +1415,7 @@ FmlObjectHandle Fieldml_CreateAbstractEvaluator( FmlSessionHandle handle, const 
         {
             elementsSuffix = elementsComponentName.substr( meshName.length(), elementsComponentName.length() );
         }
-        string elementsName = variableName + "." + elementsSuffix;
+        string elementsName = argumentName + "." + elementsSuffix;
         
         if( Fieldml_GetObjectByName( handle, elementsName.c_str() ) != FML_INVALID_HANDLE )
         {
@@ -1423,17 +1423,17 @@ FmlObjectHandle Fieldml_CreateAbstractEvaluator( FmlSessionHandle handle, const 
             return FML_INVALID_HANDLE;
         }
         
-        AbstractEvaluator *chartEvaluator = new AbstractEvaluator( chartName.c_str(), chartType, true );
+        ArgumentEvaluator *chartEvaluator = new ArgumentEvaluator( chartName.c_str(), chartType, true );
         addObject( session, chartEvaluator );        
         
-        AbstractEvaluator *elementEvaluator = new AbstractEvaluator( elementsName.c_str(), elementsType, true );
+        ArgumentEvaluator *elementEvaluator = new ArgumentEvaluator( elementsName.c_str(), elementsType, true );
         addObject( session, elementEvaluator );        
     }
     
-    AbstractEvaluator *abstractEvaluator = new AbstractEvaluator( name, valueType, false );
+    ArgumentEvaluator *argumentEvaluator = new ArgumentEvaluator( name, valueType, false );
     
     session->setError( FML_ERR_NO_ERROR );
-    return addObject( session, abstractEvaluator );
+    return addObject( session, argumentEvaluator );
 }
 
 
@@ -2048,7 +2048,7 @@ FmlObjectHandle Fieldml_GetReferenceSourceEvaluator( FmlSessionHandle handle, Fm
 }
 
 
-int Fieldml_GetVariableCount( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetArgumentCount( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2056,17 +2056,17 @@ int Fieldml_GetVariableCount( FmlSessionHandle handle, FmlObjectHandle objectHan
         return -1;
     }
 
-    vector<FmlObjectHandle> *variables = getVariableList( session, objectHandle );
-    if( variables == NULL )
+    vector<FmlObjectHandle> *arguments = getArgumentList( session, objectHandle );
+    if( arguments == NULL )
     {
         return -1;
     }
     
-    return variables->size();
+    return arguments->size();
 }
 
 
-FmlObjectHandle Fieldml_GetVariable( FmlSessionHandle handle, FmlObjectHandle objectHandle, int variableIndex )
+FmlObjectHandle Fieldml_GetArgument( FmlSessionHandle handle, FmlObjectHandle objectHandle, int argumentIndex )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2074,23 +2074,23 @@ FmlObjectHandle Fieldml_GetVariable( FmlSessionHandle handle, FmlObjectHandle ob
         return FML_INVALID_HANDLE;
     }
 
-    vector<FmlObjectHandle> *variables = getVariableList( session, objectHandle );
-    if( variables == NULL )
+    vector<FmlObjectHandle> *arguments = getArgumentList( session, objectHandle );
+    if( arguments == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     
-    if( ( variableIndex < 1 ) || ( variableIndex > variables->size() ) )
+    if( ( argumentIndex < 1 ) || ( argumentIndex > arguments->size() ) )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
     }
     
-    return variables->at( variableIndex - 1 );
+    return arguments->at( argumentIndex - 1 );
 }
 
 
-FmlErrorNumber Fieldml_AddVariable( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle evaluatorHandle )
+FmlErrorNumber Fieldml_AddArgument( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle evaluatorHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2107,15 +2107,15 @@ FmlErrorNumber Fieldml_AddVariable( FmlSessionHandle handle, FmlObjectHandle obj
         return session->getLastError();
     }
 
-    vector<FmlObjectHandle> *variables = getVariableList( session, objectHandle );
-    if( variables == NULL )
+    vector<FmlObjectHandle> *arguments = getArgumentList( session, objectHandle );
+    if( arguments == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
     
-    if( find( variables->begin(), variables->end(), evaluatorHandle ) == variables->end() )
+    if( find( arguments->begin(), arguments->end(), evaluatorHandle ) == arguments->end() )
     {
-        variables->push_back( evaluatorHandle );
+        arguments->push_back( evaluatorHandle );
     }
 
     return session->getLastError();
@@ -2140,7 +2140,7 @@ int Fieldml_GetBindCount( FmlSessionHandle handle, FmlObjectHandle objectHandle 
 }
 
 
-FmlObjectHandle Fieldml_GetBindVariable( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index )
+FmlObjectHandle Fieldml_GetBindArgument( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2176,7 +2176,7 @@ FmlObjectHandle Fieldml_GetBindEvaluator( FmlSessionHandle handle, FmlObjectHand
 }
 
 
-FmlObjectHandle Fieldml_GetBindByVariable( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle variableHandle )
+FmlObjectHandle Fieldml_GetBindByArgument( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle argumentHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2192,7 +2192,7 @@ FmlObjectHandle Fieldml_GetBindByVariable( FmlSessionHandle handle, FmlObjectHan
 
     for( int i = 0; i < map->size(); i++ )
     {
-        if( map->getKey( i ) == variableHandle )
+        if( map->getKey( i ) == argumentHandle )
         {
             return map->getValue( i );
         }
@@ -2202,7 +2202,7 @@ FmlObjectHandle Fieldml_GetBindByVariable( FmlSessionHandle handle, FmlObjectHan
 }
 
 
-FmlErrorNumber Fieldml_SetBind( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle variableHandle, FmlObjectHandle sourceHandle )
+FmlErrorNumber Fieldml_SetBind( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle argumentHandle, FmlObjectHandle sourceHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2214,7 +2214,7 @@ FmlErrorNumber Fieldml_SetBind( FmlSessionHandle handle, FmlObjectHandle objectH
     {
         return session->getLastError();
     }
-    if( !checkLocal( session, variableHandle ) )
+    if( !checkLocal( session, argumentHandle ) )
     {
         return session->getLastError();
     }
@@ -2223,7 +2223,7 @@ FmlErrorNumber Fieldml_SetBind( FmlSessionHandle handle, FmlObjectHandle objectH
         return session->getLastError();
     }
 
-    if( !checkIsEvaluatorTypeCompatible( session, variableHandle, sourceHandle ) )
+    if( !checkIsEvaluatorTypeCompatible( session, argumentHandle, sourceHandle ) )
     {
         return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
@@ -2234,7 +2234,7 @@ FmlErrorNumber Fieldml_SetBind( FmlSessionHandle handle, FmlObjectHandle objectH
         return session->getLastError();
     }
     
-    map->set( variableHandle, sourceHandle );
+    map->set( argumentHandle, sourceHandle );
     return session->getLastError();
 }
 
@@ -2561,7 +2561,14 @@ FmlObjectHandle Fieldml_CreateContinuousTypeComponents( FmlSessionHandle handle,
         return FML_INVALID_HANDLE;
     }
     
-    EnsembleType *ensembleType = new EnsembleType( name, true, false );
+    string trueName = name;
+    
+    if( strncmp( name, "~.", 2 ) == 0 )
+    {
+        trueName = type->name + ( name + 1 );
+    }
+    
+    EnsembleType *ensembleType = new EnsembleType( trueName, true, false );
     FmlObjectHandle componentHandle = addObject( session, ensembleType );
     Fieldml_SetEnsembleElementRange( handle, componentHandle, 1, count, 1 );
     

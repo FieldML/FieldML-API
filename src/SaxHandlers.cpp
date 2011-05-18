@@ -351,9 +351,9 @@ SaxHandler *RegionSaxHandler::onElementStart( const xmlChar *elementName, SaxAtt
 //NYI        return new ElementSequenceSaxHandler( this, elementName, attributes );
     }
 
-    if( xmlStrcmp( elementName, ABSTRACT_EVALUATOR_TAG ) == 0 )
+    if( xmlStrcmp( elementName, ARGUMENT_EVALUATOR_TAG ) == 0 )
     {
-        return new AbstractEvaluatorSaxHandler( this, elementName, attributes );
+        return new ArgumentEvaluatorSaxHandler( this, elementName, attributes );
     }
     if( xmlStrcmp( elementName, EXTERNAL_EVALUATOR_TAG ) == 0 )
     {
@@ -685,40 +685,40 @@ SaxHandler *ElementSequenceSaxHandler::onElementStart( const xmlChar *elementNam
 }
 
 
-AbstractEvaluatorSaxHandler::AbstractEvaluatorSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
+ArgumentEvaluatorSaxHandler::ArgumentEvaluatorSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
     FieldmlObjectSaxHandler( _parent, elementName )
 {
     const char *name = attributes.getAttribute( NAME_ATTRIB );
     if( name == NULL )
     {
-        getSession()->logError( "AbstractEvaluator has no name" );
+        getSession()->logError( "ArgumentEvaluator has no name" );
         return;
     }
     
     FmlObjectHandle valueType = attributes.getObjectAttribute( getSessionHandle(), VALUE_TYPE_ATTRIB );
     if( valueType == FML_INVALID_HANDLE )
     {
-        getSession()->logError( "AbstractEvaluator has no value type", name );
+        getSession()->logError( "ArgumentEvaluator has no value type", name );
         return;
     }
     
-    handle = Fieldml_CreateAbstractEvaluator( getSessionHandle(), name, valueType );
+    handle = Fieldml_CreateArgumentEvaluator( getSessionHandle(), name, valueType );
     if( handle == FML_INVALID_HANDLE )
     {
-        getSession()->logError( "Cannot create AbstractEvaluator with given type", name, attributes.getAttribute( VALUE_TYPE_ATTRIB ) );
+        getSession()->logError( "Cannot create ArgumentEvaluator with given type", name, attributes.getAttribute( VALUE_TYPE_ATTRIB ) );
     }
 }
 
 
-SaxHandler * AbstractEvaluatorSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
+SaxHandler * ArgumentEvaluatorSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
-    if( xmlStrcmp( elementName, VARIABLES_TAG ) == 0 )
+    if( xmlStrcmp( elementName, ARGUMENTS_TAG ) == 0 )
     {
-        return new VariablesSaxHandler( this, elementName, attributes );
+        return new ArgumentsSaxHandler( this, elementName, attributes );
     }
     else if( xmlStrcmp( elementName, BINDINGS_TAG ) == 0 )
     {
-//        return new BindsSaxHandler( this, elementName, attributes ); //TODO Add binds to abstract evaluators?
+//        return new BindsSaxHandler( this, elementName, attributes ); //TODO Add binds to argument evaluators?
     }
     
     return this;
@@ -752,9 +752,9 @@ ExternalEvaluatorSaxHandler::ExternalEvaluatorSaxHandler( RegionSaxHandler *_par
 
 SaxHandler * ExternalEvaluatorSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
-    if( xmlStrcmp( elementName, VARIABLES_TAG ) == 0 )
+    if( xmlStrcmp( elementName, ARGUMENTS_TAG ) == 0 )
     {
-        return new VariablesSaxHandler( this, elementName, attributes );
+        return new ArgumentsSaxHandler( this, elementName, attributes );
     }
     
     return this;
@@ -788,9 +788,9 @@ ReferenceEvaluatorSaxHandler::ReferenceEvaluatorSaxHandler( RegionSaxHandler *_p
 
 SaxHandler * ReferenceEvaluatorSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
-    if( xmlStrcmp( elementName, VARIABLES_TAG ) == 0 )
+    if( xmlStrcmp( elementName, ARGUMENTS_TAG ) == 0 )
     {
-        return new VariablesSaxHandler( this, elementName, attributes );
+        return new ArgumentsSaxHandler( this, elementName, attributes );
     }
     else if( xmlStrcmp( elementName, BINDINGS_TAG ) == 0 )
     {
@@ -832,9 +832,9 @@ SaxHandler * ParametersSaxHandler::onElementStart( const xmlChar *elementName, S
     {
         return new SemidenseSaxHandler( this, elementName, attributes );
     }
-    else if( xmlStrcmp( elementName, VARIABLES_TAG ) == 0 )
+    else if( xmlStrcmp( elementName, ARGUMENTS_TAG ) == 0 )
     {
-        return new VariablesSaxHandler( this, elementName, attributes );
+        return new ArgumentsSaxHandler( this, elementName, attributes );
     }
     
     return this;
@@ -877,9 +877,9 @@ SaxHandler * PiecewiseEvaluatorSaxHandler::onElementStart( const xmlChar *elemen
         }
         return new IntObjectMapSaxHandler( this, elementName, ELEMENT_EVALUATOR_TAG, INDEX_VALUE_ATTRIB, this, 0 );
     }
-    else if( xmlStrcmp( elementName, VARIABLES_TAG ) == 0 )
+    else if( xmlStrcmp( elementName, ARGUMENTS_TAG ) == 0 )
     {
-        return new VariablesSaxHandler( this, elementName, attributes );
+        return new ArgumentsSaxHandler( this, elementName, attributes );
     }
     else if( xmlStrcmp( elementName, BINDINGS_TAG ) == 0 )
     {
@@ -947,9 +947,9 @@ SaxHandler * AggregateEvaluatorSaxHandler::onElementStart( const xmlChar *elemen
         }
         return new IntObjectMapSaxHandler( this, elementName, COMPONENT_EVALUATOR_TAG, COMPONENT_ATTRIB, this, 0 );
     }
-    else if( xmlStrcmp( elementName, VARIABLES_TAG ) == 0 )
+    else if( xmlStrcmp( elementName, ARGUMENTS_TAG ) == 0 )
     {
-        return new VariablesSaxHandler( this, elementName, attributes );
+        return new ArgumentsSaxHandler( this, elementName, attributes );
     }
     else if( xmlStrcmp( elementName, BINDINGS_TAG ) == 0 )
     {
@@ -1085,24 +1085,24 @@ SaxHandler *MeshShapesSaxHandler::onElementStart( const xmlChar *elementName, Sa
 }
 
 
-VariablesSaxHandler::VariablesSaxHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
+ArgumentsSaxHandler::ArgumentsSaxHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes ) :
     ObjectMemberSaxHandler( _parent, elementName )
 {
 }
 
 
-SaxHandler *VariablesSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
+SaxHandler *ArgumentsSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
-    if( xmlStrcmp( elementName, VARIABLE_TAG ) == 0 )
+    if( xmlStrcmp( elementName, ARGUMENT_TAG ) == 0 )
     {
-        FmlObjectHandle variableHandle = attributes.getObjectAttribute( parent->getSessionHandle(), NAME_ATTRIB );
-        if( variableHandle == FML_INVALID_HANDLE )
+        FmlObjectHandle argumentHandle = attributes.getObjectAttribute( parent->getSessionHandle(), NAME_ATTRIB );
+        if( argumentHandle == FML_INVALID_HANDLE )
         {
             const char * name =  Fieldml_GetObjectName( parent->getSessionHandle(), parent->handle );
-            parent->getSession()->logError( "Evaluator has malformed variable", name );
+            parent->getSession()->logError( "Evaluator has malformed argument", name );
             return this;
         }
-        Fieldml_AddVariable( parent->getSessionHandle(), parent->handle, variableHandle );
+        Fieldml_AddArgument( parent->getSessionHandle(), parent->handle, argumentHandle );
     }
     
     return this;
@@ -1120,25 +1120,25 @@ SaxHandler *BindsSaxHandler::onElementStart( const xmlChar *elementName, SaxAttr
 {
     if( xmlStrcmp( elementName, BIND_TAG ) == 0 )
     {
-        FmlObjectHandle variableHandle = attributes.getObjectAttribute( parent->getSessionHandle(), VARIABLE_ATTRIB );
+        FmlObjectHandle argumentHandle = attributes.getObjectAttribute( parent->getSessionHandle(), ARGUMENT_ATTRIB );
         FmlObjectHandle sourceHandle = attributes.getObjectAttribute( parent->getSessionHandle(), SOURCE_ATTRIB );
-        if( ( variableHandle == FML_INVALID_HANDLE ) || ( sourceHandle == FML_INVALID_HANDLE ) )
+        if( ( argumentHandle == FML_INVALID_HANDLE ) || ( sourceHandle == FML_INVALID_HANDLE ) )
         {
             const char * name =  Fieldml_GetObjectName( parent->getSessionHandle(), parent->handle );
             parent->getSession()->logError( "Evaluator has malformed bind", name );
             return this;
         }
 
-        if( Fieldml_SetBind( parent->getSessionHandle(), parent->handle, variableHandle, sourceHandle ) != FML_ERR_NO_ERROR )
+        if( Fieldml_SetBind( parent->getSessionHandle(), parent->handle, argumentHandle, sourceHandle ) != FML_ERR_NO_ERROR )
         {
             parent->getSession()->logError( "Incompatible bind",
-                attributes.getAttribute( VARIABLE_ATTRIB ),
+                attributes.getAttribute( ARGUMENT_ATTRIB ),
                 attributes.getAttribute( SOURCE_ATTRIB ) );
         }
     }
     else if( ( xmlStrcmp( elementName, BIND_INDEX_TAG ) == 0 ) && ( Fieldml_GetObjectType( parent->getSessionHandle(), parent->handle ) == FHT_AGGREGATE_EVALUATOR ) )
     {
-        FmlObjectHandle indexHandle = attributes.getObjectAttribute( parent->getSessionHandle(), VARIABLE_ATTRIB );
+        FmlObjectHandle indexHandle = attributes.getObjectAttribute( parent->getSessionHandle(), ARGUMENT_ATTRIB );
         if( indexHandle == FML_INVALID_HANDLE )
         {
             const char * name =  Fieldml_GetObjectName( parent->getSessionHandle(), parent->handle );

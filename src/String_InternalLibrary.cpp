@@ -44,59 +44,74 @@
 const char * const FML_INTERNAL_LIBRARY_NAME = "library.xml";
 
 const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?> \
-<Fieldml version=\"0.4_RC1\" xsi:noNamespaceSchemaLocation=\"Fieldml_0.4.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"> \
+<Fieldml version=\"0.4_RC2\" xsi:noNamespaceSchemaLocation=\"Fieldml.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"> \
  <Region name=\"library\"> \
   <ContinuousType name=\"real.1d\"/> \
-  <AbstractEvaluator name=\"real.1d.variable\" valueType=\"real.1d\"/> \
+  <ArgumentEvaluator name=\"real.1d.argument\" valueType=\"real.1d\"/> \
  \
   <ContinuousType name=\"real.2d\"> \
     <Components name=\"real.2d.component\" count=\"2\"/> \
   </ContinuousType> \
-  <AbstractEvaluator name=\"real.2d.component.variable\" valueType=\"real.2d.component\"/> \
-  <AbstractEvaluator name=\"real.2d.variable\" valueType=\"real.2d\"/> \
+  <ArgumentEvaluator name=\"real.2d.component.argument\" valueType=\"real.2d.component\"/> \
+  <ArgumentEvaluator name=\"real.2d.argument\" valueType=\"real.2d\"/> \
  \
   <ContinuousType name=\"real.3d\"> \
     <Components name=\"real.3d.component\" count=\"3\"/> \
   </ContinuousType> \
-  <AbstractEvaluator name=\"real.3d.component.variable\" valueType=\"real.3d.component\"/> \
-  <AbstractEvaluator name=\"real.3d.variable\" valueType=\"real.3d\"/> \
+  <ArgumentEvaluator name=\"real.3d.component.argument\" valueType=\"real.3d.component\"/> \
+  <ArgumentEvaluator name=\"real.3d.argument\" valueType=\"real.3d\"/> \
  \
   <ContinuousType name=\"chart.1d\"> \
     <Components name=\"chart.1d.component\" count=\"1\"/> \
   </ContinuousType> \
-  <AbstractEvaluator name=\"chart.1d.component.variable\" valueType=\"chart.1d.component\"/> \
-  <AbstractEvaluator name=\"chart.1d.variable\" valueType=\"chart.1d\"/> \
+  <ArgumentEvaluator name=\"chart.1d.component.argument\" valueType=\"chart.1d.component\"/> \
+  <ArgumentEvaluator name=\"chart.1d.argument\" valueType=\"chart.1d\"/> \
  \
   <ContinuousType name=\"chart.2d\"> \
     <Components name=\"chart.2d.component\" count=\"2\"/> \
   </ContinuousType> \
-  <AbstractEvaluator name=\"chart.2d.component.variable\" valueType=\"chart.2d.component\"/> \
-  <AbstractEvaluator name=\"chart.2d.variable\" valueType=\"chart.2d\"/> \
+  <ArgumentEvaluator name=\"chart.2d.component.argument\" valueType=\"chart.2d.component\"/> \
+  <ArgumentEvaluator name=\"chart.2d.argument\" valueType=\"chart.2d\"/> \
  \
   <ContinuousType name=\"chart.3d\"> \
     <Components name=\"chart.3d.component\" count=\"3\"/> \
   </ContinuousType> \
-  <AbstractEvaluator name=\"chart.3d.component.variable\" valueType=\"chart.3d.component\"/> \
-  <AbstractEvaluator name=\"chart.3d.variable\" valueType=\"chart.3d\"/> \
+  <ArgumentEvaluator name=\"chart.3d.component.argument\" valueType=\"chart.3d.component\"/> \
+  <ArgumentEvaluator name=\"chart.3d.argument\" valueType=\"chart.3d\"/> \
+ \
+  <ContinuousType name=\"coordinates.rc.1d\"/> \
+  <ArgumentEvaluator name=\"coordinates.rc.1d.argument\" valueType=\"coordinates.rc.1d\"/> \
+ \
+  <ContinuousType name=\"coordinates.rc.2d\"> \
+    <Components name=\"coordinates.rc.2d.component\" count=\"2\"/> \
+  </ContinuousType> \
+  <ArgumentEvaluator name=\"coordinates.rc.2d.argument\" valueType=\"coordinates.rc.2d\"/> \
+  <ArgumentEvaluator name=\"coordinates.rc.2d.component.argument\" valueType=\"coordinates.rc.2d.component\"/> \
+ \
+  <ContinuousType name=\"coordinates.rc.3d\"> \
+    <Components name=\"coordinates.rc.3d.component\" count=\"3\"/> \
+  </ContinuousType> \
+  <ArgumentEvaluator name=\"coordinates.rc.3d.argument\" valueType=\"coordinates.rc.3d\"/> \
+  <ArgumentEvaluator name=\"coordinates.rc.3d.component.argument\" valueType=\"coordinates.rc.3d.component\"/> \
  \
   <EnsembleType name=\"localNodes.1d.line2\"> \
    <Members> \
     <MemberRange min=\"1\" max=\"2\"/> \
    </Members> \
   </EnsembleType> \
-  <AbstractEvaluator name=\"localNodes.1d.line2.variable\" valueType=\"localNodes.1d.line2\"/> \
+  <ArgumentEvaluator name=\"localNodes.1d.line2.argument\" valueType=\"localNodes.1d.line2\"/> \
  \
-  <ContinuousType name=\"parameters.1d.linearLagrange\"> \
-    <Components name=\"parameters.1d.linearLagrange.component\" count=\"2\"/> \
+  <ContinuousType name=\"parameters.1d.unit.linearLagrange\"> \
+    <Components name=\"parameters.1d.unit.linearLagrange.component\" count=\"2\"/> \
   </ContinuousType> \
-  <AbstractEvaluator name=\"parameters.1d.linearLagrange.component.variable\" valueType=\"parameters.1d.linearLagrange.component\"/> \
-  <AbstractEvaluator name=\"parameters.1d.linearLagrange.variable\" valueType=\"parameters.1d.linearLagrange\"/> \
+  <ArgumentEvaluator name=\"parameters.1d.unit.linearLagrange.component.argument\" valueType=\"parameters.1d.unit.linearLagrange.component\"/> \
+  <ArgumentEvaluator name=\"parameters.1d.unit.linearLagrange.argument\" valueType=\"parameters.1d.unit.linearLagrange\"/> \
  \
   <ExternalEvaluator name=\"interpolator.1d.unit.linearLagrange\" valueType=\"real.1d\"> \
-    <Variables> \
-      <Variable name=\"chart.1d.variable\"/> \
-      <Variable name=\"parameters.1d.linearLagrange.variable\"/> \
-    </Variables> \
+    <Arguments> \
+      <Argument name=\"chart.1d.argument\"/> \
+      <Argument name=\"parameters.1d.unit.linearLagrange.argument\"/> \
+    </Arguments> \
   </ExternalEvaluator> \
  \
   <EnsembleType name=\"localNodes.1d.line3\"> \
@@ -104,19 +119,19 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     <MemberRange min=\"1\" max=\"3\"/> \
    </Members> \
   </EnsembleType> \
-  <AbstractEvaluator name=\"localNodes.1d.line3.variable\" valueType=\"localNodes.1d.line3\"/> \
+  <ArgumentEvaluator name=\"localNodes.1d.line3.argument\" valueType=\"localNodes.1d.line3\"/> \
  \
-  <ContinuousType name=\"parameters.1d.quadraticLagrange\"> \
-    <Components name=\"parameters.1d.quadraticLagrange.component\" count=\"3\"/> \
+  <ContinuousType name=\"parameters.1d.unit.quadraticLagrange\"> \
+    <Components name=\"parameters.1d.unit.quadraticLagrange.component\" count=\"3\"/> \
   </ContinuousType> \
-  <AbstractEvaluator name=\"parameters.1d.quadraticLagrange.component.variable\" valueType=\"parameters.1d.quadraticLagrange.component\"/> \
-  <AbstractEvaluator name=\"parameters.1d.quadraticLagrange.variable\" valueType=\"parameters.1d.quadraticLagrange\"/> \
+  <ArgumentEvaluator name=\"parameters.1d.unit.quadraticLagrange.component.argument\" valueType=\"parameters.1d.unit.quadraticLagrange.component\"/> \
+  <ArgumentEvaluator name=\"parameters.1d.unit.quadraticLagrange.argument\" valueType=\"parameters.1d.unit.quadraticLagrange\"/> \
  \
   <ExternalEvaluator name=\"interpolator.1d.unit.quadraticLagrange\" valueType=\"real.1d\"> \
-    <Variables> \
-      <Variable name=\"chart.1d.variable\"/> \
-      <Variable name=\"parameters.1d.quadraticLagrange.variable\"/> \
-    </Variables> \
+    <Arguments> \
+      <Argument name=\"chart.1d.argument\"/> \
+      <Argument name=\"parameters.1d.unit.quadraticLagrange.argument\"/> \
+    </Arguments> \
   </ExternalEvaluator> \
  \
   <EnsembleType name=\"localNodes.2d.square2x2\"> \
@@ -124,19 +139,19 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     <MemberRange min=\"1\" max=\"4\"/> \
    </Members> \
   </EnsembleType> \
-  <AbstractEvaluator name=\"localNodes.2d.square2x2.variable\" valueType=\"localNodes.2d.square2x2\"/> \
+  <ArgumentEvaluator name=\"localNodes.2d.square2x2.argument\" valueType=\"localNodes.2d.square2x2\"/> \
  \
-  <ContinuousType name=\"parameters.2d.bilinearLagrange\"> \
-    <Components name=\"parameters.2d.bilinearLagrange.component\" count=\"4\"/> \
+  <ContinuousType name=\"parameters.2d.unit.bilinearLagrange\"> \
+    <Components name=\"parameters.2d.unit.bilinearLagrange.component\" count=\"4\"/> \
   </ContinuousType> \
-  <AbstractEvaluator name=\"parameters.2d.bilinearLagrange.variable\" valueType=\"parameters.2d.bilinearLagrange\"/> \
-  <AbstractEvaluator name=\"parameters.2d.bilinearLagrange.component.variable\" valueType=\"parameters.2d.bilinearLagrange.component\"/> \
+  <ArgumentEvaluator name=\"parameters.2d.unit.bilinearLagrange.argument\" valueType=\"parameters.2d.unit.bilinearLagrange\"/> \
+  <ArgumentEvaluator name=\"parameters.2d.unit.bilinearLagrange.component.argument\" valueType=\"parameters.2d.unit.bilinearLagrange.component\"/> \
  \
   <ExternalEvaluator name=\"interpolator.2d.unit.bilinearLagrange\" valueType=\"real.1d\"> \
-    <Variables> \
-      <Variable name=\"chart.2d.variable\"/> \
-      <Variable name=\"parameters.2d.bilinearLagrange.variable\"/> \
-    </Variables> \
+    <Arguments> \
+      <Argument name=\"chart.2d.argument\"/> \
+      <Argument name=\"parameters.2d.unit.bilinearLagrange.argument\"/> \
+    </Arguments> \
   </ExternalEvaluator> \
  \
   <EnsembleType name=\"localNodes.2d.square3x3\"> \
@@ -144,19 +159,19 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     <MemberRange min=\"1\" max=\"9\"/> \
    </Members> \
   </EnsembleType> \
-  <AbstractEvaluator name=\"localNodes.2d.square3x3.variable\" valueType=\"localNodes.2d.square3x3\"/> \
+  <ArgumentEvaluator name=\"localNodes.2d.square3x3.argument\" valueType=\"localNodes.2d.square3x3\"/> \
  \
-  <ContinuousType name=\"parameters.2d.biquadraticLagrange\"> \
-    <Components name=\"parameters.2d.biquadraticLagrange.component\" count=\"9\"/> \
+  <ContinuousType name=\"parameters.2d.unit.biquadraticLagrange\"> \
+    <Components name=\"parameters.2d.unit.biquadraticLagrange.component\" count=\"9\"/> \
   </ContinuousType> \
-  <AbstractEvaluator name=\"parameters.2d.biquadraticLagrange.variable\" valueType=\"parameters.2d.biquadraticLagrange\"/> \
-  <AbstractEvaluator name=\"parameters.2d.biquadraticLagrange.component.variable\" valueType=\"parameters.2d.biquadraticLagrange.component\"/> \
+  <ArgumentEvaluator name=\"parameters.2d.unit.biquadraticLagrange.argument\" valueType=\"parameters.2d.unit.biquadraticLagrange\"/> \
+  <ArgumentEvaluator name=\"parameters.2d.unit.biquadraticLagrange.component.argument\" valueType=\"parameters.2d.unit.biquadraticLagrange.component\"/> \
  \
   <ExternalEvaluator name=\"interpolator.2d.unit.biquadraticLagrange\" valueType=\"real.1d\"> \
-    <Variables> \
-      <Variable name=\"chart.2d.variable\"/> \
-      <Variable name=\"parameters.2d.biquadraticLagrange.variable\"/> \
-    </Variables> \
+    <Arguments> \
+      <Argument name=\"chart.2d.argument\"/> \
+      <Argument name=\"parameters.2d.unit.biquadraticLagrange.argument\"/> \
+    </Arguments> \
   </ExternalEvaluator> \
  \
   <EnsembleType name=\"localNodes.3d.cube2x2x2\"> \
@@ -164,18 +179,18 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     <MemberRange min=\"1\" max=\"8\"/> \
    </Members> \
   </EnsembleType> \
-  <AbstractEvaluator name=\"localNodes.3d.cube2x2x2.variable\" valueType=\"localNodes.3d.cube2x2x2\"/> \
+  <ArgumentEvaluator name=\"localNodes.3d.cube2x2x2.argument\" valueType=\"localNodes.3d.cube2x2x2\"/> \
  \
-  <ContinuousType name=\"parameters.3d.trilinearLagrange\"> \
-    <Components name=\"parameters.3d.trilinearLagrange.component\" count=\"8\"/> \
+  <ContinuousType name=\"parameters.3d.unit.trilinearLagrange\"> \
+    <Components name=\"parameters.3d.unit.trilinearLagrange.component\" count=\"8\"/> \
   </ContinuousType> \
-  <AbstractEvaluator name=\"parameters.3d.trilinearLagrange.variable\" valueType=\"parameters.3d.trilinearLagrange\"/> \
+  <ArgumentEvaluator name=\"parameters.3d.unit.trilinearLagrange.argument\" valueType=\"parameters.3d.unit.trilinearLagrange\"/> \
  \
   <ExternalEvaluator name=\"interpolator.3d.unit.trilinearLagrange\" valueType=\"real.1d\"> \
-    <Variables> \
-      <Variable name=\"chart.3d.variable\"/> \
-      <Variable name=\"parameters.3d.trilinearLagrange.variable\"/> \
-    </Variables> \
+    <Arguments> \
+      <Argument name=\"chart.3d.argument\"/> \
+      <Argument name=\"parameters.3d.unit.trilinearLagrange.argument\"/> \
+    </Arguments> \
   </ExternalEvaluator> \
  \
   <EnsembleType name=\"localNodes.3d.cube3x3x3\"> \
@@ -183,187 +198,172 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     <MemberRange min=\"1\" max=\"27\"/> \
    </Members> \
   </EnsembleType> \
-  <AbstractEvaluator name=\"localNodes.3d.cube3x3x3.variable\" valueType=\"localNodes.3d.cube3x3x3\"/> \
+  <ArgumentEvaluator name=\"localNodes.3d.cube3x3x3.argument\" valueType=\"localNodes.3d.cube3x3x3\"/> \
  \
-  <ContinuousType name=\"parameters.3d.triquadraticLagrange\"> \
-    <Components name=\"parameters.3d.triquadraticLagrange.component\" count=\"27\"/> \
+  <ContinuousType name=\"parameters.3d.unit.triquadraticLagrange\"> \
+    <Components name=\"parameters.3d.unit.triquadraticLagrange.component\" count=\"27\"/> \
   </ContinuousType> \
-  <AbstractEvaluator name=\"parameters.3d.triquadraticLagrange.variable\" valueType=\"parameters.3d.triquadraticLagrange\"/> \
-  <AbstractEvaluator name=\"parameters.3d.triquadraticLagrange.component.variable\" valueType=\"parameters.3d.triquadraticLagrange.component\"/> \
+  <ArgumentEvaluator name=\"parameters.3d.unit.triquadraticLagrange.argument\" valueType=\"parameters.3d.unit.triquadraticLagrange\"/> \
+  <ArgumentEvaluator name=\"parameters.3d.unit.triquadraticLagrange.component.argument\" valueType=\"parameters.3d.unit.triquadraticLagrange.component\"/> \
  \
   <ExternalEvaluator name=\"interpolator.3d.unit.triquadraticLagrange\" valueType=\"real.1d\"> \
-    <Variables> \
-      <Variable name=\"chart.3d.variable\"/> \
-      <Variable name=\"parameters.3d.triquadraticLagrange.variable\"/> \
-    </Variables> \
+    <Arguments> \
+      <Argument name=\"chart.3d.argument\"/> \
+      <Argument name=\"parameters.3d.unit.triquadraticLagrange.argument\"/> \
+    </Arguments> \
   </ExternalEvaluator> \
  \
-  <ContinuousType name=\"coordinates.rc.1d\"/> \
-  <AbstractEvaluator name=\"coordinates.rc.1d.variable\" valueType=\"coordinates.rc.1d\"/> \
- \
-  <ContinuousType name=\"coordinates.rc.2d\"> \
-    <Components name=\"coordinates.rc.2d.component\" count=\"2\"/> \
+  <ContinuousType name=\"parameters.1d.unit.cubicHermite\"> \
+    <Components name=\"parameters.1d.unit.cubicHermite.component\" count=\"4\"/> \
   </ContinuousType> \
-  <AbstractEvaluator name=\"coordinates.rc.2d.variable\" valueType=\"coordinates.rc.2d\"/> \
-  <AbstractEvaluator name=\"coordinates.rc.2d.component.variable\" valueType=\"coordinates.rc.2d.component\"/> \
- \
-  <ContinuousType name=\"coordinates.rc.3d\"> \
-    <Components name=\"coordinates.rc.3d.component\" count=\"3\"/> \
-  </ContinuousType> \
-  <AbstractEvaluator name=\"coordinates.rc.3d.variable\" valueType=\"coordinates.rc.3d\"/> \
-  <AbstractEvaluator name=\"coordinates.rc.3d.component.variable\" valueType=\"coordinates.rc.3d.component\"/> \
- \
-  <ContinuousType name=\"parameters.1d.cubicHermite\"> \
-    <Components name=\"parameters.1d.cubicHermite.component\" count=\"4\"/> \
-  </ContinuousType> \
-  <AbstractEvaluator name=\"parameters.1d.cubicHermite.variable\" valueType=\"parameters.1d.cubicHermite\"/> \
-  <AbstractEvaluator name=\"parameters.1d.cubicHermite.component.variable\" valueType=\"parameters.1d.cubicHermite.component\"/> \
-  <AbstractEvaluator name=\"parameters.1d.cubicHermiteScaling.variable\" valueType=\"parameters.1d.cubicHermite\"/> \
+  <ArgumentEvaluator name=\"parameters.1d.unit.cubicHermite.argument\" valueType=\"parameters.1d.unit.cubicHermite\"/> \
+  <ArgumentEvaluator name=\"parameters.1d.unit.cubicHermite.component.argument\" valueType=\"parameters.1d.unit.cubicHermite.component\"/> \
+  <ArgumentEvaluator name=\"parameters.1d.unit.cubicHermiteScaling.argument\" valueType=\"parameters.1d.unit.cubicHermite\"/> \
  \
   <ExternalEvaluator name=\"interpolator.1d.unit.cubicHermite\" valueType=\"real.1d\"> \
-    <Variables> \
-      <Variable name=\"chart.1d.variable\"/> \
-      <Variable name=\"parameters.1d.cubicHermite.variable\"/> \
-    </Variables> \
+    <Arguments> \
+      <Argument name=\"chart.1d.argument\"/> \
+      <Argument name=\"parameters.1d.unit.cubicHermite.argument\"/> \
+    </Arguments> \
   </ExternalEvaluator> \
  \
   <ExternalEvaluator name=\"interpolator.1d.unit.cubicHermiteScaled\" valueType=\"real.1d\"> \
-    <Variables> \
-      <Variable name=\"chart.1d.variable\"/> \
-      <Variable name=\"parameters.1d.cubicHermite.variable\"/> \
-      <Variable name=\"parameters.1d.cubicHermiteScaling.variable\"/> \
-    </Variables> \
+    <Arguments> \
+      <Argument name=\"chart.1d.argument\"/> \
+      <Argument name=\"parameters.1d.unit.cubicHermite.argument\"/> \
+      <Argument name=\"parameters.1d.unit.cubicHermiteScaling.argument\"/> \
+    </Arguments> \
   </ExternalEvaluator> \
  \
-  <ContinuousType name=\"parameters.2d.bicubicHermite\"> \
-    <Components name=\"parameters.2d.bicubicHermite.component\" count=\"16\"/> \
+  <ContinuousType name=\"parameters.2d.unit.bicubicHermite\"> \
+    <Components name=\"parameters.2d.unit.bicubicHermite.component\" count=\"16\"/> \
   </ContinuousType> \
-  <AbstractEvaluator name=\"parameters.2d.bicubicHermite.variable\" valueType=\"parameters.2d.bicubicHermite\"/> \
-  <AbstractEvaluator name=\"parameters.2d.bicubicHermite.component.variable\" valueType=\"parameters.2d.bicubicHermite.component\"/> \
-  <AbstractEvaluator name=\"parameters.2d.bicubicHermiteScaling.variable\" valueType=\"parameters.2d.bicubicHermite\"/> \
+  <ArgumentEvaluator name=\"parameters.2d.unit.bicubicHermite.argument\" valueType=\"parameters.2d.unit.bicubicHermite\"/> \
+  <ArgumentEvaluator name=\"parameters.2d.unit.bicubicHermite.component.argument\" valueType=\"parameters.2d.unit.bicubicHermite.component\"/> \
+  <ArgumentEvaluator name=\"parameters.2d.unit.bicubicHermiteScaling.argument\" valueType=\"parameters.2d.unit.bicubicHermite\"/> \
  \
   <ExternalEvaluator name=\"interpolator.2d.unit.bicubicHermite\" valueType=\"real.1d\"> \
-    <Variables> \
-      <Variable name=\"chart.2d.variable\"/> \
-      <Variable name=\"parameters.2d.bicubicHermite.variable\"/> \
-    </Variables> \
+    <Arguments> \
+      <Argument name=\"chart.2d.argument\"/> \
+      <Argument name=\"parameters.2d.unit.bicubicHermite.argument\"/> \
+    </Arguments> \
   </ExternalEvaluator> \
  \
   <ExternalEvaluator name=\"interpolator.2d.unit.bicubicHermiteScaled\" valueType=\"real.1d\"> \
-    <Variables> \
-      <Variable name=\"chart.2d.variable\"/> \
-      <Variable name=\"parameters.2d.bicubicHermite.variable\"/> \
-      <Variable name=\"parameters.2d.bicubicHermiteScaling.variable\"/> \
-    </Variables> \
+    <Arguments> \
+      <Argument name=\"chart.2d.argument\"/> \
+      <Argument name=\"parameters.2d.unit.bicubicHermite.argument\"/> \
+      <Argument name=\"parameters.2d.unit.bicubicHermiteScaling.argument\"/> \
+    </Arguments> \
   </ExternalEvaluator> \
  \
-  <ContinuousType name=\"parameters.3d.tricubicHermite\"> \
-    <Components name=\"parameters.3d.tricubicHermite.component\" count=\"64\"/> \
+  <ContinuousType name=\"parameters.3d.unit.tricubicHermite\"> \
+    <Components name=\"parameters.3d.unit.tricubicHermite.component\" count=\"64\"/> \
   </ContinuousType> \
-  <AbstractEvaluator name=\"parameters.3d.tricubicHermite.variable\" valueType=\"parameters.3d.tricubicHermite\"/> \
-  <AbstractEvaluator name=\"parameters.3d.tricubicHermite.component.variable\" valueType=\"parameters.3d.tricubicHermite.component\"/> \
-  <AbstractEvaluator name=\"parameters.3d.tricubicHermiteScaling.variable\" valueType=\"parameters.3d.tricubicHermite\"/> \
+  <ArgumentEvaluator name=\"parameters.3d.unit.tricubicHermite.argument\" valueType=\"parameters.3d.unit.tricubicHermite\"/> \
+  <ArgumentEvaluator name=\"parameters.3d.unit.tricubicHermite.component.argument\" valueType=\"parameters.3d.unit.tricubicHermite.component\"/> \
+  <ArgumentEvaluator name=\"parameters.3d.unit.tricubicHermiteScaling.argument\" valueType=\"parameters.3d.unit.tricubicHermite\"/> \
  \
   <ExternalEvaluator name=\"interpolator.3d.unit.tricubicHermite\" valueType=\"real.1d\"> \
-    <Variables> \
-      <Variable name=\"chart.3d.variable\"/> \
-      <Variable name=\"parameters.3d.tricubicHermite.variable\"/> \
-    </Variables> \
+    <Arguments> \
+      <Argument name=\"chart.3d.argument\"/> \
+      <Argument name=\"parameters.3d.unit.tricubicHermite.argument\"/> \
+    </Arguments> \
   </ExternalEvaluator> \
  \
   <ExternalEvaluator name=\"interpolator.3d.unit.tricubicHermiteScaled\" valueType=\"real.1d\"> \
-    <Variables> \
-      <Variable name=\"chart.3d.variable\"/> \
-      <Variable name=\"parameters.3d.tricubicHermite.variable\"/> \
-      <Variable name=\"parameters.3d.tricubicHermiteScaling.variable\"/> \
-    </Variables> \
+    <Arguments> \
+      <Argument name=\"chart.3d.argument\"/> \
+      <Argument name=\"parameters.3d.unit.tricubicHermite.argument\"/> \
+      <Argument name=\"parameters.3d.unit.tricubicHermiteScaling.argument\"/> \
+    </Arguments> \
   </ExternalEvaluator> \
  \
  \
 <!-- SIMPLEX OBJECTS--> \
  \
   <!-- Bilinear Simplex --> \
-  <EnsembleType name=\"localNodes.2d.triangle2x2\"> \
+  <EnsembleType name=\"localNodes.2d.triangle3\"> \
    <Members> \
     <MemberRange min=\"1\" max=\"3\"/> \
    </Members> \
   </EnsembleType> \
-  <AbstractEvaluator name=\"localNodes.2d.triangle2x2.variable\" valueType=\"localNodes.2d.triangle2x2\"/> \
+  <ArgumentEvaluator name=\"localNodes.2d.triangle3.argument\" valueType=\"localNodes.2d.triangle3\"/> \
  \
-  <ContinuousType name=\"parameters.2d.bilinearSimplex\"> \
-    <Components name=\"parameters.2d.bilinearSimplex.component\" count=\"3\"/> \
+  <ContinuousType name=\"parameters.2d.unit.bilinearSimplex\"> \
+    <Components name=\"parameters.2d.unit.bilinearSimplex.component\" count=\"3\"/> \
   </ContinuousType> \
-  <AbstractEvaluator name=\"parameters.2d.bilinearSimplex.variable\" valueType=\"parameters.2d.bilinearSimplex\"/> \
-  <AbstractEvaluator name=\"parameters.2d.bilinearSimplex.component.variable\" valueType=\"parameters.2d.bilinearSimplex.component\"/> \
+  <ArgumentEvaluator name=\"parameters.2d.unit.bilinearSimplex.argument\" valueType=\"parameters.2d.unit.bilinearSimplex\"/> \
+  <ArgumentEvaluator name=\"parameters.2d.unit.bilinearSimplex.component.argument\" valueType=\"parameters.2d.unit.bilinearSimplex.component\"/> \
  \
   <ExternalEvaluator name=\"interpolator.2d.unit.bilinearSimplex\" valueType=\"real.1d\"> \
-    <Variables> \
-      <Variable name=\"chart.2d.variable\"/> \
-      <Variable name=\"parameters.2d.bilinearSimplex.variable\"/> \
-    </Variables> \
+    <Arguments> \
+      <Argument name=\"chart.2d.argument\"/> \
+      <Argument name=\"parameters.2d.unit.bilinearSimplex.argument\"/> \
+    </Arguments> \
   </ExternalEvaluator> \
  \
   <!-- Biquadratic Simplex --> \
-  <EnsembleType name=\"localNodes.2d.triangle3x3\"> \
+  <EnsembleType name=\"localNodes.2d.triangle6\"> \
    <Members> \
     <MemberRange min=\"1\" max=\"6\"/> \
    </Members> \
   </EnsembleType> \
-  <AbstractEvaluator name=\"localNodes.2d.triangle3x3.variable\" valueType=\"localNodes.2d.triangle3x3\"/> \
+  <ArgumentEvaluator name=\"localNodes.2d.triangle6.argument\" valueType=\"localNodes.2d.triangle6\"/> \
  \
-  <ContinuousType name=\"parameters.2d.biquadraticSimplex\"> \
-    <Components name=\"parameters.2d.biquadraticSimplex.component\" count=\"6\"/> \
+  <ContinuousType name=\"parameters.2d.unit.biquadraticSimplex\"> \
+    <Components name=\"parameters.2d.unit.biquadraticSimplex.component\" count=\"6\"/> \
   </ContinuousType> \
-  <AbstractEvaluator name=\"parameters.2d.biquadraticSimplex.variable\" valueType=\"parameters.2d.biquadraticSimplex\"/> \
-  <AbstractEvaluator name=\"parameters.2d.biquadraticSimplex.component.variable\" valueType=\"parameters.2d.biquadraticSimplex.component\"/> \
+  <ArgumentEvaluator name=\"parameters.2d.unit.biquadraticSimplex.argument\" valueType=\"parameters.2d.unit.biquadraticSimplex\"/> \
+  <ArgumentEvaluator name=\"parameters.2d.unit.biquadraticSimplex.component.argument\" valueType=\"parameters.2d.unit.biquadraticSimplex.component\"/> \
  \
   <ExternalEvaluator name=\"interpolator.2d.unit.biquadraticSimplex\" valueType=\"real.1d\"> \
-    <Variables> \
-      <Variable name=\"chart.2d.variable\"/> \
-      <Variable name=\"parameters.2d.biquadraticSimplex.variable\"/> \
-    </Variables> \
+    <Arguments> \
+      <Argument name=\"chart.2d.argument\"/> \
+      <Argument name=\"parameters.2d.unit.biquadraticSimplex.argument\"/> \
+    </Arguments> \
   </ExternalEvaluator> \
  \
   <!-- Trilinear Simplex --> \
-  <EnsembleType name=\"localNodes.3d.tetrahedron2x2x2\"> \
+  <EnsembleType name=\"localNodes.3d.tetrahedron4\"> \
    <Members> \
     <MemberRange min=\"1\" max=\"4\"/> \
    </Members> \
   </EnsembleType> \
-  <AbstractEvaluator name=\"localNodes.3d.tetrahedron2x2x2.variable\" valueType=\"localNodes.3d.tetrahedron2x2x2\"/> \
+  <ArgumentEvaluator name=\"localNodes.3d.tetrahedron4.argument\" valueType=\"localNodes.3d.tetrahedron4\"/> \
  \
-  <ContinuousType name=\"parameters.3d.trilinearSimplex\"> \
-    <Components name=\"parameters.3d.trilinearSimplex.component\" count=\"4\"/> \
+  <ContinuousType name=\"parameters.3d.unit.trilinearSimplex\"> \
+    <Components name=\"parameters.3d.unit.trilinearSimplex.component\" count=\"4\"/> \
   </ContinuousType> \
-  <AbstractEvaluator name=\"parameters.3d.trilinearSimplex.variable\" valueType=\"parameters.3d.trilinearSimplex\"/> \
-  <AbstractEvaluator name=\"parameters.3d.trilinearSimplex.component.variable\" valueType=\"parameters.3d.trilinearSimplex.component\"/> \
+  <ArgumentEvaluator name=\"parameters.3d.unit.trilinearSimplex.argument\" valueType=\"parameters.3d.unit.trilinearSimplex\"/> \
+  <ArgumentEvaluator name=\"parameters.3d.unit.trilinearSimplex.component.argument\" valueType=\"parameters.3d.unit.trilinearSimplex.component\"/> \
  \
   <ExternalEvaluator name=\"interpolator.3d.unit.trilinearSimplex\" valueType=\"real.1d\"> \
-    <Variables> \
-      <Variable name=\"chart.3d.variable\"/> \
-      <Variable name=\"parameters.3d.trilinearSimplex.variable\"/> \
-    </Variables> \
+    <Arguments> \
+      <Argument name=\"chart.3d.argument\"/> \
+      <Argument name=\"parameters.3d.unit.trilinearSimplex.argument\"/> \
+    </Arguments> \
   </ExternalEvaluator> \
  \
   <!-- Triquadratic Simplex --> \
-  <EnsembleType name=\"localNodes.3d.tetrahedron3x3x3\"> \
+  <EnsembleType name=\"localNodes.3d.tetrahedron10\"> \
    <Members> \
     <MemberRange min=\"1\" max=\"10\"/> \
    </Members> \
   </EnsembleType> \
-  <AbstractEvaluator name=\"localNodes.3d.tetrahedron3x3x3.variable\" valueType=\"localNodes.3d.tetrahedron3x3x3\"/> \
+  <ArgumentEvaluator name=\"localNodes.3d.tetrahedron10.argument\" valueType=\"localNodes.3d.tetrahedron10\"/> \
  \
-  <ContinuousType name=\"parameters.3d.triquadraticSimplex\"> \
-    <Components name=\"parameters.3d.triquadraticSimplex.component\" count=\"10\"/> \
+  <ContinuousType name=\"parameters.3d.unit.triquadraticSimplex\"> \
+    <Components name=\"parameters.3d.unit.triquadraticSimplex.component\" count=\"10\"/> \
   </ContinuousType> \
-  <AbstractEvaluator name=\"parameters.3d.triquadraticSimplex.variable\" valueType=\"parameters.3d.triquadraticSimplex\"/> \
-  <AbstractEvaluator name=\"parameters.3d.triquadraticSimplex.component.variable\" valueType=\"parameters.3d.triquadraticSimplex.component\"/> \
+  <ArgumentEvaluator name=\"parameters.3d.unit.triquadraticSimplex.argument\" valueType=\"parameters.3d.unit.triquadraticSimplex\"/> \
+  <ArgumentEvaluator name=\"parameters.3d.unit.triquadraticSimplex.component.argument\" valueType=\"parameters.3d.unit.triquadraticSimplex.component\"/> \
  \
   <ExternalEvaluator name=\"interpolator.3d.unit.triquadraticSimplex\" valueType=\"real.1d\"> \
-    <Variables> \
-      <Variable name=\"chart.3d.variable\"/> \
-      <Variable name=\"parameters.3d.triquadraticSimplex.variable\"/> \
-    </Variables> \
+    <Arguments> \
+      <Argument name=\"chart.3d.argument\"/> \
+      <Argument name=\"parameters.3d.unit.triquadraticSimplex.argument\"/> \
+    </Arguments> \
   </ExternalEvaluator> \
  \
  </Region> \

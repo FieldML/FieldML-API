@@ -173,7 +173,7 @@ enum FieldmlHandleType
     FHT_ENSEMBLE_TYPE,
     FHT_CONTINUOUS_TYPE,
     FHT_MESH_TYPE,
-    FHT_ABSTRACT_EVALUATOR,
+    FHT_ARGUMENT_EVALUATOR,
     FHT_EXTERNAL_EVALUATOR,
     FHT_REFERENCE_EVALUATOR,
     FHT_PARAMETER_EVALUATOR,
@@ -465,10 +465,10 @@ FmlObjectHandle Fieldml_GetValueType( FmlSessionHandle handle, FmlObjectHandle o
 
 
 /**
- * Creates a abstract evaluator. An abstract evaluator is a placeholder for a concrete evaluator, and
- * can be bound just as concrete ones can. Only abstract evaluators can be the target of a bind.
+ * Creates an argument evaluator. An argument evaluator is a placeholder for a concrete evaluator, and
+ * can be bound just as concrete ones can. Only argument evaluators can be the target of a bind.
  */
-FmlObjectHandle Fieldml_CreateAbstractEvaluator( FmlSessionHandle handle, const char *name, FmlObjectHandle valueType );
+FmlObjectHandle Fieldml_CreateArgumentEvaluator( FmlSessionHandle handle, const char *name, FmlObjectHandle valueType );
 
 
 /**
@@ -652,25 +652,25 @@ FmlObjectHandle Fieldml_GetReferenceSourceEvaluator( FmlSessionHandle handle, Fm
 
 
 /**
- *  Returns the number of abstract evaluators used by the given evaluator. 
+ *  Returns the number of argument evaluators used by the given evaluator. 
  */
-int Fieldml_GetVariableCount( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+int Fieldml_GetArgumentCount( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- *  Returns the nth abstract evaluator used by the given evaluator. 
+ *  Returns the nth argument evaluator used by the given evaluator. 
  */
-FmlObjectHandle Fieldml_GetVariable( FmlSessionHandle handle, FmlObjectHandle objectHandle, int bindIndex );
+FmlObjectHandle Fieldml_GetArgument( FmlSessionHandle handle, FmlObjectHandle objectHandle, int bindIndex );
 
 
 /**
- *  Add an abstract evaluator to the list of abstract evaluators used by the given evaluator. 
+ *  Add an argument evaluator to the list of argument evaluators used by the given evaluator. 
  */
-FmlErrorNumber Fieldml_AddVariable( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle evaluatorHandle );
+FmlErrorNumber Fieldml_AddArgument( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle evaluatorHandle );
 
 
 /**
- * Adds an bind to the given evaluator. Only abstract evaluators can be bound. 
+ * Adds an bind to the given evaluator. Only argument evaluators can be bound. 
  */
 FmlErrorNumber Fieldml_SetBind( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle unboundEvaluator, FmlObjectHandle evaluator );
 
@@ -684,7 +684,7 @@ int Fieldml_GetBindCount( FmlSessionHandle handle, FmlObjectHandle objectHandle 
 /**
  *  Returns the evaulator used by the nth bind of the given evaluator. 
  */
-FmlObjectHandle Fieldml_GetBindVariable( FmlSessionHandle handle, FmlObjectHandle objectHandle, int bindIndex );
+FmlObjectHandle Fieldml_GetBindArgument( FmlSessionHandle handle, FmlObjectHandle objectHandle, int bindIndex );
 
 
 /**
@@ -694,9 +694,9 @@ FmlObjectHandle Fieldml_GetBindEvaluator( FmlSessionHandle handle, FmlObjectHand
 
 
 /**
- * Returns the abstract evaluator to which to given evaluator is bound to in the given evaluator.
+ * Returns the argument evaluator to which to given evaluator is bound to in the given evaluator.
  */
-FmlObjectHandle Fieldml_GetBindByVariable( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle variableHandle );
+FmlObjectHandle Fieldml_GetBindByArgument( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle argumentHandle );
 
 
 /**

@@ -115,8 +115,8 @@ ReferenceEvaluator::ReferenceEvaluator( const string _name, FmlObjectHandle _eva
 }
 
 
-AbstractEvaluator::AbstractEvaluator( const string _name, FmlObjectHandle _valueType, bool _isVirtual ) :
-    Evaluator( _name, FHT_ABSTRACT_EVALUATOR, _valueType, _isVirtual )
+ArgumentEvaluator::ArgumentEvaluator( const string _name, FmlObjectHandle _valueType, bool _isVirtual ) :
+    Evaluator( _name, FHT_ARGUMENT_EVALUATOR, _valueType, _isVirtual )
 {
 }
 

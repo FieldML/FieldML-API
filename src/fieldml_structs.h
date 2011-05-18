@@ -127,7 +127,7 @@ class Evaluator :
 public:
     const FmlObjectHandle valueType;
 
-    std::vector<FmlObjectHandle> variables;
+    std::vector<FmlObjectHandle> arguments;
 
     Evaluator( const std::string _name, FieldmlHandleType _type, FmlObjectHandle _valueType, bool _isVirtual );
 };
@@ -171,11 +171,11 @@ public:
 };
 
 
-class AbstractEvaluator :
+class ArgumentEvaluator :
     public Evaluator
 {
 public:
-    AbstractEvaluator( const std::string name, FmlObjectHandle _valueType, bool _isVirtual );
+    ArgumentEvaluator( const std::string name, FmlObjectHandle _valueType, bool _isVirtual );
 };
 
 

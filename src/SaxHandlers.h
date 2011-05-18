@@ -258,11 +258,11 @@ public:
 };
 
 
-class AbstractEvaluatorSaxHandler :
+class ArgumentEvaluatorSaxHandler :
     public FieldmlObjectSaxHandler
 {
 public:
-    AbstractEvaluatorSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
+    ArgumentEvaluatorSaxHandler( RegionSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
 };
@@ -396,11 +396,11 @@ public:
 };
 
 
-class VariablesSaxHandler :
+class ArgumentsSaxHandler :
     public ObjectMemberSaxHandler
 {
 public:
-    VariablesSaxHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
+    ArgumentsSaxHandler( FieldmlObjectSaxHandler *_parent, const xmlChar *elementName, SaxAttributes &attributes );
 
     virtual SaxHandler *onElementStart( const xmlChar *elementName, SaxAttributes &attributes );
 };

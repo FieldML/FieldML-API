@@ -177,7 +177,7 @@ void testRead( const char * filename )
         for( j = 1; j <= count2; j++ )
         {
             fprintf( stdout, "    %s  -->  %s\n",
-                Fieldml_GetObjectName( handle, Fieldml_GetBindVariable( handle, oHandle, j ) ),
+                Fieldml_GetObjectName( handle, Fieldml_GetBindArgument( handle, oHandle, j ) ),
                 Fieldml_GetObjectName( handle, Fieldml_GetBindEvaluator( handle, oHandle, j ) ) ); 
         }
     }
@@ -201,7 +201,7 @@ void testRead( const char * filename )
         for( j = 1; j <= count2; j++ )
         {
             fprintf( stdout, "    %s  -->  %s\n",
-                Fieldml_GetObjectName( handle, Fieldml_GetBindVariable( handle, oHandle, j ) ),
+                Fieldml_GetObjectName( handle, Fieldml_GetBindArgument( handle, oHandle, j ) ),
                 Fieldml_GetObjectName( handle, Fieldml_GetBindEvaluator( handle, oHandle, j ) ) ); 
         }
 
@@ -230,7 +230,7 @@ void testRead( const char * filename )
         for( j = 1; j <= count2; j++ )
         {
             fprintf( stdout, "    %s  -->  %s\n",
-                Fieldml_GetObjectName( handle, Fieldml_GetBindVariable( handle, oHandle, j ) ),
+                Fieldml_GetObjectName( handle, Fieldml_GetBindArgument( handle, oHandle, j ) ),
                 Fieldml_GetObjectName( handle, Fieldml_GetBindEvaluator( handle, oHandle, j ) ) ); 
         }
 
@@ -242,11 +242,11 @@ void testRead( const char * filename )
         }
     }
 
-    count = Fieldml_GetObjectCount( handle, FHT_ABSTRACT_EVALUATOR );
-    fprintf( stdout, "AbstractEvaluator: %d\n", count ); 
+    count = Fieldml_GetObjectCount( handle, FHT_ARGUMENT_EVALUATOR );
+    fprintf( stdout, "ArgumentEvaluator: %d\n", count ); 
     for( i = 1; i <= count; i++ )
     {
-        oHandle = Fieldml_GetObject( handle, FHT_ABSTRACT_EVALUATOR, i );
+        oHandle = Fieldml_GetObject( handle, FHT_ARGUMENT_EVALUATOR, i );
         if( !Fieldml_IsObjectLocal( handle, oHandle ) )
         {
             continue;
@@ -391,8 +391,8 @@ void testMisc()
     handle = Fieldml_Create( "", "test" );
     
     int importHandle = Fieldml_AddImportSource( handle, "library.xml", "library" );
-    FmlObjectHandle rc3Ensemble = Fieldml_AddImport( handle, importHandle, "library.chart.3d.component", "library.chart.3d.component" );
-    FmlObjectHandle realType = Fieldml_AddImport( handle, importHandle, "library.real.1d", "library.real.1d" );
+    FmlObjectHandle rc3Ensemble = Fieldml_AddImport( handle, importHandle, "chart.3d.component", "chart.3d.component" );
+    FmlObjectHandle realType = Fieldml_AddImport( handle, importHandle, "real.1d", "real.1d" );
     
     FmlObjectHandle parametersResource = Fieldml_CreateTextInlineDataResource( handle, "test.resource.parameters_data" );
     FmlObjectHandle parametersData = Fieldml_CreateTextDataSource( handle, "test.parameters_data", parametersResource, 1, 1, 3, 0, 0 );
@@ -401,7 +401,7 @@ void testMisc()
     Fieldml_SetParameterDataDescription( handle, parameters, DESCRIPTION_SEMIDENSE );
     Fieldml_SetDataSource( handle, parameters, parametersData );
     
-    FmlObjectHandle rc3Index = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract", rc3Ensemble );
+    FmlObjectHandle rc3Index = Fieldml_CreateArgumentEvaluator( handle, "test.rc_3d.argument", rc3Ensemble );
     Fieldml_AddDenseIndexEvaluator( handle, parameters, rc3Index, FML_INVALID_HANDLE );
     
     writer = Fieldml_OpenWriter( handle, parametersData, 1 );
@@ -428,16 +428,16 @@ void testMisc()
     Fieldml_SetParameterDataDescription( handle, parameters2, DESCRIPTION_SEMIDENSE );
     Fieldml_SetDataSource( handle, parameters2, parametersData2 );
     
-    FmlObjectHandle rc3Index1 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract.21", rc3Ensemble );
+    FmlObjectHandle rc3Index1 = Fieldml_CreateArgumentEvaluator( handle, "test.rc_3d.argument.21", rc3Ensemble );
     Fieldml_AddDenseIndexEvaluator( handle, parameters2, rc3Index1, FML_INVALID_HANDLE );
 
-    FmlObjectHandle rc3Index2 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract.22", rc3Ensemble );
+    FmlObjectHandle rc3Index2 = Fieldml_CreateArgumentEvaluator( handle, "test.rc_3d.argument.22", rc3Ensemble );
     Fieldml_AddDenseIndexEvaluator( handle, parameters2, rc3Index2, FML_INVALID_HANDLE );
 
-    FmlObjectHandle rc3Index3 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract.23", rc3Ensemble );
+    FmlObjectHandle rc3Index3 = Fieldml_CreateArgumentEvaluator( handle, "test.rc_3d.argument.23", rc3Ensemble );
     Fieldml_AddSparseIndexEvaluator( handle, parameters2, rc3Index3 );
     
-    FmlObjectHandle rc3Index4 = Fieldml_CreateAbstractEvaluator( handle, "test.rc_3d.abstract.24", rc3Ensemble );
+    FmlObjectHandle rc3Index4 = Fieldml_CreateArgumentEvaluator( handle, "test.rc_3d.argument.24", rc3Ensemble );
     Fieldml_AddSparseIndexEvaluator( handle, parameters2, rc3Index4 );
 
     writer = Fieldml_OpenWriter( handle, parametersData2, 1 );

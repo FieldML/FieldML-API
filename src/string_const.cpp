@@ -53,7 +53,7 @@ const char NIX_PATH_SEP = '/';
 #define DEFAULT_SEP NIX_PATH_SEP
 #endif
 
-const char * const FML_VERSION_STRING                  = "0.4.0_RC1";
+const char * const FML_VERSION_STRING                  = "0.4.0_RC2";
 
 const xmlChar * const FIELDML_TAG                      = (const xmlChar* const)"Fieldml";
 
@@ -87,10 +87,10 @@ const xmlChar * const BINDINGS_TAG                     = (const xmlChar* const)"
 const xmlChar * const BIND_TAG                         = (const xmlChar* const)"Bind";
 const xmlChar * const BIND_INDEX_TAG                   = (const xmlChar* const)"BindIndex";
 
-const xmlChar * const VARIABLES_TAG                    = (const xmlChar* const)"Variables";
-const xmlChar * const VARIABLE_TAG                     = (const xmlChar* const)"Variable";
+const xmlChar * const ARGUMENTS_TAG                    = (const xmlChar* const)"Arguments";
+const xmlChar * const ARGUMENT_TAG                     = (const xmlChar* const)"Argument";
 
-const xmlChar * const ABSTRACT_EVALUATOR_TAG           = (const xmlChar* const)"AbstractEvaluator";
+const xmlChar * const ARGUMENT_EVALUATOR_TAG           = (const xmlChar* const)"ArgumentEvaluator";
 
 const xmlChar * const EXTERNAL_EVALUATOR_TAG           = (const xmlChar* const)"ExternalEvaluator";
 
@@ -125,7 +125,7 @@ const xmlChar * const REGION_ATTRIB                    = (const xmlChar* const)"
 const xmlChar * const LOCAL_NAME_ATTRIB                = (const xmlChar* const)"localName";
 const xmlChar * const REMOTE_NAME_ATTRIB               = (const xmlChar* const)"remoteName";
 
-const xmlChar * const VARIABLE_ATTRIB                  = (const xmlChar* const)"variable";
+const xmlChar * const ARGUMENT_ATTRIB                  = (const xmlChar* const)"argument";
 const xmlChar * const INDEX_NUMBER_ATTRIB              = (const xmlChar* const)"indexNumber";
 const xmlChar * const SOURCE_ATTRIB                    = (const xmlChar* const)"source";
 

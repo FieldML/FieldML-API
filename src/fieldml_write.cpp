@@ -98,23 +98,23 @@ static int writeBinds( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObje
 {
     int count = Fieldml_GetBindCount( handle, object );
 
-    FmlObjectHandle indexVariable = FML_INVALID_HANDLE;
+    FmlObjectHandle indexArgument = FML_INVALID_HANDLE;
     if( Fieldml_GetObjectType( handle, object ) == FHT_AGGREGATE_EVALUATOR )
     {
-        indexVariable = Fieldml_GetIndexEvaluator( handle, object, 1 );
+        indexArgument = Fieldml_GetIndexEvaluator( handle, object, 1 );
     }
     
-    if( ( count <= 0 ) && ( indexVariable == FML_INVALID_HANDLE ) )
+    if( ( count <= 0 ) && ( indexArgument == FML_INVALID_HANDLE ) )
     {
         return 0;
     }
 
     xmlTextWriterStartElement( writer, BINDINGS_TAG );
     
-    if( indexVariable != FML_INVALID_HANDLE )
+    if( indexArgument != FML_INVALID_HANDLE )
     {
         xmlTextWriterStartElement( writer, BIND_INDEX_TAG );
-        xmlTextWriterWriteAttribute( writer, VARIABLE_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, indexVariable ) );
+        xmlTextWriterWriteAttribute( writer, ARGUMENT_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, indexArgument ) );
         xmlTextWriterWriteAttribute( writer, INDEX_NUMBER_ATTRIB, (const xmlChar*)"1" );
         xmlTextWriterEndElement( writer );
     }
@@ -122,14 +122,14 @@ static int writeBinds( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObje
     for( int i = 1; i <= count; i++ )
     {
         FmlObjectHandle source = Fieldml_GetBindEvaluator( handle, object, i );
-        FmlObjectHandle variable =  Fieldml_GetBindVariable( handle, object, i );
-        if( ( source == FML_INVALID_HANDLE ) || ( variable == FML_INVALID_HANDLE ) )
+        FmlObjectHandle argument =  Fieldml_GetBindArgument( handle, object, i );
+        if( ( source == FML_INVALID_HANDLE ) || ( argument == FML_INVALID_HANDLE ) )
         {
             continue;
         }
 
         xmlTextWriterStartElement( writer, BIND_TAG );
-        xmlTextWriterWriteAttribute( writer, VARIABLE_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, variable ) );
+        xmlTextWriterWriteAttribute( writer, ARGUMENT_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, argument ) );
         xmlTextWriterWriteAttribute( writer, SOURCE_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, source ) );
         xmlTextWriterEndElement( writer );
     }
@@ -140,26 +140,26 @@ static int writeBinds( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObje
 }
 
 
-static int writeVariables( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObjectHandle object )
+static int writeArguments( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObjectHandle object )
 {
-    int count = Fieldml_GetVariableCount( handle, object );
+    int count = Fieldml_GetArgumentCount( handle, object );
     if( count <= 0 )
     {
         return 0;
     }
 
-    xmlTextWriterStartElement( writer, VARIABLES_TAG );
+    xmlTextWriterStartElement( writer, ARGUMENTS_TAG );
     
     for( int i = 1; i <= count; i++ )
     {
-        FmlObjectHandle variable = Fieldml_GetVariable( handle, object, i );
-        if( variable == FML_INVALID_HANDLE )
+        FmlObjectHandle argument = Fieldml_GetArgument( handle, object, i );
+        if( argument == FML_INVALID_HANDLE )
         {
             continue;
         }
 
-        xmlTextWriterStartElement( writer, VARIABLE_TAG );
-        xmlTextWriterWriteAttribute( writer, NAME_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, variable ) );
+        xmlTextWriterStartElement( writer, ARGUMENT_TAG );
+        xmlTextWriterWriteAttribute( writer, NAME_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, argument ) );
         xmlTextWriterEndElement( writer );
     }
     
@@ -418,14 +418,14 @@ static int writeElementSequence( xmlTextWriterPtr writer, FmlSessionHandle handl
 }
 
 
-static int writeAbstractEvaluator( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObjectHandle object )
+static int writeArgumentEvaluator( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObjectHandle object )
 {
-    xmlTextWriterStartElement( writer, ABSTRACT_EVALUATOR_TAG );
+    xmlTextWriterStartElement( writer, ARGUMENT_EVALUATOR_TAG );
     
     writeObjectName( writer, NAME_ATTRIB, handle, object );
     writeObjectName( writer, VALUE_TYPE_ATTRIB, handle, Fieldml_GetValueType( handle, object ) );
 
-    writeVariables( writer, handle, object );
+    writeArguments( writer, handle, object );
 
     xmlTextWriterEndElement( writer );
     
@@ -440,7 +440,7 @@ static int writeExternalEvaluator( xmlTextWriterPtr writer, FmlSessionHandle han
     writeObjectName( writer, NAME_ATTRIB, handle, object );
     writeObjectName( writer, VALUE_TYPE_ATTRIB, handle, Fieldml_GetValueType( handle, object ) );
 
-    writeVariables( writer, handle, object );
+    writeArguments( writer, handle, object );
 
     xmlTextWriterEndElement( writer );
     
@@ -455,7 +455,7 @@ static int writeReferenceEvaluator( xmlTextWriterPtr writer, FmlSessionHandle ha
     writeObjectName( writer, NAME_ATTRIB, handle, object );
     writeObjectName( writer, EVALUATOR_ATTRIB, handle, Fieldml_GetReferenceSourceEvaluator( handle, object ) );
 
-    writeVariables( writer, handle, object );
+    writeArguments( writer, handle, object );
     
     writeBinds( writer, handle, object );
 
@@ -472,7 +472,7 @@ static int writePiecewiseEvaluator( xmlTextWriterPtr writer, FmlSessionHandle ha
     writeObjectName( writer, NAME_ATTRIB, handle, object );
     writeObjectName( writer, VALUE_TYPE_ATTRIB, handle, Fieldml_GetValueType( handle, object ) );
 
-    writeVariables( writer, handle, object );
+    writeArguments( writer, handle, object );
     
     writeBinds( writer, handle, object );
     
@@ -585,7 +585,7 @@ static int writeParameterEvaluator( xmlTextWriterPtr writer, FmlSessionHandle ha
     writeObjectName( writer, NAME_ATTRIB, handle, object );
     writeObjectName( writer, VALUE_TYPE_ATTRIB, handle, Fieldml_GetValueType( handle, object ) );
 
-    writeVariables( writer, handle, object );
+    writeArguments( writer, handle, object );
 
     DataDescriptionType description = Fieldml_GetParameterDataDescription( handle, object );
     if( description == DESCRIPTION_SEMIDENSE )
@@ -605,7 +605,7 @@ static int writeAggregateEvaluator( xmlTextWriterPtr writer, FmlSessionHandle ha
     writeObjectName( writer, NAME_ATTRIB, handle, object );
     writeObjectName( writer, VALUE_TYPE_ATTRIB, handle, Fieldml_GetValueType( handle, object ) );
 
-    writeVariables( writer, handle, object );
+    writeArguments( writer, handle, object );
     
     writeBinds( writer, handle, object );
     
@@ -655,8 +655,8 @@ static int writeFieldmlObject( xmlTextWriterPtr writer, FmlSessionHandle handle,
         return writeDataResource( writer, handle, object );
 //NYI    case FHT_ELEMENT_SEQUENCE:
 //        return writeElementSequence( writer, handle, object );
-    case FHT_ABSTRACT_EVALUATOR:
-        return writeAbstractEvaluator( writer, handle, object );
+    case FHT_ARGUMENT_EVALUATOR:
+        return writeArgumentEvaluator( writer, handle, object );
     case FHT_EXTERNAL_EVALUATOR:
         return writeExternalEvaluator( writer, handle, object );
     case FHT_REFERENCE_EVALUATOR:
