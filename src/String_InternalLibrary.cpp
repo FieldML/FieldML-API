@@ -136,6 +136,26 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     </Arguments> \
   </ExternalEvaluator> \
  \
+  <EnsembleType name=\"localNodes.1d.line4\"> \
+   <Members> \
+    <MemberRange min=\"1\" max=\"4\"/> \
+   </Members> \
+  </EnsembleType> \
+  <ArgumentEvaluator name=\"localNodes.1d.line4.argument\" valueType=\"localNodes.1d.line4\"/> \
+ \
+  <ContinuousType name=\"parameters.1d.unit.cubicLagrange\"> \
+    <Components name=\"parameters.1d.unit.cubicLagrange.component\" count=\"4\"/> \
+  </ContinuousType> \
+  <ArgumentEvaluator name=\"parameters.1d.unit.cubicLagrange.component.argument\" valueType=\"parameters.1d.unit.cubicLagrange.component\"/> \
+  <ArgumentEvaluator name=\"parameters.1d.unit.cubicLagrange.argument\" valueType=\"parameters.1d.unit.cubicLagrange\"/> \
+ \
+  <ExternalEvaluator name=\"interpolator.1d.unit.cubicLagrange\" valueType=\"real.1d\"> \
+    <Arguments> \
+      <Argument name=\"chart.1d.argument\"/> \
+      <Argument name=\"parameters.1d.unit.cubicLagrange.argument\"/> \
+    </Arguments> \
+  </ExternalEvaluator> \
+ \
   <EnsembleType name=\"localNodes.2d.square2x2\"> \
    <Members> \
     <MemberRange min=\"1\" max=\"4\"/> \
@@ -176,6 +196,26 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     </Arguments> \
   </ExternalEvaluator> \
  \
+  <EnsembleType name=\"localNodes.2d.square4x4\"> \
+   <Members> \
+    <MemberRange min=\"1\" max=\"16\"/> \
+   </Members> \
+  </EnsembleType> \
+  <ArgumentEvaluator name=\"localNodes.2d.square4x4.argument\" valueType=\"localNodes.2d.square4x4\"/> \
+ \
+  <ContinuousType name=\"parameters.2d.unit.bicubicLagrange\"> \
+    <Components name=\"parameters.2d.unit.bicubicLagrange.component\" count=\"16\"/> \
+  </ContinuousType> \
+  <ArgumentEvaluator name=\"parameters.2d.unit.bicubicLagrange.argument\" valueType=\"parameters.2d.unit.bicubicLagrange\"/> \
+  <ArgumentEvaluator name=\"parameters.2d.unit.bicubicLagrange.component.argument\" valueType=\"parameters.2d.unit.bicubicLagrange.component\"/> \
+ \
+  <ExternalEvaluator name=\"interpolator.2d.unit.bicubicLagrange\" valueType=\"real.1d\"> \
+    <Arguments> \
+      <Argument name=\"chart.2d.argument\"/> \
+      <Argument name=\"parameters.2d.unit.bicubicLagrange.argument\"/> \
+    </Arguments> \
+  </ExternalEvaluator> \
+ \
   <EnsembleType name=\"localNodes.3d.cube2x2x2\"> \
    <Members> \
     <MemberRange min=\"1\" max=\"8\"/> \
@@ -212,6 +252,26 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     <Arguments> \
       <Argument name=\"chart.3d.argument\"/> \
       <Argument name=\"parameters.3d.unit.triquadraticLagrange.argument\"/> \
+    </Arguments> \
+  </ExternalEvaluator> \
+ \
+  <EnsembleType name=\"localNodes.3d.cube4x4x4\"> \
+   <Members> \
+    <MemberRange min=\"1\" max=\"64\"/> \
+   </Members> \
+  </EnsembleType> \
+  <ArgumentEvaluator name=\"localNodes.3d.cube4x4x4.argument\" valueType=\"localNodes.3d.cube4x4x4\"/> \
+ \
+  <ContinuousType name=\"parameters.3d.unit.tricubicLagrange\"> \
+    <Components name=\"parameters.3d.unit.tricubicLagrange.component\" count=\"64\"/> \
+  </ContinuousType> \
+  <ArgumentEvaluator name=\"parameters.3d.unit.tricubicLagrange.argument\" valueType=\"parameters.3d.unit.tricubicLagrange\"/> \
+  <ArgumentEvaluator name=\"parameters.3d.unit.tricubicLagrange.component.argument\" valueType=\"parameters.3d.unit.tricubicLagrange.component\"/> \
+ \
+  <ExternalEvaluator name=\"interpolator.3d.unit.tricubicLagrange\" valueType=\"real.1d\"> \
+    <Arguments> \
+      <Argument name=\"chart.3d.argument\"/> \
+      <Argument name=\"parameters.3d.unit.tricubicLagrange.argument\"/> \
     </Arguments> \
   </ExternalEvaluator> \
  \
