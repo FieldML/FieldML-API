@@ -75,8 +75,8 @@ ObjectImport::~ObjectImport()
 }
 
 
-ImportInfo::ImportInfo( string _location, string _name ) :
-    location( _location ),
+ImportInfo::ImportInfo( string _href, string _name ) :
+    href( _href ),
     name( _name )
 {
 }

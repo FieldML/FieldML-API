@@ -717,10 +717,10 @@ int writeFieldmlFile( FmlSessionHandle handle, const char *filename )
 
         xmlTextWriterStartElement( writer, IMPORT_TAG );
         
-        length = Fieldml_CopyImportSourceLocation( handle, importSourceIndex, tBuffer, tBufferLength );
+        length = Fieldml_CopyImportSourceHref( handle, importSourceIndex, tBuffer, tBufferLength );
         if( length > 0 )
         {
-            xmlTextWriterWriteAttribute( writer, LOCATION_ATTRIB, (const xmlChar*)tBuffer );        
+            xmlTextWriterWriteAttribute( writer, QUALIFIED_HREF_ATTRIB, (const xmlChar*)tBuffer );        
         }
         
         length = Fieldml_CopyImportSourceRegionName( handle, importSourceIndex, tBuffer, tBufferLength );

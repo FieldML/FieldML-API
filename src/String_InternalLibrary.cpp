@@ -41,10 +41,12 @@
 
 #include "String_InternalLibrary.h"
 
-const char * const FML_INTERNAL_LIBRARY_NAME = "library.xml";
+const char * const FML_INTERNAL_LIBRARY_NAME = "http://www.fieldml.org/resources/xml/0.4/fieldml_library.xml";
 
 const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?> \
-<Fieldml version=\"0.4_RC2\" xsi:noNamespaceSchemaLocation=\"Fieldml.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"> \
+<Fieldml version=\"0.4_RC3\" \
+  xsi:noNamespaceSchemaLocation=\"http://www.fieldml.org/resources/xml/0.4/fieldml.xsd\" \
+  xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"> \
  <Region name=\"library\"> \
   <ContinuousType name=\"real.1d\"/> \
   <ArgumentEvaluator name=\"real.1d.argument\" valueType=\"real.1d\"/> \
@@ -159,8 +161,8 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     <MemberRange min=\"1\" max=\"9\"/> \
    </Members> \
   </EnsembleType> \
-  <ArgumentEvaluator name=\"localNodes.2d.square3x3.argument\" valueType=\"localNodes.2d.square3x3\"/> \
- \
+  <ArgumentEvaluator name=\"localNodes.2d.square3x3.argument\" valueType=\"localNodes.2d.square3x3\"/> "
+ " \
   <ContinuousType name=\"parameters.2d.unit.biquadraticLagrange\"> \
     <Components name=\"parameters.2d.unit.biquadraticLagrange.component\" count=\"9\"/> \
   </ContinuousType> \
@@ -311,16 +313,29 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
   </EnsembleType> \
   <ArgumentEvaluator name=\"localNodes.2d.triangle6.argument\" valueType=\"localNodes.2d.triangle6\"/> \
  \
-  <ContinuousType name=\"parameters.2d.unit.biquadraticSimplex\"> \
-    <Components name=\"parameters.2d.unit.biquadraticSimplex.component\" count=\"6\"/> \
+  <ContinuousType name=\"parameters.2d.unit.biquadraticSimplex.cyclic\"> \
+    <Components name=\"parameters.2d.unit.biquadraticSimplex.cyclic.component\" count=\"6\"/> \
   </ContinuousType> \
-  <ArgumentEvaluator name=\"parameters.2d.unit.biquadraticSimplex.argument\" valueType=\"parameters.2d.unit.biquadraticSimplex\"/> \
-  <ArgumentEvaluator name=\"parameters.2d.unit.biquadraticSimplex.component.argument\" valueType=\"parameters.2d.unit.biquadraticSimplex.component\"/> \
+  <ArgumentEvaluator name=\"parameters.2d.unit.biquadraticSimplex.cyclic.argument\" valueType=\"parameters.2d.unit.biquadraticSimplex.cyclic\"/> \
+  <ArgumentEvaluator name=\"parameters.2d.unit.biquadraticSimplex.cyclic.component.argument\" valueType=\"parameters.2d.unit.biquadraticSimplex.cyclic.component\"/> \
  \
-  <ExternalEvaluator name=\"interpolator.2d.unit.biquadraticSimplex\" valueType=\"real.1d\"> \
+  <ExternalEvaluator name=\"interpolator.2d.unit.biquadraticSimplex.cyclic\" valueType=\"real.1d\"> \
     <Arguments> \
       <Argument name=\"chart.2d.argument\"/> \
-      <Argument name=\"parameters.2d.unit.biquadraticSimplex.argument\"/> \
+      <Argument name=\"parameters.2d.unit.biquadraticSimplex.cyclic.argument\"/> \
+    </Arguments> \
+  </ExternalEvaluator> \
+ \
+  <ContinuousType name=\"parameters.2d.unit.biquadraticSimplex.zienkiewicz\"> \
+    <Components name=\"parameters.2d.unit.biquadraticSimplex.zienkiewicz.component\" count=\"6\"/> \
+  </ContinuousType> \
+  <ArgumentEvaluator name=\"parameters.2d.unit.biquadraticSimplex.zienkiewicz.argument\" valueType=\"parameters.2d.unit.biquadraticSimplex.zienkiewicz\"/> \
+  <ArgumentEvaluator name=\"parameters.2d.unit.biquadraticSimplex.zienkiewicz.component.argument\" valueType=\"parameters.2d.unit.biquadraticSimplex.zienkiewicz.component\"/> \
+ \
+  <ExternalEvaluator name=\"interpolator.2d.unit.biquadraticSimplex.zienkiewicz\" valueType=\"real.1d\"> \
+    <Arguments> \
+      <Argument name=\"chart.2d.argument\"/> \
+      <Argument name=\"parameters.2d.unit.biquadraticSimplex.zienkiewicz.argument\"/> \
     </Arguments> \
   </ExternalEvaluator> \
  \
@@ -353,16 +368,29 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
   </EnsembleType> \
   <ArgumentEvaluator name=\"localNodes.3d.tetrahedron10.argument\" valueType=\"localNodes.3d.tetrahedron10\"/> \
  \
-  <ContinuousType name=\"parameters.3d.unit.triquadraticSimplex\"> \
-    <Components name=\"parameters.3d.unit.triquadraticSimplex.component\" count=\"10\"/> \
+  <ContinuousType name=\"parameters.3d.unit.triquadraticSimplex.cyclic\"> \
+    <Components name=\"parameters.3d.unit.triquadraticSimplex.cyclic.component\" count=\"10\"/> \
   </ContinuousType> \
-  <ArgumentEvaluator name=\"parameters.3d.unit.triquadraticSimplex.argument\" valueType=\"parameters.3d.unit.triquadraticSimplex\"/> \
-  <ArgumentEvaluator name=\"parameters.3d.unit.triquadraticSimplex.component.argument\" valueType=\"parameters.3d.unit.triquadraticSimplex.component\"/> \
+  <ArgumentEvaluator name=\"parameters.3d.unit.triquadraticSimplex.cyclic.argument\" valueType=\"parameters.3d.unit.triquadraticSimplex.cyclic\"/> \
+  <ArgumentEvaluator name=\"parameters.3d.unit.triquadraticSimplex.cyclic.component.argument\" valueType=\"parameters.3d.unit.triquadraticSimplex.cyclic.component\"/> \
  \
-  <ExternalEvaluator name=\"interpolator.3d.unit.triquadraticSimplex\" valueType=\"real.1d\"> \
+  <ExternalEvaluator name=\"interpolator.3d.unit.triquadraticSimplex.cyclic\" valueType=\"real.1d\"> \
     <Arguments> \
       <Argument name=\"chart.3d.argument\"/> \
-      <Argument name=\"parameters.3d.unit.triquadraticSimplex.argument\"/> \
+      <Argument name=\"parameters.3d.unit.triquadraticSimplex.cyclic.argument\"/> \
+    </Arguments> \
+  </ExternalEvaluator> \
+ \
+  <ContinuousType name=\"parameters.3d.unit.triquadraticSimplex.zienkiewicz\"> \
+    <Components name=\"parameters.3d.unit.triquadraticSimplex.zienkiewicz.component\" count=\"10\"/> \
+  </ContinuousType> \
+  <ArgumentEvaluator name=\"parameters.3d.unit.triquadraticSimplex.zienkiewicz.argument\" valueType=\"parameters.3d.unit.triquadraticSimplex.zienkiewicz\"/> \
+  <ArgumentEvaluator name=\"parameters.3d.unit.triquadraticSimplex.zienkiewicz.component.argument\" valueType=\"parameters.3d.unit.triquadraticSimplex.zienkiewicz.component\"/> \
+ \
+  <ExternalEvaluator name=\"interpolator.3d.unit.triquadraticSimplex.zienkiewicz\" valueType=\"real.1d\"> \
+    <Arguments> \
+      <Argument name=\"chart.3d.argument\"/> \
+      <Argument name=\"parameters.3d.unit.triquadraticSimplex.zienkiewicz.argument\"/> \
     </Arguments> \
   </ExternalEvaluator> \
  \

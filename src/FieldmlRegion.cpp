@@ -53,8 +53,8 @@ using namespace std;
 //
 //========================================================================
 
-FieldmlRegion::FieldmlRegion( const string _location, const string _name, const string _root, ObjectStore *_store ) :
-    location( _location ),
+FieldmlRegion::FieldmlRegion( const string _href, const string _name, const string _root, ObjectStore *_store ) :
+    href( _href ),
     name( _name ),
     store( _store )
 {
@@ -102,9 +102,9 @@ const string FieldmlRegion::getRoot()
 }
 
 
-const string FieldmlRegion::getLocation()
+const string FieldmlRegion::getHref()
 {
-    return location;
+    return href;
 }
 
 
@@ -224,7 +224,7 @@ const string FieldmlRegion::getObjectName( FmlObjectHandle handle )
 }
 
 
-void FieldmlRegion::addImportSource( int importSourceIndex, string location, string name )
+void FieldmlRegion::addImportSource( int importSourceIndex, string href, string name )
 {
     while( imports.size() <= importSourceIndex )
     {
@@ -233,7 +233,7 @@ void FieldmlRegion::addImportSource( int importSourceIndex, string location, str
     
     if( imports[importSourceIndex] == NULL )
     {
-        imports[importSourceIndex] = new ImportInfo( location, name );
+        imports[importSourceIndex] = new ImportInfo( href, name );
     }
 }
 
@@ -269,7 +269,7 @@ int FieldmlRegion::getImportCount( int importSourceIndex )
 }
 
 
-const string FieldmlRegion::getImportSourceLocation( int importSourceIndex )
+const string FieldmlRegion::getImportSourceHref( int importSourceIndex )
 {
     ImportInfo *import = getImportInfo( importSourceIndex );
     if( import == NULL )
@@ -277,7 +277,7 @@ const string FieldmlRegion::getImportSourceLocation( int importSourceIndex )
         return "";
     }
 
-    return import->location;
+    return import->href;
 }
 
 

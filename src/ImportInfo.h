@@ -52,7 +52,7 @@ private:
     std::vector<ObjectImport*> imports;
     
 public:
-    ImportInfo( std::string _location, std::string name );
+    ImportInfo( std::string _href, std::string name );
 
     virtual ~ImportInfo();
     
@@ -72,7 +72,7 @@ public:
     
     bool hasObject( FmlObjectHandle handle );
 
-    const std::string location;
+    const std::string href;
     
     const std::string name;
 };

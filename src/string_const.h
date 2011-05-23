@@ -123,7 +123,6 @@ extern const xmlChar * const VERSION_ATTRIB;
 
 extern const xmlChar * const NAME_ATTRIB;
 
-extern const xmlChar * const LOCATION_ATTRIB;
 extern const xmlChar * const REGION_ATTRIB;
 extern const xmlChar * const LOCAL_NAME_ATTRIB;
 extern const xmlChar * const REMOTE_NAME_ATTRIB;

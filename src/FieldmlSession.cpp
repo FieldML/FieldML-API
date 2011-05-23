@@ -87,12 +87,12 @@ FieldmlSession::~FieldmlSession()
 }
 
 
-FieldmlRegion *FieldmlSession::getRegion( string location, string name )
+FieldmlRegion *FieldmlSession::getRegion( string href, string name )
 {
     for( vector<FieldmlRegion*>::iterator i = regions.begin(); i != regions.end(); i++ )
     {
         FieldmlRegion *r = *i;
-        if( ( r->getLocation() == location ) && ( r->getName() == name ) )
+        if( ( r->getHref() == href ) && ( r->getName() == name ) )
         {
             return r;
         }
@@ -102,21 +102,21 @@ FieldmlRegion *FieldmlSession::getRegion( string location, string name )
 }
 
 
-FieldmlRegion *FieldmlSession::addNewRegion( string location, string name )
+FieldmlRegion *FieldmlSession::addNewRegion( string href, string name )
 {
-    FieldmlRegion *region = new FieldmlRegion( location, name, "", objects );
+    FieldmlRegion *region = new FieldmlRegion( href, name, "", objects );
     regions.push_back( region );
     
     return region;
 }
 
 
-int FieldmlSession::getRegionIndex( string location, string name )
+int FieldmlSession::getRegionIndex( string href, string name )
 {
     for( int i = 0; i < regions.size(); i++ )
     {
         FieldmlRegion *r = regions[i];
-        if( ( r->getLocation() == location ) && ( r->getName() == name ) )
+        if( ( r->getHref() == href ) && ( r->getName() == name ) )
         {
             return i;
         }
@@ -137,25 +137,25 @@ FieldmlRegion *FieldmlSession::getRegion( int index )
 }
 
 
-FieldmlRegion *FieldmlSession::addResourceRegion( string location, string name )
+FieldmlRegion *FieldmlSession::addResourceRegion( string href, string name )
 {
-    if( location.length() == 0 )
+    if( href.length() == 0 )
     {
         return NULL;
     }
 
-    FieldmlRegion *resourceRegion = new FieldmlRegion( location, name, "", objects );
+    FieldmlRegion *resourceRegion = new FieldmlRegion( href, name, "", objects );
     FieldmlRegion *currentRegion = region;
     region = resourceRegion;
     
     int result = 0;
-    if( location == FML_INTERNAL_LIBRARY_NAME )
+    if( href == FML_INTERNAL_LIBRARY_NAME )
     {
         result = parseFieldmlString( FML_STRING_INTERNAL_LIBRARY, "Internal library", this );
     }
     else
     {
-        string libraryFile = makeFilename( region->getRoot(), location );
+        string libraryFile = makeFilename( region->getRoot(), href );
         result = parseFieldmlFile( libraryFile.c_str(), this );
     }
     

@@ -481,9 +481,7 @@ FmlObjectHandle Fieldml_CreateExternalEvaluator( FmlSessionHandle handle, const 
 
 /**
  * Creates a new parameter set. A parameter set contains a store of literal values, indexed by a set
- * of ensemble-valued evaluators. The format and location of the store is intended to be very flexible,
- * and include the ability to describe 3rd-party formats such as HDF5, and allow for locations that
- * refer to inline data, as well as files on the local filesystem, or over the network.
+ * of ensemble-valued evaluators.
  */
 FmlObjectHandle Fieldml_CreateParameterEvaluator( FmlSessionHandle handle, const char *name, FmlObjectHandle valueType );
 
@@ -814,16 +812,20 @@ FmlErrorNumber Fieldml_CloseWriter( FmlSessionHandle handle, FmlWriterHandle wri
 
 
 /**
- * Add an import source for the current region. The location will typically be the location of
- * another FieldML resource. The string "library_0.3.xml" is also permitted, and refers to the
- * built-in library.
+ * Add an import source for the current region. The href will typically be the location of
+ * another FieldML resource.
  * 
  * Returns an import index to use with subsequent import API calls, or -1 on error.
  * 
  * NOTE: Attempting to add the same import source more than once will succeed, but will result
  * in the same index being returned each time.
+ * 
+ * NOTE: The string 'http://www.fieldml.org/resources/xml/0.4/fieldml_library.xml' will direct
+ * the API to use an internally-cached version of fieldml_library.xml.
+ * 
+ * NOTE: At the moment, only filenames are supported.
  */
-int Fieldml_AddImportSource( FmlSessionHandle handle, const char *location, const char *regionName );
+int Fieldml_AddImportSource( FmlSessionHandle handle, const char *href, const char *regionName );
 
 
 /**
@@ -841,10 +843,10 @@ int Fieldml_GetImportSourceCount( FmlSessionHandle handle );
 
 
 /**
- * Returns the location of the FieldML resource used by the given indexed import source. This will typically
+ * Returns the href of the FieldML resource used by the given indexed import source. This will typically
  * be a FieldML document.
  */
-int Fieldml_CopyImportSourceLocation( FmlSessionHandle handle, int importSourceIndex, char *buffer, int bufferLength );
+int Fieldml_CopyImportSourceHref( FmlSessionHandle handle, int importSourceIndex, char *buffer, int bufferLength );
 
 
 /**

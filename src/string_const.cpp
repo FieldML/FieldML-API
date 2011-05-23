@@ -53,7 +53,7 @@ const char NIX_PATH_SEP = '/';
 #define DEFAULT_SEP NIX_PATH_SEP
 #endif
 
-const char * const FML_VERSION_STRING                  = "0.4.0_RC2";
+const char * const FML_VERSION_STRING                  = "0.4.0_RC3";
 
 const xmlChar * const FIELDML_TAG                      = (const xmlChar* const)"Fieldml";
 
@@ -120,7 +120,6 @@ const xmlChar * const VERSION_ATTRIB                   = (const xmlChar* const)"
 
 const xmlChar * const NAME_ATTRIB                      = (const xmlChar* const)"name";
 
-const xmlChar * const LOCATION_ATTRIB                  = (const xmlChar* const)"location";
 const xmlChar * const REGION_ATTRIB                    = (const xmlChar* const)"region";
 const xmlChar * const LOCAL_NAME_ATTRIB                = (const xmlChar* const)"localName";
 const xmlChar * const REMOTE_NAME_ATTRIB               = (const xmlChar* const)"remoteName";

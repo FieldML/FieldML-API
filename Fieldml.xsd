@@ -65,7 +65,7 @@
             <xs:element name="ImportType" type="ImportTypeEntry_Type" />
             <xs:element name="ImportEvaluator" type="ImportEvaluatorEntry_Type" />
         </xs:choice>
-        <xs:attribute name="location" type="xs:string" use="required" />
+        <xs:attribute ref="xlink:href" use="required" />
         <xs:attribute name="region" type="xs:string" use="required" />
     </xs:complexType>
 

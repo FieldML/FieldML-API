@@ -526,7 +526,7 @@ ImportSaxHandler::ImportSaxHandler( RegionSaxHandler *_parent, const xmlChar *el
     SaxHandler( elementName ),
     parent( _parent )
 {
-    const char *location = attributes.getAttribute( LOCATION_ATTRIB );
+    const char *location = attributes.getAttribute( HREF_ATTRIB );
     const char *region = attributes.getAttribute( REGION_ATTRIB );
 
     if( location == NULL )

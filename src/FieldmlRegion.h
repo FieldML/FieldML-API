@@ -51,7 +51,7 @@
 class FieldmlRegion
 {
 private:
-    const std::string location;
+    const std::string href;
     
     std::string name;
     
@@ -66,7 +66,7 @@ private:
     ImportInfo *getImportInfo( int importSourceIndex );
     
 public:
-    FieldmlRegion( const std::string location, const std::string name, const std::string root, ObjectStore *_store );
+    FieldmlRegion( const std::string href, const std::string name, const std::string root, ObjectStore *_store );
 
     virtual ~FieldmlRegion();
     
@@ -84,7 +84,7 @@ public:
 
     const std::string getRoot();
     
-    const std::string getLocation();
+    const std::string getHref();
 
     const std::string getName();
     
@@ -92,7 +92,7 @@ public:
 
     void finalize();
 
-    void addImportSource( int importSourceIndex, std::string location, std::string name );
+    void addImportSource( int importSourceIndex, std::string href, std::string name );
 
     void addImport( int importSourceIndex, std::string localName, std::string remoteName, FmlObjectHandle object );
     
@@ -100,7 +100,7 @@ public:
     
     int getImportCount( int importSourceIndex );
     
-    const std::string getImportSourceLocation( int importSourceIndex );
+    const std::string getImportSourceHref( int importSourceIndex );
     
     const std::string getImportSourceRegionName( int importSourceIndex );
     

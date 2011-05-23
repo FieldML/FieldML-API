@@ -108,7 +108,7 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
             <xs:element name=\"ImportType\" type=\"ImportTypeEntry_Type\" /> \
             <xs:element name=\"ImportEvaluator\" type=\"ImportEvaluatorEntry_Type\" /> \
         </xs:choice> \
-        <xs:attribute name=\"location\" type=\"xs:string\" use=\"required\" /> \
+        <xs:attribute ref=\"xlink:href\" use=\"required\" /> \
         <xs:attribute name=\"region\" type=\"xs:string\" use=\"required\" /> \
     </xs:complexType> \
  \

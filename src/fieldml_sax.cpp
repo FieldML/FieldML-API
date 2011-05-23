@@ -39,8 +39,8 @@
  *
  */
 
-#include <string>
-#include <stdio.h>
+#include <cstring>
+#include <cstdio>
 
 #include <libxml/SAX.h>
 #include <libxml/globals.h>

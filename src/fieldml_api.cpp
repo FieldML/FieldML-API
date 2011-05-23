@@ -3021,7 +3021,7 @@ FmlErrorNumber Fieldml_SetEnsembleElementRange( FmlSessionHandle handle, FmlObje
 }
 
 
-int Fieldml_AddImportSource( FmlSessionHandle handle, const char *location, const char *name )
+int Fieldml_AddImportSource( FmlSessionHandle handle, const char *href, const char *name )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3034,7 +3034,7 @@ int Fieldml_AddImportSource( FmlSessionHandle handle, const char *location, cons
         return -1;
     }
     
-    if( location == NULL )
+    if( href == NULL )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_2 );  
         return -1;
@@ -3045,24 +3045,24 @@ int Fieldml_AddImportSource( FmlSessionHandle handle, const char *location, cons
         return -1;
     }
 
-    FieldmlRegion *importedRegion = session->getRegion( location, name );
+    FieldmlRegion *importedRegion = session->getRegion( href, name );
     if( importedRegion == NULL )
     {
-        importedRegion = session->addResourceRegion( location, name );
+        importedRegion = session->addResourceRegion( href, name );
         if( importedRegion == NULL )
         {
             return -1;
         }
     }
     
-    int index = session->getRegionIndex( location, name );
+    int index = session->getRegionIndex( href, name );
     if( index < 0 )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_3 );  
         return -1;
     }
     
-    session->region->addImportSource( index, location, name );
+    session->region->addImportSource( index, href, name );
     
     return index + 1;
 }
@@ -3154,7 +3154,7 @@ int Fieldml_GetImportCount( FmlSessionHandle handle, int importSourceIndex )
 }
 
 
-int Fieldml_CopyImportSourceLocation( FmlSessionHandle handle, int importSourceIndex, char *buffer, int bufferLength )
+int Fieldml_CopyImportSourceHref( FmlSessionHandle handle, int importSourceIndex, char *buffer, int bufferLength )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -3167,14 +3167,14 @@ int Fieldml_CopyImportSourceLocation( FmlSessionHandle handle, int importSourceI
         return -1;
     }
     
-    string location = session->region->getImportSourceLocation( importSourceIndex - 1 );
-    if( location == "" )
+    string href = session->region->getImportSourceHref( importSourceIndex - 1 );
+    if( href == "" )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_2 );
         return -1;
     }
     
-    return cappedCopy( location.c_str(), buffer, bufferLength );
+    return cappedCopy( href.c_str(), buffer, bufferLength );
 }
 
 
