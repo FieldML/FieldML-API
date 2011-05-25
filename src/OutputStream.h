@@ -42,7 +42,7 @@
 #ifndef H_FIELDML_OUTPUT_STREAM
 #define H_FIELDML_OUTPUT_STREAM
 
-#include <string>
+#include <cstring>
 
 class FieldmlOutputStream
 {

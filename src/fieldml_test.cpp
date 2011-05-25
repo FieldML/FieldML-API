@@ -39,7 +39,7 @@
  *
  */
 
-#include <string.h>
+#include <cstring>
 
 #include <libxml/SAX.h>
 #include <libxml/globals.h>
@@ -101,7 +101,7 @@ void testRead( const char * filename )
         
         fprintf( stdout, "  %d: %s\n", i, Fieldml_GetObjectName( handle, oHandle ) );
         
-        count2 = Fieldml_GetElementCount( handle, oHandle );
+        count2 = Fieldml_GetMemberCount( handle, oHandle );
         fprintf( stdout, "  %d elements: ", count2 );
         fprintf( stdout, "\n" );
     }
@@ -120,7 +120,7 @@ void testRead( const char * filename )
             Fieldml_GetObjectName( handle, Fieldml_GetMeshElementsType( handle, oHandle ) ),
             Fieldml_GetObjectName( handle, Fieldml_GetMeshChartType( handle, oHandle ) ) );
         fprintf( stdout, "    " );
-        count2 = Fieldml_GetElementCount( handle, oHandle );
+        count2 = Fieldml_GetMemberCount( handle, oHandle );
         fprintf( stdout, "  %d elements:  \n", count2 );
         //TODO Dirty, dirty hack.
         for( int e = 1; e <= count2; e++ )

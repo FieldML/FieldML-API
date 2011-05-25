@@ -39,7 +39,7 @@
  *
  */
 
-#include <string.h>
+#include <cstring>
 
 #include <libxml/encoding.h>
 #include <libxml/xmlwriter.h>
@@ -47,6 +47,7 @@
 #include "string_const.h"
 #include "fieldml_write.h"
 #include "fieldml_api.h"
+#include "String_InternalXSD.h"
 
 using namespace std;
 
@@ -177,7 +178,7 @@ static int writeContinuousType( xmlTextWriterPtr writer, FmlSessionHandle handle
     FmlObjectHandle componentType = Fieldml_GetTypeComponentEnsemble( handle, object );
     if( componentType != FML_INVALID_HANDLE )
     {
-        int count = Fieldml_GetElementCount( handle, componentType );
+        int count = Fieldml_GetMemberCount( handle, componentType );
         if( count > 0 )
         {
             xmlTextWriterStartElement( writer, COMPONENTS_TAG );
@@ -234,7 +235,7 @@ static void writeElements( xmlTextWriterPtr writer, FmlSessionHandle handle, Fml
             writeObjectName( writer, DATA_ATTRIB, handle, dataSource );
         }
 
-        int count = Fieldml_GetElementCount( handle, object );
+        int count = Fieldml_GetMemberCount( handle, object );
         
         xmlTextWriterWriteFormatAttribute( writer, COUNT_ATTRIB, "%d", count );
 
@@ -281,7 +282,7 @@ static int writeMeshType( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlO
         writeContinuousType( writer, handle, chartType, CHART_TAG, Fieldml_GetObjectName( handle, object ) );
     }
     
-    int elementCount = Fieldml_GetElementCount( handle, elementsType );
+    int elementCount = Fieldml_GetMemberCount( handle, elementsType );
     
     xmlTextWriterStartElement( writer, MESH_SHAPES_TAG );
     const char *defaultShape = Fieldml_GetMeshDefaultShape( handle, object );
@@ -695,7 +696,7 @@ int writeFieldmlFile( FmlSessionHandle handle, const char *filename )
 
     xmlTextWriterStartElement( writer, FIELDML_TAG );
     xmlTextWriterWriteAttribute( writer, VERSION_ATTRIB, (const xmlChar*)FML_VERSION_STRING );
-    xmlTextWriterWriteAttribute( writer, (const xmlChar*)"xsi:noNamespaceSchemaLocation", (const xmlChar*)"Fieldml_0.4.xsd" );
+    xmlTextWriterWriteAttribute( writer, (const xmlChar*)"xsi:noNamespaceSchemaLocation", (const xmlChar*)FML_STRING_FIELDML_XSD_LOCATION );
     xmlTextWriterWriteAttribute( writer, (const xmlChar*)"xmlns:xsi", (const xmlChar*)"http://www.w3.org/2001/XMLSchema-instance" );        
     xmlTextWriterStartElement( writer, REGION_TAG );
     

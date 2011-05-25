@@ -43,7 +43,7 @@
 #define H_FIELDML_STRUCTS
 
 #include <vector>
-#include <string>
+#include <cstring>
 
 #include "fieldml_api.h"
 #include "SimpleMap.h"

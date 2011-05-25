@@ -44,6 +44,7 @@
 
 #include <libxml/encoding.h>
 #include <string>
+#include <cstring>
 
 //TODO This really should be somewhere else.
 struct delete_object
@@ -171,9 +172,9 @@ extern const char * const STRING_TYPE_LINES;
 extern const char * const STRING_TRUE;
 
 // strndup not available on all platforms.
-const char *strdupN( const char *str, unsigned int n );
+char *strdupN( const char *str, unsigned int n );
 
-const char *strdupS( const char *str );
+char *strdupS( const char *str );
 
 const std::string getDirectory( const std::string filename );
 

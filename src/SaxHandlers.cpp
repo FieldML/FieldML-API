@@ -40,7 +40,7 @@
  */
 
 
-#include <string.h>
+#include <cstring>
 
 #include "SaxHandlers.h"
 
@@ -1011,7 +1011,7 @@ SaxHandler *EnsembleElementsHandler::onElementStart( const xmlChar *elementName,
             return this;
         }
         
-        Fieldml_SetEnsembleElementRange( parent->getSessionHandle(), parent->handle, atoi( min ), atoi( max ), stride );
+        Fieldml_SetEnsembleMembersRange( parent->getSessionHandle(), parent->handle, atoi( min ), atoi( max ), stride );
     }
     else if( ( xmlStrcmp( elementName, MEMBER_LIST_DATA_TAG ) == 0 ) ||
         ( xmlStrcmp( elementName, MEMBER_RANGE_DATA_TAG ) == 0 ) ||

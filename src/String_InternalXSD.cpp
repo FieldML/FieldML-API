@@ -41,6 +41,8 @@
 
 #include "String_InternalXSD.h"
 
+const char * const FML_STRING_FIELDML_XSD_LOCATION = "http://www.fieldml.org/resources/xml/0.4/fieldml.xsd";
+
 const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"utf-8\"?> \
 <xs:schema id=\"fieldml\" \
     xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" \

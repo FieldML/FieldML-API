@@ -42,6 +42,8 @@
 #ifndef H_STRING_INTERNAL_XSD_H
 #define H_STRING_INTERNAL_XSD_H
 
+extern const char * const FML_STRING_FIELDML_XSD_LOCATION;
+
 extern const char * const FML_STRING_FIELDML_XSD;
 
 #endif // H_STRING_INTERNAL_XSD_H

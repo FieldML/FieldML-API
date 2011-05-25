@@ -42,7 +42,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring> 
-#include <string>
 #include <sstream>
 
 #include "fieldml_api.h"
@@ -139,7 +138,12 @@ FieldmlOutputStream *FieldmlOutputStream::createStringStream( char ** const dest
 
 int FileOutputStream::writeDouble( double value )
 {
-    fprintf( file, "%.8g ", value );
+    int err = fprintf( file, "%.8g ", value );
+
+    if( err < 0 )
+    {
+        return FML_ERR_IO_WRITE_ERR;
+    }
     
     return FML_ERR_NO_ERROR;
 }
@@ -147,7 +151,12 @@ int FileOutputStream::writeDouble( double value )
 
 int FileOutputStream::writeInt( int value )
 {
-    fprintf( file, "%d ", value );
+    int err = fprintf( file, "%d ", value );
+    
+    if( err < 0 )
+    {
+        return FML_ERR_IO_WRITE_ERR;
+    }
     
     return FML_ERR_NO_ERROR;
 }
@@ -155,7 +164,12 @@ int FileOutputStream::writeInt( int value )
 
 int FileOutputStream::writeNewline()
 {
-    fprintf( file, "\n" );
+    int err = fprintf( file, "\n" );
+    
+    if( err < 0 )
+    {
+        return FML_ERR_IO_WRITE_ERR;
+    }
     
     return FML_ERR_NO_ERROR;
 }

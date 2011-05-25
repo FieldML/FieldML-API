@@ -38,7 +38,7 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  */
-#include <string.h>
+#include <cstring>
 
 #include "string_const.h"
 
@@ -168,7 +168,7 @@ const char * const STRING_TYPE_LINES                = "lines";
 const char * const STRING_TRUE                      = "true";
 
 // strndup not available on all platforms.
-const char *strdupN( const char *str, unsigned int len )
+char *strdupN( const char *str, unsigned int len )
 {
     char *dup;
     
@@ -192,7 +192,7 @@ const char *strdupN( const char *str, unsigned int len )
 }
 
 
-const char *strdupS( const char *str )
+char *strdupS( const char *str )
 {
     if( str == NULL )
     {

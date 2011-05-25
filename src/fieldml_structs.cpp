@@ -66,7 +66,7 @@ FieldmlObject::~FieldmlObject()
 
 
 ElementSequence::ElementSequence( const string _name, FmlObjectHandle _elementType ) :
-    FieldmlObject( _name, FHT_ELEMENT_SEQUENCE, false ),
+    FieldmlObject( _name, FHT_UNKNOWN, false ),
     elementType( _elementType )
 {
 }

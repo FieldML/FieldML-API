@@ -42,7 +42,7 @@
 #ifndef H_SAX_HANDLERS
 #define H_SAX_HANDLERS
 
-#include <string>
+#include <cstring>
 #include <libxml/SAX.h>
 
 #include "fieldml_sax.h"

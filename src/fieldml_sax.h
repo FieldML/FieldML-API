@@ -42,7 +42,7 @@
 #ifndef H_FIELDMLSAX
 #define H_FIELDMLSAX
 
-#include <string>
+#include <cstring>
 
 #include "fieldml_structs.h"
 
