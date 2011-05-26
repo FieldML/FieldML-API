@@ -434,13 +434,10 @@ SaxHandler *ContinuousTypeSaxHandler::onElementStart( const xmlChar *elementName
         const char *name = attributes.getAttribute( NAME_ATTRIB );
         int count = attributes.getIntAttribute( COUNT_ATTRIB, 0 );
         
-        if( ( name == NULL ) || ( count < 0 ) )
+        FmlObjectHandle components = Fieldml_CreateContinuousTypeComponents( getSessionHandle(), handle, name, count );
+        if( components == FML_INVALID_HANDLE )
         {
-            getSession()->logError( "ContinuousType has invalid component specification", name );
-        }
-        else
-        {
-            Fieldml_CreateContinuousTypeComponents( getSessionHandle(), handle, name, count );
+            getSession()->logError( "ContinuousType has invalid component specification", handle );
         }
     }
     
@@ -476,7 +473,7 @@ DataResourceSaxHandler::DataResourceSaxHandler( RegionSaxHandler *_parent, const
 
         if( href == NULL )
         {
-            parent->getSession()->logError( "FileSource has no href", name );
+            parent->getSession()->logError( "TextFileDataResource has no href", name );
         }
         else
         {
@@ -490,6 +487,11 @@ DataResourceSaxHandler::DataResourceSaxHandler( RegionSaxHandler *_parent, const
     else
     {
         parent->getSession()->logError( "Invalid type for data resource", name );
+    }
+    
+    if( handle == FML_INVALID_HANDLE )
+    {
+        parent->getSession()->logError( "Invalid DataResource specification", name );
     }
 }
 
@@ -509,13 +511,11 @@ SaxHandler *DataResourceSaxHandler::onElementStart( const xmlChar *elementName, 
         int head = attributes.getIntAttribute( HEAD_ATTRIB, 0 );
         int tail = attributes.getIntAttribute( TAIL_ATTRIB, 0 );
         
-        if( ( name == NULL ) || ( count == -1 ) || ( length == -1 ) )
+        FmlObjectHandle dataSource = Fieldml_CreateTextDataSource( getSessionHandle(), name, handle, firstLine, count, length, head, tail );
+        if( dataSource == FML_INVALID_HANDLE )
         {
             getSession()->logError( "Malformed TextDataSource entry data" );
-            return this;
         }
-        
-        Fieldml_CreateTextDataSource( getSessionHandle(), name, handle, firstLine, count, length, head, tail );
     }
 
     return this;
@@ -541,24 +541,35 @@ ImportSaxHandler::ImportSaxHandler( RegionSaxHandler *_parent, const xmlChar *el
     }
     
     importIndex = Fieldml_AddImportSource( getSessionHandle(), location, region );
+    if( importIndex < 0 )
+    {
+        getSession()->logError( "Invalid import source specification", location );
+    }
 }
 
 
 SaxHandler *ImportSaxHandler::onElementStart( const xmlChar *elementName, SaxAttributes &attributes )
 {
+    FmlObjectHandle handle = FML_INVALID_HANDLE;
+    
     if( xmlStrcmp( elementName, IMPORT_TYPE_TAG ) == 0 )
     {
         const char *localName = attributes.getAttribute( LOCAL_NAME_ATTRIB );
         const char *remoteName = attributes.getAttribute( REMOTE_NAME_ATTRIB );
         
-        Fieldml_AddImport( getSessionHandle(), importIndex, localName, remoteName );
+        handle = Fieldml_AddImport( getSessionHandle(), importIndex, localName, remoteName );
     }
     else if( xmlStrcmp( elementName, IMPORT_EVALUATOR_TAG ) == 0 )
     {
         const char *localName = attributes.getAttribute( LOCAL_NAME_ATTRIB );
         const char *remoteName = attributes.getAttribute( REMOTE_NAME_ATTRIB );
         
-        Fieldml_AddImport( getSessionHandle(), importIndex, localName, remoteName );
+        handle = Fieldml_AddImport( getSessionHandle(), importIndex, localName, remoteName );
+    }
+    
+    if( handle == FML_INVALID_HANDLE )
+    {
+        getSession()->logError( "Invalid import specification" );
     }
 
     return this;
@@ -900,8 +911,7 @@ void PiecewiseEvaluatorSaxHandler::onIntObjectMapEntry( FmlEnsembleValue key, Fm
     {
         if( ( key <= 0 ) || ( value == FML_INVALID_HANDLE ) )
         {
-            const char * name =  Fieldml_GetObjectName( getSessionHandle(), handle );
-            getSession()->logError( "Malformed element evaluator for PiecewiseEvaluator", name );
+            getSession()->logError( "Malformed element evaluator for PiecewiseEvaluator", handle );
         }
         else
         {
@@ -966,8 +976,7 @@ void AggregateEvaluatorSaxHandler::onIntObjectMapEntry( FmlEnsembleValue key, Fm
     {
         if( ( key <= 0 ) || ( value == FML_INVALID_HANDLE ) )
         {
-            const char * name =  Fieldml_GetObjectName( getSessionHandle(), handle );
-            getSession()->logError( "Malformed element evaluator for AggregateEvaluator", name );
+            getSession()->logError( "Malformed element evaluator for AggregateEvaluator", handle );
         }
         else
         {
@@ -1006,8 +1015,7 @@ SaxHandler *EnsembleElementsHandler::onElementStart( const xmlChar *elementName,
         
         if( ( min == NULL ) || ( max == NULL ) )
         {
-            const char *name = Fieldml_GetObjectName( parent->getSessionHandle(), parent->handle );
-            parent->getSession()->logError( "member_range is malformed", name );
+            parent->getSession()->logError( "member_range is malformed", parent->handle );
             return this;
         }
         
@@ -1073,8 +1081,7 @@ SaxHandler *MeshShapesSaxHandler::onElementStart( const xmlChar *elementName, Sa
 
         if( ( element == NULL ) || ( shape == NULL ) )
         {
-            const char * name =  Fieldml_GetObjectName( parent->getSessionHandle(), parent->handle );
-            parent->getSession()->logError( "MeshDomain has malformed shape entry", name );
+            parent->getSession()->logError( "MeshDomain has malformed shape entry", parent->handle );
             return this;
         }
         
@@ -1098,8 +1105,7 @@ SaxHandler *ArgumentsSaxHandler::onElementStart( const xmlChar *elementName, Sax
         FmlObjectHandle argumentHandle = attributes.getObjectAttribute( parent->getSessionHandle(), NAME_ATTRIB );
         if( argumentHandle == FML_INVALID_HANDLE )
         {
-            const char * name =  Fieldml_GetObjectName( parent->getSessionHandle(), parent->handle );
-            parent->getSession()->logError( "Evaluator has malformed argument", name );
+            parent->getSession()->logError( "Evaluator has malformed argument", parent->handle );
             return this;
         }
         Fieldml_AddArgument( parent->getSessionHandle(), parent->handle, argumentHandle );
@@ -1124,8 +1130,7 @@ SaxHandler *BindsSaxHandler::onElementStart( const xmlChar *elementName, SaxAttr
         FmlObjectHandle sourceHandle = attributes.getObjectAttribute( parent->getSessionHandle(), SOURCE_ATTRIB );
         if( ( argumentHandle == FML_INVALID_HANDLE ) || ( sourceHandle == FML_INVALID_HANDLE ) )
         {
-            const char * name =  Fieldml_GetObjectName( parent->getSessionHandle(), parent->handle );
-            parent->getSession()->logError( "Evaluator has malformed bind", name );
+            parent->getSession()->logError( "Evaluator has malformed bind", parent->handle );
             return this;
         }
 
@@ -1141,8 +1146,7 @@ SaxHandler *BindsSaxHandler::onElementStart( const xmlChar *elementName, SaxAttr
         FmlObjectHandle indexHandle = attributes.getObjectAttribute( parent->getSessionHandle(), ARGUMENT_ATTRIB );
         if( indexHandle == FML_INVALID_HANDLE )
         {
-            const char * name =  Fieldml_GetObjectName( parent->getSessionHandle(), parent->handle );
-            parent->getSession()->logError( "Evaluator has malformed index bind", name );
+            parent->getSession()->logError( "Evaluator has malformed index bind", parent->handle );
             return this;
         }
 
@@ -1168,8 +1172,7 @@ SaxHandler *IndexEvaluatorsSaxHandler::onElementStart( const xmlChar *elementNam
         FmlObjectHandle indexHandle = attributes.getObjectAttribute( parent->getSessionHandle(), EVALUATOR_ATTRIB );
         if( indexHandle == FML_INVALID_HANDLE )
         {
-            const char * name =  Fieldml_GetObjectName( parent->getSessionHandle(), parent->handle );
-            parent->getSession()->logError( "Evaluator has malformed index evaluator", name );
+            parent->getSession()->logError( "Evaluator has malformed index evaluator", parent->handle );
             return this;
         }
 
@@ -1186,6 +1189,11 @@ SemidenseSaxHandler::SemidenseSaxHandler( FieldmlObjectSaxHandler *_parent, cons
     ObjectMemberSaxHandler( _parent, elementName )
 {
     FmlObjectHandle dataObject = attributes.getObjectAttribute( parent->getSessionHandle(), DATA_ATTRIB );
+    if( dataObject == FML_INVALID_HANDLE )
+    {
+        parent->getSession()->logError( "ParameterEvaluator has invalid data source", parent->handle );
+        return;
+    }
 
     Fieldml_SetParameterDataDescription( parent->getSessionHandle(), parent->handle, DESCRIPTION_SEMIDENSE );
     Fieldml_SetDataSource( parent->getSessionHandle(), parent->handle, dataObject );
@@ -1224,15 +1232,21 @@ SaxHandler *IndexEvaluatorListSaxHandler::onElementStart( const xmlChar *element
         FmlObjectHandle orderHandle = attributes.getObjectAttribute( parent->parent->getSessionHandle(), ORDER_ATTRIB );
         if( handle == FML_INVALID_HANDLE )
         {
-            parent->parent->getSession()->logError( "Invalid index in semi dense data" );
+            parent->parent->getSession()->logError( "Invalid index evaluator in semi dense data", parent->parent->handle );
         }
         else if( isSparse )
         {
-            Fieldml_AddSparseIndexEvaluator( parent->parent->getSessionHandle(), parent->parent->handle, handle );
+            if( Fieldml_AddSparseIndexEvaluator( parent->parent->getSessionHandle(), parent->parent->handle, handle ) != FML_ERR_NO_ERROR )
+            {
+                parent->parent->getSession()->logError( "Invalid sparse index evaluator in semi dense data", parent->parent->handle );
+            }
         }
         else
         {
-            Fieldml_AddDenseIndexEvaluator( parent->parent->getSessionHandle(), parent->parent->handle, handle, orderHandle );
+            if( Fieldml_AddDenseIndexEvaluator( parent->parent->getSessionHandle(), parent->parent->handle, handle, orderHandle ) != FML_ERR_NO_ERROR )
+            {
+                parent->parent->getSession()->logError( "Invalid dense index evaluator in semi dense data", parent->parent->handle );
+            }
         }
     }
     

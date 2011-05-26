@@ -161,7 +161,7 @@ FieldmlRegion *FieldmlSession::addResourceRegion( string href, string name )
     
     region = currentRegion;
 
-    if( result != 0 )
+    if( ( result != 0 ) || ( getErrorCount() != 0 ) )
     {
         delete resourceRegion;
         resourceRegion = NULL;
@@ -248,6 +248,20 @@ void FieldmlSession::logError( const char *error, const char *name1, const char 
     fprintf( stderr, "%s\n", errorString.c_str() );
     
     addError( errorString );
+}
+
+
+void FieldmlSession::logError( const char *error, FmlObjectHandle objectHandle )
+{
+    FieldmlObject *object = getObject( objectHandle );
+    if( object == NULL )
+    {
+        logError( error, "UNKNOWN OBJECT" );
+    }
+    else
+    {
+        logError( error, object->name.c_str() );
+    }
 }
 
 

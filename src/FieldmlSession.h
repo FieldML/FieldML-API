@@ -87,6 +87,8 @@ public:
 
     void logError( const char *error, const char *name1 = NULL, const char *name2 = NULL );
     
+    void logError( const char *error, FmlObjectHandle object );
+    
     FmlSessionHandle getHandle();
     
     FieldmlObject *getObject( const FmlObjectHandle handle );

@@ -532,15 +532,22 @@ FmlSessionHandle Fieldml_CreateFromFile( const char *filename )
 {
     FieldmlSession *session = new FieldmlSession();
     
-    session->region = session->addResourceRegion( filename, "" );
-    if( session->region == NULL )
+    if( filename == NULL )
     {
-        session->setError( FML_ERR_IO_READ_ERR );
+        session->setError( FML_ERR_INVALID_PARAMETER_1 );
     }
     else
     {
-        session->region->setRoot( getDirectory( filename ) );
-        session->region->finalize();
+        session->region = session->addResourceRegion( filename, "" );
+        if( session->region == NULL )
+        {
+            session->setError( FML_ERR_IO_READ_ERR );
+        }
+        else
+        {
+            session->region->setRoot( getDirectory( filename ) );
+            session->region->finalize();
+        }
     }
     
     return session->getHandle();
@@ -551,7 +558,18 @@ FmlSessionHandle Fieldml_Create( const char *location, const char *name )
 {
     FieldmlSession *session = new FieldmlSession();
     
-    session->region = session->addNewRegion( location, name );
+    if( location == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_1 );
+    }
+    else if( name == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+    }
+    else
+    {
+        session->region = session->addNewRegion( location, name );
+    }
     
     return session->getHandle();
 }
@@ -593,6 +611,10 @@ FmlErrorNumber Fieldml_WriteFile( FmlSessionHandle handle, const char *filename 
     if( session->region == NULL )
     {
         return session->setError( FML_ERR_INVALID_REGION );
+    }
+    if( filename == NULL )
+    {
+        return session->setError( FML_ERR_INVALID_PARAMETER_2 );
     }
         
     session->setError( FML_ERR_NO_ERROR );
@@ -1366,6 +1388,11 @@ FmlObjectHandle Fieldml_CreateArgumentEvaluator( FmlSessionHandle handle, const 
         session->setError( FML_ERR_INVALID_REGION );
         return FML_INVALID_HANDLE;
     }
+    if( name == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        return FML_INVALID_HANDLE;
+    }
 
     if( !checkLocal( session, valueType ) )
     {
@@ -1439,6 +1466,11 @@ FmlObjectHandle Fieldml_CreateExternalEvaluator( FmlSessionHandle handle, const 
     {
         return FML_INVALID_HANDLE;
     }
+    if( name == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        return FML_INVALID_HANDLE;
+    }
 
     if( !checkLocal( session, valueType ) )
     {
@@ -1463,6 +1495,11 @@ FmlObjectHandle Fieldml_CreateParameterEvaluator( FmlSessionHandle handle, const
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
     {
+        return FML_INVALID_HANDLE;
+    }
+    if( name == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_2 );
         return FML_INVALID_HANDLE;
     }
 
@@ -1757,6 +1794,11 @@ FmlObjectHandle Fieldml_CreatePiecewiseEvaluator( FmlSessionHandle handle, const
     {
         return FML_INVALID_HANDLE;
     }
+    if( name == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        return FML_INVALID_HANDLE;
+    }
 
     if( !checkLocal( session, valueType ) )
     {
@@ -1781,6 +1823,11 @@ FmlObjectHandle Fieldml_CreateAggregateEvaluator( FmlSessionHandle handle, const
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
     {
+        return FML_INVALID_HANDLE;
+    }
+    if( name == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_2 );
         return FML_INVALID_HANDLE;
     }
 
@@ -2000,6 +2047,11 @@ FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlSessionHandle handle, const
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
     {
+        return FML_INVALID_HANDLE;
+    }
+    if( name == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_2 );
         return FML_INVALID_HANDLE;
     }
 
@@ -2506,6 +2558,11 @@ FmlObjectHandle Fieldml_CreateContinuousType( FmlSessionHandle handle, const cha
     {
         return FML_INVALID_HANDLE;
     }
+    if( name == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        return FML_INVALID_HANDLE;
+    }
 
     ContinuousType *continuousType = new ContinuousType( name, false );
     
@@ -2519,6 +2576,11 @@ FmlObjectHandle Fieldml_CreateContinuousTypeComponents( FmlSessionHandle handle,
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
     {
+        return FML_INVALID_HANDLE;
+    }
+    if( name == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
     }
     
@@ -2547,6 +2609,11 @@ FmlObjectHandle Fieldml_CreateContinuousTypeComponents( FmlSessionHandle handle,
         session->setError( FML_ERR_INVALID_PARAMETER_4 );
         return FML_INVALID_HANDLE;
     }
+    if( name == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        return FML_INVALID_HANDLE;
+    }
     
     string trueName = name;
     
@@ -2572,6 +2639,11 @@ FmlObjectHandle Fieldml_CreateEnsembleType( FmlSessionHandle handle, const char 
     {
         return FML_INVALID_HANDLE;
     }
+    if( name == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        return FML_INVALID_HANDLE;
+    }
 
     EnsembleType *ensembleType = new EnsembleType( name, false, false );
     
@@ -2585,6 +2657,11 @@ FmlObjectHandle Fieldml_CreateMeshType( FmlSessionHandle handle, const char * na
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
     {
+        return FML_INVALID_HANDLE;
+    }
+    if( name == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_2 );
         return FML_INVALID_HANDLE;
     }
 
@@ -2601,6 +2678,11 @@ FmlObjectHandle Fieldml_CreateMeshElementsType( FmlSessionHandle handle, FmlObje
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
     {
+        return FML_INVALID_HANDLE;
+    }
+    if( name == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
     }
 
@@ -2637,6 +2719,11 @@ FmlObjectHandle Fieldml_CreateMeshChartType( FmlSessionHandle handle, FmlObjectH
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
     {
+        return FML_INVALID_HANDLE;
+    }
+    if( name == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
     }
 
@@ -3225,6 +3312,16 @@ FmlObjectHandle Fieldml_CreateTextFileDataResource( FmlSessionHandle handle, con
     {
         return FML_INVALID_HANDLE;
     }
+    if( name == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        return FML_INVALID_HANDLE;
+    }
+    if( href == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        return FML_INVALID_HANDLE;
+    }
 
     DataResource *dataResource = new TextFileDataResource( name, href );
     
@@ -3238,6 +3335,11 @@ FmlObjectHandle Fieldml_CreateTextInlineDataResource( FmlSessionHandle handle, c
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
     {
+        return FML_INVALID_HANDLE;
+    }
+    if( name == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_2 );
         return FML_INVALID_HANDLE;
     }
 
@@ -3274,6 +3376,11 @@ FmlErrorNumber Fieldml_AddInlineData( FmlSessionHandle handle, FmlObjectHandle o
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
+    }
+    if( data == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        return FML_INVALID_HANDLE;
     }
 
     if( !checkLocal( session, objectHandle ) )
@@ -3526,6 +3633,11 @@ FmlErrorNumber Fieldml_CreateTextDataSource( FmlSessionHandle handle, const char
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
+    }
+    if( name == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        return FML_INVALID_HANDLE;
     }
     
     if( !checkLocal( session, resource ) )
