@@ -41,11 +41,11 @@
 
 #include "String_InternalLibrary.h"
 
-const char * const FML_INTERNAL_LIBRARY_NAME = "http://www.fieldml.org/resources/xml/0.4/fieldml_library.xml";
+const char * const FML_INTERNAL_LIBRARY_NAME = "http://www.fieldml.org/resources/xml/0.4/FieldML_Library_0.4.xml";
 
 const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?> \
-<Fieldml version=\"0.4_RC3\" \
-  xsi:noNamespaceSchemaLocation=\"http://www.fieldml.org/resources/xml/0.4/fieldml.xsd\" \
+<Fieldml version=\"0.4.0\" \
+  xsi:noNamespaceSchemaLocation=\"http://www.fieldml.org/resources/xml/0.4/FieldML_0.4.xsd\" \
   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"> \
  <Region name=\"library\"> \
   <ContinuousType name=\"real.1d\"/> \
@@ -181,8 +181,8 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     <MemberRange min=\"1\" max=\"9\"/> \
    </Members> \
   </EnsembleType> \
-  <ArgumentEvaluator name=\"localNodes.2d.square3x3.argument\" valueType=\"localNodes.2d.square3x3\"/> " 
- " \
+  <ArgumentEvaluator name=\"localNodes.2d.square3x3.argument\" valueType=\"localNodes.2d.square3x3\"/> \
+ \
   <ContinuousType name=\"parameters.2d.unit.biquadraticLagrange\"> \
     <Components name=\"parameters.2d.unit.biquadraticLagrange.component\" count=\"9\"/> \
   </ContinuousType> \
