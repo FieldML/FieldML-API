@@ -63,10 +63,7 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
   <ArgumentEvaluator name=\"real.3d.component.argument\" valueType=\"real.3d.component\"/> \
   <ArgumentEvaluator name=\"real.3d.argument\" valueType=\"real.3d\"/> \
  \
-  <ContinuousType name=\"chart.1d\"> \
-    <Components name=\"chart.1d.component\" count=\"1\"/> \
-  </ContinuousType> \
-  <ArgumentEvaluator name=\"chart.1d.component.argument\" valueType=\"chart.1d.component\"/> \
+  <ContinuousType name=\"chart.1d\"/> \
   <ArgumentEvaluator name=\"chart.1d.argument\" valueType=\"chart.1d\"/> \
  \
   <ContinuousType name=\"chart.2d\"> \
