@@ -72,6 +72,7 @@ FieldmlSession::FieldmlSession() :
     objects( new ObjectStore() )
 {
     handle = addSession( this );
+    lastError = FML_ERR_NO_ERROR;
     
     region = NULL;
 }

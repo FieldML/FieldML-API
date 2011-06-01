@@ -698,6 +698,7 @@ int writeFieldmlFile( FmlSessionHandle handle, const char *filename )
     xmlTextWriterWriteAttribute( writer, VERSION_ATTRIB, (const xmlChar*)FML_VERSION_STRING );
     xmlTextWriterWriteAttribute( writer, (const xmlChar*)"xsi:noNamespaceSchemaLocation", (const xmlChar*)FML_STRING_FIELDML_XSD_LOCATION );
     xmlTextWriterWriteAttribute( writer, (const xmlChar*)"xmlns:xsi", (const xmlChar*)"http://www.w3.org/2001/XMLSchema-instance" );        
+    xmlTextWriterWriteAttribute( writer, (const xmlChar*)"xmlns:xlink", (const xmlChar*)"http://www.w3.org/1999/xlink" );
     xmlTextWriterStartElement( writer, REGION_TAG );
     
     const char *regionName = Fieldml_GetRegionName( handle );

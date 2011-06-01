@@ -503,8 +503,11 @@ void testMisc()
 
 int main( int argc, char **argv )
 {
-    testRead( argv[1] );
-    testWrite( argv[1] );
+    if( argc > 0 )
+    {
+        testRead( argv[1] );
+        testWrite( argv[1] );
+    }
     testMisc();
     testStream();
 
