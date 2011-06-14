@@ -41,6 +41,7 @@
 
 #include <algorithm>
 
+#include "Util.h"
 #include "string_const.h"
 #include "fieldml_api.h"
 #include "ImportInfo.h"

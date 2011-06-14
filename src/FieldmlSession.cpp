@@ -42,8 +42,10 @@
 #include <algorithm>
 
 #include "string_const.h"
+#include "Util.h"
 #include "fieldml_structs.h"
-#include "fieldml_sax.h"
+#include "FieldmlDOM.h"
+#include "FieldmlSession.h"
 #include "String_InternalLibrary.h"
 
 using namespace std;
@@ -144,6 +146,15 @@ FieldmlRegion *FieldmlSession::addResourceRegion( string href, string name )
     {
         return NULL;
     }
+    
+    //NOTE: This will be insufficient when the region name starts being used.
+    if( vectorContains( importHrefStack, href ) )
+    {
+        addError( "Recursive import involving " + href );
+        return NULL;
+    }
+    
+    importHrefStack.push_back( href );
 
     FieldmlRegion *resourceRegion = new FieldmlRegion( href, name, "", objects );
     FieldmlRegion *currentRegion = region;
@@ -152,13 +163,15 @@ FieldmlRegion *FieldmlSession::addResourceRegion( string href, string name )
     int result = 0;
     if( href == FML_INTERNAL_LIBRARY_NAME )
     {
-        result = parseFieldmlString( FML_STRING_INTERNAL_LIBRARY, "Internal library", this );
+        result = FieldmlDOM::parseFieldmlString( FML_STRING_INTERNAL_LIBRARY, "Internal library", FML_INTERNAL_LIBRARY_NAME, this, getSessionHandle() );
     }
     else
     {
-        string libraryFile = makeFilename( region->getRoot(), href );
-        result = parseFieldmlFile( libraryFile.c_str(), this );
+        string filename = makeFilename( region->getRoot(), href );
+        result = FieldmlDOM::parseFieldmlFile( filename.c_str(), this, getSessionHandle() );
     }
+    
+    importHrefStack.pop_back();
     
     region = currentRegion;
 
@@ -184,7 +197,7 @@ FmlErrorNumber FieldmlSession::setErrorAndLocation( const char *file, const int 
     {
         if( debug )
         {
-            printf("FIELDML %s (%s): Error %d at %s:%d\n", FML_VERSION_STRING, __DATE__, error, file, line );
+            fprintf( stderr, "FIELDML %s (%s): Error %d at %s:%d\n", FML_VERSION_STRING, __DATE__, error, file, line );
         }
     }
     
@@ -221,13 +234,19 @@ const string FieldmlSession::getError( const int index )
 }
 
 
+void FieldmlSession::clearErrors()
+{
+    errors.clear();
+}
+
+
 void FieldmlSession::setDebug( const int debugValue )
 {
     debug = debugValue;
 }
 
 
-FmlSessionHandle FieldmlSession::getHandle()
+FmlSessionHandle FieldmlSession::getSessionHandle()
 {
     return handle;
 }

@@ -41,7 +41,6 @@
 
 #include <cstring>
 
-#include <libxml/SAX.h>
 #include <libxml/globals.h>
 #include <libxml/xmlerror.h>
 #include <libxml/parser.h>

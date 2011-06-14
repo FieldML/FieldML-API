@@ -46,7 +46,7 @@
 #include "String_InternalLibrary.h"
 
 #include "fieldml_api.h"
-#include "fieldml_sax.h"
+#include "FieldmlSession.h"
 #include "fieldml_structs.h"
 #include "fieldml_write.h"
 #include "string_const.h"
@@ -459,7 +459,7 @@ static bool checkIsEvaluatorType( FieldmlSession *session, FmlObjectHandle objec
         return false;
     }
     
-    return checkIsValueType( session, Fieldml_GetValueType( session->getHandle(), objectHandle ), allowContinuous, allowEnsemble, false );
+    return checkIsValueType( session, Fieldml_GetValueType( session->getSessionHandle(), objectHandle ), allowContinuous, allowEnsemble, false );
 }
 
 
@@ -483,8 +483,8 @@ static bool checkIsTypeCompatible( FieldmlSession *session, FmlObjectHandle obje
     }
     else if( ( object1->type == FHT_CONTINUOUS_TYPE ) && ( object2->type == FHT_CONTINUOUS_TYPE ) )
     {
-        FmlObjectHandle component1 = Fieldml_GetTypeComponentEnsemble( session->getHandle(), objectHandle1 );
-        FmlObjectHandle component2 = Fieldml_GetTypeComponentEnsemble( session->getHandle(), objectHandle2 );
+        FmlObjectHandle component1 = Fieldml_GetTypeComponentEnsemble( session->getSessionHandle(), objectHandle1 );
+        FmlObjectHandle component2 = Fieldml_GetTypeComponentEnsemble( session->getSessionHandle(), objectHandle2 );
         
         if( ( component1 == FML_INVALID_HANDLE ) && ( component2 == FML_INVALID_HANDLE ) )
         {
@@ -495,7 +495,7 @@ static bool checkIsTypeCompatible( FieldmlSession *session, FmlObjectHandle obje
             return false;
         }
         
-        return Fieldml_GetTypeComponentCount( session->getHandle(), objectHandle1 ) == Fieldml_GetTypeComponentCount( session->getHandle(), objectHandle2 );
+        return Fieldml_GetTypeComponentCount( session->getSessionHandle(), objectHandle1 ) == Fieldml_GetTypeComponentCount( session->getSessionHandle(), objectHandle2 );
     }
     else
     {
@@ -515,8 +515,8 @@ static bool checkIsEvaluatorTypeCompatible( FieldmlSession *session, FmlObjectHa
         return false;
     }
     
-    FmlObjectHandle typeHandle1 = Fieldml_GetValueType( session->getHandle(), objectHandle1 );
-    FmlObjectHandle typeHandle2 = Fieldml_GetValueType( session->getHandle(), objectHandle2 );
+    FmlObjectHandle typeHandle1 = Fieldml_GetValueType( session->getSessionHandle(), objectHandle1 );
+    FmlObjectHandle typeHandle2 = Fieldml_GetValueType( session->getSessionHandle(), objectHandle2 );
     
     return checkIsTypeCompatible( session, typeHandle1, typeHandle2 );
 }
@@ -550,7 +550,7 @@ FmlSessionHandle Fieldml_CreateFromFile( const char *filename )
         }
     }
     
-    return session->getHandle();
+    return session->getSessionHandle();
 }
 
 
@@ -571,7 +571,7 @@ FmlSessionHandle Fieldml_Create( const char *location, const char *name )
         session->region = session->addNewRegion( location, name );
     }
     
-    return session->getHandle();
+    return session->getSessionHandle();
 }
 
 
@@ -620,7 +620,7 @@ FmlErrorNumber Fieldml_WriteFile( FmlSessionHandle handle, const char *filename 
     session->setError( FML_ERR_NO_ERROR );
     session->region->setRoot( getDirectory( filename ) );
 
-    return writeFieldmlFile( handle, filename );
+    return writeFieldmlFile( session, handle, filename );
 }
 
 
@@ -700,6 +700,21 @@ char * Fieldml_GetError( FmlSessionHandle handle, int index )
 int Fieldml_CopyError( FmlSessionHandle handle, int index, char *buffer, int bufferLength )
 {
     return cappedCopyAndFree( Fieldml_GetError( handle, index ), buffer, bufferLength );
+}
+
+
+int Fieldml_ClearErrors( FmlSessionHandle handle )
+{
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    if( session == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+        
+    session->setError( FML_ERR_NO_ERROR );
+    session->clearErrors();
+    
+    return FML_INVALID_HANDLE;
 }
 
 
@@ -1445,6 +1460,7 @@ FmlObjectHandle Fieldml_CreateArgumentEvaluator( FmlSessionHandle handle, const 
             return FML_INVALID_HANDLE;
         }
         
+        //Shouldn't need to check for name-collision, as we already have.
         ArgumentEvaluator *chartEvaluator = new ArgumentEvaluator( chartName.c_str(), chartType, true );
         addObject( session, chartEvaluator );        
         
@@ -1535,7 +1551,6 @@ FmlErrorNumber Fieldml_SetParameterDataDescription( FmlSessionHandle handle, Fml
     }
 
     FieldmlObject *object = getObject( session, objectHandle );
-
     if( object == NULL )
     {
         return session->getLastError();
@@ -1708,7 +1723,6 @@ FmlErrorNumber Fieldml_AddSparseIndexEvaluator( FmlSessionHandle handle, FmlObje
     {
         return session->getLastError();
     }
-
 
     if( !checkIsEvaluatorType( session, indexHandle, false, true ) )
     {
@@ -3089,6 +3103,7 @@ int Fieldml_AddImportSource( FmlSessionHandle handle, const char *href, const ch
         importedRegion = session->addResourceRegion( href, name );
         if( importedRegion == NULL )
         {
+            session->setError( FML_ERR_IO_READ_ERR );
             return -1;
         }
     }
@@ -3646,6 +3661,10 @@ FmlErrorNumber Fieldml_CreateTextDataSource( FmlSessionHandle handle, const char
     }
     
     FieldmlObject *object = getObject( session, resource );
+    if( object == NULL )
+    {
+        return session->getLastError();
+    }
     if( object->type != FHT_DATA_RESOURCE )
     {
         return session->setError( FML_ERR_INVALID_OBJECT );

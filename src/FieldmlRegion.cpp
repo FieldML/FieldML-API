@@ -41,9 +41,10 @@
 
 #include <algorithm>
 
+#include "Util.h"
 #include "string_const.h"
 #include "fieldml_structs.h"
-#include "fieldml_sax.h"
+#include "FieldmlRegion.h"
 
 using namespace std;
 
@@ -131,12 +132,9 @@ const bool FieldmlRegion::hasLocalObject( FmlObjectHandle handle, bool allowVirt
         }
     }
     
-    for( vector<FmlObjectHandle>::iterator i = localObjects.begin(); i != localObjects.end(); i++ )
+    if( vectorContains( localObjects, handle ) )
     {
-        if( *i == handle )
-        {
-            return true;
-        }
+        return true;
     }
     
     if( allowImport )
@@ -194,13 +192,10 @@ const FmlObjectHandle FieldmlRegion::getNamedObject( const string name )
 
 const string FieldmlRegion::getObjectName( FmlObjectHandle handle )
 {
-    for( vector<FmlObjectHandle>::iterator i = localObjects.begin(); i != localObjects.end(); i++ )
+    if( vectorContains( localObjects, handle ) )
     {
-        if( handle == *i )
-        {
-            FieldmlObject *object = store->getObject( *i );
-            return object->name;
-        }
+        FieldmlObject *object = store->getObject( handle );
+        return object->name;
     }
 
     

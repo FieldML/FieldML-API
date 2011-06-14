@@ -39,26 +39,24 @@
  *
  */
 
-#ifndef H_FIELDML_ERROR_HANDLER
-#define H_FIELDML_ERROR_HANDLER
+#ifndef H_UTIL
+#define H_UTIL
 
 #include <vector>
+#include <algorithm>
 
-#include "fieldml_api.h"
-
-class FieldmlErrorHandler
+struct delete_object
 {
-public:
-    virtual FmlErrorNumber setErrorAndLocation( const char *file, const int line, const FmlErrorNumber error ) = 0;
-
-    virtual void addError( const std::string string ) = 0;
-
-    virtual void logError( const char *error, FmlObjectHandle object ) = 0;
-
-    virtual void logError( const char *error, const char *name1 = NULL, const char *name2 = NULL ) = 0;
+    template <typename T>
+    void operator()(T *ptr){ delete ptr;}
 };
 
 
-#define setError( error ) setErrorAndLocation( __FILE__, __LINE__, error )
+template <typename T>
+bool vectorContains( std::vector<T> &v, T value )
+{
+    return find( v.begin(), v.end(), value ) != v.end();
+}
 
-#endif //H_FIELDML_ERROR_HANDLER
+
+#endif // H_UTIL

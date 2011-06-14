@@ -55,6 +55,8 @@ const char NIX_PATH_SEP = '/';
 
 const char * const FML_VERSION_STRING                  = "0.4.0";
 
+const xmlChar * const XLINK_NAMESPACE_STRING           = (const xmlChar* const)"http://www.w3.org/1999/xlink";
+
 const xmlChar * const FIELDML_TAG                      = (const xmlChar* const)"Fieldml";
 
 const xmlChar * const REGION_TAG                       = (const xmlChar* const)"Region";

@@ -65,6 +65,8 @@ private:
 
     std::vector<FieldmlRegion*> regions;
     
+    std::vector<std::string> importHrefStack;
+    
     FmlSessionHandle handle;
     
     static FmlSessionHandle addSession( FieldmlSession *session );
@@ -82,6 +84,8 @@ public:
     const int getErrorCount();
     
     const std::string getError( const int index );
+    
+    void clearErrors();
 
     const FmlObjectHandle getLastError();
 
@@ -89,7 +93,7 @@ public:
     
     void logError( const char *error, FmlObjectHandle object );
     
-    FmlSessionHandle getHandle();
+    FmlSessionHandle getSessionHandle();
     
     FieldmlObject *getObject( const FmlObjectHandle handle );
     

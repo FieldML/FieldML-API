@@ -43,7 +43,8 @@
 #define H_FIELDMLWRITE
 
 #include "fieldml_structs.h"
+#include "FieldmlSession.h"
 
-int writeFieldmlFile( FmlSessionHandle handle, const char *filename );
+int writeFieldmlFile( FieldmlErrorHandler *errorHandler, FmlSessionHandle session, const char *filename );
 
 #endif // H_FIELDMLWRITE

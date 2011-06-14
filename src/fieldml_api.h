@@ -377,6 +377,17 @@ int Fieldml_CopyError( FmlSessionHandle handle, int errorIndex, char *buffer, in
 
 
 /**
+ * Clears the given session's parsing errors and error number.
+ * 
+ * \see Fieldml_GetErrorCount
+ * \see Fieldml_GetError
+ * \see Fieldml_CopyRegionName
+ * \see Fieldml_GetLastError
+ */
+FmlErrorNumber Fieldml_ClearErrors( FmlSessionHandle handle );
+
+
+/**
  * \return The total number of FieldML objects, or zero if there are none.
  * 
  * \see Fieldml_GetObjectByIndex

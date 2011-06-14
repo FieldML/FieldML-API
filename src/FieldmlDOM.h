@@ -39,17 +39,18 @@
  *
  */
 
-#ifndef H_FIELDMLSAX
-#define H_FIELDMLSAX
+#ifndef H_FIELDMLDOM
+#define H_FIELDMLDOM
 
 #include <cstring>
 
-#include "fieldml_structs.h"
+#include "FieldmlErrorHandler.h"
 
-#include "FieldmlSession.h"
+namespace FieldmlDOM
+{
+    int parseFieldmlFile( const char *filename, FieldmlErrorHandler *errorHandler, FmlSessionHandle session );
 
-int parseFieldmlFile( const char *filename, FieldmlSession *session );
+    int parseFieldmlString( const char *string, const char *stringDescription, const char *url, FieldmlErrorHandler *errorHandler, FmlSessionHandle session );
+}
 
-int parseFieldmlString( const char *string, const char *stringDescription, FieldmlSession *session );
-
-#endif // H_FIELDMLSAX
+#endif // H_FIELDMLDOM

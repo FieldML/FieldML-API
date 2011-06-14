@@ -46,15 +46,9 @@
 #include <string>
 #include <cstring>
 
-//TODO This really should be somewhere else.
-struct delete_object
-{
-  template <typename T>
-  void operator()(T *ptr){ delete ptr;}
-};
-
-
 extern const char * const FML_VERSION_STRING;
+
+extern const xmlChar * const XLINK_NAMESPACE_STRING;
 
 extern const xmlChar * const FIELDML_TAG;
 

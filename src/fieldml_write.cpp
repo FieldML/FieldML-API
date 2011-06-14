@@ -676,18 +676,18 @@ static int writeFieldmlObject( xmlTextWriterPtr writer, FmlSessionHandle handle,
 }
 
 
-int writeFieldmlFile( FmlSessionHandle handle, const char *filename )
+int writeFieldmlFile( FieldmlErrorHandler *errorHandler, FmlSessionHandle handle, const char *filename )
 {
     FmlObjectHandle object;
     int i, count, length;
-    int rc = 0;
+    int result = 0;
     char tBuffer[tBufferLength];
     xmlTextWriterPtr writer;
-
+    
     writer = xmlNewTextWriterFilename( filename, 0 );
     if( writer == NULL )
     {
-        printf( "testXmlwriterFilename: Error creating the xml writer\n" );
+        errorHandler->logError( "testXmlwriterFilename: Error creating XML writer", filename );
         return 1;
     }
 
@@ -698,7 +698,7 @@ int writeFieldmlFile( FmlSessionHandle handle, const char *filename )
     xmlTextWriterWriteAttribute( writer, VERSION_ATTRIB, (const xmlChar*)FML_VERSION_STRING );
     xmlTextWriterWriteAttribute( writer, (const xmlChar*)"xsi:noNamespaceSchemaLocation", (const xmlChar*)FML_STRING_FIELDML_XSD_LOCATION );
     xmlTextWriterWriteAttribute( writer, (const xmlChar*)"xmlns:xsi", (const xmlChar*)"http://www.w3.org/2001/XMLSchema-instance" );        
-    xmlTextWriterWriteAttribute( writer, (const xmlChar*)"xmlns:xlink", (const xmlChar*)"http://www.w3.org/1999/xlink" );
+    xmlTextWriterWriteAttribute( writer, (const xmlChar*)"xmlns:xlink", XLINK_NAMESPACE_STRING );
     xmlTextWriterStartElement( writer, REGION_TAG );
     
     const char *regionName = Fieldml_GetRegionName( handle );
@@ -783,10 +783,10 @@ int writeFieldmlFile( FmlSessionHandle handle, const char *filename )
         }
     }
 
-    rc = xmlTextWriterEndDocument( writer );
-    if( rc < 0 )
+    result = xmlTextWriterEndDocument( writer );
+    if( result < 0 )
     {
-        printf( "testXmlwriterFilename: Error at xmlTextWriterEndDocument\n" );
+        errorHandler->logError( "testXmlwriterFilename: Error at xmlTextWriterEndDocument", filename );
         return 1;
     }
 
