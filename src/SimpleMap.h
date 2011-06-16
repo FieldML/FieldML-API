@@ -43,6 +43,7 @@
 #define H_SIMPLE_MAP
 
 #include <vector>
+#include <set>
 
 template <typename K, typename V> class SimpleMap
 {
@@ -191,6 +192,36 @@ public:
     const V getDefault()
     {
         return defaultValue;
+    }
+    
+    
+    std::set<V> getKeys()
+    {
+        std::set<V> keys;
+        
+        for( ConstIterator i = pairs.begin(); i != pairs.end(); i++ )
+        {
+            keys.insert( i->first );
+        }
+        
+        return keys;
+    }
+    
+    
+    std::set<V> getValues()
+    {
+        std::set<V> values;
+        for( ConstIterator i = pairs.begin(); i != pairs.end(); i++ )
+        {
+            values.insert( i->second );
+        }
+        
+        if( defaultValue != invalidValue )
+        {
+            values.insert( defaultValue );
+        }
+        
+        return values;
     }
 };
 

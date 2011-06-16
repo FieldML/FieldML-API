@@ -54,7 +54,7 @@ ObjectStore::ObjectStore()
 
 ObjectStore::~ObjectStore()
 {
-    for_each( objects.begin(), objects.end(), delete_object() );
+    for_each( objects.begin(), objects.end(), FmlUtil::delete_object() );
 }
 
 FieldmlObject *ObjectStore::getObject( FmlObjectHandle handle )

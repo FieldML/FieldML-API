@@ -43,6 +43,7 @@
 #define H_FIELDML_SESSION
 
 #include <vector>
+#include <set>
 
 #include "FieldmlErrorHandler.h"
 #include "FieldmlRegion.h"
@@ -69,6 +70,10 @@ private:
     
     FmlSessionHandle handle;
     
+    bool getDelegateEvaluators(  const std::set<FmlObjectHandle> &evaluators, std::vector<FmlObjectHandle> &stack, std::set<FmlObjectHandle> &set );
+    
+    bool getDelegateEvaluators( FmlObjectHandle handle, std::vector<FmlObjectHandle> &stack, std::set<FmlObjectHandle> &set );
+
     static FmlSessionHandle addSession( FieldmlSession *session );
     
 public:
@@ -122,6 +127,8 @@ public:
     void removeWriter( FmlWriterHandle handle );
     
     DataWriter *handleToWriter( FmlWriterHandle handle );
+    
+    bool getDelegateEvaluators( FmlObjectHandle handle, std::set<FmlObjectHandle> &set );
     
 
     static FieldmlSession *handleToSession( FmlSessionHandle handle );

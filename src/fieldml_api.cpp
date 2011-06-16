@@ -50,6 +50,7 @@
 #include "fieldml_structs.h"
 #include "fieldml_write.h"
 #include "string_const.h"
+#include "Util.h"
 
 #include "DataReader.h"
 #include "DataWriter.h"
@@ -274,6 +275,20 @@ static SemidenseDataDescription *getSemidenseDataDescription( FieldmlSession *se
 
     session->setError( FML_ERR_INVALID_OBJECT );
     return NULL;
+}
+
+
+static bool checkCyclicDependency( FieldmlSession *session, FmlObjectHandle objectHandle, FmlObjectHandle objectDependancy )
+{
+    set<FmlObjectHandle> delegates;
+    session->getDelegateEvaluators( objectDependancy, delegates );
+    if( FmlUtil::contains( delegates, objectHandle ) )
+    {
+        session->setError( FML_ERR_CYCLIC_DEPENDENCY );
+        return false;
+    }
+    
+    return true;
 }
 
 
@@ -1579,6 +1594,7 @@ FmlErrorNumber Fieldml_SetParameterDataDescription( FmlSessionHandle handle, Fml
     return session->setError( FML_ERR_INVALID_OBJECT );
 }
 
+
 DataDescriptionType Fieldml_GetParameterDataDescription( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
@@ -1699,6 +1715,11 @@ FmlErrorNumber Fieldml_AddDenseIndexEvaluator( FmlSessionHandle handle, FmlObjec
     {
         return session->getLastError();
     }
+    
+    if( !checkCyclicDependency( session, objectHandle, indexHandle ) )
+    {
+        return session->getLastError();
+    }
 
     semidense->denseIndexes.push_back( indexHandle );
     semidense->denseOrders.push_back( orderHandle );
@@ -1731,6 +1752,11 @@ FmlErrorNumber Fieldml_AddSparseIndexEvaluator( FmlSessionHandle handle, FmlObje
         
     SemidenseDataDescription *semidense = getSemidenseDataDescription( session, objectHandle );
     if( semidense == NULL )
+    {
+        return session->getLastError();
+    }
+
+    if( !checkCyclicDependency( session, objectHandle, indexHandle ) )
     {
         return session->getLastError();
     }
@@ -1900,6 +1926,11 @@ FmlErrorNumber Fieldml_SetDefaultEvaluator( FmlSessionHandle handle, FmlObjectHa
         return session->getLastError();
     }
 
+    if( !checkCyclicDependency( session, objectHandle, evaluator ) )
+    {
+        return session->getLastError();
+    }
+
     if( ( object->type == FHT_PIECEWISE_EVALUATOR ) || ( object->type == FHT_AGGREGATE_EVALUATOR ) )
     {
         map->setDefault( evaluator );
@@ -1971,11 +2002,17 @@ FmlErrorNumber Fieldml_SetEvaluator( FmlSessionHandle handle, FmlObjectHandle ob
 
     SimpleMap<FmlEnsembleValue, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
  
-    if( map != NULL )
+    if( map == NULL )
     {
-        map->set( element, evaluator );
+        return session->getLastError();
     }
-
+    
+    if( !checkCyclicDependency( session, objectHandle, evaluator ) )
+    {
+        return session->getLastError();
+    }
+    
+    map->set( element, evaluator );
     return session->getLastError();
 }
 
@@ -2287,6 +2324,11 @@ FmlErrorNumber Fieldml_SetBind( FmlSessionHandle handle, FmlObjectHandle objectH
         return session->getLastError();
     }
     
+    if( !checkCyclicDependency( session, objectHandle, sourceHandle ) )
+    {
+        return session->getLastError();
+    }
+    
     map->set( argumentHandle, sourceHandle );
     return session->getLastError();
 }
@@ -2356,6 +2398,11 @@ FmlErrorNumber Fieldml_SetIndexEvaluator( FmlSessionHandle handle, FmlObjectHand
         return session->setError( FML_ERR_INVALID_PARAMETER_4 );
     }
 
+    if( !checkCyclicDependency( session, objectHandle, evaluatorHandle ) )
+    {
+        return session->getLastError();
+    }
+    
     FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )

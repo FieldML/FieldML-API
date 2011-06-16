@@ -107,6 +107,7 @@ typedef int32_t FmlEnsembleValue;               ///< An integer-valued ensemble 
 #define FML_ERR_NAME_COLLISION          1005    ///< An attempt was made to create an object with a name that was already in use. 
 #define FML_ERR_INVALID_REGION          1006    ///< An attempt was made to access an invalid region. This usually indicates a failure to deserialise a FieldML file.
 #define FML_ERR_NONLOCAL_OBJECT         1007    ///< An attempt was made to reference a non-local object (i.e. one that has not been imported).
+#define FML_ERR_CYCLIC_DEPENDENCY       1008    ///< An attempt was made to create a cyclic dependency. 
 
 //Used for giving the user precise feedback on bad parameters passed to the API
 //Only used for parameters other than the FieldML handle and object handle parameters.

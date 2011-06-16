@@ -82,7 +82,7 @@ FieldmlSession::FieldmlSession() :
 
 FieldmlSession::~FieldmlSession()
 {
-    for_each( regions.begin(), regions.end(), delete_object() );
+    for_each( regions.begin(), regions.end(), FmlUtil::delete_object() );
     
     delete objects;
     
@@ -148,7 +148,7 @@ FieldmlRegion *FieldmlSession::addResourceRegion( string href, string name )
     }
     
     //NOTE: This will be insufficient when the region name starts being used.
-    if( vectorContains( importHrefStack, href ) )
+    if( FmlUtil::contains( importHrefStack, href ) )
     {
         addError( "Recursive import involving " + href );
         return NULL;
@@ -336,4 +336,108 @@ FmlWriterHandle FieldmlSession::addWriter( DataWriter *writer )
 void FieldmlSession::removeWriter( FmlWriterHandle handle )
 {
     writers[handle] = NULL;
+}
+
+
+bool FieldmlSession::getDelegateEvaluators( const set<FmlObjectHandle> &evaluators, vector<FmlObjectHandle> &stack, set<FmlObjectHandle> &delegates )
+{
+    for( set<FmlObjectHandle>::const_iterator i = evaluators.begin(); i != evaluators.end(); i++ )
+    {
+        if( !getDelegateEvaluators( *i, stack, delegates ) )
+        {
+            return false;
+        }
+        delegates.insert( *i );
+    }
+    return true;
+}
+
+    
+bool FieldmlSession::getDelegateEvaluators( FmlObjectHandle handle, vector<FmlObjectHandle> &stack, set<FmlObjectHandle> &delegates )
+{
+    FieldmlObject *object = getObject( handle );
+    
+    if( handle == FML_INVALID_HANDLE )
+    {
+        //Convenience so that callers don't have to check
+        return true;
+    }
+    
+    if( FmlUtil::contains( stack, handle ) )
+    {
+        //Recursive dependency!
+        return false;
+    }
+    
+    stack.push_back( handle );
+    if( object->type == FHT_REFERENCE_EVALUATOR )
+    {
+        ReferenceEvaluator *evaluator = (ReferenceEvaluator*)object;
+        if( !getDelegateEvaluators( evaluator->sourceEvaluator, stack, delegates ) )
+        {
+            return false;
+        }
+        delegates.insert( evaluator->sourceEvaluator );
+        if( !getDelegateEvaluators( evaluator->binds.getValues(), stack, delegates ) )
+        {
+            return false;
+        }
+    }
+    else if( object->type == FHT_AGGREGATE_EVALUATOR )
+    {
+        AggregateEvaluator *evaluator = (AggregateEvaluator*)object;
+        if( !getDelegateEvaluators( evaluator->evaluators.getValues(), stack, delegates ) )
+        {
+            return false;
+        }
+        if( !getDelegateEvaluators( evaluator->binds.getValues(), stack, delegates ) )
+        {
+            return false;
+        }
+    }
+    else if( object->type == FHT_PIECEWISE_EVALUATOR )
+    {
+        PiecewiseEvaluator *evaluator = (PiecewiseEvaluator*)object;
+        if( !getDelegateEvaluators( evaluator->evaluators.getValues(), stack, delegates ) )
+        {
+            return false;
+        }
+        if( !getDelegateEvaluators( evaluator->binds.getValues(), stack, delegates ) )
+        {
+            return false;
+        }
+    }
+    else if( object->type == FHT_PARAMETER_EVALUATOR )
+    {
+        ParameterEvaluator *evaluator = (ParameterEvaluator*)object;
+        set<FmlObjectHandle> indexEvaluators;
+        if( evaluator->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
+        {
+            SemidenseDataDescription *semidense = (SemidenseDataDescription*)evaluator->dataDescription;
+            
+            for( vector<FmlObjectHandle>::const_iterator i = semidense->denseIndexes.begin(); i != semidense->denseIndexes.end(); i++ )
+            {
+                indexEvaluators.insert( *i );
+            }
+            for( vector<FmlObjectHandle>::const_iterator i = semidense->sparseIndexes.begin(); i != semidense->sparseIndexes.end(); i++ )
+            {
+                indexEvaluators.insert( *i );
+            }
+        }
+        
+        if( !getDelegateEvaluators( indexEvaluators, stack, delegates ) )
+        {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+
+bool FieldmlSession::getDelegateEvaluators( FmlObjectHandle handle, set<FmlObjectHandle> &delegates )
+{
+    vector<FmlObjectHandle> stack;
+    
+    return getDelegateEvaluators( handle, stack, delegates );
 }

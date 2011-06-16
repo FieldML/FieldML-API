@@ -65,7 +65,7 @@ FieldmlRegion::FieldmlRegion( const string _href, const string _name, const stri
 
 FieldmlRegion::~FieldmlRegion()
 {
-    for_each( imports.begin(), imports.end(), delete_object() );
+    for_each( imports.begin(), imports.end(), FmlUtil::delete_object() );
 }
 
 
@@ -132,7 +132,7 @@ const bool FieldmlRegion::hasLocalObject( FmlObjectHandle handle, bool allowVirt
         }
     }
     
-    if( vectorContains( localObjects, handle ) )
+    if( FmlUtil::contains( localObjects, handle ) )
     {
         return true;
     }
@@ -192,7 +192,7 @@ const FmlObjectHandle FieldmlRegion::getNamedObject( const string name )
 
 const string FieldmlRegion::getObjectName( FmlObjectHandle handle )
 {
-    if( vectorContains( localObjects, handle ) )
+    if( FmlUtil::contains( localObjects, handle ) )
     {
         FieldmlObject *object = store->getObject( handle );
         return object->name;

@@ -45,18 +45,20 @@
 #include <vector>
 #include <algorithm>
 
-struct delete_object
+namespace FmlUtil
 {
-    template <typename T>
-    void operator()(T *ptr){ delete ptr;}
-};
-
-
-template <typename T>
-bool vectorContains( std::vector<T> &v, T value )
-{
-    return find( v.begin(), v.end(), value ) != v.end();
+    struct delete_object
+    {
+        template <typename T>
+        void operator()(T *ptr){ delete ptr;}
+    };
+    
+    
+    template <typename T, typename S>
+    bool contains( T &v, S value )
+    {
+        return find( v.begin(), v.end(), value ) != v.end();
+    }
 }
-
 
 #endif // H_UTIL

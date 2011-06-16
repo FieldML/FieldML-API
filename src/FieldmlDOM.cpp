@@ -1137,7 +1137,7 @@ public:
     
 static int parseObjectNode( xmlNodePtr objectNode, ParseState &state )
 {
-    if( vectorContains( state.parseStack, objectNode ) )
+    if( FmlUtil::contains( state.parseStack, objectNode ) )
     {
         const char *name = getStringAttribute( objectNode, NAME_ATTRIB );
         state.errorHandler->logError( "Recursive object definition", name );

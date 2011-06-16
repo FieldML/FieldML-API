@@ -127,7 +127,7 @@ void testRead( const char * filename )
             const char *shape = Fieldml_GetMeshElementShape( handle, oHandle, e, 1 );
             if( shape != NULL )
             {
-                printf("  %d -> %s\n", e, shape );
+                printf( "  %d -> %s\n", e, shape );
             }
         }
         fprintf( stdout, "\n" );
@@ -353,11 +353,11 @@ void testStream()
 
     if( testOk ) 
     {
-        printf("TestStream - ok\n" );
+        printf( "TestStream - ok\n" );
     }
     else
     {
-        printf("TestStream - failed\n" );
+        printf( "TestStream - failed\n" );
     }
 }
 
@@ -416,7 +416,7 @@ void testMisc()
         if( values[i] != readValues[i] ) 
         {
             testOk = false;
-            printf("Parameter stream simple test failed: %d %g != %g\n", i, values[i], readValues[i] );
+            printf( "Parameter stream simple test failed: %d %g != %g\n", i, values[i], readValues[i] );
         }
     }
     
@@ -452,7 +452,7 @@ void testMisc()
     if( ( indexValues1[0] != readIndexes[0] ) && ( indexValues1[1] != readIndexes[1] ) ) 
     {
         testOk = false;
-        printf("Parameter stream semidense first index read failed: index %d %d != %d\n", i, indexValues1[i], readIndexes[i] );
+        printf( "Parameter stream semidense first index read failed: index %d %d != %d\n", i, indexValues1[i], readIndexes[i] );
     }
 
     Fieldml_ReadDoubleValues( handle, reader, readValues, 3 );
@@ -463,7 +463,7 @@ void testMisc()
         if( rawValues1[i] != readValues[i] ) 
         {
             testOk = false;
-            printf("Parameter stream semidense first values read failed: %d %g != %g\n", i, rawValues1[i], readValues[i] );
+            printf( "Parameter stream semidense first values read failed: %d %g != %g\n", i, rawValues1[i], readValues[i] );
         }
     }
     
@@ -471,7 +471,7 @@ void testMisc()
     if( ( indexValues2[0] != readIndexes[0] ) && ( indexValues2[1] != readIndexes[1] ) ) 
     {
         testOk = false;
-        printf("Parameter stream test second index read failed: index %d %d != %d\n", i, indexValues2[i], readIndexes[i] );
+        printf( "Parameter stream test second index read failed: index %d %d != %d\n", i, indexValues2[i], readIndexes[i] );
     }
 
     Fieldml_ReadDoubleValues( handle, reader, readValues, 9 );
@@ -481,7 +481,7 @@ void testMisc()
         if( rawValues2[i] != readValues[i] ) 
         {
             testOk = false;
-            printf("Parameter stream test second values read failed: %d %g != %g\n", i, rawValues2[i], readValues[i] );
+            printf( "Parameter stream test second values read failed: %d %g != %g\n", i, rawValues2[i], readValues[i] );
         }
     }
     
@@ -491,12 +491,87 @@ void testMisc()
     Fieldml_Destroy( handle );
     if( testOk ) 
     {
-        printf("TestMisc - ok\n" );
+        printf( "TestMisc - ok\n" );
     }
     else
     {
-        printf("TestMisc - failed\n" );
+        printf( "TestMisc - failed\n" );
     }
+}
+
+
+int testCycles()
+{
+    bool testOk = true;
+    
+    FmlSessionHandle session = Fieldml_Create( "test", "test" );
+    
+    FmlObjectHandle type = Fieldml_CreateContinuousType( session, "test.type" );
+    
+    FmlObjectHandle ensemble = Fieldml_CreateEnsembleType( session, "test.ensemble" );
+    Fieldml_SetEnsembleMembersRange( session, ensemble, 1, 20, 1 );
+    
+    FmlObjectHandle arg1 = Fieldml_CreateArgumentEvaluator( session, "test.arg1", type );
+    FmlObjectHandle arg2 = Fieldml_CreateArgumentEvaluator( session, "test.arg2", type );
+    
+    FmlObjectHandle external = Fieldml_CreateExternalEvaluator( session, "test.external", type );
+    
+    FmlObjectHandle ref1 = Fieldml_CreateReferenceEvaluator( session, "test.reference1", external );
+    FmlObjectHandle ref2 = Fieldml_CreateReferenceEvaluator( session, "test.reference2", ref1 );
+    
+    if( Fieldml_SetBind( session, ref1, arg1, ref2 ) != FML_ERR_CYCLIC_DEPENDENCY )
+    {
+        printf( "TestCycles - ReferenceEvaluator test failed\n" );
+        testOk = false;
+    }
+    
+    FmlObjectHandle param = Fieldml_CreateParameterEvaluator( session, "test.parameter", ensemble );
+    Fieldml_SetParameterDataDescription( session, param, DESCRIPTION_SEMIDENSE );
+    
+    FmlObjectHandle ref3 = Fieldml_CreateReferenceEvaluator( session, "test.reference3", param );
+    
+    if( Fieldml_AddDenseIndexEvaluator( session, param, ref3, FML_INVALID_HANDLE ) != FML_ERR_CYCLIC_DEPENDENCY )
+    {
+        printf( "TestCycles - ParameterEvaluator dense test failed\n" );
+        testOk = false;
+    }
+    if( Fieldml_AddSparseIndexEvaluator( session, param, ref3 ) != FML_ERR_CYCLIC_DEPENDENCY )
+    {
+        printf( "TestCycles - ParameterEvaluator sparse test failed\n" );
+        testOk = false;
+    }
+    
+    FmlObjectHandle piece = Fieldml_CreatePiecewiseEvaluator( session, "test.piecewise", ensemble );
+    Fieldml_AddDenseIndexEvaluator( session, param, piece, FML_INVALID_HANDLE );
+    
+    if( Fieldml_SetDefaultEvaluator( session, piece, param ) != FML_ERR_CYCLIC_DEPENDENCY )
+    {
+        printf( "TestCycles - PiecewiseEvaluator default test failed\n" );
+        testOk = false;
+    }
+    
+    if( Fieldml_SetEvaluator( session, piece, 1, param ) != FML_ERR_CYCLIC_DEPENDENCY )
+    {
+        printf( "TestCycles - PiecewiseEvaluator evaluator test failed\n" );
+    }
+    
+    if( Fieldml_SetIndexEvaluator( session, piece, 1, param ) != FML_ERR_CYCLIC_DEPENDENCY )
+    {
+        printf( "TestCycles - PiecewiseEvaluator index evaluator test failed\n" );
+    }
+    
+    Fieldml_Destroy( session );
+    
+    if( testOk ) 
+    {
+        printf( "TestCycles - ok\n" );
+    }
+    else
+    {
+        printf( "TestCycles - failed\n" );
+    }
+    
+    return 0;
 }
 
 
@@ -508,7 +583,10 @@ int main( int argc, char **argv )
         testWrite( argv[1] );
     }
     testMisc();
+    
     testStream();
+    
+    testCycles();
 
     xmlCleanupParser( );
     xmlMemoryDump( );

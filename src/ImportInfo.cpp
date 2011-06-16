@@ -85,7 +85,7 @@ ImportInfo::ImportInfo( string _href, string _name ) :
 
 ImportInfo::~ImportInfo()
 {
-    for_each( imports.begin(), imports.end(), delete_object() );
+    for_each( imports.begin(), imports.end(), FmlUtil::delete_object() );
 }
 
 
