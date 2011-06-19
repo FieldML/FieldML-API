@@ -74,6 +74,10 @@ private:
     
     bool getDelegateEvaluators( FmlObjectHandle handle, std::vector<FmlObjectHandle> &stack, std::set<FmlObjectHandle> &set );
 
+    void mergeArguments( const SimpleMap<FmlObjectHandle, FmlObjectHandle> &binds, std::set<FmlObjectHandle> &delegateUnbound, std::set<FmlObjectHandle> &delegateUsed, std::set<FmlObjectHandle> &unbound, std::set<FmlObjectHandle> &used );
+    
+    void getArguments( const std::set<FmlObjectHandle> &handles, std::set<FmlObjectHandle> &unbound, std::set<FmlObjectHandle> &used );
+
     static FmlSessionHandle addSession( FieldmlSession *session );
     
 public:
@@ -130,6 +134,7 @@ public:
     
     bool getDelegateEvaluators( FmlObjectHandle handle, std::set<FmlObjectHandle> &set );
     
+    void getArguments( FmlObjectHandle handle, std::set<FmlObjectHandle> &unbound, std::set<FmlObjectHandle> &used, bool addSelf );
 
     static FieldmlSession *handleToSession( FmlSessionHandle handle );
 };

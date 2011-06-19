@@ -189,48 +189,62 @@ static SimpleMap<FmlObjectHandle, FmlObjectHandle> *getBindMap( FieldmlSession *
 }
 
 
-static vector<FmlObjectHandle> *getArgumentList( FieldmlSession *session, FmlObjectHandle objectHandle )
+static vector<FmlObjectHandle> getArgumentList( FieldmlSession *session, FmlObjectHandle objectHandle, bool isUnbound, bool isUsed )
 {
     FieldmlObject *object = getObject( session, objectHandle );
 
+    vector<FmlObjectHandle> args;
+
     if( object == NULL )
     {
-        return NULL;
+        session->setError( FML_ERR_UNKNOWN_OBJECT );
+        return args;
     }
+    
+    if( ( object->type != FHT_AGGREGATE_EVALUATOR ) &&
+        ( object->type != FHT_ARGUMENT_EVALUATOR ) &&
+        ( object->type != FHT_EXTERNAL_EVALUATOR ) &&
+        ( object->type != FHT_PARAMETER_EVALUATOR ) &&
+        ( object->type != FHT_PIECEWISE_EVALUATOR ) &&
+        ( object->type != FHT_REFERENCE_EVALUATOR ) )
+    {
+        session->setError( FML_ERR_INVALID_OBJECT );
+        return args;
+    }
+        
 
-    if( object->type == FHT_REFERENCE_EVALUATOR )
+    if ( !isUnbound && !isUsed )
     {
-        ReferenceEvaluator *referenceEvaluator = (ReferenceEvaluator *)object;
-        return &referenceEvaluator->arguments;
+        //Always an empty set with the current algorithm, as it only tracks unbound or used arguments.
+        return args;
     }
-    if( object->type == FHT_AGGREGATE_EVALUATOR )
+    if( isUnbound && !isUsed )
     {
-        AggregateEvaluator *aggregateEvaluator = (AggregateEvaluator *)object;
-        return &aggregateEvaluator->arguments;
+        //Always an empty set with the current algorithm, as it assumes that arguments of arguments are used.
+        return args;
     }
-    if( object->type == FHT_PARAMETER_EVALUATOR )
+    
+    set<FmlObjectHandle> unbound, used;
+    session->getArguments( objectHandle, unbound, used, false );
+    
+    if( !isUnbound && isUsed )
     {
-        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        return &parameterEvaluator->arguments;
+        used.erase( unbound.begin(), unbound.end() );
+        for( set<FmlObjectHandle>::const_iterator i = used.begin(); i != used.end(); i++ )
+        {
+            args.push_back( *i );
+        }
+        return args;
     }
-    if( object->type == FHT_ARGUMENT_EVALUATOR )
+    else //if( isUnbound && isUsed )
     {
-        ArgumentEvaluator *argumentEvaluator = (ArgumentEvaluator *)object;
-        return &argumentEvaluator->arguments;
+        //In used, and in unbound. Unbound is always is a subset of used with the current algorithm.
+        for( set<FmlObjectHandle>::const_iterator i = unbound.begin(); i != unbound.end(); i++ )
+        {
+            args.push_back( *i );
+        }
+        return args;
     }
-    if( object->type == FHT_EXTERNAL_EVALUATOR )
-    {
-        ExternalEvaluator *externalEvaluator = (ExternalEvaluator *)object;
-        return &externalEvaluator->arguments;
-    }
-    if( object->type == FHT_PIECEWISE_EVALUATOR )
-    {
-        PiecewiseEvaluator *piecewiseEvaluator = (PiecewiseEvaluator *)object;
-        return &piecewiseEvaluator->arguments;
-    }
-
-    session->setError( FML_ERR_INVALID_OBJECT );
-    return NULL;
 }
 
 
@@ -2146,25 +2160,24 @@ FmlObjectHandle Fieldml_GetReferenceSourceEvaluator( FmlSessionHandle handle, Fm
 }
 
 
-int Fieldml_GetArgumentCount( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetArgumentCount( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlBoolean isBound, FmlBoolean isUsed )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
     {
         return -1;
     }
-
-    vector<FmlObjectHandle> *arguments = getArgumentList( session, objectHandle );
-    if( arguments == NULL )
+    
+    vector<FmlObjectHandle> args = getArgumentList( session, objectHandle, isBound != 0, isUsed != 0 );
+    if( session->getLastError() != FML_ERR_NO_ERROR )
     {
         return -1;
     }
-    
-    return arguments->size();
+    return args.size();
 }
 
 
-FmlObjectHandle Fieldml_GetArgument( FmlSessionHandle handle, FmlObjectHandle objectHandle, int argumentIndex )
+FmlObjectHandle Fieldml_GetArgument( FmlSessionHandle handle, FmlObjectHandle objectHandle, int argumentIndex, FmlBoolean isUnbound, FmlBoolean isUsed )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
@@ -2172,19 +2185,19 @@ FmlObjectHandle Fieldml_GetArgument( FmlSessionHandle handle, FmlObjectHandle ob
         return FML_INVALID_HANDLE;
     }
 
-    vector<FmlObjectHandle> *arguments = getArgumentList( session, objectHandle );
-    if( arguments == NULL )
+    vector<FmlObjectHandle> args = getArgumentList( session, objectHandle, isUnbound != 0, isUsed != 0 );
+    if( session->getLastError() != FML_ERR_NO_ERROR )
     {
         return FML_INVALID_HANDLE;
     }
     
-    if( ( argumentIndex < 1 ) || ( argumentIndex > arguments->size() ) )
+    if( ( argumentIndex < 1 ) || ( argumentIndex > args.size() ) )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
     }
     
-    return arguments->at( argumentIndex - 1 );
+    return args.at( argumentIndex - 1 );
 }
 
 
@@ -2196,6 +2209,12 @@ FmlErrorNumber Fieldml_AddArgument( FmlSessionHandle handle, FmlObjectHandle obj
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
+    FieldmlObject *object = getObject( session, objectHandle );
+    if( object == NULL )
+    {
+        return session->getLastError();
+    }
+
     if( !checkLocal( session, objectHandle ) )
     {
         return session->getLastError();
@@ -2204,16 +2223,25 @@ FmlErrorNumber Fieldml_AddArgument( FmlSessionHandle handle, FmlObjectHandle obj
     {
         return session->getLastError();
     }
-
-    vector<FmlObjectHandle> *arguments = getArgumentList( session, objectHandle );
-    if( arguments == NULL )
+    
+    if( Fieldml_GetObjectType( handle, evaluatorHandle ) != FHT_ARGUMENT_EVALUATOR )
     {
-        return FML_ERR_UNKNOWN_HANDLE;
+        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
     
-    if( find( arguments->begin(), arguments->end(), evaluatorHandle ) == arguments->end() )
+    if( object->type == FHT_ARGUMENT_EVALUATOR )
     {
-        arguments->push_back( evaluatorHandle );
+        ArgumentEvaluator *evaluator = (ArgumentEvaluator*)object;
+        evaluator->arguments.insert( evaluatorHandle );
+    }
+    else if( object->type == FHT_EXTERNAL_EVALUATOR )
+    {
+        ExternalEvaluator *evaluator = (ExternalEvaluator*)object;
+        evaluator->arguments.insert( evaluatorHandle );
+    }
+    else
+    {
+        return session->setError( FML_ERR_INVALID_OBJECT );
     }
 
     return session->getLastError();

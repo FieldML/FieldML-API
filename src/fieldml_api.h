@@ -1000,31 +1000,31 @@ FmlObjectHandle Fieldml_GetReferenceSourceEvaluator( FmlSessionHandle handle, Fm
 
 /**
  * Add an argument evaluator to the list of argument evaluators used by the given evaluator.
+ * Arguments can only be directly set for external and argument evaluators, because they represent abstractions.
+ * However, the arguments for all types of evaluator is accessible via the relevant functions.
  * 
- * \note Currently, an evaluator's argument list is specified entirely by this function. However, it is
- * intended that in future version, the argument list will be automatically maintained for piecewise, aggregate,
- * reference and parameter evaluators. Because they represent abstractions, the argument list for external and
- * argument evaluators will still need to be set directly via Fieldml_AddArgument()
+ * \see Fieldml_GetArgumentCount
+ * \see Fieldml_GetArgument
  */
 FmlErrorNumber Fieldml_AddArgument( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle evaluatorHandle );
 
 
 /**
- * \return The number of argument evaluators used by the given evaluator.
+ * \return The number of argument evaluators used by the given evaluator, subject to the given qualifiers.
  * 
  * \see Fieldml_AddArgument
  * \see Fieldml_GetArgument
  */
-int Fieldml_GetArgumentCount( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+int Fieldml_GetArgumentCount( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlBoolean isUnbound, FmlBoolean isUsed );
 
 
 /**
- * \return The nth argument evaluator used by the given evaluator. 
+ * \return The nth argument evaluator used by the given evaluator, subject to the given qualifiers. 
  * 
  * \see Fieldml_AddArgument
  * \see Fieldml_GetArgumentCount
  */
-FmlObjectHandle Fieldml_GetArgument( FmlSessionHandle handle, FmlObjectHandle objectHandle, int argumentIndex );
+FmlObjectHandle Fieldml_GetArgument( FmlSessionHandle handle, FmlObjectHandle objectHandle, int argumentIndex, FmlBoolean isUnbound, FmlBoolean isUsed );
 
 
 /**

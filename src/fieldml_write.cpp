@@ -143,7 +143,7 @@ static int writeBinds( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObje
 
 static int writeArguments( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObjectHandle object )
 {
-    int count = Fieldml_GetArgumentCount( handle, object );
+    int count = Fieldml_GetArgumentCount( handle, object, 1, 1 );
     if( count <= 0 )
     {
         return 0;
@@ -153,7 +153,7 @@ static int writeArguments( xmlTextWriterPtr writer, FmlSessionHandle handle, Fml
     
     for( int i = 1; i <= count; i++ )
     {
-        FmlObjectHandle argument = Fieldml_GetArgument( handle, object, i );
+        FmlObjectHandle argument = Fieldml_GetArgument( handle, object, i, 1, 1 );
         if( argument == FML_INVALID_HANDLE )
         {
             continue;
@@ -456,8 +456,6 @@ static int writeReferenceEvaluator( xmlTextWriterPtr writer, FmlSessionHandle ha
     writeObjectName( writer, NAME_ATTRIB, handle, object );
     writeObjectName( writer, EVALUATOR_ATTRIB, handle, Fieldml_GetReferenceSourceEvaluator( handle, object ) );
 
-    writeArguments( writer, handle, object );
-    
     writeBinds( writer, handle, object );
 
     xmlTextWriterEndElement( writer );
@@ -473,8 +471,6 @@ static int writePiecewiseEvaluator( xmlTextWriterPtr writer, FmlSessionHandle ha
     writeObjectName( writer, NAME_ATTRIB, handle, object );
     writeObjectName( writer, VALUE_TYPE_ATTRIB, handle, Fieldml_GetValueType( handle, object ) );
 
-    writeArguments( writer, handle, object );
-    
     writeBinds( writer, handle, object );
     
     xmlTextWriterStartElement( writer, INDEX_EVALUATORS_TAG );
@@ -586,8 +582,6 @@ static int writeParameterEvaluator( xmlTextWriterPtr writer, FmlSessionHandle ha
     writeObjectName( writer, NAME_ATTRIB, handle, object );
     writeObjectName( writer, VALUE_TYPE_ATTRIB, handle, Fieldml_GetValueType( handle, object ) );
 
-    writeArguments( writer, handle, object );
-
     DataDescriptionType description = Fieldml_GetParameterDataDescription( handle, object );
     if( description == DESCRIPTION_SEMIDENSE )
     {
@@ -606,8 +600,6 @@ static int writeAggregateEvaluator( xmlTextWriterPtr writer, FmlSessionHandle ha
     writeObjectName( writer, NAME_ATTRIB, handle, object );
     writeObjectName( writer, VALUE_TYPE_ATTRIB, handle, Fieldml_GetValueType( handle, object ) );
 
-    writeArguments( writer, handle, object );
-    
     writeBinds( writer, handle, object );
     
     int count = Fieldml_GetEvaluatorCount( handle, object );

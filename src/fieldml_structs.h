@@ -43,6 +43,7 @@
 #define H_FIELDML_STRUCTS
 
 #include <vector>
+#include <set>
 #include <string>
 
 #include "fieldml_api.h"
@@ -127,8 +128,6 @@ class Evaluator :
 public:
     const FmlObjectHandle valueType;
 
-    std::vector<FmlObjectHandle> arguments;
-
     Evaluator( const std::string _name, FieldmlHandleType _type, FmlObjectHandle _valueType, bool _isVirtual );
 };
 
@@ -175,6 +174,8 @@ class ArgumentEvaluator :
     public Evaluator
 {
 public:
+    std::set<FmlObjectHandle> arguments;
+    
     ArgumentEvaluator( const std::string name, FmlObjectHandle _valueType, bool _isVirtual );
 };
 
@@ -183,6 +184,8 @@ class ExternalEvaluator :
     public Evaluator
 {
 public:
+    std::set<FmlObjectHandle> arguments;
+    
     ExternalEvaluator( const std::string name, FmlObjectHandle _valueType, bool _isVirtual );
 };
 

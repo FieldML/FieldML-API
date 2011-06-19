@@ -101,13 +101,13 @@ public:
     }
     
 
-    ConstIterator begin()
+    ConstIterator begin() const
     {
         return pairs.begin();
     }
     
     
-    ConstIterator end()
+    ConstIterator end() const
     {
         return pairs.end();
     }

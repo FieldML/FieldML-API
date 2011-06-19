@@ -390,6 +390,10 @@ bool FieldmlSession::getDelegateEvaluators( FmlObjectHandle handle, vector<FmlOb
         {
             return false;
         }
+        if( !getDelegateEvaluators( evaluator->indexEvaluator, stack, delegates ) )
+        {
+            return false;
+        }
         if( !getDelegateEvaluators( evaluator->binds.getValues(), stack, delegates ) )
         {
             return false;
@@ -399,6 +403,10 @@ bool FieldmlSession::getDelegateEvaluators( FmlObjectHandle handle, vector<FmlOb
     {
         PiecewiseEvaluator *evaluator = (PiecewiseEvaluator*)object;
         if( !getDelegateEvaluators( evaluator->evaluators.getValues(), stack, delegates ) )
+        {
+            return false;
+        }
+        if( !getDelegateEvaluators( evaluator->indexEvaluator, stack, delegates ) )
         {
             return false;
         }
@@ -440,4 +448,124 @@ bool FieldmlSession::getDelegateEvaluators( FmlObjectHandle handle, set<FmlObjec
     vector<FmlObjectHandle> stack;
     
     return getDelegateEvaluators( handle, stack, delegates );
+}
+
+
+void FieldmlSession::mergeArguments( const SimpleMap<FmlObjectHandle, FmlObjectHandle> &binds, set<FmlObjectHandle> &delegateUnbound, set<FmlObjectHandle> &delegateUsed, set<FmlObjectHandle> &unbound, set<FmlObjectHandle> &used )
+{
+    set<FmlObjectHandle> tmpUnbound;
+    for( SimpleMap<FmlObjectHandle, FmlObjectHandle>::ConstIterator i = binds.begin(); i != binds.end(); i++ )
+    {
+        if( FmlUtil::contains( delegateUsed, i->first ) )
+        {
+            getArguments( i->second, tmpUnbound, delegateUsed, true );
+
+            ArgumentEvaluator *arg = (ArgumentEvaluator*)getObject( i->first );
+            for( set<FmlObjectHandle>::const_iterator i = arg->arguments.begin(); i != arg->arguments.end(); i++ )
+            {
+                tmpUnbound.erase( *i );
+            }
+            for( set<FmlObjectHandle>::const_iterator i = tmpUnbound.begin(); i != tmpUnbound.end(); i++ )
+            {
+                delegateUnbound.insert( *i );
+            }
+        }
+    }
+
+    for( SimpleMap<FmlObjectHandle, FmlObjectHandle>::ConstIterator i = binds.begin(); i != binds.end(); i++ )
+    {
+        delegateUnbound.erase( i->first );
+    }
+
+    used.insert( delegateUsed.begin(), delegateUsed.end() );
+    unbound.insert( delegateUnbound.begin(), delegateUnbound.end() );
+
+}
+
+
+void FieldmlSession::getArguments( const set<FmlObjectHandle> &handles, set<FmlObjectHandle> &unbound, set<FmlObjectHandle> &used )
+{
+    for( set<FmlObjectHandle>::const_iterator i = handles.begin(); i != handles.end(); i++ )
+    {
+        getArguments( *i, unbound, used, true );
+    }
+}
+
+
+void FieldmlSession::getArguments( FmlObjectHandle handle, set<FmlObjectHandle> &unbound, set<FmlObjectHandle> &used, bool addSelf )
+{
+    FieldmlObject *object = getObject( handle );
+    set<FmlObjectHandle> tmpUnbound, tmpUsed;
+    
+    if( handle == FML_INVALID_HANDLE )
+    {
+        //Convenience so that callers don't have to check
+        return;
+    }
+    
+    if( object->type == FHT_ARGUMENT_EVALUATOR )
+    {
+        if( addSelf )
+        {
+            used.insert( handle );
+            unbound.insert( handle );
+        }
+        ArgumentEvaluator *evaluator = (ArgumentEvaluator*)object;
+        for( set<FmlObjectHandle>::const_iterator i = evaluator->arguments.begin(); i != evaluator->arguments.end(); i++ )
+        {
+            used.insert( *i );
+            unbound.insert( *i );
+        }
+    }
+    else if( object->type == FHT_EXTERNAL_EVALUATOR )
+    {
+        ExternalEvaluator *evaluator = (ExternalEvaluator*)object;
+        for( set<FmlObjectHandle>::const_iterator i = evaluator->arguments.begin(); i != evaluator->arguments.end(); i++ )
+        {
+            used.insert( *i );
+            unbound.insert( *i );
+        }
+    }
+    else if( object->type == FHT_REFERENCE_EVALUATOR )
+    {
+        ReferenceEvaluator *evaluator = (ReferenceEvaluator*)object;
+        getArguments( evaluator->sourceEvaluator, tmpUnbound, tmpUsed, true );
+        mergeArguments( evaluator->binds, tmpUnbound, tmpUsed, unbound, used );
+    }
+    else if( object->type == FHT_AGGREGATE_EVALUATOR )
+    {
+        AggregateEvaluator *evaluator = (AggregateEvaluator*)object;
+        getArguments( evaluator->evaluators.getValues(), tmpUnbound, tmpUsed );
+        getArguments( evaluator->indexEvaluator, tmpUnbound, tmpUsed, true );
+        mergeArguments( evaluator->binds, tmpUnbound, tmpUsed, unbound, used );
+        unbound.erase( evaluator->indexEvaluator );
+        used.insert( evaluator->indexEvaluator );
+    }
+    else if( object->type == FHT_PIECEWISE_EVALUATOR )
+    {
+        PiecewiseEvaluator *evaluator = (PiecewiseEvaluator*)object;
+        getArguments( evaluator->evaluators.getValues(), tmpUnbound, tmpUsed );
+        getArguments( evaluator->indexEvaluator, tmpUnbound, tmpUsed, true );
+        mergeArguments( evaluator->binds, tmpUnbound, tmpUsed, unbound, used );
+    }
+    else if( object->type == FHT_PARAMETER_EVALUATOR )
+    {
+        ParameterEvaluator *evaluator = (ParameterEvaluator*)object;
+        set<FmlObjectHandle> indexEvaluators;
+        if( evaluator->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
+        {
+            SemidenseDataDescription *semidense = (SemidenseDataDescription*)evaluator->dataDescription;
+            
+            for( vector<FmlObjectHandle>::const_iterator i = semidense->denseIndexes.begin(); i != semidense->denseIndexes.end(); i++ )
+            {
+                indexEvaluators.insert( *i );
+            }
+            for( vector<FmlObjectHandle>::const_iterator i = semidense->sparseIndexes.begin(); i != semidense->sparseIndexes.end(); i++ )
+            {
+                indexEvaluators.insert( *i );
+            }
+        }
+        
+        getArguments( indexEvaluators, unbound, used );
+    }
 }

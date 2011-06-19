@@ -530,12 +530,6 @@ public:
             return err;
         }
         
-        err = processChildren( getFirstChild( objectNode, ARGUMENTS_TAG ), ARGUMENT_TAG, state, ArgumentParser( evaluator ) );
-        if( err != 0 )
-        {
-            return err;
-        }
-        
         return 0;
     }
 };
@@ -920,12 +914,6 @@ public:
             return err;
         }
     
-        err = processChildren( getFirstChild( objectNode, ARGUMENTS_TAG ), ARGUMENT_TAG, state, ArgumentParser( evaluator ) );
-        if( err != 0 )
-        {
-            return err;
-        }
-        
         err = processChildren( getFirstChild( objectNode, BINDINGS_TAG ), BIND_TAG, state, BindParser( evaluator ) );
         if( err != 0 )
         {
@@ -1010,12 +998,6 @@ public:
             return err;
         }
     
-        err = processChildren( getFirstChild( objectNode, ARGUMENTS_TAG ), ARGUMENT_TAG, state, ArgumentParser( evaluator ) );
-        if( err != 0 )
-        {
-            return err;
-        }
-        
         err = processChildren( getFirstChild( objectNode, BINDINGS_TAG ), BIND_TAG, state, BindParser( evaluator ) );
         if( err != 0 )
         {
@@ -1124,12 +1106,6 @@ public:
             return 1;
         }
 
-        int err = processChildren( getFirstChild( objectNode, ARGUMENTS_TAG ), ARGUMENT_TAG, state, ArgumentParser( evaluator ) );
-        if( err != 0 )
-        {
-            return err;
-        }
-        
         return 0;
     }
 };
