@@ -44,6 +44,8 @@
 
 #include "FieldmlErrorHandler.h"
 #include "DataReader.h"
+#include "StreamDataReader.h"
+#include "ArrayDataReader.h"
 
 using namespace std;
 
@@ -79,7 +81,20 @@ DataReader *DataReader::createTextReader( FieldmlErrorHandler *eHandler, const c
         return NULL;
     }
     
-    return new DataReader( stream, eHandler, dataSource->count, dataSource->length, dataSource->head, dataSource->tail );
+    return new StreamDataReader( stream, eHandler, dataSource->count, dataSource->length, dataSource->head, dataSource->tail );
+}
+
+
+DataReader *DataReader::createArrayReader( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source )
+{
+    if( source->resource->type != DATA_RESOURCE_ARRAY )
+    {
+        return NULL;
+    }
+    
+    ArrayDataResource *resource = (ArrayDataResource*)source->resource;
+    
+    return ArrayDataReader::create( eHandler, root, resource, source );
 }
 
 
@@ -95,110 +110,16 @@ DataReader *DataReader::create( FieldmlErrorHandler *eHandler, const char *root,
         TextDataSource *textSource = (TextDataSource*)dataSource;
         return createTextReader( eHandler, root, textSource );
     }
+    else if( dataSource->type == DATA_SOURCE_ARRAY )
+    {
+        ArrayDataSource *arraySource = (ArrayDataSource*)dataSource;
+        return createArrayReader( eHandler, root, arraySource );
+    }
     
     return NULL;
 }
 
 
-DataReader::DataReader( FieldmlInputStream *_stream, FieldmlErrorHandler *_eHandler, int _count, int _length, int _head, int _tail ) :
-    eHandler( _eHandler ),
-    stream( _stream ),
-    entryCount( _count ),
-    entryLength( _length ),
-    head( _head ),
-    tail( _tail )
-{
-    dataCounter = 0;
-    entryCounter = 0;
-    
-    skip( head );
-}
-
-
-void DataReader::skip( int amount )
-{
-    for( int i = 0; i < amount; i++ )
-    {
-        stream->readDouble();
-    }
-}
-
-
-int DataReader::readIntValues( int *valueBuffer, int count )
-{
-    if( entryCounter == entryCount )
-    {
-        eHandler->setError( FML_ERR_IO_NO_DATA );
-        return -1;
-    }
-    
-    if( count + dataCounter > entryLength )
-    {
-        count = entryLength - dataCounter;
-    }
-    
-    int index = 0;
-    while( ( index < count ) && ( !stream->eof() ) )
-    {
-        valueBuffer[index++] = stream->readInt();
-        dataCounter++;
-    }
-    
-    if( stream->eof() )
-    {
-        eHandler->setError( FML_ERR_IO_UNEXPECTED_EOF );
-        return -1;
-    }
-    
-    if( dataCounter == entryLength )
-    {
-        entryCounter++;
-        dataCounter = 0;
-        skip( tail + head );
-    }
-    
-    return count;
-}
-
-
-int DataReader::readDoubleValues( double *valueBuffer, int count )
-{
-    if( entryCounter == entryCount )
-    {
-        eHandler->setError( FML_ERR_IO_NO_DATA );
-        return -1;
-    }
-    
-    if( count + dataCounter > entryLength )
-    {
-        count = entryLength - dataCounter;
-    }
-    
-    int index = 0;
-    while( index < count )
-    {
-        valueBuffer[index++] = stream->readDouble();
-        dataCounter++;
-    }
-    
-    if( stream->eof() )
-    {
-        eHandler->setError( FML_ERR_IO_UNEXPECTED_EOF );
-        return -1;
-    }
-    
-    if( dataCounter == entryLength )
-    {
-        entryCounter++;
-        dataCounter = 0;
-        skip( tail + head );
-    }
-    
-    return count;
-}
-
-
 DataReader::~DataReader()
 {
-    delete stream;
 }

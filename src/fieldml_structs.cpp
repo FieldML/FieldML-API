@@ -195,6 +195,18 @@ TextInlineDataResource::~TextInlineDataResource()
 }
 
 
+ArrayDataResource::ArrayDataResource( const string _name, const string _format, const string _href ) : 
+    DataResource( _name, DATA_RESOURCE_ARRAY ),
+    format( _format ),
+    href( _href )
+{
+}
+
+ArrayDataResource::~ArrayDataResource()
+{
+}
+
+
 DataDescription::DataDescription( DataDescriptionType _descriptionType ) :
     descriptionType( _descriptionType )
 {
@@ -219,6 +231,28 @@ SemidenseDataDescription::SemidenseDataDescription() :
 
 
 SemidenseDataDescription::~SemidenseDataDescription()
+{
+}
+
+
+DenseArrayDataDescription::DenseArrayDataDescription() :
+    DataDescription( DESCRIPTION_DENSE_ARRAY )
+{
+}
+
+
+DenseArrayDataDescription::~DenseArrayDataDescription()
+{
+}
+
+
+DOKArrayDataDescription::DOKArrayDataDescription() :
+    DataDescription( DESCRIPTION_DOK_ARRAY )
+{
+}
+
+
+DOKArrayDataDescription::~DOKArrayDataDescription()
 {
 }
 
@@ -248,5 +282,17 @@ TextDataSource::TextDataSource( const string _name, DataResource *_resource, int
 
 
 TextDataSource::~TextDataSource()
+{
+}
+
+
+ArrayDataSource::ArrayDataSource( const string _name, ArrayDataResource *_resource, const string _sourceName ) :
+    DataSource( _name, _resource, DATA_SOURCE_ARRAY ),
+    sourceName( _sourceName )
+{
+}
+
+
+ArrayDataSource::~ArrayDataSource()
 {
 }

@@ -39,34 +39,42 @@
  *
  */
 
-#ifndef H_DATA_READER
-#define H_DATA_READER
+#ifndef H_ARRAY_DATA_READER
+#define H_ARRAY_DATA_READER
 
 #include "InputStream.h"
+#include "DataReader.h"
 #include "FieldmlErrorHandler.h"
 
 #include "fieldml_structs.h"
 
-class DataReader
+extern const char * const HDF5_NAME;
+
+class ArrayDataReader :
+    public DataReader
 {
 private:
-    static DataReader *createTextReader( FieldmlErrorHandler *eHandler, const char *root, TextDataSource *dataSource );
 
-    static DataReader *createArrayReader( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *dataSource );
+protected:
+    FieldmlErrorHandler *eHandler;
 
-public:
-    static DataReader *create( FieldmlErrorHandler *eHandler, const char *root, DataSource *dataSource );
+    ArrayDataReader( FieldmlErrorHandler *_eHandler );
     
-    virtual int readIntValues( int *values, int count ) = 0;
+public:
+    virtual void skip( int amount );
+    
+    virtual int readIntValues( int *values, int count );
     
     virtual int readIntSlab( int *offsets, int *sizes, int *valueBuffer ) = 0;
     
-    virtual int readDoubleSlab( int *offsets, int *sizes, double *valueBuffer ) = 0;
-
-    virtual int readDoubleValues( double *value, int count ) = 0; 
+    virtual int readDoubleValues( double *value, int count ); 
     
-    virtual ~DataReader();
+    virtual int readDoubleSlab( int *offsets, int *sizes, double *valueBuffer ) = 0;
+    
+    virtual ~ArrayDataReader();
+    
+    static ArrayDataReader *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataResource *resource, ArrayDataSource *source );
 };
 
 
-#endif //H_DATA_READER
+#endif //H_ARRAY_DATA_READER

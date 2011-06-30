@@ -50,6 +50,20 @@
       <xs:attribute name="name" type="xs:string" use="required" />
     </xs:complexType>
 
+    <xs:complexType name="ArrayDataSource_Type">
+        <xs:attribute name="name" type="xs:string" use="required" />
+        <xs:attribute name="sourceName" type="xs:string" use="required" />
+    </xs:complexType>
+    
+    <xs:complexType name="ArrayDataResource_Type">
+      <xs:choice minOccurs="1" maxOccurs="unbounded">
+          <xs:element name="ArrayDataSource" type="ArrayDataSource_Type" />
+      </xs:choice>
+      <xs:attribute name="name" type="xs:string" use="required" />
+      <xs:attribute name="format" type="xs:string" use="required" />
+      <xs:attribute ref="xlink:href" use="required" />
+    </xs:complexType>
+
     <xs:complexType name="ImportTypeEntry_Type">
         <xs:attribute name="localName" type="xs:string" use="required" />
         <xs:attribute name="remoteName" type="xs:string" use="required" />
@@ -290,11 +304,29 @@
         <xs:attribute name="data" type="xs:string" use="required" />
     </xs:complexType>
 
+    <xs:complexType name="DenseArrayData_Type">
+        <xs:sequence>
+            <xs:element name="DenseIndexes" type="OrderedIndexEvaluatorList_Type" minOccurs="0" maxOccurs="1" />
+        </xs:sequence>
+        <xs:attribute name="data" type="xs:string" use="required" />
+    </xs:complexType>
+
+    <xs:complexType name="DOKArrayData_Type">
+        <xs:sequence>
+            <xs:element name="SparseIndexes" type="OrderedIndexEvaluatorList_Type" minOccurs="1" maxOccurs="1" />
+            <xs:element name="DenseIndexes" type="IndexEvaluatorList_Type" minOccurs="1" maxOccurs="1" />
+        </xs:sequence>
+        <xs:attribute name="keyData" type="xs:string" use="required" />
+        <xs:attribute name="valueData" type="xs:string" use="required" />
+    </xs:complexType>
+
     <xs:complexType name="ParameterEvaluator_Type">
         <xs:complexContent>
             <xs:extension base="FieldmlEvaluator_Type">
                 <xs:choice>
                     <xs:element name="SemidenseData" type="SemidenseData_Type" minOccurs="1" maxOccurs="1" />
+                    <xs:element name="DenseArrayData" type="DenseArrayData_Type" minOccurs="1" maxOccurs="1" />
+                    <xs:element name="DOKArrayData" type="DOKArrayData_Type" minOccurs="1" maxOccurs="1" />
                 </xs:choice>
             </xs:extension>
         </xs:complexContent>
@@ -318,6 +350,7 @@
                     <xs:element name="Import" type="Import_Type" />
                     <xs:element name="TextFileResource" type="TextFileResource_Type" />
                     <xs:element name="TextInlineResource" type="TextInlineResource_Type" />
+                    <xs:element name="ArrayDataResource" type="ArrayDataResource_Type" />
                     <xs:element name="EnsembleType" type="EnsembleType_Type" />
                     <xs:element name="ContinuousType" type="ContinuousType_Type" />
                     <xs:element name="MeshType" type="MeshType_Type" />

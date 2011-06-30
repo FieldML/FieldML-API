@@ -124,6 +124,7 @@ typedef int32_t FmlEnsembleValue;               ///< An integer-valued ensemble 
 #define FML_ERR_IO_WRITE_ERR            1202    ///< A write error was encountered during IO.
 #define FML_ERR_IO_UNEXPECTED_EOF       1203    ///< An EOF was encountered when more data was expected.
 #define FML_ERR_IO_NO_DATA              1204    ///< There is no data remaining.
+#define FML_ERR_IO_UNSUPPORTED          1205    ///< Operation not supported for the given IO object.
 
 #define FML_ERR_UNSUPPORTED             2000    ///< Used for operations that are valid, but not yet implemented.
 
@@ -165,6 +166,8 @@ enum DataDescriptionType
 {
     DESCRIPTION_UNKNOWN,      ///< The data's format is unknown.
     DESCRIPTION_SEMIDENSE,    ///< The data is in the semi-dense format, detailed in the FieldML specification.
+    DESCRIPTION_DENSE_ARRAY,  ///< The data is a fully-populated array.
+    DESCRIPTION_DOK_ARRAY,    ///< The data is a (potentially) sparse array represented by a dictionary of keys and values. This is similar to semidense, expect that the indices and sub-arrays are in different data sources.
 };
 
 
@@ -183,6 +186,7 @@ enum DataResourceType
     DATA_RESOURCE_UNKNOWN,    ///< The data's type is unknown.
     DATA_RESOURCE_TEXT_INLINE,///< The data is inline text, contained within the FieldML document itself.
     DATA_RESOURCE_TEXT_FILE,  ///< The data is a text file, its location specified by an associated href.
+    DATA_RESOURCE_ARRAY,      ///< The data is a binary array format, including HDF5, netCEF and PnetCDF
     //DATA_RESOURCE_HDF5_FILE,
 };
 
@@ -198,6 +202,7 @@ enum DataSourceType
 {
     DATA_SOURCE_UNKNOWN,      ///< The data source's type is unknown.
     DATA_SOURCE_TEXT,         ///< The data source is text. The first line, count, length, head and tail attributes can be used.
+    DATA_SOURCE_ARRAY,        ///< The data source is a binary array. The array dimensions are given by the binary data itself.
 };
 
 
@@ -768,6 +773,8 @@ FmlErrorNumber Fieldml_SetParameterDataDescription( FmlSessionHandle handle, Fml
  */
 FmlObjectHandle Fieldml_GetDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
+FmlObjectHandle Fieldml_GetKeyDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+
 /**
  * Set the data source to be used by the given object. Currently, only parameter evaluators and ensemble types
  * use data sources.
@@ -776,6 +783,8 @@ FmlObjectHandle Fieldml_GetDataSource( FmlSessionHandle handle, FmlObjectHandle 
  * \see Fieldml_SetEnsembleMembersDataSource
  */
 FmlErrorNumber Fieldml_SetDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle dataSource );
+
+FmlErrorNumber Fieldml_SetKeyDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle dataSource );
 
 /**
  * \return The data description type of the given parameter evaluator.
@@ -790,8 +799,9 @@ DataDescriptionType Fieldml_GetParameterDataDescription( FmlSessionHandle handle
  * unique members of the ensemble. 
  * 
  * \see Fieldml_SetParameterDataDescription
- * \see Fieldml_GetSemidenseIndexCount
- * \see Fieldml_GetSemidenseIndexEvaluator
+ * \see Fieldml_GetParameterIndexCount
+ * \see Fieldml_GetParameterIndexEvaluator
+ * \see Fieldml_GetParameterIndexOrder
  * \see Fieldml_AddSparseIndexEvaluator
  */
 FmlErrorNumber Fieldml_AddDenseIndexEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle, FmlObjectHandle orderHandle );
@@ -800,8 +810,8 @@ FmlErrorNumber Fieldml_AddDenseIndexEvaluator( FmlSessionHandle handle, FmlObjec
  * Adds a sparse index evaluator to the given parameter evaluator's semidense data description. The given evaluator must be ensemble-valued.
  * 
  * \see Fieldml_SetParameterDataDescription
- * \see Fieldml_GetSemidenseIndexCount
- * \see Fieldml_GetSemidenseIndexEvaluator
+ * \see Fieldml_GetParameterIndexCount
+ * \see Fieldml_GetParameterIndexEvaluator
  * \see Fieldml_AddDenseIndexEvaluator
  */
 FmlErrorNumber Fieldml_AddSparseIndexEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle );
@@ -811,11 +821,11 @@ FmlErrorNumber Fieldml_AddSparseIndexEvaluator( FmlSessionHandle handle, FmlObje
  * associated with the given parameter evaluator.
  * 
  * \see Fieldml_SetParameterDataDescription
- * \see Fieldml_GetSemidenseIndexEvaluator
+ * \see Fieldml_GetParameterIndexEvaluator
  * \see Fieldml_AddDenseIndexEvaluator
  * \see Fieldml_AddSparseIndexEvaluator
  */
-int Fieldml_GetSemidenseIndexCount( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlBoolean isSparse );
+int Fieldml_GetParameterIndexCount( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlBoolean isSparse );
 
 
 /**
@@ -823,11 +833,11 @@ int Fieldml_GetSemidenseIndexCount( FmlSessionHandle handle, FmlObjectHandle obj
  * store associated with the given parameter evaluator.
  * 
  * \see Fieldml_SetParameterDataDescription
- * \see Fieldml_GetSemidenseIndexCount
+ * \see Fieldml_GetParameterIndexCount
  * \see Fieldml_AddDenseIndexEvaluator
  * \see Fieldml_AddSparseIndexEvaluator
  */
-FmlObjectHandle Fieldml_GetSemidenseIndexEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index, FmlBoolean isSparse );
+FmlObjectHandle Fieldml_GetParameterIndexEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index, FmlBoolean isSparse );
 
 
 /**
@@ -838,7 +848,7 @@ FmlObjectHandle Fieldml_GetSemidenseIndexEvaluator( FmlSessionHandle handle, Fml
  * \see Fieldml_AddDenseIndexEvaluator
  * 
  */
-FmlObjectHandle Fieldml_GetSemidenseIndexOrder( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index );
+FmlObjectHandle Fieldml_GetParameterIndexOrder( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index );
 
 /**
  * Creates a new piecewise evaluator. Piecewise evaluators delegate their evaluation based on the value
@@ -1173,6 +1183,8 @@ FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle obj
  */
 FmlErrorNumber Fieldml_ReadIntValues( FmlSessionHandle handle, FmlReaderHandle reader, int *valueBuffer, int bufferSize );
 
+FmlErrorNumber Fieldml_ReadIntSlab( FmlSessionHandle handle, FmlReaderHandle readerHandle, int *offsets, int *sizes, int *valueBuffer );
+
 
 /**
  * Reads in some double-precision floating point values from the current block of dense data.
@@ -1182,6 +1194,8 @@ FmlErrorNumber Fieldml_ReadIntValues( FmlSessionHandle handle, FmlReaderHandle r
  * \see Fieldml_OpenReader
  */
 FmlErrorNumber Fieldml_ReadDoubleValues( FmlSessionHandle handle, FmlReaderHandle reader, double *valueBuffer, int bufferSize );
+
+FmlErrorNumber Fieldml_ReadDoubleSlab( FmlSessionHandle handle, FmlReaderHandle readerHandle, int *offsets, int *sizes, double *valueBuffer );
 
 
 /**
@@ -1350,6 +1364,8 @@ FmlObjectHandle Fieldml_CreateTextFileDataResource( FmlSessionHandle handle, con
  */
 FmlObjectHandle Fieldml_CreateTextInlineDataResource( FmlSessionHandle handle, const char *name );
 
+FmlObjectHandle Fieldml_CreateArrayDataResource( FmlSessionHandle handle, const char *name, const char *format, const char *href );
+
 
 /**
  * \return The type of the given data resource.
@@ -1374,6 +1390,7 @@ DataResourceType Fieldml_GetDataResourceType( FmlSessionHandle handle, FmlObject
  */
 FmlErrorNumber Fieldml_CreateTextDataSource( FmlSessionHandle handle, const char *name, FmlObjectHandle dataResource, int firstLine, int count, int length, int head, int tail );
 
+FmlObjectHandle Fieldml_CreateArrayDataSource( FmlSessionHandle handle, const char *name, FmlObjectHandle dataResource, const char *sourceName );
 
 /**
  * \return The number of data sources associated with the given data resource.
@@ -1450,6 +1467,8 @@ int Fieldml_GetTextDataSourceTail( FmlSessionHandle handle, FmlObjectHandle obje
  */
 DataSourceType Fieldml_GetDataSourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
+char * Fieldml_GetDataSourceArraySource( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+
 
 /**
  * Appends the given string to the given data resource's inline data. The data resource's type must be
@@ -1499,7 +1518,6 @@ int Fieldml_CopyInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandl
  */
 char * Fieldml_GetDataResourceHref( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
-
 /**
  * Copies the given data resource's href into the givn buffer. The data resource's type must be ::DATA_RESOURCE_TEXT_FILE.
  *  
@@ -1507,6 +1525,10 @@ char * Fieldml_GetDataResourceHref( FmlSessionHandle handle, FmlObjectHandle obj
  * \see Fieldml_CreateTextFileDataResource
  */
 int Fieldml_CopyDataResourceHref( FmlSessionHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength );
+
+char * Fieldml_GetDataResourceFormat( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+
+int Fieldml_CopyDataResourceFormat( FmlSessionHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength );
 
 }
 #endif // __cplusplus

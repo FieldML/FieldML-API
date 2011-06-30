@@ -39,34 +39,50 @@
  *
  */
 
-#ifndef H_DATA_READER
-#define H_DATA_READER
+#ifndef H_STREAM_DATA_READER
+#define H_STREAM_DATA_READER
 
 #include "InputStream.h"
+#include "DataReader.h"
 #include "FieldmlErrorHandler.h"
 
 #include "fieldml_structs.h"
 
-class DataReader
+class StreamDataReader :
+    public DataReader
 {
 private:
-    static DataReader *createTextReader( FieldmlErrorHandler *eHandler, const char *root, TextDataSource *dataSource );
+    FieldmlErrorHandler *eHandler;
+    
+    const int entryCount;
+    
+    const int entryLength;
+    
+    const int head;
+    
+    const int tail;
+    
+    int entryCounter;
+    
+    int dataCounter;
+    
+    FieldmlInputStream *const stream;
 
-    static DataReader *createArrayReader( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *dataSource );
+    void skip( int amount );
 
 public:
-    static DataReader *create( FieldmlErrorHandler *eHandler, const char *root, DataSource *dataSource );
+    StreamDataReader( FieldmlInputStream *_stream, FieldmlErrorHandler *_eHandler, int _count, int _length, int _head, int _tail );
     
-    virtual int readIntValues( int *values, int count ) = 0;
+    virtual int readIntValues( int *values, int count );
     
-    virtual int readIntSlab( int *offsets, int *sizes, int *valueBuffer ) = 0;
+    virtual int readIntSlab( int *offsets, int *sizes, int *valueBuffer );
     
-    virtual int readDoubleSlab( int *offsets, int *sizes, double *valueBuffer ) = 0;
-
-    virtual int readDoubleValues( double *value, int count ) = 0; 
+    virtual int readDoubleValues( double *value, int count ); 
     
-    virtual ~DataReader();
+    virtual int readDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
+    
+    virtual ~StreamDataReader();
 };
 
 
-#endif //H_DATA_READER
+#endif //H_STREAM_DATA_READER

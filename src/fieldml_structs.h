@@ -204,7 +204,7 @@ public:
     virtual ~DataResource();
 };
  
-    
+
 class TextFileDataResource :
     public DataResource
 {
@@ -227,6 +227,19 @@ public:
     TextInlineDataResource( const std::string _name );
     
     virtual ~TextInlineDataResource();
+};
+    
+    
+class ArrayDataResource :
+    public DataResource
+{
+public:
+    const std::string format;
+    const std::string href;
+
+    ArrayDataResource( const std::string _name, const std::string _type, const std::string _href );
+    
+    virtual ~ArrayDataResource();
 };
 
     
@@ -265,6 +278,18 @@ public:
 };
 
 
+class ArrayDataSource :
+    public DataSource
+{
+public:
+    const std::string sourceName;
+    
+    ArrayDataSource( const std::string _name, ArrayDataResource *_resource, const std::string _sourceName );
+    
+    virtual ~ArrayDataSource();
+};
+
+
 class DataDescription
 {
 public:
@@ -289,6 +314,8 @@ class SemidenseDataDescription :
     public DataDescription
 {
 public:
+    FmlObjectHandle dataSource;
+    
     std::vector<FmlObjectHandle> sparseIndexes;
     std::vector<FmlObjectHandle> denseIndexes;
     std::vector<FmlObjectHandle> denseOrders;
@@ -297,14 +324,42 @@ public:
     
     virtual ~SemidenseDataDescription();
 };
+    
+
+class DenseArrayDataDescription :
+    public DataDescription
+{
+public:
+    FmlObjectHandle dataSource;
+    
+    std::vector<FmlObjectHandle> denseIndexes;
+    std::vector<FmlObjectHandle> denseOrders;
+    
+    DenseArrayDataDescription();
+    virtual ~DenseArrayDataDescription();
+};
+
+
+class DOKArrayDataDescription :
+    public DataDescription
+{
+public:
+    FmlObjectHandle keySource;
+    FmlObjectHandle valueSource;
+    
+    std::vector<FmlObjectHandle> sparseIndexes;
+    std::vector<FmlObjectHandle> denseIndexes;
+    std::vector<FmlObjectHandle> denseOrders;
+    
+    DOKArrayDataDescription();
+    virtual ~DOKArrayDataDescription();
+};
 
 
 class ParameterEvaluator :
     public Evaluator
 {
 public:
-    FmlObjectHandle dataSource;
-    
     DataDescription *dataDescription;
     
     ParameterEvaluator( const std::string _name, FmlObjectHandle _valueType, bool _isVirtual );

@@ -98,6 +98,8 @@ const xmlChar * const EXTERNAL_EVALUATOR_TAG           = (const xmlChar* const)"
 
 const xmlChar * const PARAMETER_EVALUATOR_TAG          = (const xmlChar* const)"ParameterEvaluator";
 const xmlChar * const SEMI_DENSE_DATA_TAG              = (const xmlChar* const)"SemidenseData";
+const xmlChar * const DENSE_ARRAY_DATA_TAG             = (const xmlChar* const)"DenseArrayData";
+const xmlChar * const DOK_ARRAY_DATA_TAG               = (const xmlChar* const)"DOKArrayData";
 const xmlChar * const SPARSE_INDEXES_TAG               = (const xmlChar* const)"SparseIndexes";
 const xmlChar * const DENSE_INDEXES_TAG                = (const xmlChar* const)"DenseIndexes";
 const xmlChar * const INDEX_EVALUATORS_TAG             = (const xmlChar* const)"IndexEvaluators";
@@ -116,6 +118,8 @@ const xmlChar * const TEXT_INLINE_RESOURCE_TAG         = (const xmlChar* const)"
 const xmlChar * const TEXT_STRING_TAG                  = (const xmlChar* const)"TextString";
 const xmlChar * const TEXT_DATA_SOURCE_TAG             = (const xmlChar* const)"TextDataSource";
 
+const xmlChar * const ARRAY_DATA_RESOURCE_TAG          = (const xmlChar* const)"ArrayDataResource";
+const xmlChar * const ARRAY_DATA_SOURCE_TAG            = (const xmlChar* const)"ArrayDataSource";
 
 
 const xmlChar * const VERSION_ATTRIB                   = (const xmlChar* const)"version";
@@ -150,11 +154,13 @@ const xmlChar * const STRIDE_ATTRIB                    = (const xmlChar* const)"
 
 const xmlChar * const INDEX_EVALUATOR_ATTRIB           = (const xmlChar* const)"indexEvaluator";
 
-const xmlChar * const FILE_ATTRIB                      = (const xmlChar* const)"file";
-const xmlChar * const TYPE_ATTRIB                      = (const xmlChar* const)"type";
-const xmlChar * const OFFSET_ATTRIB                    = (const xmlChar* const)"offset";
+const xmlChar * const FORMAT_ATTRIB                    = (const xmlChar* const)"format";
+
+const xmlChar * const SOURCE_NAME_ATTRIB               = (const xmlChar* const)"sourceName";
 
 const xmlChar * const DATA_ATTRIB                      = (const xmlChar* const)"data";
+const xmlChar * const KEY_DATA_ATTRIB                  = (const xmlChar* const)"keyData";
+const xmlChar * const VALUE_DATA_ATTRIB                = (const xmlChar* const)"valueData";
 
 const xmlChar * const HREF_ATTRIB                      = (const xmlChar* const)"href";
 const xmlChar * const QUALIFIED_HREF_ATTRIB            = (const xmlChar* const)"xlink:href";
@@ -163,9 +169,6 @@ const xmlChar * const COUNT_ATTRIB                     = (const xmlChar* const)"
 const xmlChar * const LENGTH_ATTRIB                    = (const xmlChar* const)"length";
 const xmlChar * const HEAD_ATTRIB                      = (const xmlChar* const)"head";
 const xmlChar * const TAIL_ATTRIB                      = (const xmlChar* const)"tail";
-
-const char * const STRING_TYPE_TEXT                 = "text";
-const char * const STRING_TYPE_LINES                = "lines";
 
 const char * const STRING_TRUE                      = "true";
 

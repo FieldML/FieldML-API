@@ -91,6 +91,8 @@ extern const xmlChar * const EXTERNAL_EVALUATOR_TAG;
 
 extern const xmlChar * const PARAMETER_EVALUATOR_TAG;
 extern const xmlChar * const SEMI_DENSE_DATA_TAG;
+extern const xmlChar * const DOK_ARRAY_DATA_TAG;
+extern const xmlChar * const DENSE_ARRAY_DATA_TAG;
 extern const xmlChar * const SPARSE_INDEXES_TAG;
 extern const xmlChar * const DENSE_INDEXES_TAG;
 
@@ -112,7 +114,8 @@ extern const xmlChar * const TEXT_INLINE_RESOURCE_TAG;
 extern const xmlChar * const TEXT_STRING_TAG;
 extern const xmlChar * const TEXT_DATA_SOURCE_TAG;
 
-
+extern const xmlChar * const ARRAY_DATA_RESOURCE_TAG;
+extern const xmlChar * const ARRAY_DATA_SOURCE_TAG;
 
 extern const xmlChar * const VERSION_ATTRIB;
 
@@ -130,6 +133,8 @@ extern const xmlChar * const COMPONENT_ENSEMBLE_ATTRIB;
 
 extern const xmlChar * const VALUE_TYPE_ATTRIB;
 
+extern const xmlChar * const SOURCE_NAME_ATTRIB;
+
 extern const xmlChar * const KEY_ATTRIB;
 extern const xmlChar * const VALUE_ATTRIB;
 extern const xmlChar * const DEFAULT_ATTRIB;
@@ -146,11 +151,11 @@ extern const xmlChar * const STRIDE_ATTRIB;
 
 extern const xmlChar * const INDEX_EVALUATOR_ATTRIB;
 
-extern const xmlChar * const FILE_ATTRIB;
-extern const xmlChar * const TYPE_ATTRIB;
-extern const xmlChar * const OFFSET_ATTRIB;
+extern const xmlChar * const FORMAT_ATTRIB;
 
 extern const xmlChar * const DATA_ATTRIB;
+extern const xmlChar * const KEY_DATA_ATTRIB;
+extern const xmlChar * const VALUE_DATA_ATTRIB;
 
 extern const xmlChar * const HREF_ATTRIB;
 extern const xmlChar * const QUALIFIED_HREF_ATTRIB;
@@ -159,9 +164,6 @@ extern const xmlChar * const COUNT_ATTRIB;
 extern const xmlChar * const LENGTH_ATTRIB;
 extern const xmlChar * const HEAD_ATTRIB;
 extern const xmlChar * const TAIL_ATTRIB;
-
-extern const char * const STRING_TYPE_TEXT;
-extern const char * const STRING_TYPE_LINES;
 
 extern const char * const STRING_TRUE;
 

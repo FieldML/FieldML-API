@@ -146,15 +146,15 @@ void testRead( const char * filename )
         fprintf( stdout, "  %d: %d %s (%s)\n", i, Fieldml_GetParameterDataDescription( handle, oHandle ),
             Fieldml_GetObjectName( handle, oHandle ),
             Fieldml_GetObjectName( handle, Fieldml_GetValueType( handle, oHandle ) ) );
-        count2 = Fieldml_GetSemidenseIndexCount( handle, oHandle, 1 );
+        count2 = Fieldml_GetParameterIndexCount( handle, oHandle, 1 );
         for( j = 1; j <= count2; j++ )
         {
-            fprintf( stdout, "   sparse: %s\n", Fieldml_GetObjectName( handle, Fieldml_GetSemidenseIndexEvaluator( handle, oHandle, j, 1 ) ) );
+            fprintf( stdout, "   sparse: %s\n", Fieldml_GetObjectName( handle, Fieldml_GetParameterIndexEvaluator( handle, oHandle, j, 1 ) ) );
         }
-        count2 = Fieldml_GetSemidenseIndexCount( handle, oHandle, 0 );
+        count2 = Fieldml_GetParameterIndexCount( handle, oHandle, 0 );
         for( j = 1; j <= count2; j++ )
         {
-            fprintf( stdout, "    dense: %s\n", Fieldml_GetObjectName( handle, Fieldml_GetSemidenseIndexEvaluator( handle, oHandle, j, 0 ) ) );
+            fprintf( stdout, "    dense: %s\n", Fieldml_GetObjectName( handle, Fieldml_GetParameterIndexEvaluator( handle, oHandle, j, 0 ) ) );
         }
     }
 
@@ -575,6 +575,73 @@ int testCycles()
 }
 
 
+int testHdf5()
+{
+    bool testOk = true;
+    
+    FmlSessionHandle session = Fieldml_Create( "test", "test" );
+    
+    FmlObjectHandle resource = Fieldml_CreateArrayDataResource( session, "test.resource", "HDF5", "test.h5" );
+    FmlObjectHandle sourceI = Fieldml_CreateArrayDataSource( session, "test.source_int", resource, "test/fooI16BE" );
+    FmlObjectHandle sourceD = Fieldml_CreateArrayDataSource( session, "test.source_double", resource, "test/foo2" );
+    
+    FmlObjectHandle resource2 = Fieldml_CreateArrayDataResource( session, "test.resource2", "HDF5", "I16BE.h5" );
+    FmlObjectHandle source2I = Fieldml_CreateArrayDataSource( session, "test.source2_int", resource2, "I16BE" );
+
+    FmlObjectHandle reader = Fieldml_OpenReader( session, source2I );
+    
+    int offsets[1];
+    offsets[0] = 2;
+    
+    int sizes[1];
+    sizes[0] = 3;
+    
+    int dataI[20];
+    for( int i = 0; i < 20; i++ )
+    {
+        dataI[i] = 0xdead;
+    }
+    
+    Fieldml_ReadIntSlab( session, reader, offsets, sizes, dataI );
+    
+    for( int i = 0; i < 20; i++ )
+    {
+        printf("%d\n", dataI[i] );
+    }
+    
+    Fieldml_CloseReader( session, reader );
+    
+    reader = Fieldml_OpenReader( session, sourceD );
+    
+    double dataD[20];
+    for( int i = 0; i < 20; i++ )
+    {
+        dataD[i] = 0.12345;
+    }
+    
+    sizes[0] = 2;
+    Fieldml_ReadDoubleSlab( session, reader, offsets, sizes, dataD );
+    
+    for( int i = 0; i < 20; i++ )
+    {
+        printf("%g\n", dataD[i] );
+    }
+    
+    Fieldml_CloseReader( session, reader );
+    
+    if( testOk ) 
+    {
+        printf( "TestHdf5 - ok\n" );
+    }
+    else
+    {
+        printf( "TestHdf5 - failed\n" );
+    }
+    
+    return 0;
+}
+
+
 int main( int argc, char **argv )
 {
     if( argc > 1 )
@@ -587,6 +654,8 @@ int main( int argc, char **argv )
     testStream();
     
     testCycles();
+    
+    testHdf5();
 
     xmlCleanupParser( );
     xmlMemoryDump( );

@@ -427,6 +427,63 @@ public:
 };
 
 
+class ArrayDataSourceParser :
+    public NodeParser
+{
+private:
+    const FmlObjectHandle resource;
+
+public:
+    ArrayDataSourceParser( FmlObjectHandle _resource ) :
+        resource( _resource ) {}
+
+    int parseNode( xmlNodePtr node, ParseState &state )
+    {
+        const char *name = getStringAttribute( node, NAME_ATTRIB );
+        const char *sourceName = getStringAttribute( node, SOURCE_NAME_ATTRIB );
+        
+        FmlObjectHandle dataSource = Fieldml_CreateArrayDataSource( state.session, name, resource, sourceName );
+        if( dataSource == FML_INVALID_HANDLE )
+        {
+            state.errorHandler->logError( "Malformed ArrayDataSource" );
+            return 1;
+        }
+        
+        return 0;
+    }
+};
+
+    
+class ArrayDataResourceParser :
+    public NodeParser
+{
+public:
+    ArrayDataResourceParser() {}
+    
+    int parseNode( xmlNodePtr node, ParseState &state )
+    {
+        const char *name = getStringAttribute( node, NAME_ATTRIB );
+        const char *href = getStringAttribute( node, HREF_ATTRIB, XLINK_NAMESPACE_STRING );
+        const char *format = getStringAttribute( node, FORMAT_ATTRIB );
+    
+        FmlObjectHandle resource = Fieldml_CreateArrayDataResource( state.session, name, format, href );
+        if( resource == FML_INVALID_HANDLE )
+        {
+            state.errorHandler->logError( "Invalid array data resource specification", name );
+            return 1;
+        }
+        
+        int err = processChildren( node, ARRAY_DATA_SOURCE_TAG, state, ArrayDataSourceParser( resource ) );
+        if( err != 0 )
+        {
+            return err;
+        }
+        
+        return 0;
+    }
+};
+
+
 class BindParser :
     public NodeParser
 {
@@ -1072,6 +1129,8 @@ public:
         }
 
         xmlNodePtr semidenseNode = getFirstChild( objectNode, SEMI_DENSE_DATA_TAG );
+        xmlNodePtr denseNode = getFirstChild( objectNode, DENSE_ARRAY_DATA_TAG );
+        xmlNodePtr dokNode = getFirstChild( objectNode, DOK_ARRAY_DATA_TAG );
         if( semidenseNode != NULL )
         {
             if( Fieldml_SetParameterDataDescription( state.session, evaluator, DESCRIPTION_SEMIDENSE ) != FML_ERR_NO_ERROR )
@@ -1095,6 +1154,62 @@ public:
             }
             
             err = processChildren( getFirstChild( semidenseNode, SPARSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, SemidenseIndexEvaluatorParser( evaluator, false ) );
+            if( err != 0 )
+            {
+                return err;
+            }
+        }
+        else if( denseNode != NULL )
+        {
+            if( Fieldml_SetParameterDataDescription( state.session, evaluator, DESCRIPTION_DENSE_ARRAY ) != FML_ERR_NO_ERROR )
+            {
+                state.errorHandler->logError( "ParameterEvaluator must have a valid data description", name );
+                return 1;
+            }
+            
+            FmlObjectHandle dataObject = getObjectAttribute( denseNode, DATA_ATTRIB, state );
+            
+            if( Fieldml_SetDataSource( state.session, evaluator, dataObject ) != FML_ERR_NO_ERROR )
+            {
+                state.errorHandler->logError( "ParameterEvaluator must have a valid data source", name );
+                return 1;
+            }
+
+            int err = processChildren( getFirstChild( denseNode, DENSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, SemidenseIndexEvaluatorParser( evaluator, true ) );
+            if( err != 0 )
+            {
+                return err;
+            }
+        }
+        else if( dokNode != NULL )
+        {
+            if( Fieldml_SetParameterDataDescription( state.session, evaluator, DESCRIPTION_DOK_ARRAY ) != FML_ERR_NO_ERROR )
+            {
+                state.errorHandler->logError( "ParameterEvaluator must have a valid data description", name );
+                return 1;
+            }
+            
+            FmlObjectHandle keyDataObject = getObjectAttribute( dokNode, KEY_DATA_ATTRIB, state );
+            FmlObjectHandle valueDataObject = getObjectAttribute( dokNode, VALUE_DATA_ATTRIB, state );
+            
+            if( Fieldml_SetKeyDataSource( state.session, evaluator, keyDataObject ) != FML_ERR_NO_ERROR )
+            {
+                state.errorHandler->logError( "ParameterEvaluator must have a valid key data source", name );
+                return 1;
+            }
+            if( Fieldml_SetDataSource( state.session, evaluator, valueDataObject ) != FML_ERR_NO_ERROR )
+            {
+                state.errorHandler->logError( "ParameterEvaluator must have a valid value data source", name );
+                return 1;
+            }
+
+            int err = processChildren( getFirstChild( dokNode, SPARSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, SemidenseIndexEvaluatorParser( evaluator, false ) );
+            if( err != 0 )
+            {
+                return err;
+            }
+            
+            err = processChildren( getFirstChild( dokNode, DENSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, SemidenseIndexEvaluatorParser( evaluator, true ) );
             if( err != 0 )
             {
                 return err;
@@ -1130,6 +1245,10 @@ static int parseObjectNode( xmlNodePtr objectNode, ParseState &state )
     else if( checkName( objectNode, TEXT_INLINE_RESOURCE_TAG ) )
     {
         err = TextInlineResourceParser().parseNode( objectNode, state );
+    }
+    else if( checkName( objectNode, ARRAY_DATA_RESOURCE_TAG ) )
+    {
+        err = ArrayDataResourceParser().parseNode( objectNode, state );
     }
     else if( checkName( objectNode, REFERENCE_EVALUATOR_TAG ) )
     {

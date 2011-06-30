@@ -342,6 +342,16 @@ static int writeDataSource( xmlTextWriterPtr writer, FmlSessionHandle handle, Fm
         
         xmlTextWriterEndElement( writer );
     }
+    else if( type == DATA_SOURCE_ARRAY )
+    {
+        xmlTextWriterStartElement( writer, ARRAY_DATA_SOURCE_TAG );
+        
+        writeObjectName( writer, NAME_ATTRIB, handle, object );
+        
+        xmlTextWriterWriteAttribute( writer, SOURCE_NAME_ATTRIB, (const xmlChar*)Fieldml_GetDataSourceArraySource( handle, object ) );
+        
+        xmlTextWriterEndElement( writer );
+    }
     
     return 0;
 }
@@ -380,6 +390,14 @@ static int writeDataResource( xmlTextWriterPtr writer, FmlSessionHandle handle, 
         }
         
         xmlTextWriterEndElement( writer );
+    }
+    else if( type == DATA_RESOURCE_ARRAY )
+    {
+        xmlTextWriterStartElement( writer, ARRAY_DATA_RESOURCE_TAG );
+        writeObjectName( writer, NAME_ATTRIB, handle, object );
+
+        xmlTextWriterWriteAttribute( writer, FORMAT_ATTRIB, (const xmlChar*)Fieldml_GetDataResourceFormat( handle, object ) );
+        xmlTextWriterWriteAttribute( writer, QUALIFIED_HREF_ATTRIB, (const xmlChar*)Fieldml_GetDataResourceHref( handle, object ) );
     }
     else
     {
@@ -519,9 +537,10 @@ static int writePiecewiseEvaluator( xmlTextWriterPtr writer, FmlSessionHandle ha
 }
 
 
-static void writeSemidenseIndexes( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObjectHandle object, const int isSparse )
+static void writeParameterIndexes( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObjectHandle object, const int isSparse )
 {
-    int count = Fieldml_GetSemidenseIndexCount( handle, object, isSparse );
+    int count = Fieldml_GetParameterIndexCount( handle, object, isSparse );
+    
     if( count > 0 )
     {
         if( isSparse )
@@ -535,7 +554,7 @@ static void writeSemidenseIndexes( xmlTextWriterPtr writer, FmlSessionHandle han
 
         for( int i = 1; i <= count; i++ )
         {
-            FmlObjectHandle index = Fieldml_GetSemidenseIndexEvaluator( handle, object, i, isSparse );
+            FmlObjectHandle index = Fieldml_GetParameterIndexEvaluator( handle, object, i, isSparse );
             if( index == FML_INVALID_HANDLE )
             {
                 continue;
@@ -543,7 +562,7 @@ static void writeSemidenseIndexes( xmlTextWriterPtr writer, FmlSessionHandle han
             xmlTextWriterStartElement( writer, INDEX_EVALUATOR_TAG );
             xmlTextWriterWriteAttribute( writer, EVALUATOR_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, index ) );
 
-            FmlObjectHandle order = Fieldml_GetSemidenseIndexOrder( handle, object, i );
+            FmlObjectHandle order = Fieldml_GetParameterIndexOrder( handle, object, i );
             if( order != FML_INVALID_HANDLE )
             {
                 xmlTextWriterWriteAttribute( writer, ORDER_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, order ) );
@@ -563,8 +582,37 @@ static void writeSemidenseData( xmlTextWriterPtr writer, FmlSessionHandle handle
     FmlObjectHandle dataObject = Fieldml_GetDataSource( handle, object );
     xmlTextWriterWriteAttribute( writer, DATA_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, dataObject ) );
     
-    writeSemidenseIndexes( writer, handle, object, 1 );
-    writeSemidenseIndexes( writer, handle, object, 0 );
+    writeParameterIndexes( writer, handle, object, 1 );
+    writeParameterIndexes( writer, handle, object, 0 );
+
+    xmlTextWriterEndElement( writer );
+}
+
+
+static void writeDenseArrayData( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObjectHandle object )
+{
+    xmlTextWriterStartElement( writer, DENSE_ARRAY_DATA_TAG );
+    
+    FmlObjectHandle dataObject = Fieldml_GetDataSource( handle, object );
+    xmlTextWriterWriteAttribute( writer, DATA_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, dataObject ) );
+    
+    writeParameterIndexes( writer, handle, object, 0 );
+
+    xmlTextWriterEndElement( writer );
+}
+
+
+static void writeDOKArrayData( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObjectHandle object )
+{
+    xmlTextWriterStartElement( writer, DOK_ARRAY_DATA_TAG );
+    
+    FmlObjectHandle dataObject = Fieldml_GetDataSource( handle, object );
+    FmlObjectHandle keyDataObject = Fieldml_GetKeyDataSource( handle, object );
+    xmlTextWriterWriteAttribute( writer,KEY_DATA_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, keyDataObject ) );
+    xmlTextWriterWriteAttribute( writer, VALUE_DATA_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, dataObject ) );
+    
+    writeParameterIndexes( writer, handle, object, 1 );
+    writeParameterIndexes( writer, handle, object, 0 );
 
     xmlTextWriterEndElement( writer );
 }
@@ -586,6 +634,14 @@ static int writeParameterEvaluator( xmlTextWriterPtr writer, FmlSessionHandle ha
     if( description == DESCRIPTION_SEMIDENSE )
     {
         writeSemidenseData( writer, handle, object );
+    }
+    else if( description == DESCRIPTION_DENSE_ARRAY )
+    {
+        writeDenseArrayData( writer, handle, object );
+    }
+    else if( description == DESCRIPTION_DOK_ARRAY )
+    {
+        writeDOKArrayData( writer, handle, object );
     }
     
     xmlTextWriterEndElement( writer );
