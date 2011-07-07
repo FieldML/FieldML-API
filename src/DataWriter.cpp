@@ -39,40 +39,43 @@
  *
  */
 
-#include "FieldmlRegion.h"
-#include "DataWriter.h"
-
 #include "fieldml_api.h"
 #include "string_const.h"
 
+#include "FieldmlErrorHandler.h"
+#include "DataWriter.h"
+#include "StreamDataWriter.h"
+#include "ArrayDataWriter.h"
+
 using namespace std;
 
-DataWriter::DataWriter( FieldmlOutputStream *_stream, FieldmlErrorHandler *_eHandler ) :
-    stream( _stream ),
-    eHandler( _eHandler )
+
+DataWriter::~DataWriter()
 {
 }
-    
-    
-DataWriter * DataWriter::create( FieldmlErrorHandler *eHandler, const char *root, DataSource *dataSource, int append )
+
+
+DataWriter *DataWriter::createTextWriter( FieldmlErrorHandler *eHandler, const char *root, TextDataSource *dataSource, bool append )
 {
-    FieldmlOutputStream *stream = NULL;
-    
     if( ( dataSource == NULL ) || ( root == NULL ) || ( eHandler == NULL ) )
     {
         return NULL;
     }
-    else if( dataSource->resource->type == DATA_RESOURCE_TEXT_FILE )
+
+    FieldmlOutputStream *stream = NULL;
+    
+    if( dataSource->resource->type == DATA_RESOURCE_TEXT_FILE )
     {
         TextFileDataResource *fileDataResource = (TextFileDataResource*)dataSource->resource;
 
+        //Resolve this href properly, perhaps at parse-time?
         const string filename = makeFilename( root, fileDataResource->href );
-        stream = FieldmlOutputStream::createTextFileStream( filename, append != 0 );
+        stream = FieldmlOutputStream::createTextFileStream( filename, append );
     }
     else if( dataSource->resource->type == DATA_RESOURCE_TEXT_INLINE )
     {
         TextInlineDataResource *inlineDataResource = (TextInlineDataResource*)dataSource->resource;
-        stream = FieldmlOutputStream::createStringStream( &inlineDataResource->inlineString, append != 0 );
+        stream = FieldmlOutputStream::createStringStream( &inlineDataResource->inlineString, append );
     }
     
     if( stream == NULL )
@@ -80,51 +83,16 @@ DataWriter * DataWriter::create( FieldmlErrorHandler *eHandler, const char *root
         return NULL;
     }
     
-    return new DataWriter( stream, eHandler );
+    return new StreamDataWriter( stream, eHandler );
 }
 
 
-int DataWriter::writeIntValues( int *valueBuffer, int count )
+DataWriter *DataWriter::createArrayWriter( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank )
 {
-    int err = FML_ERR_NO_ERROR;
-    int writeCount = 0;
-    while( ( writeCount < count ) && ( err == FML_ERR_NO_ERROR ) )
+    if( ( source == NULL ) || ( root == NULL ) || ( eHandler == NULL ) )
     {
-        int err = stream->writeInt( valueBuffer[writeCount] );
-        
-        if( err != FML_ERR_NO_ERROR )
-        {
-            eHandler->setError( err );
-            return -1;
-        }
-        writeCount++;
+        return NULL;
     }
-    
-    return writeCount;
-}
 
-
-int DataWriter::writeDoubleValues( double *valueBuffer, int count )
-{
-    int err = FML_ERR_NO_ERROR;
-    int writeCount = 0;
-    while( ( writeCount < count ) && ( err == FML_ERR_NO_ERROR ) )
-    {
-        int err = stream->writeDouble( valueBuffer[writeCount] );
-        
-        if( err != FML_ERR_NO_ERROR )
-        {
-            eHandler->setError( err );
-            return -1;
-        }
-        writeCount++;
-    }
-    
-    return writeCount;
-}
-
-
-DataWriter::~DataWriter()
-{
-    delete stream;
+    return ArrayDataWriter::create( eHandler, root, source, isDouble, append, sizes, rank );
 }

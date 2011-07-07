@@ -165,6 +165,8 @@ extern const xmlChar * const LENGTH_ATTRIB;
 extern const xmlChar * const HEAD_ATTRIB;
 extern const xmlChar * const TAIL_ATTRIB;
 
+extern const char * const HDF5_NAME;
+
 extern const char * const STRING_TRUE;
 
 // strndup not available on all platforms.

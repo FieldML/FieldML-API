@@ -204,9 +204,19 @@ public:
     virtual ~DataResource();
 };
  
+    
+class TextDataResource :
+    public DataResource
+{
+public:
+    TextDataResource( const std::string _name, DataResourceType _type );
+    
+    virtual ~TextDataResource(); 
+};
+    
 
 class TextFileDataResource :
-    public DataResource
+    public TextDataResource
 {
 public:
     const std::string href;
@@ -218,7 +228,7 @@ public:
 
 
 class TextInlineDataResource :
-    public DataResource
+    public TextDataResource
 {
 public:
     char *inlineString;
@@ -243,23 +253,30 @@ public:
 };
 
     
-class DataSource :
+template<class ResourceType> class DataSource :
     public FieldmlObject
 {
 protected:
-    DataSource( const std::string _name, DataResource *_resource, DataSourceType _type );
+    DataSource( const std::string _name, ResourceType *_resource, DataSourceType _type ) :
+        FieldmlObject( _name, FHT_DATA_SOURCE, false ),
+        resource( _resource ),
+        type( _type )
+    {
+    }
     
 public:
     const DataSourceType type;
     
-    const DataResource *resource;
+    const ResourceType *resource;
 
-    virtual ~DataSource();
+    virtual ~DataSource()
+    {
+    }
 };
 
     
 class TextDataSource :
-    public DataSource
+    public DataSource<TextDataResource>
 {
 public:
     const int firstLine;
@@ -272,14 +289,14 @@ public:
     
     const int tail;
     
-    TextDataSource( const std::string _name, DataResource *_resource, int _firstLine, int _count, int _length, int _head, int _tail );
+    TextDataSource( const std::string _name, TextDataResource *_resource, int _firstLine, int _count, int _length, int _head, int _tail );
     
     virtual ~TextDataSource();
 };
 
 
 class ArrayDataSource :
-    public DataSource
+    public DataSource<ArrayDataResource>
 {
 public:
     const std::string sourceName;

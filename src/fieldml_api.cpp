@@ -322,7 +322,7 @@ static int cappedCopyAndFree( const char *source, char *buffer, int bufferLength
 }
 
 
-static DataSource *objectAsDataSource( FieldmlSession *session, FmlObjectHandle objectHandle )
+static DataSource<DataResource> *objectAsDataSource( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
     FieldmlObject *object = getObject( session, objectHandle );
 
@@ -337,13 +337,13 @@ static DataSource *objectAsDataSource( FieldmlSession *session, FmlObjectHandle 
         return NULL;
     }
     
-    return (DataSource*)object;
+    return (DataSource<DataResource>*)object;
 }
 
 
 static TextDataSource *getTextDataSource( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
-    DataSource *dataSource = objectAsDataSource( session, objectHandle );
+    DataSource<DataResource> *dataSource = objectAsDataSource( session, objectHandle );
     
     if( dataSource == NULL )
     {
@@ -2800,6 +2800,11 @@ FmlObjectHandle Fieldml_GetParameterIndexOrder( FmlSessionHandle handle, FmlObje
         DOKArrayDataDescription *dok = (DOKArrayDataDescription *)parameterEvaluator->dataDescription;
         orders = &dok->denseOrders;
     }
+    else if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DENSE_ARRAY )
+    {
+        DenseArrayDataDescription *dense = (DenseArrayDataDescription *)parameterEvaluator->dataDescription;
+        orders = &dense->denseOrders;
+    }
     else
     {
         session->setError( FML_ERR_INVALID_OBJECT );
@@ -3107,12 +3112,26 @@ FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle obj
     
     if( !checkLocal( session, objectHandle ) )
     {
-        return session->getLastError();
+        return FML_INVALID_HANDLE;
     }
 
-    DataSource *dataSource = objectAsDataSource( session, objectHandle );
-
-    DataReader *reader = DataReader::create( session, session->region->getRoot().c_str(), dataSource );
+    DataReader *reader = NULL;
+    DataSource<DataResource> *dataSource = objectAsDataSource( session, objectHandle );
+    if( dataSource->type == DATA_SOURCE_TEXT )
+    {
+        TextDataSource *textSource = (TextDataSource*)dataSource;
+        reader = DataReader::createTextReader( session, session->region->getRoot().c_str(), textSource );
+    }
+    else if( dataSource->type == DATA_SOURCE_ARRAY )
+    {
+        ArrayDataSource *arraySource = (ArrayDataSource*)dataSource;
+        reader = DataReader::createArrayReader( session, session->region->getRoot().c_str(), arraySource );
+    }
+    else
+    {
+        session->setError( FML_ERR_INVALID_OBJECT );
+        return FML_INVALID_HANDLE;
+    }
     
     if( reader == NULL )
     {
@@ -3217,12 +3236,12 @@ FmlErrorNumber Fieldml_CloseReader( FmlSessionHandle handle, FmlReaderHandle rea
 }
 
 
-FmlWriterHandle Fieldml_OpenWriter( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlBoolean append )
+FmlWriterHandle Fieldml_OpenTextWriter( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlBoolean append )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
     {
-        return NULL;
+        return FML_INVALID_HANDLE;
     }
     if( session->region == NULL )
     {
@@ -3232,12 +3251,87 @@ FmlWriterHandle Fieldml_OpenWriter( FmlSessionHandle handle, FmlObjectHandle obj
     
     if( !checkLocal( session, objectHandle ) )
     {
-        return session->getLastError();
+        return FML_INVALID_HANDLE;
     }
 
-    DataSource *dataSource = objectAsDataSource( session, objectHandle );
+    DataSource<DataResource> *dataSource = objectAsDataSource( session, objectHandle );
+    if( dataSource->type != DATA_SOURCE_TEXT )
+    {
+        session->setError( FML_ERR_INVALID_OBJECT );
+        return FML_INVALID_HANDLE;
+    }
 
-    DataWriter *writer = DataWriter::create( session, session->region->getRoot().c_str(), dataSource, ( append == 1 ));
+    TextDataSource *textSource = (TextDataSource*)dataSource;
+    DataWriter *writer = DataWriter::createTextWriter( session, session->region->getRoot().c_str(), textSource, ( append == 1 ));
+
+    if( writer == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+    
+    return session->addWriter( writer );
+}
+
+
+FmlWriterHandle Fieldml_OpenArrayWriter( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle typeHandle, FmlBoolean append, int *sizes, int rank )
+{
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    if( session == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+    if( session->region == NULL )
+    {
+        session->setError( FML_ERR_INVALID_REGION );
+        return FML_INVALID_HANDLE;
+    }
+    
+    if( !checkLocal( session, objectHandle ) )
+    {
+        session->getLastError();
+        return FML_INVALID_HANDLE;
+    }
+    if( !checkLocal( session, objectHandle ) )
+    {
+        session->getLastError();
+        return FML_INVALID_HANDLE;
+    }
+    
+    //NOTE: Currently, IO only supports scalar ensemble or continuous values, so this boolean is sufficient. 
+    bool isDouble;
+    
+    FieldmlObject *typeObject = getObject( session, typeHandle );
+    if( typeObject->type == FHT_ENSEMBLE_TYPE )
+    {
+        isDouble = false;
+    }
+    else if( typeObject->type == FHT_CONTINUOUS_TYPE )
+    {
+        ContinuousType *continuousType = (ContinuousType*)typeObject;
+        if( continuousType->componentType == FML_INVALID_HANDLE )
+        {
+            isDouble = true;
+        }
+        else
+        {
+            session->setError( FML_ERR_INVALID_PARAMETER_3 );
+            return FML_INVALID_HANDLE;
+        }
+    }
+    else
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        return FML_INVALID_HANDLE;
+    }
+
+    DataSource<DataResource> *dataSource = objectAsDataSource( session, objectHandle );
+    if( dataSource->type != DATA_SOURCE_ARRAY )
+    {
+        return session->setError( FML_ERR_INVALID_OBJECT );
+    }
+
+    ArrayDataSource *arraySource = (ArrayDataSource*)dataSource;
+    DataWriter *writer = DataWriter::createArrayWriter( session, session->region->getRoot().c_str(), arraySource, isDouble, ( append == 1 ), sizes, rank );
 
     if( writer == NULL )
     {
@@ -3267,6 +3361,24 @@ FmlErrorNumber Fieldml_WriteIntValues( FmlSessionHandle handle, FmlWriterHandle 
 }
 
 
+FmlErrorNumber Fieldml_WriteIntSlab( FmlSessionHandle handle, FmlReaderHandle writerHandle, int *offsets, int *sizes, int *valueBuffer )
+{
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    if( session == NULL )
+    {
+        return FML_ERR_UNKNOWN_HANDLE;
+    }
+
+    DataWriter *writer = session->handleToWriter( writerHandle );
+    if( writer == NULL )
+    {
+        return session->setError( FML_ERR_INVALID_OBJECT );
+    }
+
+    return writer->writeIntSlab( offsets, sizes, valueBuffer );
+}
+
+
 FmlErrorNumber Fieldml_WriteDoubleValues( FmlSessionHandle handle, FmlWriterHandle writerHandle, double *valueBuffer, int valueCount )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
@@ -3283,6 +3395,24 @@ FmlErrorNumber Fieldml_WriteDoubleValues( FmlSessionHandle handle, FmlWriterHand
     }
 
     return writer->writeDoubleValues( valueBuffer, valueCount );
+}
+
+
+FmlErrorNumber Fieldml_WriteDoubleSlab( FmlSessionHandle handle, FmlWriterHandle writerHandle, int *offsets, int *sizes, double *valueBuffer )
+{
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    if( session == NULL )
+    {
+        return FML_ERR_UNKNOWN_HANDLE;
+    }
+
+    DataWriter *writer = session->handleToWriter( writerHandle );
+    if( writer == NULL )
+    {
+        return session->setError( FML_ERR_INVALID_OBJECT );
+    }
+
+    return writer->writeDoubleSlab( offsets, sizes, valueBuffer );
 }
 
 
@@ -3802,7 +3932,7 @@ DataSourceType Fieldml_GetDataSourceType( FmlSessionHandle handle, FmlObjectHand
         return DATA_SOURCE_UNKNOWN;
     }
     
-    DataSource *dataSource = objectAsDataSource( session, objectHandle );
+    DataSource<DataResource> *dataSource = objectAsDataSource( session, objectHandle );
     if( dataSource == NULL )
     {
         return DATA_SOURCE_UNKNOWN;
@@ -4043,7 +4173,7 @@ FmlObjectHandle Fieldml_GetDataSourceResource( FmlSessionHandle handle, FmlObjec
         return FML_INVALID_HANDLE;
     }
     
-    DataSource *source = objectAsDataSource( session, objectHandle );
+    DataSource<DataResource> *source = objectAsDataSource( session, objectHandle );
     if( source == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -4091,7 +4221,7 @@ FmlErrorNumber Fieldml_CreateTextDataSource( FmlSessionHandle handle, const char
     {
         return session->setError( FML_ERR_INVALID_OBJECT );
     }
-
+    
     if( firstLine <= 0 )
     {
         return session->setError( FML_ERR_INVALID_PARAMETER_3 );
@@ -4112,8 +4242,9 @@ FmlErrorNumber Fieldml_CreateTextDataSource( FmlSessionHandle handle, const char
     {
         return session->setError( FML_ERR_INVALID_PARAMETER_7 );
     }
-    
-    DataSource *source = new TextDataSource( name, dataResource, firstLine, count, length, head, tail );
+
+    TextDataResource *textResource = (TextDataResource*)dataResource;
+    TextDataSource *source = new TextDataSource( name, textResource, firstLine, count, length, head, tail );
 
     session->setError( FML_ERR_NO_ERROR );
     FmlObjectHandle sourceHandle = addObject( session, source );
@@ -4255,7 +4386,7 @@ FmlErrorNumber Fieldml_CreateArrayDataSource( FmlSessionHandle handle, const cha
     
     ArrayDataResource *arrayResource = (ArrayDataResource*)dataResource;
 
-    DataSource *source = new ArrayDataSource( name, arrayResource, sourceName );
+    ArrayDataSource *source = new ArrayDataSource( name, arrayResource, sourceName );
 
     session->setError( FML_ERR_NO_ERROR );
     FmlObjectHandle sourceHandle = addObject( session, source );
@@ -4285,7 +4416,7 @@ char * Fieldml_GetDataSourceArraySource( FmlSessionHandle handle, FmlObjectHandl
         return NULL;
     }
     
-    DataSource *source = (DataSource*)object;
+    DataSource<DataResource> *source = (DataSource<DataResource>*)object;
     if( source->type != DATA_SOURCE_ARRAY )
     {
         session->setError( FML_ERR_INVALID_OBJECT );

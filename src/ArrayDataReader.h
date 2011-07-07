@@ -48,8 +48,6 @@
 
 #include "fieldml_structs.h"
 
-extern const char * const HDF5_NAME;
-
 class ArrayDataReader :
     public DataReader
 {
@@ -73,7 +71,7 @@ public:
     
     virtual ~ArrayDataReader();
     
-    static ArrayDataReader *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataResource *resource, ArrayDataSource *source );
+    static ArrayDataReader *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source );
 };
 
 

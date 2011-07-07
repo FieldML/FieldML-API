@@ -39,29 +39,37 @@
  *
  */
 
-#ifndef H_DATA_READER
-#define H_DATA_READER
+#ifndef H_ARRAY_DATA_WRITER
+#define H_ARRAY_DATA_WRITER
 
+#include "DataWriter.h"
 #include "FieldmlErrorHandler.h"
+
 #include "fieldml_structs.h"
 
-class DataReader
+class ArrayDataWriter :
+    public DataWriter
 {
+private:
+
+protected:
+    FieldmlErrorHandler *eHandler;
+
+    ArrayDataWriter( FieldmlErrorHandler *_eHandler );
+    
 public:
-    static DataReader *createTextReader( FieldmlErrorHandler *eHandler, const char *root, TextDataSource *dataSource );
-
-    static DataReader *createArrayReader( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *dataSource );
-
-    virtual int readIntValues( int *values, int count ) = 0;
+    virtual int writeIntValues( int *values, int count );
     
-    virtual int readIntSlab( int *offsets, int *sizes, int *valueBuffer ) = 0;
+    virtual int writeIntSlab( int *offsets, int *sizes, int *valueBuffer ) = 0;
     
-    virtual int readDoubleSlab( int *offsets, int *sizes, double *valueBuffer ) = 0;
-
-    virtual int readDoubleValues( double *value, int count ) = 0; 
+    virtual int writeDoubleValues( double *value, int count ); 
     
-    virtual ~DataReader();
+    virtual int writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer ) = 0;
+    
+    virtual ~ArrayDataWriter();
+    
+    static ArrayDataWriter *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank );
 };
 
 
-#endif //H_DATA_READER
+#endif //H_ARRAY_DATA_WRITER

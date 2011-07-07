@@ -169,8 +169,19 @@ DataResource::~DataResource()
 }
 
     
+TextDataResource::TextDataResource( const string _name, DataResourceType _type ) :
+    DataResource( _name, _type )
+{
+}
+
+
+TextDataResource::~TextDataResource()
+{
+}
+
+
 TextFileDataResource::TextFileDataResource( const string _name, const string _href ) :
-    DataResource( _name, DATA_RESOURCE_TEXT_FILE ),
+    TextDataResource( _name, DATA_RESOURCE_TEXT_FILE ),
     href( _href )
 {
 }
@@ -182,7 +193,7 @@ TextFileDataResource::~TextFileDataResource()
 
 
 TextInlineDataResource::TextInlineDataResource( const string _name ) : 
-    DataResource( _name, DATA_RESOURCE_TEXT_INLINE )
+    TextDataResource( _name, DATA_RESOURCE_TEXT_INLINE )
 {
     inlineString = new char[1];
     ((char*)inlineString)[0] = 0; //Dirty hack.
@@ -257,20 +268,7 @@ DOKArrayDataDescription::~DOKArrayDataDescription()
 }
 
 
-DataSource::DataSource( const string _name, DataResource *_resource, DataSourceType _type ) :
-    FieldmlObject( _name, FHT_DATA_SOURCE, false ),
-    resource( _resource ),
-    type( _type )
-{
-}
-
-
-DataSource::~DataSource()
-{
-}
-
-
-TextDataSource::TextDataSource( const string _name, DataResource *_resource, int _firstLine, int _count, int _length, int _head, int _tail ) :
+TextDataSource::TextDataSource( const string _name, TextDataResource *_resource, int _firstLine, int _count, int _length, int _head, int _tail ) :
     DataSource( _name, _resource, DATA_SOURCE_TEXT ),
     firstLine( _firstLine ),
     count( _count ),

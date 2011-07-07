@@ -170,6 +170,8 @@ const xmlChar * const LENGTH_ATTRIB                    = (const xmlChar* const)"
 const xmlChar * const HEAD_ATTRIB                      = (const xmlChar* const)"head";
 const xmlChar * const TAIL_ATTRIB                      = (const xmlChar* const)"tail";
 
+const char * const HDF5_NAME                           = "HDF5";
+
 const char * const STRING_TRUE                      = "true";
 
 // strndup not available on all platforms.

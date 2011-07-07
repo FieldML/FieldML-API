@@ -403,7 +403,7 @@ void testMisc()
     FmlObjectHandle rc3Index = Fieldml_CreateArgumentEvaluator( handle, "test.rc_3d.argument", rc3Ensemble );
     Fieldml_AddDenseIndexEvaluator( handle, parameters, rc3Index, FML_INVALID_HANDLE );
     
-    writer = Fieldml_OpenWriter( handle, parametersData, 1 );
+    writer = Fieldml_OpenTextWriter( handle, parametersData, 1 );
     Fieldml_WriteDoubleValues( handle, writer, values, 3 );
     Fieldml_CloseWriter( handle, writer );
     
@@ -439,7 +439,7 @@ void testMisc()
     FmlObjectHandle rc3Index4 = Fieldml_CreateArgumentEvaluator( handle, "test.rc_3d.argument.24", rc3Ensemble );
     Fieldml_AddSparseIndexEvaluator( handle, parameters2, rc3Index4 );
 
-    writer = Fieldml_OpenWriter( handle, parametersData2, 1 );
+    writer = Fieldml_OpenTextWriter( handle, parametersData2, 1 );
     Fieldml_WriteIntValues( handle, writer, indexValues1, 2 );
     Fieldml_WriteDoubleValues( handle, writer, rawValues1, 9 );
     Fieldml_WriteIntValues( handle, writer, indexValues2, 2 );
@@ -587,6 +587,9 @@ int testHdf5()
     
     FmlObjectHandle resource2 = Fieldml_CreateArrayDataResource( session, "test.resource2", "HDF5", "I16BE.h5" );
     FmlObjectHandle source2I = Fieldml_CreateArrayDataSource( session, "test.source2_int", resource2, "I16BE" );
+    FmlObjectHandle source2D = Fieldml_CreateArrayDataSource( session, "test.source2_double", resource2, "DOUBLE" );
+    
+    FmlObjectHandle cType = Fieldml_CreateContinuousType( session, "test.scalar_real" );
 
     FmlObjectHandle reader = Fieldml_OpenReader( session, source2I );
     
@@ -599,9 +602,9 @@ int testHdf5()
     int dataI[20];
     for( int i = 0; i < 20; i++ )
     {
-        dataI[i] = 0xdead;
+        dataI[i] = 12345;
     }
-    
+
     Fieldml_ReadIntSlab( session, reader, offsets, sizes, dataI );
     
     for( int i = 0; i < 20; i++ )
@@ -628,6 +631,25 @@ int testHdf5()
     }
     
     Fieldml_CloseReader( session, reader );
+    
+    printf("Testing array write\n");
+    
+    for( int i = 0; i < 20; i++ )
+    {
+        dataD[i] = i * 100.001;
+    }
+    sizes[0] = 12;
+    FmlObjectHandle writer = Fieldml_OpenArrayWriter( session, source2D, cType, 1, sizes, 1 );
+
+    offsets[0] = 0;
+    sizes[0] = 6;
+    Fieldml_WriteDoubleSlab( session, writer, offsets, sizes, dataD );
+    
+    offsets[0] = 6;
+    sizes[0] = 6;
+    Fieldml_WriteDoubleSlab( session, writer, offsets, sizes, dataD );
+    
+    Fieldml_CloseWriter( session, writer );
     
     if( testOk ) 
     {

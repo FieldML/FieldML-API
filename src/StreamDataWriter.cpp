@@ -39,29 +39,76 @@
  *
  */
 
-#ifndef H_DATA_READER
-#define H_DATA_READER
+#include "FieldmlRegion.h"
+#include "StreamDataWriter.h"
 
-#include "FieldmlErrorHandler.h"
-#include "fieldml_structs.h"
+#include "fieldml_api.h"
+#include "string_const.h"
 
-class DataReader
+using namespace std;
+
+StreamDataWriter::StreamDataWriter( FieldmlOutputStream *_stream, FieldmlErrorHandler *_eHandler ) :
+    stream( _stream ),
+    eHandler( _eHandler )
 {
-public:
-    static DataReader *createTextReader( FieldmlErrorHandler *eHandler, const char *root, TextDataSource *dataSource );
+}
 
-    static DataReader *createArrayReader( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *dataSource );
 
-    virtual int readIntValues( int *values, int count ) = 0;
+int StreamDataWriter::writeIntValues( int *valueBuffer, int count )
+{
+    int err = FML_ERR_NO_ERROR;
+    int writeCount = 0;
+    while( ( writeCount < count ) && ( err == FML_ERR_NO_ERROR ) )
+    {
+        int err = stream->writeInt( valueBuffer[writeCount] );
+        
+        if( err != FML_ERR_NO_ERROR )
+        {
+            eHandler->setError( err );
+            return -1;
+        }
+        writeCount++;
+    }
     
-    virtual int readIntSlab( int *offsets, int *sizes, int *valueBuffer ) = 0;
+    return writeCount;
+}
+
+
+int StreamDataWriter::writeDoubleValues( double *valueBuffer, int count )
+{
+    int err = FML_ERR_NO_ERROR;
+    int writeCount = 0;
+    while( ( writeCount < count ) && ( err == FML_ERR_NO_ERROR ) )
+    {
+        int err = stream->writeDouble( valueBuffer[writeCount] );
+        
+        if( err != FML_ERR_NO_ERROR )
+        {
+            eHandler->setError( err );
+            return -1;
+        }
+        writeCount++;
+    }
     
-    virtual int readDoubleSlab( int *offsets, int *sizes, double *valueBuffer ) = 0;
-
-    virtual int readDoubleValues( double *value, int count ) = 0; 
-    
-    virtual ~DataReader();
-};
+    return writeCount;
+}
 
 
-#endif //H_DATA_READER
+int StreamDataWriter::writeIntSlab( int *offsets, int *sizes, int *valueBuffer )
+{
+    eHandler->setError( FML_ERR_IO_UNSUPPORTED );
+    return -1;
+}
+
+
+int StreamDataWriter::writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer )
+{
+    eHandler->setError( FML_ERR_IO_UNSUPPORTED );
+    return -1;
+}
+
+
+StreamDataWriter::~StreamDataWriter()
+{
+    delete stream;
+}

@@ -50,10 +50,20 @@
 using namespace std;
 
 
+DataReader::~DataReader()
+{
+}
+
+
 DataReader *DataReader::createTextReader( FieldmlErrorHandler *eHandler, const char *root, TextDataSource *dataSource )
 {
     FieldmlInputStream *stream = NULL;
     
+    if( ( dataSource == NULL ) || ( root == NULL ) || ( eHandler == NULL ) )
+    {
+        return NULL;
+    }
+
     if( dataSource->resource->type == DATA_RESOURCE_TEXT_FILE )
     {
         TextFileDataResource *fileDataResource = (TextFileDataResource*)dataSource->resource;
@@ -87,39 +97,10 @@ DataReader *DataReader::createTextReader( FieldmlErrorHandler *eHandler, const c
 
 DataReader *DataReader::createArrayReader( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source )
 {
-    if( source->resource->type != DATA_RESOURCE_ARRAY )
+    if( ( source == NULL ) || ( root == NULL ) || ( eHandler == NULL ) )
     {
         return NULL;
     }
     
-    ArrayDataResource *resource = (ArrayDataResource*)source->resource;
-    
-    return ArrayDataReader::create( eHandler, root, resource, source );
-}
-
-
-DataReader *DataReader::create( FieldmlErrorHandler *eHandler, const char *root, DataSource *dataSource )
-{
-    if( ( dataSource == NULL ) || ( root == NULL ) || ( eHandler == NULL ) )
-    {
-        return NULL;
-    }
-
-    if( dataSource->type == DATA_SOURCE_TEXT )
-    {
-        TextDataSource *textSource = (TextDataSource*)dataSource;
-        return createTextReader( eHandler, root, textSource );
-    }
-    else if( dataSource->type == DATA_SOURCE_ARRAY )
-    {
-        ArrayDataSource *arraySource = (ArrayDataSource*)dataSource;
-        return createArrayReader( eHandler, root, arraySource );
-    }
-    
-    return NULL;
-}
-
-
-DataReader::~DataReader()
-{
+    return ArrayDataReader::create( eHandler, root, source );
 }

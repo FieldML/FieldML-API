@@ -42,25 +42,23 @@
 #ifndef H_DATA_WRITER
 #define H_DATA_WRITER
 
-#include "OutputStream.h"
-
 #include "FieldmlErrorHandler.h"
 #include "fieldml_structs.h"
 
 class DataWriter
 {
-private:
-    FieldmlErrorHandler *eHandler;
-
-    FieldmlOutputStream * const stream;
-
-    DataWriter( FieldmlOutputStream *_stream, FieldmlErrorHandler *_eHandler );
-
 public:
-    static DataWriter * create( FieldmlErrorHandler *eHandler, const char *root, DataSource *dataSource, int append );
+    static DataWriter *createTextWriter( FieldmlErrorHandler *eHandler, const char *root, TextDataSource *dataSource, bool append );
+
+    static DataWriter *createArrayWriter( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *dataSource, bool isDouble, bool append, int *sizes, int rank );
     
-    virtual int writeIntValues( int *values, int count );
-    virtual int writeDoubleValues( double *values, int count );
+    virtual int writeIntValues( int *values, int count ) = 0;
+    
+    virtual int writeIntSlab( int *offsets, int *sizes, int *valueBuffer ) = 0;
+    
+    virtual int writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer ) = 0;
+
+    virtual int writeDoubleValues( double *value, int count ) = 0; 
     
     virtual ~DataWriter();
 };

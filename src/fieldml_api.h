@@ -1214,8 +1214,9 @@ FmlErrorNumber Fieldml_CloseReader( FmlSessionHandle handle, FmlReaderHandle rea
  * 
  * \see Fieldml_CloseWriter
  */
-FmlWriterHandle Fieldml_OpenWriter( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlBoolean append );
+FmlWriterHandle Fieldml_OpenTextWriter( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlBoolean append );
 
+FmlWriterHandle Fieldml_OpenArrayWriter( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle typeHandle, FmlBoolean append, int *sizes, int rank );
 
 /**
  * Write out some integer values to the given data writer.
@@ -1226,6 +1227,7 @@ FmlWriterHandle Fieldml_OpenWriter( FmlSessionHandle handle, FmlObjectHandle obj
  */
 FmlErrorNumber Fieldml_WriteIntValues( FmlSessionHandle handle, FmlWriterHandle writer, int *indexBuffer, int bufferSize );
 
+FmlErrorNumber Fieldml_WriteIntSlab( FmlSessionHandle handle, FmlWriterHandle writer, int *offsets, int *sizes, int *valueBuffer );
 
 /**
  * Write out some double-precision floating point values to the given data writer.
@@ -1235,6 +1237,8 @@ FmlErrorNumber Fieldml_WriteIntValues( FmlSessionHandle handle, FmlWriterHandle 
  * \see Fieldml_OpenWriter
  */
 FmlErrorNumber Fieldml_WriteDoubleValues( FmlSessionHandle handle, FmlWriterHandle writer, double *indexBuffer, int bufferSize );
+
+FmlErrorNumber Fieldml_WriteDoubleSlab( FmlSessionHandle handle, FmlWriterHandle writer, int *offsets, int *sizes, double *valueBuffer );
 
 
 /**
