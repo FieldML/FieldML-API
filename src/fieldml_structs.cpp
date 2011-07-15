@@ -269,7 +269,7 @@ DOKArrayDataDescription::~DOKArrayDataDescription()
 
 
 TextDataSource::TextDataSource( const string _name, TextDataResource *_resource, int _firstLine, int _count, int _length, int _head, int _tail ) :
-    DataSource( _name, _resource, DATA_SOURCE_TEXT ),
+    DataSource<TextDataResource>( _name, _resource, DATA_SOURCE_TEXT ),
     firstLine( _firstLine ),
     count( _count ),
     length( _length ),
@@ -285,7 +285,7 @@ TextDataSource::~TextDataSource()
 
 
 ArrayDataSource::ArrayDataSource( const string _name, ArrayDataResource *_resource, const string _sourceName ) :
-    DataSource( _name, _resource, DATA_SOURCE_ARRAY ),
+    DataSource<ArrayDataResource>( _name, _resource, DATA_SOURCE_ARRAY ),
     sourceName( _sourceName )
 {
 }

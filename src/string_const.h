@@ -166,6 +166,7 @@ extern const xmlChar * const HEAD_ATTRIB;
 extern const xmlChar * const TAIL_ATTRIB;
 
 extern const char * const HDF5_NAME;
+extern const char * const PHDF5_NAME;
 
 extern const char * const STRING_TRUE;
 

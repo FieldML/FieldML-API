@@ -47,7 +47,7 @@
 
 using namespace std;
 
-#ifdef FIELDML_HDF5_ARRAY
+#if defined FIELDML_HDF5_ARRAY || FIELDML_PHDF5_ARRAY
 #include <hdf5.h>
 
 class Hdf5DataReader :
@@ -69,7 +69,7 @@ private:
 public:
     bool ok;
 
-    Hdf5DataReader( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source );
+    Hdf5DataReader( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, hid_t fileAccessProperties );
     
     virtual int readIntSlab( int *offsets, int *sizes, int *valueBuffer );
     
@@ -87,7 +87,7 @@ ArrayDataReader *ArrayDataReader::create( FieldmlErrorHandler *eHandler, const c
     if( source->resource->format == HDF5_NAME )
     {
 #ifdef FIELDML_HDF5_ARRAY
-        Hdf5DataReader *hdf5reader = new Hdf5DataReader( eHandler, root, source );
+        Hdf5DataReader *hdf5reader = new Hdf5DataReader( eHandler, root, source, H5P_DEFAULT );
         if( !hdf5reader->ok )
         {
             delete hdf5reader;
@@ -97,6 +97,25 @@ ArrayDataReader *ArrayDataReader::create( FieldmlErrorHandler *eHandler, const c
             reader = hdf5reader;
         }
 #endif //FIELDML_HDF5_ARRAY
+    }
+    else if( source->resource->format == PHDF5_NAME )
+    {
+#ifdef FIELDML_PHDF5_ARRAY
+        hid_t accessProperties = H5Pcreate( H5P_FILE_ACCESS );
+        if( H5Pset_fapl_mpio( accessProperties, MPI_COMM_WORLD, MPI_INFO_NULL ) >= 0 )
+        {
+            Hdf5DataReader *hdf5reader = new Hdf5DataReader( eHandler, root, source, accessProperties );
+            if( !hdf5reader->ok )
+            {
+                delete hdf5reader;
+            }
+            else
+            {
+                reader = hdf5reader;
+            }
+        }
+        H5Pclose( accessProperties );
+#endif //FIELDML_PHDF5_ARRAY
     }
     
     return reader;
@@ -134,8 +153,8 @@ ArrayDataReader::~ArrayDataReader()
 }
 
 
-#ifdef FIELDML_HDF5_ARRAY
-Hdf5DataReader::Hdf5DataReader( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source ) :
+#if defined FIELDML_HDF5_ARRAY || FIELDML_PHDF5_ARRAY
+Hdf5DataReader::Hdf5DataReader( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, hid_t accessProperties ) :
     ArrayDataReader( eHandler )
 {
     hStrides = NULL;
@@ -147,7 +166,7 @@ Hdf5DataReader::Hdf5DataReader( FieldmlErrorHandler *eHandler, const char *root,
     const string filename = makeFilename( root, source->resource->href );
     while( true )
     {
-        file = H5Fopen( filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT );
+        file = H5Fopen( filename.c_str(), H5F_ACC_RDONLY, accessProperties );
         if( file < 0 )
         {
             break;

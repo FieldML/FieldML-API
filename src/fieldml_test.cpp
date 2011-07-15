@@ -607,11 +607,6 @@ int testHdf5()
 
     Fieldml_ReadIntSlab( session, reader, offsets, sizes, dataI );
     
-    for( int i = 0; i < 20; i++ )
-    {
-        printf("%d\n", dataI[i] );
-    }
-    
     Fieldml_CloseReader( session, reader );
     
     reader = Fieldml_OpenReader( session, sourceD );
@@ -624,11 +619,6 @@ int testHdf5()
     
     sizes[0] = 2;
     Fieldml_ReadDoubleSlab( session, reader, offsets, sizes, dataD );
-    
-    for( int i = 0; i < 20; i++ )
-    {
-        printf("%g\n", dataD[i] );
-    }
     
     Fieldml_CloseReader( session, reader );
     

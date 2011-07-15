@@ -47,7 +47,7 @@
 
 using namespace std;
 
-#ifdef FIELDML_HDF5_ARRAY
+#if defined FIELDML_HDF5_ARRAY || defined FIELDML_PHDF5_ARRAY
 #include <hdf5.h>
 
 class Hdf5DataWriter :
@@ -73,7 +73,7 @@ private:
 public:
     bool ok;
 
-    Hdf5DataWriter( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank );
+    Hdf5DataWriter( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank, hid_t fileAccessProperties );
     
     virtual int writeIntSlab( int *offsets, int *sizes, int *valueBuffer );
     
@@ -81,7 +81,7 @@ public:
     
     virtual ~Hdf5DataWriter();
 };
-#endif //FIELDML_HDF5_ARRAY
+#endif //FIELDML_HDF5_ARRAY || FIELDML_PHDF5_ARRAY
     
 
 ArrayDataWriter *ArrayDataWriter::create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank )
@@ -91,7 +91,7 @@ ArrayDataWriter *ArrayDataWriter::create( FieldmlErrorHandler *eHandler, const c
     if( source->resource->format == HDF5_NAME )
     {
 #ifdef FIELDML_HDF5_ARRAY
-        Hdf5DataWriter *hdf5writer = new Hdf5DataWriter( eHandler, root, source, isDouble, append, sizes, rank );
+        Hdf5DataWriter *hdf5writer = new Hdf5DataWriter( eHandler, root, source, isDouble, append, sizes, rank, H5P_DEFAULT );
         if( !hdf5writer->ok )
         {
             delete hdf5writer;
@@ -101,6 +101,25 @@ ArrayDataWriter *ArrayDataWriter::create( FieldmlErrorHandler *eHandler, const c
             writer = hdf5writer;
         }
 #endif //FIELDML_HDF5_ARRAY
+    }
+    else if( source->resource->format == PHDF5_NAME )
+    {
+#ifdef FIELDML_PHDF5_ARRAY
+        hid_t accessProperties = H5Pcreate( H5P_FILE_ACCESS );
+        if( H5Pset_fapl_mpio( accessProperties, MPI_COMM_WORLD, MPI_INFO_NULL ) >= 0 )
+        {
+            Hdf5DataWriter *hdf5writer = new Hdf5DataWriter( eHandler, root, source, isDouble, append, sizes, rank, accessProperties );
+            if( !hdf5writer->ok )
+            {
+                delete hdf5writer;
+            }
+            else
+            {
+                writer = hdf5writer;
+            }
+        }
+        H5Pclose( accessProperties );
+#endif //FIELDML_PHDF5_ARRAY
     }
     
     return writer;
@@ -132,8 +151,8 @@ ArrayDataWriter::~ArrayDataWriter()
 }
 
 
-#ifdef FIELDML_HDF5_ARRAY
-Hdf5DataWriter::Hdf5DataWriter( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int _rank ) :
+#if defined FIELDML_HDF5_ARRAY || defined FIELDML_PHDF5_ARRAY
+Hdf5DataWriter::Hdf5DataWriter( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int _rank, hid_t accessProperties ) :
     ArrayDataWriter( eHandler )
 {
     rank = _rank;
@@ -153,14 +172,14 @@ Hdf5DataWriter::Hdf5DataWriter( FieldmlErrorHandler *eHandler, const char *root,
         //TODO Add an API-level enum to allow the user to append data, nuke any existing file, or fail if the file already exists. 
         if( !append )
         {
-            file = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
+            file = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, accessProperties );
         }
         else
         {
-            file = H5Fopen( filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
+            file = H5Fopen( filename.c_str(), H5F_ACC_RDWR, accessProperties );
             if( file < 0 )
             {
-                file = H5Fcreate( filename.c_str(), H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT );
+                file = H5Fcreate( filename.c_str(), H5F_ACC_EXCL, H5P_DEFAULT, accessProperties );
             }
         }
         

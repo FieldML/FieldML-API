@@ -197,8 +197,6 @@ FmlObjectHandle getObjectAttribute( xmlNodePtr node, const xmlChar *attribute, P
 
 static xmlNodePtr getFirstChild( xmlNodePtr node, const xmlChar *name )
 {
-    int err = 0;
-    
     xmlNodePtr cur = xmlFirstElementChild( node );
     while( cur != NULL )
     {
@@ -356,7 +354,8 @@ public:
             return 1;
         }
         
-        int err = processChildren( node, TEXT_DATA_SOURCE_TAG, state, TextDataSourceParser( resource ) );
+        TextDataSourceParser textDataSourceParser( resource );
+        int err = processChildren( node, TEXT_DATA_SOURCE_TAG, state, textDataSourceParser );
         if( err != 0 )
         {
             return err;
@@ -410,13 +409,15 @@ public:
             return 1;
         }
         
-        int err = processChildren( node, TEXT_STRING_TAG, state, TextStringParser( resource ) );
+        TextStringParser textStringParser( resource );
+        int err = processChildren( node, TEXT_STRING_TAG, state, textStringParser );
         if( err != 0 )
         {
             return err;
         }
     
-        err = processChildren( node, TEXT_DATA_SOURCE_TAG, state, TextDataSourceParser( resource ) );
+        TextDataSourceParser textDataSourceParser( resource );
+        err = processChildren( node, TEXT_DATA_SOURCE_TAG, state, textDataSourceParser );
         if( err != 0 )
         {
             return err;
@@ -473,7 +474,8 @@ public:
             return 1;
         }
         
-        int err = processChildren( node, ARRAY_DATA_SOURCE_TAG, state, ArrayDataSourceParser( resource ) );
+        ArrayDataSourceParser arrayDataSourceParser( resource );
+        int err = processChildren( node, ARRAY_DATA_SOURCE_TAG, state, arrayDataSourceParser );
         if( err != 0 )
         {
             return err;
@@ -581,7 +583,8 @@ public:
             return 1;
         }
         
-        int err = processChildren( getFirstChild( objectNode, BINDINGS_TAG ), BIND_TAG, state, BindParser( evaluator ) );
+        BindParser bindParser( evaluator );
+        int err = processChildren( getFirstChild( objectNode, BINDINGS_TAG ), BIND_TAG, state, bindParser );
         if( err != 0 )
         {
             return err;
@@ -722,6 +725,11 @@ public:
             {
                 type = MEMBER_STRIDE_RANGE_DATA;
             }
+            else
+            {
+                state.errorHandler->logError( "EnsembleType has invalid member specification", name );
+                return 1;
+            }
     
             FmlObjectHandle dataObject = getObjectAttribute( membersSpecNode, DATA_ATTRIB, state );
             int count = getIntAttribute( membersSpecNode, COUNT_ATTRIB, -1 );
@@ -827,7 +835,8 @@ public:
             Fieldml_SetMeshDefaultShape( state.session, handle, defaultValue );
         }
 
-        return processChildren( shapesNode, MESH_SHAPE_TAG, state, MeshShapeParser( handle ) );
+        MeshShapeParser meshShapeParser( handle );
+        return processChildren( shapesNode, MESH_SHAPE_TAG, state, meshShapeParser );
     }
 };
     
@@ -850,7 +859,8 @@ public:
             return 1;
         }
         
-        return processChildren( getFirstChild( objectNode, ARGUMENTS_TAG ), ARGUMENT_TAG, state, ArgumentParser( evaluator ) );
+        ArgumentParser argumentParser( evaluator );
+        return processChildren( getFirstChild( objectNode, ARGUMENTS_TAG ), ARGUMENT_TAG, state, argumentParser );
     }
 };
     
@@ -873,7 +883,8 @@ public:
             return 1;
         }
         
-        return processChildren( getFirstChild( objectNode, ARGUMENTS_TAG ), ARGUMENT_TAG, state, ArgumentParser( evaluator ) );
+        ArgumentParser argumentParser( evaluator );
+        return processChildren( getFirstChild( objectNode, ARGUMENTS_TAG ), ARGUMENT_TAG, state, argumentParser );
     }
 };
 
@@ -965,19 +976,22 @@ public:
             }
         }
         
-        int err = processChildren( evaluatorsNode, ELEMENT_EVALUATOR_TAG, state, PiecewiseMapParser( evaluator ) );
+        PiecewiseMapParser piecewiseMapParser( evaluator );
+        int err = processChildren( evaluatorsNode, ELEMENT_EVALUATOR_TAG, state, piecewiseMapParser );
         if( err != 0 )
         {
             return err;
         }
     
-        err = processChildren( getFirstChild( objectNode, BINDINGS_TAG ), BIND_TAG, state, BindParser( evaluator ) );
+        BindParser bindParser( evaluator );
+        err = processChildren( getFirstChild( objectNode, BINDINGS_TAG ), BIND_TAG, state, bindParser );
         if( err != 0 )
         {
             return err;
         }
     
-        err = processChildren( getFirstChild( objectNode, INDEX_EVALUATORS_TAG ), INDEX_EVALUATOR_TAG, state, IndexEvaluatorParser( evaluator ) );
+        IndexEvaluatorParser indexEvaluatorParser( evaluator );
+        err = processChildren( getFirstChild( objectNode, INDEX_EVALUATORS_TAG ), INDEX_EVALUATOR_TAG, state, indexEvaluatorParser );
         if( err != 0 )
         {
             return err;
@@ -1049,19 +1063,22 @@ public:
             }
         }
         
-        int err = processChildren( evaluatorsNode, COMPONENT_EVALUATOR_TAG, state, AggregateMapParser( evaluator ) );
+        AggregateMapParser aggregateMapParser( evaluator );
+        int err = processChildren( evaluatorsNode, COMPONENT_EVALUATOR_TAG, state, aggregateMapParser );
         if( err != 0 )
         {
             return err;
         }
     
-        err = processChildren( getFirstChild( objectNode, BINDINGS_TAG ), BIND_TAG, state, BindParser( evaluator ) );
+        BindParser bindParser( evaluator );
+        err = processChildren( getFirstChild( objectNode, BINDINGS_TAG ), BIND_TAG, state, bindParser );
         if( err != 0 )
         {
             return err;
         }
         
-        err = processChildren( getFirstChild( objectNode, BINDINGS_TAG ), BIND_INDEX_TAG, state, BindIndexParser( evaluator ) );
+        BindIndexParser bindIndexParser( evaluator );
+        err = processChildren( getFirstChild( objectNode, BINDINGS_TAG ), BIND_INDEX_TAG, state, bindIndexParser );
         if( err != 0 )
         {
             return err;
@@ -1147,13 +1164,15 @@ public:
                 return 1;
             }
 
-            int err = processChildren( getFirstChild( semidenseNode, DENSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, SemidenseIndexEvaluatorParser( evaluator, true ) );
+            SemidenseIndexEvaluatorParser denseIndexEvaluatorParser( evaluator, true );
+            int err = processChildren( getFirstChild( semidenseNode, DENSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, denseIndexEvaluatorParser );
             if( err != 0 )
             {
                 return err;
             }
             
-            err = processChildren( getFirstChild( semidenseNode, SPARSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, SemidenseIndexEvaluatorParser( evaluator, false ) );
+            SemidenseIndexEvaluatorParser sparseIndexEvaluatorParser( evaluator, false );
+            err = processChildren( getFirstChild( semidenseNode, SPARSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, sparseIndexEvaluatorParser );
             if( err != 0 )
             {
                 return err;
@@ -1175,7 +1194,8 @@ public:
                 return 1;
             }
 
-            int err = processChildren( getFirstChild( denseNode, DENSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, SemidenseIndexEvaluatorParser( evaluator, true ) );
+            SemidenseIndexEvaluatorParser semidenseIndexEvaluatorParser( evaluator, true );
+            int err = processChildren( getFirstChild( denseNode, DENSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, semidenseIndexEvaluatorParser );
             if( err != 0 )
             {
                 return err;
@@ -1203,13 +1223,15 @@ public:
                 return 1;
             }
 
-            int err = processChildren( getFirstChild( dokNode, SPARSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, SemidenseIndexEvaluatorParser( evaluator, false ) );
+            SemidenseIndexEvaluatorParser denseIndexEvaluatorParser( evaluator, false );
+            int err = processChildren( getFirstChild( dokNode, SPARSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, denseIndexEvaluatorParser );
             if( err != 0 )
             {
                 return err;
             }
             
-            err = processChildren( getFirstChild( dokNode, DENSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, SemidenseIndexEvaluatorParser( evaluator, true ) );
+            SemidenseIndexEvaluatorParser sparseIndexEvaluatorParser( evaluator, true );
+            err = processChildren( getFirstChild( dokNode, DENSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, sparseIndexEvaluatorParser );
             if( err != 0 )
             {
                 return err;
@@ -1299,8 +1321,6 @@ static int parseObjectNode( xmlNodePtr objectNode, ParseState &state )
 
 static int parseDoc( xmlDocPtr doc, ParseState &state )
 {
-    int err = 0;
-    
     xmlNodePtr fieldmlNode = xmlDocGetRootElement( doc );
     
     xmlNodePtr regionNode = xmlFirstElementChild( fieldmlNode );

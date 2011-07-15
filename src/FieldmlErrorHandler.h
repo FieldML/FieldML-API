@@ -42,7 +42,7 @@
 #ifndef H_FIELDML_ERROR_HANDLER
 #define H_FIELDML_ERROR_HANDLER
 
-#include <vector>
+#include <string>
 
 #include "fieldml_api.h"
 

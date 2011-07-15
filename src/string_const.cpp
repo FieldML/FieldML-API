@@ -171,6 +171,7 @@ const xmlChar * const HEAD_ATTRIB                      = (const xmlChar* const)"
 const xmlChar * const TAIL_ATTRIB                      = (const xmlChar* const)"tail";
 
 const char * const HDF5_NAME                           = "HDF5";
+const char * const PHDF5_NAME                          = "PHDF5";
 
 const char * const STRING_TRUE                      = "true";
 
