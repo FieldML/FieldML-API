@@ -96,7 +96,7 @@ static void addContextError( void *context, const char *msg, ... )
         {
             message[retval-1] = 0;
         }
-        errorHandler->addError( message );
+        errorHandler->logError( message );
     }
 }
 

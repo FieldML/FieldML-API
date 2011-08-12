@@ -189,7 +189,14 @@ FieldmlRegion *FieldmlSession::addResourceRegion( string href, string name )
 }
 
 
-FmlErrorNumber FieldmlSession::setErrorAndLocation( const char *file, const int line, const FmlErrorNumber error )
+void FieldmlSession::setErrorContext( const char *file, const int line )
+{
+    contextFile = file;
+    contextLine = line;
+}
+
+
+FmlErrorNumber FieldmlSession::setError( const FmlErrorNumber error )
 {
     lastError = error;
 
@@ -197,7 +204,7 @@ FmlErrorNumber FieldmlSession::setErrorAndLocation( const char *file, const int 
     {
         if( debug )
         {
-            fprintf( stderr, "FIELDML %s (%s): Error %d at %s:%d\n", FML_VERSION_STRING, __DATE__, error, file, line );
+            fprintf( stderr, "FIELDML %s (%s): Error %d at %s:%d\n", FML_VERSION_STRING, __DATE__, error, contextFile, contextLine );
         }
     }
     
@@ -251,6 +258,11 @@ FmlSessionHandle FieldmlSession::getSessionHandle()
     return handle;
 }
 
+
+void FieldmlSession::logError( const string error )
+{
+    addError( error );
+}
 
 void FieldmlSession::logError( const char *error, const char *name1, const char *name2 )
 {

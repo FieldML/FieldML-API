@@ -56,6 +56,10 @@ class FieldmlSession :
 private:
     FmlErrorNumber lastError;
     
+    int contextLine;
+    
+    const char *contextFile;
+    
     int debug;
     
     std::vector<std::string> errors;
@@ -79,14 +83,18 @@ private:
     void getArguments( const std::set<FmlObjectHandle> &handles, std::set<FmlObjectHandle> &unbound, std::set<FmlObjectHandle> &used );
 
     static FmlSessionHandle addSession( FieldmlSession *session );
+
+    void addError( const std::string string );
     
 public:
     FieldmlSession();
     virtual ~FieldmlSession();
     
-    FmlObjectHandle setErrorAndLocation( const char *file, const int line, const FmlObjectHandle error );
+    void setErrorContext( const char *file, const int line );
+    
+    FmlErrorNumber setError( FmlErrorNumber error );
 
-    void addError( const std::string string );
+    void logError( const std::string string );
 
     void setDebug( const int debugValue );
     

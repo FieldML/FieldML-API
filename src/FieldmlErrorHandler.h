@@ -49,16 +49,15 @@
 class FieldmlErrorHandler
 {
 public:
-    virtual FmlErrorNumber setErrorAndLocation( const char *file, const int line, const FmlErrorNumber error ) = 0;
+    virtual void setErrorContext( const char *file, const int line ) = 0;
+    
+    virtual FmlErrorNumber setError( FmlErrorNumber error ) = 0;
 
-    virtual void addError( const std::string string ) = 0;
+    virtual void logError( const std::string string ) = 0;
 
     virtual void logError( const char *error, FmlObjectHandle object ) = 0;
 
     virtual void logError( const char *error, const char *name1 = NULL, const char *name2 = NULL ) = 0;
 };
-
-
-#define setError( error ) setErrorAndLocation( __FILE__, __LINE__, error )
 
 #endif //H_FIELDML_ERROR_HANDLER
