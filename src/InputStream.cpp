@@ -58,6 +58,9 @@ protected:
     int loadBuffer();
     
 public:
+    virtual long tell();
+    virtual bool seek( long pos );
+    
     FileInputStream( FILE *_file );
     virtual ~FileInputStream();
 };
@@ -75,7 +78,11 @@ protected:
     int loadBuffer();
     
 public:
+    virtual long tell();
+    virtual bool seek( long pos );
+    
     StringInputStream( const char *string );
+    virtual ~StringInputStream();
 };
 
 static const int BUFFER_SIZE = 1024;
@@ -193,7 +200,7 @@ double FieldmlInputStream::readDouble()
 
 int FieldmlInputStream::skipLine()
 {
-    while( 1 )
+    while( true )
     {
         if( bufferPos >= bufferCount )
         {
@@ -277,6 +284,24 @@ int FileInputStream::loadBuffer()
 }
 
 
+long FileInputStream::tell()
+{
+    return ftell( file );
+}
+
+
+bool FileInputStream::seek( long pos )
+{
+    if( fseek( file, pos, SEEK_SET ) == 0 )
+    {
+        bufferPos = bufferCount;
+        return true;
+    }
+    
+    return false;
+}
+
+
 StringInputStream::StringInputStream( const char * const _string ) :
     string( _string )
 {
@@ -307,4 +332,28 @@ int StringInputStream::loadBuffer()
     }
     
     return 1;
+}
+
+
+long StringInputStream::tell()
+{
+    return stringPos;
+}
+
+
+bool StringInputStream::seek( long pos )
+{
+    if( ( pos < 0 ) || ( pos >= stringMaxLen ) )
+    {
+        return false;
+    }
+    
+    stringPos = pos;
+    bufferPos = bufferCount;
+    return true;
+}
+
+
+StringInputStream::~StringInputStream()
+{
 }

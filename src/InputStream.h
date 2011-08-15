@@ -62,6 +62,9 @@ public:
     bool eof();
     virtual ~FieldmlInputStream();
     
+    virtual long tell() = 0;
+    virtual bool seek( long pos ) = 0;
+    
     static FieldmlInputStream *createTextFileStream( const std::string filename );
     static FieldmlInputStream *createStringStream( const char *string );
 };
