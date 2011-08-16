@@ -53,6 +53,7 @@
 #include "String_InternalLibrary.h"
 #include "String_InternalXSD.h"
 #include "string_const.h"
+#include "InputStream.h"
 
 #include "FieldmlDOM.h"
 
@@ -304,64 +305,127 @@ public:
     }
 };
 
+    
+class IntVectorParser :
+    public NodeParser
+{
+private:
+    const int rank;
+    
+public:
+    int *values;
+    
+    IntVectorParser( int _rank ) :
+        rank( _rank )
+    {
+        values = new int[rank];
+    }
+    
+    int parseNode( xmlNodePtr node, ParseState &state )
+    {
+        for( int i = 0; i < rank; i++ )
+        {
+            values[i] = 0;
+        }
+        
+        if( node == NULL )
+        {
+            return 1;
+        }
+        
+        char *content = (char *)xmlNodeGetContent( node );
+        if( content == NULL )
+        {
+            return 1;
+        }
+        
+        FieldmlInputStream *input = FieldmlInputStream::createStringStream( content );
+        
+        for( int i = 0; i < rank; i++ )
+        {
+            values[i] = input->readInt();
+        }
+        
+        delete input;
+        
+        return 0;
+    }
+    
+    ~IntVectorParser()
+    {
+        delete values;
+    }
+};
 
-class TextDataSourceParser :
+
+class TextArrayDataSourceParser :
     public NodeParser
 {
 private:
     const FmlObjectHandle resource;
 
 public:
-    TextDataSourceParser( FmlObjectHandle _resource ) :
+    TextArrayDataSourceParser( FmlObjectHandle _resource ) :
         resource( _resource ) {}
 
     int parseNode( xmlNodePtr node, ParseState &state )
     {
         const char *name = getStringAttribute( node, NAME_ATTRIB );
         int firstLine = getIntAttribute( node, FIRST_LINE_ATTRIB, 1 );
-        int count = getIntAttribute( node, COUNT_ATTRIB, -1 );
-        int length = getIntAttribute( node, LENGTH_ATTRIB, -1 );
-        int head = getIntAttribute( node, HEAD_ATTRIB, 0 );
-        int tail = getIntAttribute( node, TAIL_ATTRIB, 0 );
+        int rank = getIntAttribute( node, RANK_ATTRIB, 1 );
+        int err;
         
-        FmlObjectHandle dataSource = Fieldml_CreateTextDataSource( state.session, name, resource, firstLine, count, length, head, tail );
+        FmlObjectHandle dataSource = Fieldml_CreateTextArrayDataSource( state.session, name, resource, firstLine, rank );
         if( dataSource == FML_INVALID_HANDLE )
         {
-            state.errorHandler->logError( "Malformed TextDataSource entry data" );
+            state.errorHandler->logError( "Malformed TextArrayDataSource entry data" );
             return 1;
         }
-        
-        return 0;
-    }
-};
 
-    
-class TextFileResourceParser :
-    public NodeParser
-{
-public:
-    TextFileResourceParser() {}
-    
-    int parseNode( xmlNodePtr node, ParseState &state )
-    {
-        const char *name = getStringAttribute( node, NAME_ATTRIB );
-        const char *href = getStringAttribute( node, HREF_ATTRIB, XLINK_NAMESPACE_STRING );
-    
-        FmlObjectHandle resource = Fieldml_CreateTextFileDataResource( state.session, name, href );
-        if( resource == FML_INVALID_HANDLE )
-        {
-            state.errorHandler->logError( "Invalid text file resource specification", name );
-            return 1;
-        }
-        
-        TextDataSourceParser textDataSourceParser( resource );
-        int err = processChildren( node, TEXT_DATA_SOURCE_TAG, state, textDataSourceParser );
+        IntVectorParser vectorParser( rank );
+
+        err = vectorParser.parseNode( getFirstChild( node, TEXT_ARRAY_SIZE_TAG ), state );
         if( err != 0 )
         {
+            state.errorHandler->logError( "Malformed TextArrayDataSource size data" );
             return err;
         }
-        
-        return 0;
+        if( Fieldml_SetTextArrayDataSourceSizes( state.session, dataSource, vectorParser.values ) != FML_ERR_NO_ERROR )
+        {
+            state.errorHandler->logError( "TextArrayDataSource has invalid size specification", name );
+        }
+     
+        xmlNodePtr offsetNode = getFirstChild( node, ARRAY_DATA_OFFSET_TAG );
+        if( offsetNode != NULL )
+        {
+            err = vectorParser.parseNode( offsetNode, state );
+            if( err != 0 )
+            {
+                state.errorHandler->logError( "Malformed TextArrayDataSource offset data" );
+                return err;
+            }
+            if( Fieldml_SetArrayDataSourceOffsets( state.session, dataSource, vectorParser.values ) != FML_ERR_NO_ERROR )
+            {
+                state.errorHandler->logError( "TextArrayDataSource has invalid offset specification", name );
+            }
+        }
+
+        xmlNodePtr sizeNode = getFirstChild( node, ARRAY_DATA_SIZE_TAG );
+        if( sizeNode != NULL )
+        {
+            err = vectorParser.parseNode( sizeNode, state );
+            if( err != 0 )
+            {
+                state.errorHandler->logError( "Malformed TextArrayDataSource size data" );
+                return err;
+            }
+            if( Fieldml_SetArrayDataSourceSizes( state.session, dataSource, vectorParser.values ) != FML_ERR_NO_ERROR )
+            {
+                state.errorHandler->logError( "TextArrayDataSource has invalid size specification", name );
+            }
+        }
+
+        return 1;
     }
 };
 
@@ -392,32 +456,50 @@ public:
 };
 
 
-class TextInlineResourceParser :
+class TextResourceParser :
     public NodeParser
 {
 public:
-    TextInlineResourceParser() {}
+    TextResourceParser() {}
     
     int parseNode( xmlNodePtr node, ParseState &state )
     {
         const char *name = getStringAttribute( node, NAME_ATTRIB );
-    
-        FmlObjectHandle resource = Fieldml_CreateTextInlineDataResource( state.session, name );
-        if( resource == FML_INVALID_HANDLE )
+
+        xmlNodePtr textHrefNode = getFirstChild( node, TEXT_RESOURCE_HREF_TAG );
+        xmlNodePtr textStringNode = getFirstChild( node, TEXT_RESOURCE_STRING_TAG );
+        if( ( textHrefNode == NULL ) == ( textStringNode == NULL ) )
         {
-            state.errorHandler->logError( "Invalid text inline resource specification", name );
+            state.errorHandler->logError( "Malformed TextResource" );
             return 1;
         }
         
-        TextStringParser textStringParser( resource );
-        int err = processChildren( node, TEXT_STRING_TAG, state, textStringParser );
-        if( err != 0 )
+        FmlObjectHandle resource;
+        
+        if( textHrefNode != NULL )
         {
-            return err;
+            const char *href = getStringAttribute( textHrefNode, HREF_ATTRIB, XLINK_NAMESPACE_STRING );
+            resource = Fieldml_CreateTextFileDataResource( state.session, name, href );
         }
-    
-        TextDataSourceParser textDataSourceParser( resource );
-        err = processChildren( node, TEXT_DATA_SOURCE_TAG, state, textDataSourceParser );
+        else
+        {
+            resource = Fieldml_CreateTextInlineDataResource( state.session, name );
+            TextStringParser textStringParser( resource );
+            int err = textStringParser.parseNode( textStringNode, state );
+            if( err != 0 )
+            {
+                return err;
+            }
+        }
+        
+        if( resource == FML_INVALID_HANDLE )
+        {
+            state.errorHandler->logError( "Malformed TextResource" );
+            return 1;
+        }
+        
+        TextArrayDataSourceParser textArrayDataSourceParser( resource );
+        int err = processChildren( node, TEXT_ARRAY_DATA_SOURCE_TAG, state, textArrayDataSourceParser );
         if( err != 0 )
         {
             return err;
@@ -442,14 +524,48 @@ public:
     {
         const char *name = getStringAttribute( node, NAME_ATTRIB );
         const char *sourceName = getStringAttribute( node, SOURCE_NAME_ATTRIB );
+        const int rank = getIntAttribute( node, RANK_ATTRIB, -1 );
+        int err;
         
-        FmlObjectHandle dataSource = Fieldml_CreateArrayDataSource( state.session, name, resource, sourceName );
+        FmlObjectHandle dataSource = Fieldml_CreateArrayDataSource( state.session, name, resource, sourceName, rank );
         if( dataSource == FML_INVALID_HANDLE )
         {
             state.errorHandler->logError( "Malformed ArrayDataSource" );
             return 1;
         }
         
+        IntVectorParser vectorParser( rank );
+
+        xmlNodePtr offsetNode = getFirstChild( node, ARRAY_DATA_SIZE_TAG );
+        if( offsetNode != NULL )
+        {
+            err = vectorParser.parseNode( offsetNode, state );
+            if( err != 0 )
+            {
+                state.errorHandler->logError( "Malformed ArrayDataSource offset data" );
+                return err;
+            }
+            if( Fieldml_SetArrayDataSourceOffsets( state.session, dataSource, vectorParser.values ) != FML_ERR_NO_ERROR )
+            {
+                state.errorHandler->logError( "ArrayDataSource has invalid offset specification", name );
+            }
+        }
+
+        xmlNodePtr sizeNode = getFirstChild( node, ARRAY_DATA_SIZE_TAG );
+        if( sizeNode != NULL )
+        {
+            err = vectorParser.parseNode( sizeNode, state );
+            if( err != 0 )
+            {
+                state.errorHandler->logError( "Malformed ArrayDataSource size data" );
+                return err;
+            }
+            if( Fieldml_SetArrayDataSourceSizes( state.session, dataSource, vectorParser.values ) != FML_ERR_NO_ERROR )
+            {
+                state.errorHandler->logError( "ArrayDataSource has invalid size specification", name );
+            }
+        }
+
         return 0;
     }
 };
@@ -763,8 +879,8 @@ public:
     
     int parseNode( xmlNodePtr shapeNode, ParseState &state )
     {
-        const int element = getIntAttribute( shapeNode, KEY_ATTRIB, -1 );
-        const char *shape = getStringAttribute( shapeNode, VALUE_ATTRIB );
+        const int element = getIntAttribute( shapeNode, ELEMENT_ATTRIB, -1 );
+        const char *shape = getStringAttribute( shapeNode, SHAPE_ATTRIB );
         
         if( Fieldml_SetMeshElementShape( state.session, mesh, element, shape ) != FML_ERR_NO_ERROR )
         {
@@ -822,7 +938,7 @@ public:
             return err;
         }
         
-        xmlNodePtr shapesNode = getFirstChild( objectNode, MESH_SHAPES_TAG );
+        xmlNodePtr shapesNode = getFirstChild( objectNode, SHAPES_TAG );
         if( shapesNode == NULL )
         {
             state.errorHandler->logError( "MeshType must have shape specification", name );
@@ -836,7 +952,7 @@ public:
         }
 
         MeshShapeParser meshShapeParser( handle );
-        return processChildren( shapesNode, MESH_SHAPE_TAG, state, meshShapeParser );
+        return processChildren( shapesNode, SHAPE_TAG, state, meshShapeParser );
     }
 };
     
@@ -1089,7 +1205,7 @@ public:
 };
 
     
-class SemidenseIndexEvaluatorParser :
+class ParameterIndexEvaluatorParser :
     public NodeParser
 {
 private:
@@ -1097,7 +1213,7 @@ private:
     const bool isDense;
     
 public:
-    SemidenseIndexEvaluatorParser( FmlObjectHandle _evaluator, bool _isDense ) :
+    ParameterIndexEvaluatorParser( FmlObjectHandle _evaluator, bool _isDense ) :
         evaluator( _evaluator ), isDense( _isDense ) {}
     
     int parseNode( xmlNodePtr objectNode, ParseState &state )
@@ -1109,7 +1225,7 @@ public:
         {
             if( Fieldml_AddDenseIndexEvaluator( state.session, evaluator, handle, orderHandle ) != FML_ERR_NO_ERROR )
             {
-                state.errorHandler->logError( "Invalid dense index evaluator in semi dense data", evaluator );
+                state.errorHandler->logError( "Invalid dense index evaluator", evaluator );
                 return 1;
             }
         }
@@ -1117,7 +1233,7 @@ public:
         {
             if( Fieldml_AddSparseIndexEvaluator( state.session, evaluator, handle ) != FML_ERR_NO_ERROR )
             {
-                state.errorHandler->logError( "Invalid sparse index evaluator in semi dense data", evaluator );
+                state.errorHandler->logError( "Invalid sparse index evaluator", evaluator );
                 return 1;
             }
         }
@@ -1145,40 +1261,9 @@ public:
             return 1;
         }
 
-        xmlNodePtr semidenseNode = getFirstChild( objectNode, SEMI_DENSE_DATA_TAG );
         xmlNodePtr denseNode = getFirstChild( objectNode, DENSE_ARRAY_DATA_TAG );
         xmlNodePtr dokNode = getFirstChild( objectNode, DOK_ARRAY_DATA_TAG );
-        if( semidenseNode != NULL )
-        {
-            if( Fieldml_SetParameterDataDescription( state.session, evaluator, DESCRIPTION_SEMIDENSE ) != FML_ERR_NO_ERROR )
-            {
-                state.errorHandler->logError( "ParameterEvaluator must have a valid data description", name );
-                return 1;
-            }
-            
-            FmlObjectHandle dataObject = getObjectAttribute( semidenseNode, DATA_ATTRIB, state );
-
-            if( Fieldml_SetDataSource( state.session, evaluator, dataObject ) != FML_ERR_NO_ERROR )
-            {
-                state.errorHandler->logError( "ParameterEvaluator must have a valid data source", name );
-                return 1;
-            }
-
-            SemidenseIndexEvaluatorParser denseIndexEvaluatorParser( evaluator, true );
-            int err = processChildren( getFirstChild( semidenseNode, DENSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, denseIndexEvaluatorParser );
-            if( err != 0 )
-            {
-                return err;
-            }
-            
-            SemidenseIndexEvaluatorParser sparseIndexEvaluatorParser( evaluator, false );
-            err = processChildren( getFirstChild( semidenseNode, SPARSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, sparseIndexEvaluatorParser );
-            if( err != 0 )
-            {
-                return err;
-            }
-        }
-        else if( denseNode != NULL )
+        if( denseNode != NULL )
         {
             if( Fieldml_SetParameterDataDescription( state.session, evaluator, DESCRIPTION_DENSE_ARRAY ) != FML_ERR_NO_ERROR )
             {
@@ -1194,8 +1279,8 @@ public:
                 return 1;
             }
 
-            SemidenseIndexEvaluatorParser semidenseIndexEvaluatorParser( evaluator, true );
-            int err = processChildren( getFirstChild( denseNode, DENSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, semidenseIndexEvaluatorParser );
+            ParameterIndexEvaluatorParser parameterIndexEvaluatorParser( evaluator, true );
+            int err = processChildren( getFirstChild( denseNode, DENSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, parameterIndexEvaluatorParser );
             if( err != 0 )
             {
                 return err;
@@ -1223,14 +1308,14 @@ public:
                 return 1;
             }
 
-            SemidenseIndexEvaluatorParser denseIndexEvaluatorParser( evaluator, false );
+            ParameterIndexEvaluatorParser denseIndexEvaluatorParser( evaluator, false );
             int err = processChildren( getFirstChild( dokNode, SPARSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, denseIndexEvaluatorParser );
             if( err != 0 )
             {
                 return err;
             }
             
-            SemidenseIndexEvaluatorParser sparseIndexEvaluatorParser( evaluator, true );
+            ParameterIndexEvaluatorParser sparseIndexEvaluatorParser( evaluator, true );
             err = processChildren( getFirstChild( dokNode, DENSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, sparseIndexEvaluatorParser );
             if( err != 0 )
             {
@@ -1260,13 +1345,9 @@ static int parseObjectNode( xmlNodePtr objectNode, ParseState &state )
     state.parseStack.push_back( objectNode );
     
     int err = 0;
-    if( checkName( objectNode, TEXT_FILE_RESOURCE_TAG ) )
+    if( checkName( objectNode, TEXT_RESOURCE_TAG ) )
     {
-        err = TextFileResourceParser().parseNode( objectNode, state );
-    }
-    else if( checkName( objectNode, TEXT_INLINE_RESOURCE_TAG ) )
-    {
-        err = TextInlineResourceParser().parseNode( objectNode, state );
+        err = TextResourceParser().parseNode( objectNode, state );
     }
     else if( checkName( objectNode, ARRAY_DATA_RESOURCE_TAG ) )
     {

@@ -64,40 +64,26 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
         </xs:complexContent> \
     </xs:complexType> \
  \
-    <xs:complexType name=\"TextDataSource_Type\"> \
-        <xs:attribute name=\"name\" type=\"xs:string\" use=\"required\" /> \
-        <xs:attribute name=\"firstLine\" type=\"xs:positiveInteger\" /> \
-        <xs:attribute name=\"count\" type=\"xs:nonNegativeInteger\" use=\"required\" /> \
-        <xs:attribute name=\"length\" type=\"xs:positiveInteger\" use=\"required\" /> \
-        <xs:attribute name=\"head\" type=\"xs:nonNegativeInteger\" /> \
-        <xs:attribute name=\"tail\" type=\"xs:nonNegativeInteger\" /> \
-    </xs:complexType> \
- \
-    <xs:complexType name=\"TextFileResource_Type\"> \
-      <xs:choice minOccurs=\"1\" maxOccurs=\"unbounded\"> \
-          <xs:element name=\"TextDataSource\" type=\"TextDataSource_Type\" /> \
-      </xs:choice> \
-      <xs:attribute name=\"name\" type=\"xs:string\" use=\"required\" /> \
-      <xs:attribute ref=\"xlink:href\" use=\"required\" /> \
-    </xs:complexType> \
- \
-    <xs:complexType name=\"TextString_Type\"> \
+    <xs:complexType name=\"ArrayDataSize_Type\"> \
       <xs:simpleContent> \
         <xs:extension base=\"xs:string\" /> \
       </xs:simpleContent> \
     </xs:complexType> \
  \
-    <xs:complexType name=\"TextInlineResource_Type\"> \
-      <xs:choice minOccurs=\"2\" maxOccurs=\"unbounded\"> \
-        <xs:element name=\"TextString\" type=\"TextString_Type\" minOccurs=\"1\" maxOccurs=\"1\" /> \
-        <xs:element name=\"TextDataSource\" type=\"TextDataSource_Type\" minOccurs=\"1\" /> \
-      </xs:choice> \
-      <xs:attribute name=\"name\" type=\"xs:string\" use=\"required\" /> \
+    <xs:complexType name=\"ArrayDataOffset_Type\"> \
+      <xs:simpleContent> \
+        <xs:extension base=\"xs:string\" /> \
+      </xs:simpleContent> \
     </xs:complexType> \
  \
     <xs:complexType name=\"ArrayDataSource_Type\"> \
-        <xs:attribute name=\"name\" type=\"xs:string\" use=\"required\" /> \
-        <xs:attribute name=\"sourceName\" type=\"xs:string\" use=\"required\" /> \
+      <xs:choice minOccurs=\"1\" maxOccurs=\"unbounded\"> \
+          <xs:element name=\"ArrayDataSize\" type=\"ArrayDataSize_Type\" minOccurs=\"0\" maxOccurs=\"1\"/> \
+          <xs:element name=\"ArrayDataOffset\" type=\"ArrayDataOffset_Type\" minOccurs=\"0\" maxOccurs=\"1\"/> \
+      </xs:choice> \
+      <xs:attribute name=\"name\" type=\"xs:string\" use=\"required\" /> \
+      <xs:attribute name=\"sourceName\" type=\"xs:string\" use=\"required\" /> \
+      <xs:attribute name=\"rank\" type=\"xs:positiveInteger\" use=\"required\" /> \
     </xs:complexType> \
  \
     <xs:complexType name=\"ArrayDataResource_Type\"> \
@@ -107,6 +93,36 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
       <xs:attribute name=\"name\" type=\"xs:string\" use=\"required\" /> \
       <xs:attribute name=\"format\" type=\"xs:string\" use=\"required\" /> \
       <xs:attribute ref=\"xlink:href\" use=\"required\" /> \
+    </xs:complexType> \
+ \
+    <xs:complexType name=\"TextResourceHref_Type\"> \
+      <xs:attribute ref=\"xlink:href\" use=\"required\" /> \
+    </xs:complexType> \
+ \
+    <xs:complexType name=\"TextResourceString_Type\"> \
+      <xs:simpleContent> \
+        <xs:extension base=\"xs:string\" /> \
+      </xs:simpleContent> \
+    </xs:complexType> \
+ \
+    <xs:complexType name=\"TextArrayDataSource_Type\"> \
+      <xs:choice minOccurs=\"1\" maxOccurs=\"unbounded\"> \
+          <xs:element name=\"TextArraySize\" type=\"ArrayDataSize_Type\" minOccurs=\"1\" maxOccurs=\"1\"/> \
+          <xs:element name=\"ArrayDataSize\" type=\"ArrayDataSize_Type\" minOccurs=\"0\" maxOccurs=\"1\"/> \
+          <xs:element name=\"ArrayDataOffset\" type=\"ArrayDataOffset_Type\" minOccurs=\"0\" maxOccurs=\"1\"/> \
+      </xs:choice> \
+      <xs:attribute name=\"name\" type=\"xs:string\" use=\"required\" /> \
+      <xs:attribute name=\"firstLine\" type=\"xs:positiveInteger\" use=\"required\" /> \
+      <xs:attribute name=\"rank\" type=\"xs:positiveInteger\" use=\"required\" /> \
+    </xs:complexType> \
+ \
+    <xs:complexType name=\"TextResource_Type\"> \
+      <xs:choice minOccurs=\"1\" maxOccurs=\"unbounded\"> \
+        <xs:element name=\"TextArrayDataSource\" type=\"TextArrayDataSource_Type\" /> \
+        <xs:element name=\"TextResourceHref\" type=\"TextResourceHref_Type\" minOccurs=\"0\" maxOccurs=\"1\"/> \
+        <xs:element name=\"TextResourceString\" type=\"TextResourceString_Type\" minOccurs=\"0\" maxOccurs=\"1\"/> \
+      </xs:choice> \
+      <xs:attribute name=\"name\" type=\"xs:string\" use=\"required\" /> \
     </xs:complexType> \
  \
     <xs:complexType name=\"ImportTypeEntry_Type\"> \
@@ -174,15 +190,16 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
         <xs:attribute name=\"default\" type=\"xs:string\" use=\"optional\" /> \
     </xs:complexType> \
  \
-    <xs:complexType name=\"SimpleMapEntry_Type\"> \
-        <xs:attribute name=\"key\" type=\"xs:string\" use=\"required\" /> \
-        <xs:attribute name=\"value\" type=\"xs:string\" use=\"required\" /> \
+    <xs:complexType name=\"ShapeMapEntry_Type\"> \
+        <xs:attribute name=\"element\" type=\"xs:nonNegativeInteger\" use=\"required\" /> \
+        <xs:attribute name=\"shape\" type=\"xs:string\" use=\"required\" /> \
     </xs:complexType> \
  \
-    <xs:complexType name=\"SimpleMap_Type\"> \
+    <xs:complexType name=\"ShapeMap_Type\"> \
         <xs:choice minOccurs=\"0\" maxOccurs=\"unbounded\"> \
-            <xs:element name=\"SimpleMapEntry\" type=\"SimpleMapEntry_Type\" /> \
+            <xs:element name=\"Shape\" type=\"ShapeMapEntry_Type\" /> \
         </xs:choice> \
+        <xs:attribute name=\"default\" type=\"xs:string\" use=\"optional\"/> \
     </xs:complexType> \
  \
     <xs:complexType name=\"ElementMapEntry_Type\"> \
@@ -195,14 +212,6 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
             <xs:element name=\"ElementEvaluator\" type=\"ElementMapEntry_Type\" /> \
         </xs:choice> \
         <xs:attribute name=\"default\" type=\"xs:string\" use=\"optional\"/> \
-    </xs:complexType> \
- \
-    <xs:complexType name=\"DefaultSimpleMap_Type\"> \
-        <xs:complexContent> \
-            <xs:extension base=\"SimpleMap_Type\"> \
-                <xs:attribute name=\"default\" type=\"xs:string\" use=\"optional\"/> \
-            </xs:extension> \
-        </xs:complexContent> \
     </xs:complexType> \
  \
     <xs:complexType name=\"ArgumentListEntry_Type\"> \
@@ -289,7 +298,7 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
                 <xs:sequence> \
                     <xs:element name=\"Elements\" type=\"EnsembleType_Type\" minOccurs=\"1\" maxOccurs=\"1\" /> \
                     <xs:element name=\"Chart\" type=\"ContinuousType_Type\" minOccurs=\"1\" maxOccurs=\"1\" /> \
-                    <xs:element name=\"Shapes\" type=\"DefaultSimpleMap_Type\" minOccurs=\"1\" maxOccurs=\"1\" /> \
+                    <xs:element name=\"Shapes\" type=\"ShapeMap_Type\" minOccurs=\"1\" maxOccurs=\"1\" /> \
                 </xs:sequence> \
             </xs:extension> \
         </xs:complexContent> \
@@ -395,8 +404,7 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
             <xs:extension base=\"FieldmlRdfTargetType\"> \
                 <xs:choice minOccurs=\"0\" maxOccurs=\"unbounded\"> \
                     <xs:element name=\"Import\" type=\"Import_Type\" /> \
-                    <xs:element name=\"TextFileResource\" type=\"TextFileResource_Type\" /> \
-                    <xs:element name=\"TextInlineResource\" type=\"TextInlineResource_Type\" /> \
+                    <xs:element name=\"TextResource\" type=\"TextResource_Type\" /> \
                     <xs:element name=\"ArrayDataResource\" type=\"ArrayDataResource_Type\" /> \
                     <xs:element name=\"EnsembleType\" type=\"EnsembleType_Type\" /> \
                     <xs:element name=\"ContinuousType\" type=\"ContinuousType_Type\" /> \

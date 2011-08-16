@@ -303,7 +303,7 @@ FieldmlObject *FieldmlSession::getObject( const FmlObjectHandle handle )
 }
 
 
-DataReader *FieldmlSession::handleToReader( FmlReaderHandle handle )
+ArrayDataReader *FieldmlSession::handleToReader( FmlReaderHandle handle )
 {
     if( ( handle < 0 ) || ( handle >= readers.size() ) )
     {
@@ -314,7 +314,7 @@ DataReader *FieldmlSession::handleToReader( FmlReaderHandle handle )
 }
 
 
-FmlReaderHandle FieldmlSession::addReader( DataReader *reader )
+FmlReaderHandle FieldmlSession::addReader( ArrayDataReader *reader )
 {
     readers.push_back( reader );
     return readers.size() - 1;
@@ -327,7 +327,7 @@ void FieldmlSession::removeReader( FmlReaderHandle handle )
 }
 
 
-DataWriter *FieldmlSession::handleToWriter( FmlWriterHandle handle )
+ArrayDataWriter *FieldmlSession::handleToWriter( FmlWriterHandle handle )
 {
     if( ( handle < 0 ) || ( handle >= writers.size() ) )
     {
@@ -338,7 +338,7 @@ DataWriter *FieldmlSession::handleToWriter( FmlWriterHandle handle )
 }
 
 
-FmlWriterHandle FieldmlSession::addWriter( DataWriter *writer )
+FmlWriterHandle FieldmlSession::addWriter( ArrayDataWriter *writer )
 {
     writers.push_back( writer );
     return writers.size() - 1;
@@ -368,6 +368,7 @@ bool FieldmlSession::getDelegateEvaluators( const set<FmlObjectHandle> &evaluato
 bool FieldmlSession::getDelegateEvaluators( FmlObjectHandle handle, vector<FmlObjectHandle> &stack, set<FmlObjectHandle> &delegates )
 {
     FieldmlObject *object = getObject( handle );
+    set<FmlObjectHandle> evaluators;
     
     if( handle == FML_INVALID_HANDLE )
     {
@@ -385,12 +386,8 @@ bool FieldmlSession::getDelegateEvaluators( FmlObjectHandle handle, vector<FmlOb
     if( object->type == FHT_REFERENCE_EVALUATOR )
     {
         ReferenceEvaluator *evaluator = (ReferenceEvaluator*)object;
-        if( !getDelegateEvaluators( evaluator->sourceEvaluator, stack, delegates ) )
-        {
-            return false;
-        }
-        delegates.insert( evaluator->sourceEvaluator );
-        if( !getDelegateEvaluators( evaluator->binds.getValues(), stack, delegates ) )
+        evaluator->addDelegates( evaluators );
+        if( !getDelegateEvaluators( evaluators, stack, delegates ) )
         {
             return false;
         }
@@ -398,15 +395,8 @@ bool FieldmlSession::getDelegateEvaluators( FmlObjectHandle handle, vector<FmlOb
     else if( object->type == FHT_AGGREGATE_EVALUATOR )
     {
         AggregateEvaluator *evaluator = (AggregateEvaluator*)object;
-        if( !getDelegateEvaluators( evaluator->evaluators.getValues(), stack, delegates ) )
-        {
-            return false;
-        }
-        if( !getDelegateEvaluators( evaluator->indexEvaluator, stack, delegates ) )
-        {
-            return false;
-        }
-        if( !getDelegateEvaluators( evaluator->binds.getValues(), stack, delegates ) )
+        evaluator->addDelegates( evaluators );
+        if( !getDelegateEvaluators( evaluators, stack, delegates ) )
         {
             return false;
         }
@@ -414,15 +404,8 @@ bool FieldmlSession::getDelegateEvaluators( FmlObjectHandle handle, vector<FmlOb
     else if( object->type == FHT_PIECEWISE_EVALUATOR )
     {
         PiecewiseEvaluator *evaluator = (PiecewiseEvaluator*)object;
-        if( !getDelegateEvaluators( evaluator->evaluators.getValues(), stack, delegates ) )
-        {
-            return false;
-        }
-        if( !getDelegateEvaluators( evaluator->indexEvaluator, stack, delegates ) )
-        {
-            return false;
-        }
-        if( !getDelegateEvaluators( evaluator->binds.getValues(), stack, delegates ) )
+        evaluator->addDelegates( evaluators );
+        if( !getDelegateEvaluators( evaluators, stack, delegates ) )
         {
             return false;
         }
@@ -430,22 +413,8 @@ bool FieldmlSession::getDelegateEvaluators( FmlObjectHandle handle, vector<FmlOb
     else if( object->type == FHT_PARAMETER_EVALUATOR )
     {
         ParameterEvaluator *evaluator = (ParameterEvaluator*)object;
-        set<FmlObjectHandle> indexEvaluators;
-        if( evaluator->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
-        {
-            SemidenseDataDescription *semidense = (SemidenseDataDescription*)evaluator->dataDescription;
-            
-            for( vector<FmlObjectHandle>::const_iterator i = semidense->denseIndexes.begin(); i != semidense->denseIndexes.end(); i++ )
-            {
-                indexEvaluators.insert( *i );
-            }
-            for( vector<FmlObjectHandle>::const_iterator i = semidense->sparseIndexes.begin(); i != semidense->sparseIndexes.end(); i++ )
-            {
-                indexEvaluators.insert( *i );
-            }
-        }
-        
-        if( !getDelegateEvaluators( indexEvaluators, stack, delegates ) )
+        evaluator->addDelegates( evaluators );
+        if( !getDelegateEvaluators( evaluators, stack, delegates ) )
         {
             return false;
         }
@@ -523,20 +492,14 @@ void FieldmlSession::getArguments( FmlObjectHandle handle, set<FmlObjectHandle> 
             unbound.insert( handle );
         }
         ArgumentEvaluator *evaluator = (ArgumentEvaluator*)object;
-        for( set<FmlObjectHandle>::const_iterator i = evaluator->arguments.begin(); i != evaluator->arguments.end(); i++ )
-        {
-            used.insert( *i );
-            unbound.insert( *i );
-        }
+        used.insert( evaluator->arguments.begin(), evaluator->arguments.end() );
+        unbound.insert( evaluator->arguments.begin(), evaluator->arguments.end() );
     }
     else if( object->type == FHT_EXTERNAL_EVALUATOR )
     {
         ExternalEvaluator *evaluator = (ExternalEvaluator*)object;
-        for( set<FmlObjectHandle>::const_iterator i = evaluator->arguments.begin(); i != evaluator->arguments.end(); i++ )
-        {
-            used.insert( *i );
-            unbound.insert( *i );
-        }
+        used.insert( evaluator->arguments.begin(), evaluator->arguments.end() );
+        unbound.insert( evaluator->arguments.begin(), evaluator->arguments.end() );
     }
     else if( object->type == FHT_REFERENCE_EVALUATOR )
     {
@@ -564,19 +527,7 @@ void FieldmlSession::getArguments( FmlObjectHandle handle, set<FmlObjectHandle> 
     {
         ParameterEvaluator *evaluator = (ParameterEvaluator*)object;
         set<FmlObjectHandle> indexEvaluators;
-        if( evaluator->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
-        {
-            SemidenseDataDescription *semidense = (SemidenseDataDescription*)evaluator->dataDescription;
-            
-            for( vector<FmlObjectHandle>::const_iterator i = semidense->denseIndexes.begin(); i != semidense->denseIndexes.end(); i++ )
-            {
-                indexEvaluators.insert( *i );
-            }
-            for( vector<FmlObjectHandle>::const_iterator i = semidense->sparseIndexes.begin(); i != semidense->sparseIndexes.end(); i++ )
-            {
-                indexEvaluators.insert( *i );
-            }
-        }
+        evaluator->addDelegates( indexEvaluators );
         
         getArguments( indexEvaluators, unbound, used );
     }

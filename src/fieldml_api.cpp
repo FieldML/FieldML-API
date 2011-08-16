@@ -52,8 +52,8 @@
 #include "string_const.h"
 #include "Util.h"
 
-#include "DataReader.h"
-#include "DataWriter.h"
+#include "ArrayDataReader.h"
+#include "ArrayDataWriter.h"
 #include "FieldmlRegion.h"
 
 using namespace std;
@@ -70,6 +70,7 @@ static FieldmlSession *getSessionAndSetContext( FmlSessionHandle handle, char *f
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     session->setErrorContext( file, line );
+    session->setError( FML_ERR_NO_ERROR );
     return session;
 }
 
@@ -350,7 +351,7 @@ static DataSource<DataResource> *objectAsDataSource( FieldmlSession *session, Fm
 }
 
 
-static TextDataSource *getTextDataSource( FieldmlSession *session, FmlObjectHandle objectHandle )
+static BaseArrayDataSource<DataResource> *getArrayDataSource( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
     DataSource<DataResource> *dataSource = objectAsDataSource( session, objectHandle );
     
@@ -359,13 +360,33 @@ static TextDataSource *getTextDataSource( FieldmlSession *session, FmlObjectHand
         return NULL;
     }
 
-    if( dataSource->type != DATA_SOURCE_TEXT )
+    if( ( dataSource->type != DATA_SOURCE_TEXT_ARRAY ) && ( dataSource->type != DATA_SOURCE_ARRAY ) )
     {
         session->setError( FML_ERR_INVALID_OBJECT );
         return NULL;
     }
 
-    TextDataSource *textSource = (TextDataSource*)dataSource;
+    BaseArrayDataSource<DataResource> *arraySource = (BaseArrayDataSource<DataResource>*)dataSource;
+    return arraySource;
+}
+
+
+static TextArrayDataSource *getTextArrayDataSource( FieldmlSession *session, FmlObjectHandle objectHandle )
+{
+    DataSource<DataResource> *dataSource = objectAsDataSource( session, objectHandle );
+    
+    if( dataSource == NULL )
+    {
+        return NULL;
+    }
+
+    if( dataSource->type != DATA_SOURCE_TEXT_ARRAY )
+    {
+        session->setError( FML_ERR_INVALID_OBJECT );
+        return NULL;
+    }
+
+    TextArrayDataSource *textSource = (TextArrayDataSource*)dataSource;
     return textSource;
 }
 
@@ -389,7 +410,7 @@ static DataResource *getDataResource( FieldmlSession *session, FmlObjectHandle o
 }
 
 
-static TextInlineDataResource *getTextInlineDataResource( FieldmlSession *session, FmlObjectHandle objectHandle )
+static TextResource *getTextResource( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
     DataResource *dataResource = getDataResource( session, objectHandle );
     if( dataResource == NULL )
@@ -397,14 +418,14 @@ static TextInlineDataResource *getTextInlineDataResource( FieldmlSession *sessio
         return NULL;
     }
 
-    if( dataResource->type != DATA_RESOURCE_TEXT_INLINE )
+    if( ( dataResource->type != DATA_RESOURCE_TEXT_HREF ) && ( dataResource->type != DATA_RESOURCE_TEXT_INLINE ) )
     {
         session->setError( FML_ERR_INVALID_OBJECT );
         return NULL;
     }
 
-    TextInlineDataResource *inlineSource = (TextInlineDataResource*)dataResource;
-    return inlineSource;
+    TextResource *textResource = (TextResource*)dataResource;
+    return textResource;
 }
 
 
@@ -526,8 +547,6 @@ FmlSessionHandle Fieldml_CreateFromFile( const char *filename )
 {
     FieldmlSession *session = new FieldmlSession();
     
-    session->setErrorContext( __FILE__, __LINE__ );
-    
     if( filename == NULL )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_1 );
@@ -553,8 +572,6 @@ FmlSessionHandle Fieldml_CreateFromFile( const char *filename )
 FmlSessionHandle Fieldml_Create( const char *location, const char *name )
 {
     FieldmlSession *session = new FieldmlSession();
-    
-    session->setErrorContext( __FILE__, __LINE__ );
     
     if( location == NULL )
     {
@@ -1562,16 +1579,10 @@ FmlErrorNumber Fieldml_SetParameterDataDescription( FmlSessionHandle handle, Fml
             return session->setError( FML_ERR_ACCESS_VIOLATION );
         }
 
-        if( description == DESCRIPTION_SEMIDENSE )
+        if( description == DESCRIPTION_DOK_ARRAY )
         {
             delete parameterEvaluator->dataDescription;
-            parameterEvaluator->dataDescription = new SemidenseDataDescription();
-            return session->getLastError();
-        }
-        else if( description == DESCRIPTION_DOK_ARRAY )
-        {
-            delete parameterEvaluator->dataDescription;
-            parameterEvaluator->dataDescription = new DOKArrayDataDescription();
+            parameterEvaluator->dataDescription = new DokArrayDataDescription();
             return session->getLastError();
         }
         else if( description == DESCRIPTION_DENSE_ARRAY )
@@ -1646,19 +1657,14 @@ FmlErrorNumber Fieldml_SetDataSource( FmlSessionHandle handle, FmlObjectHandle o
     else if( object->type == FHT_PARAMETER_EVALUATOR )
     {
         ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
-        {
-            SemidenseDataDescription *semidense = (SemidenseDataDescription*)parameterEvaluator->dataDescription;
-            semidense->dataSource = dataSource;
-        }
-        else if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DENSE_ARRAY )
+        if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DENSE_ARRAY )
         {
             DenseArrayDataDescription *denseArray = (DenseArrayDataDescription*)parameterEvaluator->dataDescription;
             denseArray->dataSource = dataSource;
         }
         else if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DOK_ARRAY )
         {
-            DOKArrayDataDescription *dokArray = (DOKArrayDataDescription*)parameterEvaluator->dataDescription;
+            DokArrayDataDescription *dokArray = (DokArrayDataDescription*)parameterEvaluator->dataDescription;
             dokArray->valueSource = dataSource;
         }
         else
@@ -1724,7 +1730,7 @@ FmlErrorNumber Fieldml_SetKeyDataSource( FmlSessionHandle handle, FmlObjectHandl
         ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
         if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DOK_ARRAY )
         {
-            DOKArrayDataDescription *dokArray = (DOKArrayDataDescription*)parameterEvaluator->dataDescription;
+            DokArrayDataDescription *dokArray = (DokArrayDataDescription*)parameterEvaluator->dataDescription;
             dokArray->keySource = dataSource;
         }
         else
@@ -1787,28 +1793,7 @@ FmlErrorNumber Fieldml_AddDenseIndexEvaluator( FmlSessionHandle handle, FmlObjec
     if( object->type == FHT_PARAMETER_EVALUATOR )
     {
         ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
-        {
-            SemidenseDataDescription *semidense = (SemidenseDataDescription*)parameterEvaluator->dataDescription;
-            semidense->denseIndexes.push_back( indexHandle );
-            semidense->denseOrders.push_back( orderHandle );
-        }
-        else if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DENSE_ARRAY )
-        {
-            DenseArrayDataDescription *denseArray = (DenseArrayDataDescription*)parameterEvaluator->dataDescription;
-            denseArray->denseIndexes.push_back( indexHandle );
-            denseArray->denseOrders.push_back( orderHandle );
-        }
-        else if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DOK_ARRAY )
-        {
-            DOKArrayDataDescription *dokArray = (DOKArrayDataDescription*)parameterEvaluator->dataDescription;
-            dokArray->denseIndexes.push_back( indexHandle );
-            dokArray->denseOrders.push_back( orderHandle );
-        }
-        else
-        {
-            return session->setError( FML_ERR_INVALID_OBJECT );
-        }
+        session->setError( parameterEvaluator->dataDescription->addIndexEvaluator( false, indexHandle, orderHandle ) );
     }
     else
     {
@@ -1855,20 +1840,7 @@ FmlErrorNumber Fieldml_AddSparseIndexEvaluator( FmlSessionHandle handle, FmlObje
     if( object->type == FHT_PARAMETER_EVALUATOR )
     {
         ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
-        {
-            SemidenseDataDescription *semidense = (SemidenseDataDescription*)parameterEvaluator->dataDescription;
-            semidense->sparseIndexes.push_back( indexHandle );
-        }
-        else if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DOK_ARRAY )
-        {
-            DOKArrayDataDescription *dokArray = (DOKArrayDataDescription*)parameterEvaluator->dataDescription;
-            dokArray->sparseIndexes.push_back( indexHandle );
-        }
-        else
-        {
-            return session->setError( FML_ERR_INVALID_OBJECT );
-        }
+        session->setError( parameterEvaluator->dataDescription->addIndexEvaluator( true, indexHandle, FML_INVALID_HANDLE ) );
     }
     else
     {
@@ -1896,47 +1868,13 @@ int Fieldml_GetParameterIndexCount( FmlSessionHandle handle, FmlObjectHandle obj
     if( object->type == FHT_PARAMETER_EVALUATOR )
     {
         ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
-        {
-            SemidenseDataDescription *semidense = (SemidenseDataDescription*)parameterEvaluator->dataDescription;
-            if( isSparse )
-            {
-                return semidense->sparseIndexes.size();
-            }
-            else
-            {
-                return semidense->denseIndexes.size();
-            }
-        }
-        else if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DENSE_ARRAY )
-        {
-            DenseArrayDataDescription *denseArray = (DenseArrayDataDescription*)parameterEvaluator->dataDescription;
-            if( isSparse )
-            {
-                return 0;
-            }
-            else
-            {
-                return denseArray->denseIndexes.size();
-            }
-        }
-        else if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DOK_ARRAY )
-        {
-            DOKArrayDataDescription *dokArray = (DOKArrayDataDescription*)parameterEvaluator->dataDescription;
-            if( isSparse )
-            {
-                return dokArray->sparseIndexes.size();
-            }
-            else
-            {
-                return dokArray->denseIndexes.size();
-            }
-        }
-        else
+        int count = parameterEvaluator->dataDescription->getIndexCount( isSparse != 0 );
+        if( count == -1 )
         {
             session->setError( FML_ERR_INVALID_OBJECT );
-            return -1;
         }
+        
+        return count;
     }
     else
     {
@@ -1960,72 +1898,19 @@ FmlObjectHandle Fieldml_GetParameterIndexEvaluator( FmlSessionHandle handle, Fml
         return FML_INVALID_HANDLE;
     }
     
-    vector<FmlObjectHandle> *indexes = NULL;
     if( object->type == FHT_PARAMETER_EVALUATOR )
     {
+        FmlObjectHandle evaluator;
         ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
-        {
-            SemidenseDataDescription *semidense = (SemidenseDataDescription*)parameterEvaluator->dataDescription;
-            if( isSparse )
-            {
-                indexes = &semidense->sparseIndexes;
-            }
-            else
-            {
-                indexes = &semidense->denseIndexes;
-            }
-        }
-        else if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DENSE_ARRAY )
-        {
-            DenseArrayDataDescription *denseArray = (DenseArrayDataDescription*)parameterEvaluator->dataDescription;
-            if( isSparse )
-            {
-                session->setError( FML_ERR_INVALID_PARAMETER_4 );
-                return FML_INVALID_HANDLE;
-            }
-            else
-            {
-                indexes = &denseArray->denseIndexes;
-            }
-        }
-        else if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DOK_ARRAY )
-        {
-            DOKArrayDataDescription *dokArray = (DOKArrayDataDescription*)parameterEvaluator->dataDescription;
-            if( isSparse )
-            {
-                indexes = &dokArray->sparseIndexes;
-            }
-            else
-            {
-                indexes = &dokArray->denseIndexes;
-            }
-        }
-        else
-        {
-            session->setError( FML_ERR_INVALID_OBJECT );
-            return FML_INVALID_HANDLE;
-        }
+        session->setError( parameterEvaluator->dataDescription->getIndexEvaluator( index-1, isSparse != 0, evaluator ) );
+        
+        return evaluator;
     }
     else
     {
         session->setError( FML_ERR_INVALID_OBJECT );
         return FML_INVALID_HANDLE;
     }
-    
-    if( indexes == NULL )
-    {
-        session->setError( FML_ERR_INVALID_OBJECT );
-        return FML_INVALID_HANDLE;
-    }
-    
-    if( ( index < 1 ) || ( index > indexes->size() ) )
-    {
-        session->setError( FML_ERR_INVALID_PARAMETER_4 );
-        return FML_INVALID_HANDLE;
-    }
-    
-    return indexes->at( index - 1 );
 }
 
 
@@ -2572,19 +2457,27 @@ int Fieldml_GetIndexEvaluatorCount( FmlSessionHandle handle, FmlObjectHandle obj
     }
     else if( object->type == FHT_PARAMETER_EVALUATOR )
     {
-        int count1, count2;
-        
         ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
-        {
-            SemidenseDataDescription *semidense = (SemidenseDataDescription *)parameterEvaluator->dataDescription;
-            count1 = semidense->sparseIndexes.size();
-            count2 = semidense->denseIndexes.size();
-            return count1 + count2;
-        }
+        int denseCount = parameterEvaluator->dataDescription->getIndexCount( false );
+        int sparseCount = parameterEvaluator->dataDescription->getIndexCount( true );
         
-        session->setError( FML_ERR_UNSUPPORTED );
-        return -1;
+        if( ( denseCount > -1 ) && ( sparseCount > -1 ) )
+        {
+            return denseCount + sparseCount;
+        }
+        else if( denseCount > -1 )
+        {
+            return denseCount;
+        }
+        else if( sparseCount > -1 )
+        {
+            return sparseCount;
+        }
+        else
+        {
+            session->setError( FML_ERR_INVALID_OBJECT );
+            return -1;
+        }
     }
     
     session->setError( FML_ERR_INVALID_OBJECT );
@@ -2659,32 +2552,7 @@ FmlErrorNumber Fieldml_SetIndexEvaluator( FmlSessionHandle handle, FmlObjectHand
         int count;
         
         ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
-        {
-            SemidenseDataDescription *semidense = (SemidenseDataDescription *)parameterEvaluator->dataDescription;
-            count = semidense->sparseIndexes.size();
-            
-            if( index <= count )
-            {
-                semidense->sparseIndexes[index - 1] = evaluatorHandle;
-                return session->getLastError();
-            }
-
-            index -= count;
-            count = semidense->denseIndexes.size();
-
-            if( index <= count )
-            {
-                semidense->denseIndexes[index - 1] = evaluatorHandle;
-                return session->getLastError();
-            }
-            
-            session->setError( FML_ERR_INVALID_PARAMETER_3 );
-        }
-        else
-        {
-            session->setError( FML_ERR_UNSUPPORTED );
-        }
+        session->setError( parameterEvaluator->dataDescription->setIndexEvaluator( index-1, evaluatorHandle, FML_INVALID_HANDLE ) );
     }
     else
     {
@@ -2743,32 +2611,12 @@ FmlObjectHandle Fieldml_GetIndexEvaluator( FmlSessionHandle handle, FmlObjectHan
     else if( object->type == FHT_PARAMETER_EVALUATOR )
     {
         int count;
-        
+
+        FmlObjectHandle evaluator;
         ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
-        {
-            SemidenseDataDescription *semidense = (SemidenseDataDescription *)parameterEvaluator->dataDescription;
-            count = semidense->sparseIndexes.size();
-            
-            if( index <= count )
-            {
-                return semidense->sparseIndexes[index - 1];
-            }
-
-            index -= count;
-            count = semidense->denseIndexes.size();
-
-            if( index <= count )
-            {
-                return semidense->denseIndexes[index - 1];
-            }
-            
-            session->setError( FML_ERR_INVALID_PARAMETER_3 );
-        }
-        else
-        {
-            session->setError( FML_ERR_UNSUPPORTED );
-        }
+        session->setError( parameterEvaluator->dataDescription->getIndexEvaluator( index-1, evaluator ) );
+        
+        return evaluator;
     }
     else
     {
@@ -2802,35 +2650,12 @@ FmlObjectHandle Fieldml_GetParameterIndexOrder( FmlSessionHandle handle, FmlObje
     
     ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
     vector<FmlObjectHandle> *orders = NULL;
+
+    FmlObjectHandle order;
+    FmlErrorNumber err = parameterEvaluator->dataDescription->getIndexOrder( index-1, order );
+    session->setError( err );
     
-    if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
-    {
-        SemidenseDataDescription *semidense = (SemidenseDataDescription *)parameterEvaluator->dataDescription;
-        orders = &semidense->denseOrders;
-    }
-    else if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DOK_ARRAY )
-    {
-        DOKArrayDataDescription *dok = (DOKArrayDataDescription *)parameterEvaluator->dataDescription;
-        orders = &dok->denseOrders;
-    }
-    else if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DENSE_ARRAY )
-    {
-        DenseArrayDataDescription *dense = (DenseArrayDataDescription *)parameterEvaluator->dataDescription;
-        orders = &dense->denseOrders;
-    }
-    else
-    {
-        session->setError( FML_ERR_INVALID_OBJECT );
-        return FML_INVALID_HANDLE;
-    }
-    
-    if( ( index < 1 ) || ( index > orders->size() ) )
-    {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
-        return FML_INVALID_HANDLE;
-    }
-    
-    return orders->at( index - 1 );
+    return order;
 }
 
 
@@ -3128,17 +2953,12 @@ FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle obj
         return FML_INVALID_HANDLE;
     }
 
-    DataReader *reader = NULL;
+    ArrayDataReader *reader = NULL;
     DataSource<DataResource> *dataSource = objectAsDataSource( session, objectHandle );
-    if( dataSource->type == DATA_SOURCE_TEXT )
-    {
-        TextDataSource *textSource = (TextDataSource*)dataSource;
-        reader = DataReader::createTextReader( session, session->region->getRoot().c_str(), textSource );
-    }
-    else if( dataSource->type == DATA_SOURCE_ARRAY )
+    if( dataSource->type == DATA_SOURCE_ARRAY )
     {
         ArrayDataSource *arraySource = (ArrayDataSource*)dataSource;
-        reader = DataReader::createArrayReader( session, session->region->getRoot().c_str(), arraySource );
+        reader = ArrayDataReader::create( session, session->region->getRoot().c_str(), arraySource );
     }
     else
     {
@@ -3155,24 +2975,6 @@ FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle obj
 }
 
 
-FmlErrorNumber Fieldml_ReadIntValues( FmlSessionHandle handle, FmlReaderHandle readerHandle, int *valueBuffer, int bufferSize )
-{
-    FieldmlSession *session = getSession( handle );
-    if( session == NULL )
-    {
-        return FML_ERR_UNKNOWN_HANDLE;
-    }
-
-    DataReader *reader = session->handleToReader( readerHandle );
-    if( reader == NULL )
-    {
-        return session->setError( FML_ERR_INVALID_OBJECT );
-    }
-
-    return reader->readIntValues( valueBuffer, bufferSize );
-}
-
-
 FmlErrorNumber Fieldml_ReadIntSlab( FmlSessionHandle handle, FmlReaderHandle readerHandle, int *offsets, int *sizes, int *valueBuffer )
 {
     FieldmlSession *session = getSession( handle );
@@ -3181,31 +2983,13 @@ FmlErrorNumber Fieldml_ReadIntSlab( FmlSessionHandle handle, FmlReaderHandle rea
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    DataReader *reader = session->handleToReader( readerHandle );
+    ArrayDataReader *reader = session->handleToReader( readerHandle );
     if( reader == NULL )
     {
         return session->setError( FML_ERR_INVALID_OBJECT );
     }
 
     return reader->readIntSlab( offsets, sizes, valueBuffer );
-}
-
-
-FmlErrorNumber Fieldml_ReadDoubleValues( FmlSessionHandle handle, FmlReaderHandle readerHandle, double *valueBuffer, int bufferSize )
-{
-    FieldmlSession *session = getSession( handle );
-    if( session == NULL )
-    {
-        return FML_ERR_UNKNOWN_HANDLE;
-    }
-
-    DataReader *reader = session->handleToReader( readerHandle );
-    if( reader == NULL )
-    {
-        return session->setError( FML_ERR_INVALID_OBJECT );
-    }
-
-    return reader->readDoubleValues( valueBuffer, bufferSize );
 }
 
 
@@ -3217,7 +3001,7 @@ FmlErrorNumber Fieldml_ReadDoubleSlab( FmlSessionHandle handle, FmlReaderHandle 
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    DataReader *reader = session->handleToReader( readerHandle );
+    ArrayDataReader *reader = session->handleToReader( readerHandle );
     if( reader == NULL )
     {
         return session->setError( FML_ERR_INVALID_OBJECT );
@@ -3235,7 +3019,7 @@ FmlErrorNumber Fieldml_CloseReader( FmlSessionHandle handle, FmlReaderHandle rea
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    DataReader *reader = session->handleToReader( readerHandle );
+    ArrayDataReader *reader = session->handleToReader( readerHandle );
     if( reader == NULL )
     {
         return session->setError( FML_ERR_INVALID_OBJECT );
@@ -3249,44 +3033,7 @@ FmlErrorNumber Fieldml_CloseReader( FmlSessionHandle handle, FmlReaderHandle rea
 }
 
 
-FmlWriterHandle Fieldml_OpenTextWriter( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlBoolean append )
-{
-    FieldmlSession *session = getSession( handle );
-    if( session == NULL )
-    {
-        return FML_INVALID_HANDLE;
-    }
-    if( session->region == NULL )
-    {
-        session->setError( FML_ERR_INVALID_REGION );
-        return FML_INVALID_HANDLE;
-    }
-    
-    if( !checkLocal( session, objectHandle ) )
-    {
-        return FML_INVALID_HANDLE;
-    }
-
-    DataSource<DataResource> *dataSource = objectAsDataSource( session, objectHandle );
-    if( dataSource->type != DATA_SOURCE_TEXT )
-    {
-        session->setError( FML_ERR_INVALID_OBJECT );
-        return FML_INVALID_HANDLE;
-    }
-
-    TextDataSource *textSource = (TextDataSource*)dataSource;
-    DataWriter *writer = DataWriter::createTextWriter( session, session->region->getRoot().c_str(), textSource, ( append == 1 ));
-
-    if( writer == NULL )
-    {
-        return FML_INVALID_HANDLE;
-    }
-    
-    return session->addWriter( writer );
-}
-
-
-FmlWriterHandle Fieldml_OpenArrayWriter( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle typeHandle, FmlBoolean append, int *sizes, int rank )
+FmlWriterHandle Fieldml_OpenWriter( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle typeHandle, FmlBoolean append, int *sizes, int rank )
 {
     FieldmlSession *session = getSession( handle );
     if( session == NULL )
@@ -3344,7 +3091,7 @@ FmlWriterHandle Fieldml_OpenArrayWriter( FmlSessionHandle handle, FmlObjectHandl
     }
 
     ArrayDataSource *arraySource = (ArrayDataSource*)dataSource;
-    DataWriter *writer = DataWriter::createArrayWriter( session, session->region->getRoot().c_str(), arraySource, isDouble, ( append == 1 ), sizes, rank );
+    ArrayDataWriter *writer = ArrayDataWriter::create( session, session->region->getRoot().c_str(), arraySource, isDouble, ( append == 1 ), sizes, rank );
 
     if( writer == NULL )
     {
@@ -3352,25 +3099,6 @@ FmlWriterHandle Fieldml_OpenArrayWriter( FmlSessionHandle handle, FmlObjectHandl
     }
     
     return session->addWriter( writer );
-}
-
-
-FmlErrorNumber Fieldml_WriteIntValues( FmlSessionHandle handle, FmlWriterHandle writerHandle, int *valueBuffer, int valueCount )
-{
-    FieldmlSession *session = getSession( handle );
-    if( session == NULL )
-    {
-        return FML_ERR_UNKNOWN_HANDLE;
-    }
-
-    DataWriter *writer = session->handleToWriter( writerHandle );
-    if( writer == NULL )
-    {
-        session->setError( FML_ERR_INVALID_OBJECT );
-        return -1;
-    }
-
-    return writer->writeIntValues( valueBuffer, valueCount );
 }
 
 
@@ -3382,32 +3110,13 @@ FmlErrorNumber Fieldml_WriteIntSlab( FmlSessionHandle handle, FmlReaderHandle wr
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    DataWriter *writer = session->handleToWriter( writerHandle );
+    ArrayDataWriter *writer = session->handleToWriter( writerHandle );
     if( writer == NULL )
     {
         return session->setError( FML_ERR_INVALID_OBJECT );
     }
 
     return writer->writeIntSlab( offsets, sizes, valueBuffer );
-}
-
-
-FmlErrorNumber Fieldml_WriteDoubleValues( FmlSessionHandle handle, FmlWriterHandle writerHandle, double *valueBuffer, int valueCount )
-{
-    FieldmlSession *session = getSession( handle );
-    if( session == NULL )
-    {
-        return FML_ERR_UNKNOWN_HANDLE;
-    }
-
-    DataWriter *writer = session->handleToWriter( writerHandle );
-    if( writer == NULL )
-    {
-        session->setError( FML_ERR_INVALID_OBJECT );
-        return -1;
-    }
-
-    return writer->writeDoubleValues( valueBuffer, valueCount );
 }
 
 
@@ -3419,7 +3128,7 @@ FmlErrorNumber Fieldml_WriteDoubleSlab( FmlSessionHandle handle, FmlWriterHandle
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    DataWriter *writer = session->handleToWriter( writerHandle );
+    ArrayDataWriter *writer = session->handleToWriter( writerHandle );
     if( writer == NULL )
     {
         return session->setError( FML_ERR_INVALID_OBJECT );
@@ -3437,7 +3146,7 @@ FmlErrorNumber Fieldml_CloseWriter( FmlSessionHandle handle, FmlWriterHandle wri
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    DataWriter *writer = session->handleToWriter( writerHandle );
+    ArrayDataWriter *writer = session->handleToWriter( writerHandle );
     if( writer == NULL )
     {
         return session->setError( FML_ERR_INVALID_OBJECT );
@@ -3768,7 +3477,8 @@ FmlObjectHandle Fieldml_CreateTextFileDataResource( FmlSessionHandle handle, con
         return FML_INVALID_HANDLE;
     }
 
-    DataResource *dataResource = new TextFileDataResource( name, href );
+    TextResource *dataResource = new TextResource( name, DATA_RESOURCE_TEXT_HREF );
+    dataResource->href = href;
     
     session->setError( FML_ERR_NO_ERROR );
     return addObject( session, dataResource );
@@ -3788,7 +3498,7 @@ FmlObjectHandle Fieldml_CreateTextInlineDataResource( FmlSessionHandle handle, c
         return FML_INVALID_HANDLE;
     }
 
-    DataResource *dataResource = new TextInlineDataResource( name );
+    DataResource *dataResource = new TextResource( name, DATA_RESOURCE_TEXT_INLINE );
     
     session->setError( FML_ERR_NO_ERROR );
     return addObject( session, dataResource );
@@ -3858,21 +3568,17 @@ FmlErrorNumber Fieldml_AddInlineData( FmlSessionHandle handle, FmlObjectHandle o
         return session->getLastError();
     }
 
-    TextInlineDataResource *source = getTextInlineDataResource( session, objectHandle );
-    if( source == NULL )
+    TextResource *resource = getTextResource( session, objectHandle );
+    if( resource == NULL )
     {
         return session->getLastError();
     }
-
-    char *newString = new char[source->length + length + 1];
-    memcpy( newString, source->inlineString, source->length );
-    memcpy( newString + source->length, data, length );
-
-    delete[] source->inlineString;
-    source->inlineString = newString;
+    if( resource->type != DATA_RESOURCE_TEXT_INLINE )
+    {
+        return session->setError( FML_ERR_INVALID_OBJECT );
+    }
     
-    source->length += length;
-    newString[source->length] = 0;
+    resource->arrayString = resource->arrayString + string( data, length );
     
     return session->getLastError();
 }
@@ -3886,13 +3592,18 @@ int Fieldml_GetInlineDataLength( FmlSessionHandle handle, FmlObjectHandle object
         return -1;
     }
 
-    TextInlineDataResource *source = getTextInlineDataResource( session, objectHandle );
-    if( source == NULL )
+    TextResource *resource = getTextResource( session, objectHandle );
+    if( resource == NULL )
     {
         return -1;
     }
+    if( resource->type != DATA_RESOURCE_TEXT_INLINE )
+    {
+        session->setError( FML_ERR_INVALID_OBJECT );
+        return -1;
+    }
     
-    return source->length;
+    return resource->arrayString.length();
 }
 
 
@@ -3904,13 +3615,18 @@ char * Fieldml_GetInlineData( FmlSessionHandle handle, FmlObjectHandle objectHan
         return NULL;
     }
 
-    TextInlineDataResource *source = getTextInlineDataResource( session, objectHandle );
-    if( source == NULL )
+    TextResource *resource = getTextResource( session, objectHandle );
+    if( resource == NULL )
     {
         return NULL;
     }
+    if( resource->type != DATA_RESOURCE_TEXT_INLINE )
+    {
+        session->setError( FML_ERR_INVALID_OBJECT );
+        return NULL;
+    }
     
-    return strdupS( source->inlineString );
+    return cstrCopy( resource->arrayString );
 }
 
 
@@ -3922,18 +3638,24 @@ int Fieldml_CopyInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandl
         return -1;
     }
 
-    TextInlineDataResource *source = getTextInlineDataResource( session, objectHandle );
-    if( source == NULL )
+    TextResource *resource = getTextResource( session, objectHandle );
+    if( resource == NULL )
     {
         return -1;
     }
+    if( resource->type != DATA_RESOURCE_TEXT_INLINE )
+    {
+        session->setError( FML_ERR_INVALID_OBJECT );
+        return NULL;
+    }
     
-    if( offset >= source->length )
+    if( offset >= resource->arrayString.length() )
     {
         return 0;
     }
     
-    return cappedCopy( source->inlineString + offset, buffer, bufferLength );
+    //This is probably not the best way to do this
+    return cappedCopy( resource->arrayString.c_str() + offset, buffer, bufferLength );
 }
 
 
@@ -3969,9 +3691,9 @@ char * Fieldml_GetDataResourceHref( FmlSessionHandle handle, FmlObjectHandle obj
         return NULL;
     }
     
-    if( dataResource->type == DATA_RESOURCE_TEXT_FILE )
+    if( dataResource->type == DATA_RESOURCE_TEXT_HREF )
     {
-        TextFileDataResource *fileResource = (TextFileDataResource*)dataResource;
+        TextResource *fileResource = (TextResource*)dataResource;
         return cstrCopy( fileResource->href );
     }
     else if( dataResource->type == DATA_RESOURCE_ARRAY )
@@ -4045,19 +3767,14 @@ FmlObjectHandle Fieldml_GetDataSource( FmlSessionHandle handle, FmlObjectHandle 
     else if( object->type == FHT_PARAMETER_EVALUATOR )
     {
         ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_SEMIDENSE )
-        {
-            SemidenseDataDescription *semidense = (SemidenseDataDescription*)parameterEvaluator->dataDescription;
-            return semidense->dataSource;
-        }
-        else if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DENSE_ARRAY )
+        if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DENSE_ARRAY )
         {
             DenseArrayDataDescription *denseArray = (DenseArrayDataDescription*)parameterEvaluator->dataDescription;
             return denseArray->dataSource;
         }
         else if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DOK_ARRAY )
         {
-            DOKArrayDataDescription *dokArray = (DOKArrayDataDescription*)parameterEvaluator->dataDescription;
+            DokArrayDataDescription *dokArray = (DokArrayDataDescription*)parameterEvaluator->dataDescription;
             return dokArray->valueSource;
         }
         else
@@ -4113,7 +3830,7 @@ FmlObjectHandle Fieldml_GetKeyDataSource( FmlSessionHandle handle, FmlObjectHand
         ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
         if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DOK_ARRAY )
         {
-            DOKArrayDataDescription *dokArray = (DOKArrayDataDescription*)parameterEvaluator->dataDescription;
+            DokArrayDataDescription *dokArray = (DokArrayDataDescription*)parameterEvaluator->dataDescription;
             return dokArray->keySource;
         }
         else
@@ -4201,7 +3918,7 @@ FmlObjectHandle Fieldml_GetDataSourceResource( FmlSessionHandle handle, FmlObjec
 }
 
 
-FmlErrorNumber Fieldml_CreateTextDataSource( FmlSessionHandle handle, const char *name, FmlObjectHandle resource, int firstLine, int count, int length, int head, int tail )
+FmlErrorNumber Fieldml_CreateTextArrayDataSource( FmlSessionHandle handle, const char *name, FmlObjectHandle resource, int firstLine, int rank )
 {
     FieldmlSession *session = getSession( handle );
     if( session == NULL )
@@ -4230,7 +3947,7 @@ FmlErrorNumber Fieldml_CreateTextDataSource( FmlSessionHandle handle, const char
     }
     
     DataResource *dataResource = (DataResource*)object;
-    if( ( dataResource->type != DATA_RESOURCE_TEXT_FILE ) && ( dataResource->type != DATA_RESOURCE_TEXT_INLINE ) )
+    if( ( dataResource->type != DATA_RESOURCE_TEXT_HREF ) && ( dataResource->type != DATA_RESOURCE_TEXT_INLINE ) )
     {
         return session->setError( FML_ERR_INVALID_OBJECT );
     }
@@ -4239,25 +3956,13 @@ FmlErrorNumber Fieldml_CreateTextDataSource( FmlSessionHandle handle, const char
     {
         return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
-    if( count <= 0 )
+    if( rank <= 0 )
     {
         return session->setError( FML_ERR_INVALID_PARAMETER_4 );
     }
-    if( length <= 0 )
-    {
-        return session->setError( FML_ERR_INVALID_PARAMETER_5 );
-    }
-    if( head <= -1 )
-    {
-        return session->setError( FML_ERR_INVALID_PARAMETER_6 );
-    }
-    if( tail <= -1 )
-    {
-        return session->setError( FML_ERR_INVALID_PARAMETER_7 );
-    }
 
-    TextDataResource *textResource = (TextDataResource*)dataResource;
-    TextDataSource *source = new TextDataSource( name, textResource, firstLine, count, length, head, tail );
+    TextResource *textResource = (TextResource*)dataResource;
+    TextArrayDataSource *source = new TextArrayDataSource( name, textResource, firstLine, rank );
 
     session->setError( FML_ERR_NO_ERROR );
     FmlObjectHandle sourceHandle = addObject( session, source );
@@ -4268,7 +3973,7 @@ FmlErrorNumber Fieldml_CreateTextDataSource( FmlSessionHandle handle, const char
 }
 
 
-int Fieldml_GetTextDataSourceFirstLine( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetTextArrayDataSourceFirstLine( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = getSession( handle );
     if( session == NULL )
@@ -4276,7 +3981,7 @@ int Fieldml_GetTextDataSourceFirstLine( FmlSessionHandle handle, FmlObjectHandle
         return -1;
     }
 
-    TextDataSource *source = getTextDataSource( session, objectHandle );
+    TextArrayDataSource *source = getTextArrayDataSource( session, objectHandle );
     if( source == NULL )
     {
         return -1;
@@ -4286,7 +3991,7 @@ int Fieldml_GetTextDataSourceFirstLine( FmlSessionHandle handle, FmlObjectHandle
 }
 
 
-int Fieldml_GetTextDataSourceCount( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetArrayDataSourceRank( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = getSession( handle );
     if( session == NULL )
@@ -4294,71 +3999,201 @@ int Fieldml_GetTextDataSourceCount( FmlSessionHandle handle, FmlObjectHandle obj
         return -1;
     }
     
-    TextDataSource *source = getTextDataSource( session, objectHandle );
-    if( source == NULL )
+    FieldmlObject *object = getObject( session, objectHandle );
+    if( object == NULL )
     {
-        return -1;
+        return NULL;
+    }
+    if( object->type != FHT_DATA_SOURCE )
+    {
+        session->setError( FML_ERR_INVALID_OBJECT );
+        return NULL;
     }
     
-    return source->count;
+    DataSource<DataResource> *source = (DataSource<DataResource>*)object;
+    if( source->type == DATA_SOURCE_ARRAY )
+    {
+        ArrayDataSource *arraySource = (ArrayDataSource*)source;
+        return arraySource->rank;
+    }
+    if( source->type == DATA_SOURCE_TEXT_ARRAY )
+    {
+        TextArrayDataSource *arraySource = (TextArrayDataSource*)source;
+        return arraySource->rank;
+    }
+    
+    
+    session->setError( FML_ERR_INVALID_OBJECT );
+    return -1;
 }
 
 
-int Fieldml_GetTextDataSourceLength( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetArrayDataSourceSizes( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *sizes )
 {
     FieldmlSession *session = getSession( handle );
     if( session == NULL )
     {
-        return -1;
+        return session->getLastError();
     }
-    
-    TextDataSource *source = getTextDataSource( session, objectHandle );
+
+    BaseArrayDataSource<DataResource> *source = getArrayDataSource( session, objectHandle );
     if( source == NULL )
     {
-        return -1;
+        return session->getLastError();
+    }
+
+    for( int i = 0; i < source->rank; i++ )
+    {
+        sizes[i] = source->sizes[i];
     }
     
-    return source->length;
+    return FML_ERR_NO_ERROR;
 }
 
 
-int Fieldml_GetTextDataSourceHead( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_SetArrayDataSourceSizes( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *sizes )
 {
     FieldmlSession *session = getSession( handle );
     if( session == NULL )
     {
-        return -1;
+        return session->getLastError();
     }
-    
-    TextDataSource *source = getTextDataSource( session, objectHandle );
+
+    BaseArrayDataSource<DataResource> *source = getArrayDataSource( session, objectHandle );
     if( source == NULL )
     {
-        return -1;
+        return session->getLastError();
+    }
+
+    for( int i = 0; i < source->rank; i++ )
+    {
+        if( sizes[i] < 0 )
+        {
+            return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        }
     }
     
-    return source->head;
+    source->sizes.clear();
+    for( int i = 0; i < source->rank; i++ )
+    {
+        source->sizes.push_back( sizes[i] );
+    }
+    
+    return FML_ERR_NO_ERROR;
 }
 
 
-int Fieldml_GetTextDataSourceTail( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+int Fieldml_GetTextArrayDataSourceSizes( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *sizes )
 {
     FieldmlSession *session = getSession( handle );
     if( session == NULL )
     {
-        return -1;
+        return session->getLastError();
     }
-    
-    TextDataSource *source = getTextDataSource( session, objectHandle );
+
+    TextArrayDataSource *source = getTextArrayDataSource( session, objectHandle );
     if( source == NULL )
     {
-        return -1;
+        return session->getLastError();
+    }
+
+    for( int i = 0; i < source->rank; i++ )
+    {
+        sizes[i] = source->textSizes[i];
     }
     
-    return source->tail;
+    return FML_ERR_NO_ERROR;
 }
 
 
-FmlErrorNumber Fieldml_CreateArrayDataSource( FmlSessionHandle handle, const char *name, FmlObjectHandle resource, const char *sourceName )
+int Fieldml_SetTextArrayDataSourceSizes( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *sizes )
+{
+    FieldmlSession *session = getSession( handle );
+    if( session == NULL )
+    {
+        return session->getLastError();
+    }
+
+    TextArrayDataSource *source = getTextArrayDataSource( session, objectHandle );
+    if( source == NULL )
+    {
+        return session->getLastError();
+    }
+
+    for( int i = 0; i < source->rank; i++ )
+    {
+        if( sizes[i] <= 0 )
+        {
+            return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        }
+    }
+    
+    source->textSizes.clear();
+    for( int i = 0; i < source->rank; i++ )
+    {
+        source->textSizes.push_back( sizes[i] );
+    }
+    
+    return FML_ERR_NO_ERROR;
+}
+
+
+int Fieldml_GetArrayDataSourceOffsets( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *offsets )
+{
+    FieldmlSession *session = getSession( handle );
+    if( session == NULL )
+    {
+        return session->getLastError();
+    }
+
+    BaseArrayDataSource<DataResource> *source = getArrayDataSource( session, objectHandle );
+    if( source == NULL )
+    {
+        return session->getLastError();
+    }
+
+    for( int i = 0; i < source->rank; i++ )
+    {
+        offsets[i] = source->offsets[i];
+    }
+    
+    return FML_ERR_NO_ERROR;
+}
+
+
+int Fieldml_SetArrayDataSourceOffsets( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *offsets )
+{
+    FieldmlSession *session = getSession( handle );
+    if( session == NULL )
+    {
+        return session->getLastError();
+    }
+
+    BaseArrayDataSource<DataResource> *source = getArrayDataSource( session, objectHandle );
+    if( source == NULL )
+    {
+        return session->getLastError();
+    }
+
+    for( int i = 0; i < source->rank; i++ )
+    {
+        if( offsets[i] < 0 )
+        {
+            return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        }
+    }
+    
+    source->offsets.clear();
+    for( int i = 0; i < source->rank; i++ )
+    {
+        source->offsets.push_back( offsets[i] );
+    }
+    
+    return FML_ERR_NO_ERROR;
+}
+
+
+FmlErrorNumber Fieldml_CreateArrayDataSource( FmlSessionHandle handle, const char *name, FmlObjectHandle resource, const char *sourceName, int rank )
 {
     FieldmlSession *session = getSession( handle );
     if( session == NULL )
@@ -4380,6 +4215,11 @@ FmlErrorNumber Fieldml_CreateArrayDataSource( FmlSessionHandle handle, const cha
     {
         return session->getLastError();
     }
+
+    if( rank <= 0 )
+    {
+        return session->setError( FML_ERR_INVALID_PARAMETER_5 );
+    }
     
     FieldmlObject *object = getObject( session, resource );
     if( object == NULL )
@@ -4399,7 +4239,7 @@ FmlErrorNumber Fieldml_CreateArrayDataSource( FmlSessionHandle handle, const cha
     
     ArrayDataResource *arrayResource = (ArrayDataResource*)dataResource;
 
-    ArrayDataSource *source = new ArrayDataSource( name, arrayResource, sourceName );
+    ArrayDataSource *source = new ArrayDataSource( name, arrayResource, sourceName, rank );
 
     session->setError( FML_ERR_NO_ERROR );
     FmlObjectHandle sourceHandle = addObject( session, source );

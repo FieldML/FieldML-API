@@ -132,20 +132,6 @@ ArrayDataWriter::ArrayDataWriter( FieldmlErrorHandler *_eHandler ) :
 }
 
 
-int ArrayDataWriter::writeIntValues( int *valueBuffer, int count )
-{
-    eHandler->setError( FML_ERR_IO_UNSUPPORTED );
-    return -1;
-}
-
-
-int ArrayDataWriter::writeDoubleValues( double *valueBuffer, int count )
-{
-    eHandler->setError( FML_ERR_IO_UNSUPPORTED );
-    return -1;
-}
-
-
 ArrayDataWriter::~ArrayDataWriter()
 {
 }
@@ -322,7 +308,18 @@ int Hdf5DataWriter::writeIntSlab( int *offsets, int *sizes, int *valueBuffer )
     
     herr_t status;
     status = H5Sselect_hyperslab( dataspace, H5S_SELECT_SET, hOffsets, NULL, hSizes, NULL );
-    status = H5Dwrite( dataset, H5T_NATIVE_INT, bufferSpace, dataspace, H5P_DEFAULT, valueBuffer );
+    
+    hid_t transferProperties = H5P_DEFAULT;
+
+//    if( collective )
+//    {
+//        transferProperties = H5Pcreate (H5P_DATASET_XFER);
+//        H5Pset_dxpl_mpio(transferProperties, H5FD_MPIO_COLLECTIVE);
+//    }
+    
+    status = H5Dwrite( dataset, H5T_NATIVE_INT, bufferSpace, dataspace, transferProperties, valueBuffer );
+
+//    H5Pclose( transferProperties );    
     
     H5Sclose( bufferSpace );
     
@@ -348,7 +345,18 @@ int Hdf5DataWriter::writeDoubleSlab( int *offsets, int *sizes, double *valueBuff
     
     herr_t status;
     status = H5Sselect_hyperslab( dataspace, H5S_SELECT_SET, hOffsets, NULL, hSizes, NULL );
-    status = H5Dwrite( dataset, H5T_NATIVE_DOUBLE, bufferSpace, dataspace, H5P_DEFAULT, valueBuffer );
+
+    hid_t transferProperties = H5P_DEFAULT;
+
+//    if( collective )
+//    {
+//        transferProperties = H5Pcreate (H5P_DATASET_XFER);
+//        H5Pset_dxpl_mpio(transferProperties, H5FD_MPIO_COLLECTIVE);
+//    }
+    
+    status = H5Dwrite( dataset, H5T_NATIVE_DOUBLE, bufferSpace, dataspace, transferProperties, valueBuffer );
+    
+//    H5Pclose( transferProperties );
     
     H5Sclose( bufferSpace );
     

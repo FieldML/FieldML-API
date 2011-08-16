@@ -42,14 +42,11 @@
 #ifndef H_ARRAY_DATA_READER
 #define H_ARRAY_DATA_READER
 
-#include "InputStream.h"
-#include "DataReader.h"
 #include "FieldmlErrorHandler.h"
 
 #include "fieldml_structs.h"
 
-class ArrayDataReader :
-    public DataReader
+class ArrayDataReader
 {
 private:
 
@@ -59,13 +56,7 @@ protected:
     ArrayDataReader( FieldmlErrorHandler *_eHandler );
     
 public:
-    virtual void skip( int amount );
-    
-    virtual int readIntValues( int *values, int count );
-    
     virtual int readIntSlab( int *offsets, int *sizes, int *valueBuffer ) = 0;
-    
-    virtual int readDoubleValues( double *value, int count ); 
     
     virtual int readDoubleSlab( int *offsets, int *sizes, double *valueBuffer ) = 0;
     

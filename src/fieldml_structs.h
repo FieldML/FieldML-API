@@ -129,6 +129,8 @@ public:
     const FmlObjectHandle valueType;
 
     Evaluator( const std::string _name, FieldmlHandleType _type, FmlObjectHandle _valueType, bool _isVirtual );
+    
+    virtual void addDelegates( std::set<FmlObjectHandle> &delegates ) = 0;
 };
 
 
@@ -141,6 +143,8 @@ public:
     SimpleMap<FmlObjectHandle, FmlObjectHandle> binds;
 
     ReferenceEvaluator( const std::string _name, FmlObjectHandle _evaluator, FmlObjectHandle _valueType, bool _isVirtual );
+    
+    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
 };
 
 
@@ -154,6 +158,8 @@ public:
     SimpleMap<FmlEnsembleValue, FmlObjectHandle> evaluators;
     
     PiecewiseEvaluator( const std::string name, FmlObjectHandle valueType, bool _isVirtual );
+    
+    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
 };
 
 
@@ -167,6 +173,8 @@ public:
     FmlObjectHandle indexEvaluator;
     
     AggregateEvaluator( const std::string _name, FmlObjectHandle _valueType, bool _isVirtual );
+    
+    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
 };
 
 
@@ -177,6 +185,8 @@ public:
     std::set<FmlObjectHandle> arguments;
     
     ArgumentEvaluator( const std::string name, FmlObjectHandle _valueType, bool _isVirtual );
+    
+    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
 };
 
 
@@ -187,6 +197,8 @@ public:
     std::set<FmlObjectHandle> arguments;
     
     ExternalEvaluator( const std::string name, FmlObjectHandle _valueType, bool _isVirtual );
+    
+    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
 };
 
 
@@ -205,46 +217,28 @@ public:
 };
  
     
-class TextDataResource :
+class TextResource :
     public DataResource
 {
 public:
-    TextDataResource( const std::string _name, DataResourceType _type );
+    std::string href;
     
-    virtual ~TextDataResource(); 
+    std::string arrayString;
+    
+    std::vector<int> size;
+    
+    TextResource( const std::string _name, DataResourceType _type );
+    
+    virtual ~TextResource(); 
 };
     
 
-class TextFileDataResource :
-    public TextDataResource
-{
-public:
-    const std::string href;
-        
-    TextFileDataResource( const std::string _name, const std::string _href );
-    
-    virtual ~TextFileDataResource(); 
-};
-
-
-class TextInlineDataResource :
-    public TextDataResource
-{
-public:
-    char *inlineString;
-    int length;
-
-    TextInlineDataResource( const std::string _name );
-    
-    virtual ~TextInlineDataResource();
-};
-    
-    
 class ArrayDataResource :
     public DataResource
 {
 public:
     const std::string format;
+
     const std::string href;
 
     ArrayDataResource( const std::string _name, const std::string _type, const std::string _href );
@@ -257,12 +251,7 @@ template<class ResourceType> class DataSource :
     public FieldmlObject
 {
 protected:
-    DataSource( const std::string _name, ResourceType *_resource, DataSourceType _type ) :
-        FieldmlObject( _name, FHT_DATA_SOURCE, false ),
-        resource( _resource ),
-        type( _type )
-    {
-    }
+    DataSource( const std::string _name, ResourceType *_resource, DataSourceType _type );
     
 public:
     const DataSourceType type;
@@ -275,101 +264,168 @@ public:
 };
 
     
-class TextDataSource :
-    public DataSource<TextDataResource>
+template<class ResourceType> class BaseArrayDataSource :
+    public DataSource<ResourceType>
+{
+public:
+    const int rank;
+    
+    std::vector<int> offsets;
+    
+    std::vector<int> sizes;
+    
+    BaseArrayDataSource( const std::string _name, ResourceType *_resource, DataSourceType _type, int _rank );
+    
+    virtual ~BaseArrayDataSource();
+};
+
+
+class TextArrayDataSource :
+    public BaseArrayDataSource<TextResource>
 {
 public:
     const int firstLine;
     
-    const int count;
+    std::vector<int> textSizes;
     
-    const int length;
+    TextArrayDataSource( const std::string _name, TextResource *_resource, int _firstLine, int _rank );
     
-    const int head;
-    
-    const int tail;
-    
-    TextDataSource( const std::string _name, TextDataResource *_resource, int _firstLine, int _count, int _length, int _head, int _tail );
-    
-    virtual ~TextDataSource();
+    virtual ~TextArrayDataSource();
 };
 
 
 class ArrayDataSource :
-    public DataSource<ArrayDataResource>
+    public BaseArrayDataSource<ArrayDataResource>
 {
 public:
     const std::string sourceName;
     
-    ArrayDataSource( const std::string _name, ArrayDataResource *_resource, const std::string _sourceName );
+    ArrayDataSource( const std::string _name, ArrayDataResource *_resource, const std::string _sourceName, int _rank );
     
     virtual ~ArrayDataSource();
 };
 
 
-class DataDescription
+class BaseDataDescription
 {
 public:
     const DataDescriptionType descriptionType;
     
-    virtual ~DataDescription();
+    virtual void addDelegates( std::set<FmlObjectHandle> &delegates ) = 0;
 
+    virtual FmlErrorNumber addIndexEvaluator( bool isSparse, FmlObjectHandle evaluator, FmlObjectHandle orderEvaluator ) = 0;
+    
+    virtual FmlErrorNumber setIndexEvaluator( int index, bool isSparse, FmlObjectHandle evaluator, FmlObjectHandle orderEvaluator ) = 0;
+    
+    virtual FmlErrorNumber getIndexEvaluator( int index, bool isSparse, FmlObjectHandle &evaluator ) = 0;
+    
+    virtual FmlErrorNumber setIndexEvaluator( int index, FmlObjectHandle evaluator, FmlObjectHandle orderEvaluator ) = 0;
+    
+    virtual FmlErrorNumber getIndexEvaluator( int index, FmlObjectHandle &evaluator ) = 0;
+    
+    virtual FmlErrorNumber getIndexOrder( int index, FmlObjectHandle &order ) = 0;
+    
+    virtual int getIndexCount( bool isSparse ) = 0;
+
+    virtual ~BaseDataDescription() = 0;
+    
 protected:
-    DataDescription( DataDescriptionType _descriptionType );
+    BaseDataDescription( DataDescriptionType _descriptionType );
 };
 
 
 class UnknownDataDescription :
-    public DataDescription
+    public BaseDataDescription
 {
 public:
     UnknownDataDescription();
+
+    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
+
+    virtual FmlErrorNumber addIndexEvaluator( bool isSparse, FmlObjectHandle evaluator, FmlObjectHandle orderEvaluator );
+    
+    virtual FmlErrorNumber setIndexEvaluator( int index, bool isSparse, FmlObjectHandle evaluator, FmlObjectHandle orderEvaluator );
+    
+    virtual FmlErrorNumber getIndexEvaluator( int index, bool isSparse, FmlObjectHandle &evaluator );
+    
+    virtual FmlErrorNumber setIndexEvaluator( int index, FmlObjectHandle evaluator, FmlObjectHandle orderEvaluator );
+    
+    virtual FmlErrorNumber getIndexEvaluator( int index, FmlObjectHandle &evaluator );
+    
+    virtual FmlErrorNumber getIndexOrder( int index, FmlObjectHandle &order );
+    
+    virtual int getIndexCount( bool isSparse );
+
+    virtual ~UnknownDataDescription();
+    
+protected:
+    UnknownDataDescription( DataDescriptionType _descriptionType );
 };
 
-
-class SemidenseDataDescription :
-    public DataDescription
-{
-public:
-    FmlObjectHandle dataSource;
-    
-    std::vector<FmlObjectHandle> sparseIndexes;
-    std::vector<FmlObjectHandle> denseIndexes;
-    std::vector<FmlObjectHandle> denseOrders;
-    
-    SemidenseDataDescription();
-    
-    virtual ~SemidenseDataDescription();
-};
-    
 
 class DenseArrayDataDescription :
-    public DataDescription
+    public BaseDataDescription
 {
+private:
+    std::vector<FmlObjectHandle> denseIndexes;
+    std::vector<FmlObjectHandle> denseOrders;
+        
 public:
     FmlObjectHandle dataSource;
     
-    std::vector<FmlObjectHandle> denseIndexes;
-    std::vector<FmlObjectHandle> denseOrders;
-    
     DenseArrayDataDescription();
+
+    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
+
+    virtual FmlErrorNumber addIndexEvaluator( bool isSparse, FmlObjectHandle evaluator, FmlObjectHandle orderEvaluator );
+    
+    virtual FmlErrorNumber setIndexEvaluator( int index, bool isSparse, FmlObjectHandle evaluator, FmlObjectHandle orderEvaluator );
+    
+    virtual FmlErrorNumber getIndexEvaluator( int index, bool isSparse, FmlObjectHandle &evaluator );
+    
+    virtual FmlErrorNumber setIndexEvaluator( int index, FmlObjectHandle evaluator, FmlObjectHandle orderEvaluator );
+    
+    virtual FmlErrorNumber getIndexEvaluator( int index, FmlObjectHandle &evaluator );
+    
+    virtual FmlErrorNumber getIndexOrder( int index, FmlObjectHandle &order );
+    
+    virtual int getIndexCount( bool isSparse );
+    
     virtual ~DenseArrayDataDescription();
 };
 
 
-class DOKArrayDataDescription :
-    public DataDescription
+class DokArrayDataDescription :
+    public BaseDataDescription
 {
+private:
+    std::vector<FmlObjectHandle> sparseIndexes;
+    std::vector<FmlObjectHandle> denseIndexes;
+    std::vector<FmlObjectHandle> denseOrders;
+        
 public:
     FmlObjectHandle keySource;
     FmlObjectHandle valueSource;
     
-    std::vector<FmlObjectHandle> sparseIndexes;
-    std::vector<FmlObjectHandle> denseIndexes;
-    std::vector<FmlObjectHandle> denseOrders;
+    DokArrayDataDescription();
+
+    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
+
+    virtual FmlErrorNumber addIndexEvaluator( bool isSparse, FmlObjectHandle evaluator, FmlObjectHandle orderEvaluator );
     
-    DOKArrayDataDescription();
-    virtual ~DOKArrayDataDescription();
+    virtual FmlErrorNumber setIndexEvaluator( int index, bool isSparse, FmlObjectHandle evaluator, FmlObjectHandle orderEvaluator );
+    
+    virtual FmlErrorNumber getIndexEvaluator( int index, bool isSparse, FmlObjectHandle &evaluator );
+    
+    virtual FmlErrorNumber setIndexEvaluator( int index, FmlObjectHandle evaluator, FmlObjectHandle orderEvaluator );
+    
+    virtual FmlErrorNumber getIndexEvaluator( int index, FmlObjectHandle &evaluator );
+    
+    virtual FmlErrorNumber getIndexOrder( int index, FmlObjectHandle &order );
+    
+    virtual int getIndexCount( bool isSparse );
+    
+    virtual ~DokArrayDataDescription();
 };
 
 
@@ -377,9 +433,11 @@ class ParameterEvaluator :
     public Evaluator
 {
 public:
-    DataDescription *dataDescription;
+    BaseDataDescription *dataDescription;
     
     ParameterEvaluator( const std::string _name, FmlObjectHandle _valueType, bool _isVirtual );
+    
+    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
     
     virtual ~ParameterEvaluator();
 };

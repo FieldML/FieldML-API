@@ -47,8 +47,8 @@
 
 #include "FieldmlErrorHandler.h"
 #include "FieldmlRegion.h"
-#include "DataReader.h"
-#include "DataWriter.h"
+#include "ArrayDataReader.h"
+#include "ArrayDataWriter.h"
 
 class FieldmlSession :
     public FieldmlErrorHandler
@@ -64,9 +64,9 @@ private:
     
     std::vector<std::string> errors;
     
-    std::vector<DataReader *> readers;
+    std::vector<ArrayDataReader *> readers;
     
-    std::vector<DataWriter *> writers;
+    std::vector<ArrayDataWriter *> writers;
 
     std::vector<FieldmlRegion*> regions;
     
@@ -128,17 +128,17 @@ public:
 
     ObjectStore * const objects;
 
-    FmlReaderHandle addReader( DataReader *reader );
+    FmlReaderHandle addReader( ArrayDataReader *reader );
     
     void removeReader( FmlReaderHandle handle );
     
-    DataReader *handleToReader( FmlReaderHandle handle );
+    ArrayDataReader *handleToReader( FmlReaderHandle handle );
     
-    FmlWriterHandle addWriter( DataWriter *writer );
+    FmlWriterHandle addWriter( ArrayDataWriter *writer );
     
     void removeWriter( FmlWriterHandle handle );
     
-    DataWriter *handleToWriter( FmlWriterHandle handle );
+    ArrayDataWriter *handleToWriter( FmlWriterHandle handle );
     
     bool getDelegateEvaluators( FmlObjectHandle handle, std::set<FmlObjectHandle> &set );
     

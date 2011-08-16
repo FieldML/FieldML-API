@@ -51,119 +51,89 @@ extern const char * const FML_VERSION_STRING;
 extern const xmlChar * const XLINK_NAMESPACE_STRING;
 
 extern const xmlChar * const FIELDML_TAG;
-
 extern const xmlChar * const REGION_TAG;
-
-extern const xmlChar * const IMPORT_TAG;
-extern const xmlChar * const IMPORT_TYPE_TAG;
-extern const xmlChar * const IMPORT_EVALUATOR_TAG;
-
-extern const xmlChar * const ENSEMBLE_TYPE_TAG;
-
-extern const xmlChar * const CONTINUOUS_TYPE_TAG;
-extern const xmlChar * const COMPONENTS_TAG;
-
-extern const xmlChar * const MESH_TYPE_TAG;
-extern const xmlChar * const MESH_SHAPES_TAG;
-extern const xmlChar * const MESH_SHAPE_TAG;
-
-extern const xmlChar * const ELEMENT_SEQUENCE_TAG;
-extern const xmlChar * const ELEMENTS_TAG;
-extern const xmlChar * const CHART_TAG;
-extern const xmlChar * const MEMBERS_TAG;
-
-extern const xmlChar * const MEMBER_RANGE_TAG;
-extern const xmlChar * const MEMBER_LIST_DATA_TAG;
-extern const xmlChar * const MEMBER_RANGE_DATA_TAG;
-extern const xmlChar * const MEMBER_STRIDE_RANGE_DATA_TAG;
-
-extern const xmlChar * const REFERENCE_EVALUATOR_TAG;
-extern const xmlChar * const BINDINGS_TAG;
-extern const xmlChar * const BIND_TAG;
-extern const xmlChar * const BIND_INDEX_TAG;
-
-extern const xmlChar * const ARGUMENTS_TAG;
-extern const xmlChar * const ARGUMENT_TAG;
-
-extern const xmlChar * const ARGUMENT_EVALUATOR_TAG;
-
-extern const xmlChar * const EXTERNAL_EVALUATOR_TAG;
-
+extern const xmlChar * const AGGREGATE_EVALUATOR_TAG;
 extern const xmlChar * const PARAMETER_EVALUATOR_TAG;
-extern const xmlChar * const SEMI_DENSE_DATA_TAG;
+extern const xmlChar * const PIECEWISE_EVALUATOR_TAG;
+extern const xmlChar * const REFERENCE_EVALUATOR_TAG;
+extern const xmlChar * const EXTERNAL_EVALUATOR_TAG;
+extern const xmlChar * const ARGUMENT_EVALUATOR_TAG;
+extern const xmlChar * const MESH_TYPE_TAG;
+extern const xmlChar * const CONTINUOUS_TYPE_TAG;
+extern const xmlChar * const ENSEMBLE_TYPE_TAG;
+extern const xmlChar * const ARRAY_DATA_RESOURCE_TAG;
+extern const xmlChar * const TEXT_RESOURCE_TAG;
+extern const xmlChar * const IMPORT_TAG;
+extern const xmlChar * const COMPONENT_EVALUATORS_TAG;
 extern const xmlChar * const DOK_ARRAY_DATA_TAG;
 extern const xmlChar * const DENSE_ARRAY_DATA_TAG;
+extern const xmlChar * const SEMIDENSE_DATA_TAG;
 extern const xmlChar * const SPARSE_INDEXES_TAG;
 extern const xmlChar * const DENSE_INDEXES_TAG;
-
-extern const xmlChar * const INDEX_EVALUATORS_TAG;
-extern const xmlChar * const INDEX_EVALUATOR_TAG;
-
-extern const xmlChar * const PIECEWISE_EVALUATOR_TAG;
 extern const xmlChar * const ELEMENT_EVALUATORS_TAG;
+extern const xmlChar * const INDEX_EVALUATORS_TAG;
+extern const xmlChar * const BINDINGS_TAG;
+extern const xmlChar * const ARGUMENTS_TAG;
+extern const xmlChar * const SHAPES_TAG;
+extern const xmlChar * const CHART_TAG;
+extern const xmlChar * const ELEMENTS_TAG;
+extern const xmlChar * const COMPONENTS_TAG;
+extern const xmlChar * const MEMBERS_TAG;
+extern const xmlChar * const MEMBER_RANGE_TAG;
+extern const xmlChar * const MEMBER_STRIDE_RANGE_DATA_TAG;
+extern const xmlChar * const MEMBER_RANGE_DATA_TAG;
+extern const xmlChar * const MEMBER_LIST_DATA_TAG;
+extern const xmlChar * const ARGUMENT_TAG;
 extern const xmlChar * const ELEMENT_EVALUATOR_TAG;
-
-extern const xmlChar * const RANGE_TAG;
-
-extern const xmlChar * const AGGREGATE_EVALUATOR_TAG;
-extern const xmlChar * const COMPONENT_EVALUATORS_TAG;
+extern const xmlChar * const SHAPE_TAG;
 extern const xmlChar * const COMPONENT_EVALUATOR_TAG;
-
-extern const xmlChar * const TEXT_FILE_RESOURCE_TAG;
-extern const xmlChar * const TEXT_INLINE_RESOURCE_TAG;
-extern const xmlChar * const TEXT_STRING_TAG;
-extern const xmlChar * const TEXT_DATA_SOURCE_TAG;
-
-extern const xmlChar * const ARRAY_DATA_RESOURCE_TAG;
+extern const xmlChar * const BIND_TAG;
+extern const xmlChar * const BIND_INDEX_TAG;
+extern const xmlChar * const INDEX_EVALUATOR_TAG;
+extern const xmlChar * const IMPORT_EVALUATOR_TAG;
+extern const xmlChar * const IMPORT_TYPE_TAG;
+extern const xmlChar * const TEXT_RESOURCE_STRING_TAG;
+extern const xmlChar * const TEXT_RESOURCE_HREF_TAG;
+extern const xmlChar * const TEXT_ARRAY_DATA_SOURCE_TAG;
+extern const xmlChar * const TEXT_ARRAY_SIZE_TAG;
 extern const xmlChar * const ARRAY_DATA_SOURCE_TAG;
+extern const xmlChar * const ARRAY_DATA_OFFSET_TAG;
+extern const xmlChar * const ARRAY_DATA_SIZE_TAG;
+
 
 extern const xmlChar * const VERSION_ATTRIB;
-
-extern const xmlChar * const NAME_ATTRIB;
-
-extern const xmlChar * const REGION_ATTRIB;
-extern const xmlChar * const LOCAL_NAME_ATTRIB;
-extern const xmlChar * const REMOTE_NAME_ATTRIB;
-
+extern const xmlChar * const VALUE_DATA_ATTRIB;
+extern const xmlChar * const KEY_DATA_ATTRIB;
+extern const xmlChar * const VALUE_TYPE_ATTRIB;
+extern const xmlChar * const DATA_ATTRIB;
+extern const xmlChar * const COUNT_ATTRIB;
+extern const xmlChar * const STRIDE_ATTRIB;
+extern const xmlChar * const MAX_ATTRIB;
+extern const xmlChar * const MIN_ATTRIB;
+extern const xmlChar * const ORDER_ATTRIB;
+extern const xmlChar * const INDEX_VALUE_ATTRIB;
+extern const xmlChar * const SHAPE_ATTRIB;
+extern const xmlChar * const ELEMENT_ATTRIB;
+extern const xmlChar * const DEFAULT_ATTRIB;
+extern const xmlChar * const COMPONENT_ATTRIB;
+extern const xmlChar * const SOURCE_ATTRIB;
 extern const xmlChar * const ARGUMENT_ATTRIB;
 extern const xmlChar * const INDEX_NUMBER_ATTRIB;
-extern const xmlChar * const SOURCE_ATTRIB;
-
-extern const xmlChar * const COMPONENT_ENSEMBLE_ATTRIB;
-
-extern const xmlChar * const VALUE_TYPE_ATTRIB;
-
-extern const xmlChar * const SOURCE_NAME_ATTRIB;
-
-extern const xmlChar * const KEY_ATTRIB;
-extern const xmlChar * const VALUE_ATTRIB;
-extern const xmlChar * const DEFAULT_ATTRIB;
-
-extern const xmlChar * const COMPONENT_ATTRIB;
-extern const xmlChar * const INDEX_VALUE_ATTRIB;
 extern const xmlChar * const EVALUATOR_ATTRIB;
-extern const xmlChar * const ELEMENT_SEQUENCE_ATTRIB;
-extern const xmlChar * const ORDER_ATTRIB;
-
-extern const xmlChar * const MIN_ATTRIB;
-extern const xmlChar * const MAX_ATTRIB;
-extern const xmlChar * const STRIDE_ATTRIB;
-
-extern const xmlChar * const INDEX_EVALUATOR_ATTRIB;
-
+extern const xmlChar * const REGION_ATTRIB;
+extern const xmlChar * const REMOTE_NAME_ATTRIB;
+extern const xmlChar * const LOCAL_NAME_ATTRIB;
+extern const xmlChar * const RANK_ATTRIB;
+extern const xmlChar * const FIRST_LINE_ATTRIB;
 extern const xmlChar * const FORMAT_ATTRIB;
+extern const xmlChar * const SOURCE_NAME_ATTRIB;
+extern const xmlChar * const NAME_ATTRIB;
+extern const xmlChar * const ID_ATTRIB;
 
-extern const xmlChar * const DATA_ATTRIB;
-extern const xmlChar * const KEY_DATA_ATTRIB;
-extern const xmlChar * const VALUE_DATA_ATTRIB;
 
 extern const xmlChar * const HREF_ATTRIB;
 extern const xmlChar * const QUALIFIED_HREF_ATTRIB;
-extern const xmlChar * const FIRST_LINE_ATTRIB;
-extern const xmlChar * const COUNT_ATTRIB;
-extern const xmlChar * const LENGTH_ATTRIB;
-extern const xmlChar * const HEAD_ATTRIB;
-extern const xmlChar * const TAIL_ATTRIB;
+
 
 extern const char * const HDF5_NAME;
 extern const char * const PHDF5_NAME;

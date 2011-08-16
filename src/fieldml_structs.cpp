@@ -114,8 +114,22 @@ ReferenceEvaluator::ReferenceEvaluator( const string _name, FmlObjectHandle _eva
 }
 
 
+void ReferenceEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
+{
+    delegates.insert( sourceEvaluator );
+    
+    const set<FmlObjectHandle> &values = binds.getValues();
+    delegates.insert( values.begin(), values.end() );
+}
+
+
 ArgumentEvaluator::ArgumentEvaluator( const string _name, FmlObjectHandle _valueType, bool _isVirtual ) :
     Evaluator( _name, FHT_ARGUMENT_EVALUATOR, _valueType, _isVirtual )
+{
+}
+
+
+void ArgumentEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
 {
 }
 
@@ -126,10 +140,21 @@ ExternalEvaluator::ExternalEvaluator( const string _name, FmlObjectHandle _value
 }
 
 
-ParameterEvaluator::ParameterEvaluator( const string _name, FmlObjectHandle _valueType, bool _isVirtual ) :
-    Evaluator( _name, FHT_PARAMETER_EVALUATOR, _valueType, _isVirtual ),
-    dataDescription( new UnknownDataDescription() )
+void ExternalEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
 {
+}
+
+
+ParameterEvaluator::ParameterEvaluator( const string _name, FmlObjectHandle _valueType, bool _isVirtual ) :
+    Evaluator( _name, FHT_PARAMETER_EVALUATOR, _valueType, _isVirtual )
+{
+    dataDescription = new UnknownDataDescription();
+}
+
+
+void ParameterEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
+{
+    dataDescription->addDelegates( delegates );
 }
 
 
@@ -148,12 +173,36 @@ PiecewiseEvaluator::PiecewiseEvaluator( const string _name, FmlObjectHandle _val
 }
 
 
+void PiecewiseEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
+{
+    const set<FmlObjectHandle> &evaluatorValues = evaluators.getValues();
+    delegates.insert( evaluatorValues.begin(), evaluatorValues.end() );
+
+    delegates.insert( indexEvaluator );
+    
+    const set<FmlObjectHandle> &bindValues = binds.getValues();
+    delegates.insert( bindValues.begin(), bindValues.end() );
+}
+
+
 AggregateEvaluator::AggregateEvaluator( const string _name, FmlObjectHandle _valueType, bool _isVirtual ) :
     Evaluator( _name, FHT_AGGREGATE_EVALUATOR, _valueType, _isVirtual ),
     binds( FML_INVALID_HANDLE ),
     evaluators( FML_INVALID_HANDLE ),
     indexEvaluator( FML_INVALID_HANDLE )
 {
+}
+
+
+void AggregateEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
+{
+    const set<FmlObjectHandle> &evaluatorValues = evaluators.getValues();
+    delegates.insert( evaluatorValues.begin(), evaluatorValues.end() );
+
+    delegates.insert( indexEvaluator );
+    
+    const set<FmlObjectHandle> &bindValues = binds.getValues();
+    delegates.insert( bindValues.begin(), bindValues.end() );
 }
 
 
@@ -169,40 +218,14 @@ DataResource::~DataResource()
 }
 
     
-TextDataResource::TextDataResource( const string _name, DataResourceType _type ) :
+TextResource::TextResource( const string _name, DataResourceType _type ) :
     DataResource( _name, _type )
 {
 }
 
 
-TextDataResource::~TextDataResource()
+TextResource::~TextResource()
 {
-}
-
-
-TextFileDataResource::TextFileDataResource( const string _name, const string _href ) :
-    TextDataResource( _name, DATA_RESOURCE_TEXT_FILE ),
-    href( _href )
-{
-}
-
-
-TextFileDataResource::~TextFileDataResource()
-{
-}
-
-
-TextInlineDataResource::TextInlineDataResource( const string _name ) : 
-    TextDataResource( _name, DATA_RESOURCE_TEXT_INLINE )
-{
-    inlineString = new char[1];
-    ((char*)inlineString)[0] = 0; //Dirty hack.
-    length = 0;
-}
-
-TextInlineDataResource::~TextInlineDataResource()
-{
-    delete[] inlineString;
 }
 
 
@@ -218,37 +241,174 @@ ArrayDataResource::~ArrayDataResource()
 }
 
 
-DataDescription::DataDescription( DataDescriptionType _descriptionType ) :
+BaseDataDescription::BaseDataDescription( DataDescriptionType _descriptionType ) :
     descriptionType( _descriptionType )
 {
 }
 
 
-DataDescription::~DataDescription()
+BaseDataDescription::~BaseDataDescription()
 {
 }
 
 
 UnknownDataDescription::UnknownDataDescription() :
-    DataDescription( DESCRIPTION_UNKNOWN )
+    BaseDataDescription( DESCRIPTION_UNKNOWN )
 {
 }
 
 
-SemidenseDataDescription::SemidenseDataDescription() :
-    DataDescription( DESCRIPTION_SEMIDENSE )
+void UnknownDataDescription::addDelegates( set<FmlObjectHandle> &delegates )
 {
 }
 
 
-SemidenseDataDescription::~SemidenseDataDescription()
+FmlErrorNumber UnknownDataDescription::addIndexEvaluator( bool isSparse, FmlObjectHandle evaluator, FmlObjectHandle orderEvaluator )
+{
+    return FML_ERR_INVALID_OBJECT;
+}
+
+
+FmlErrorNumber UnknownDataDescription::setIndexEvaluator( int index, bool isSparse, FmlObjectHandle evaluator, FmlObjectHandle orderEvaluator )
+{
+    return FML_ERR_INVALID_OBJECT;
+}
+
+
+FmlErrorNumber UnknownDataDescription::getIndexEvaluator( int index, bool isSparse, FmlObjectHandle &evaluator )
+{
+    return FML_INVALID_HANDLE;
+}
+
+
+FmlErrorNumber UnknownDataDescription::setIndexEvaluator( int index, FmlObjectHandle evaluator, FmlObjectHandle orderEvaluator )
+{
+    return false;
+}
+
+
+FmlErrorNumber UnknownDataDescription::getIndexEvaluator( int index, FmlObjectHandle &evaluator )
+{
+    return FML_INVALID_HANDLE;
+}
+
+
+FmlErrorNumber UnknownDataDescription::getIndexOrder( int index, FmlObjectHandle &order )
+{
+    return FML_INVALID_HANDLE;
+}
+
+
+int UnknownDataDescription::getIndexCount( bool isSparse )
+{
+    return -1;
+}
+
+
+UnknownDataDescription::~UnknownDataDescription()
 {
 }
 
 
 DenseArrayDataDescription::DenseArrayDataDescription() :
-    DataDescription( DESCRIPTION_DENSE_ARRAY )
+    BaseDataDescription( DESCRIPTION_DENSE_ARRAY )
 {
+}
+
+
+void DenseArrayDataDescription::addDelegates( set<FmlObjectHandle> &delegates )
+{
+    delegates.insert( denseIndexes.begin(), denseIndexes.end() );
+}
+
+
+FmlErrorNumber DenseArrayDataDescription::addIndexEvaluator( bool isSparse, FmlObjectHandle evaluator, FmlObjectHandle orderEvaluator )
+{
+    if( isSparse )
+    {
+        return FML_ERR_INVALID_OBJECT;
+    }
+    
+    denseIndexes.push_back( evaluator );
+    denseOrders.push_back( orderEvaluator );
+    
+    return FML_ERR_NO_ERROR;
+}
+
+
+FmlErrorNumber DenseArrayDataDescription::setIndexEvaluator( int index, bool isSparse, FmlObjectHandle evaluator, FmlObjectHandle orderEvaluator )
+{
+    if( isSparse )
+    {
+        return FML_ERR_INVALID_OBJECT;
+    }
+
+    if( ( index < 0 ) || ( index >= denseIndexes.size() ) )
+    {
+        return FML_ERR_INVALID_INDEX;
+    }
+    
+    denseIndexes[index] = evaluator;
+    denseOrders[index] = orderEvaluator;
+    
+    return FML_ERR_NO_ERROR;
+}
+
+
+FmlErrorNumber DenseArrayDataDescription::getIndexEvaluator( int index, bool isSparse, FmlObjectHandle &evaluator )
+{
+    if( isSparse )
+    {
+        evaluator = FML_INVALID_HANDLE;
+        return FML_ERR_INVALID_OBJECT;
+    }
+
+    if( ( index < 0 ) || ( index >= denseIndexes.size() ) )
+    {
+        evaluator = FML_INVALID_HANDLE;
+        return FML_ERR_INVALID_INDEX;
+    }
+    
+    evaluator = denseIndexes[index];
+    return FML_ERR_NO_ERROR;
+}
+
+
+FmlErrorNumber DenseArrayDataDescription::setIndexEvaluator( int index, FmlObjectHandle evaluator, FmlObjectHandle orderEvaluator )
+{
+    return setIndexEvaluator( index, false, evaluator, orderEvaluator );
+}
+
+
+FmlErrorNumber DenseArrayDataDescription::getIndexEvaluator( int index, FmlObjectHandle &evaluator )
+{
+    return getIndexEvaluator( index, false, evaluator );
+}
+
+
+FmlErrorNumber DenseArrayDataDescription::getIndexOrder( int index, FmlObjectHandle &order )
+{
+    if( ( index < 0 ) || ( index >= denseOrders.size() ) )
+    {
+        order = FML_INVALID_HANDLE;
+        return FML_ERR_INVALID_INDEX;
+    }
+    
+    order = denseOrders[index];
+    return FML_ERR_NO_ERROR;
+}
+
+
+int DenseArrayDataDescription::getIndexCount( bool isSparse )
+{
+    if( isSparse )
+    {
+        return -1;
+    }
+    else
+    {
+        return denseIndexes.size();
+    }
 }
 
 
@@ -257,35 +417,203 @@ DenseArrayDataDescription::~DenseArrayDataDescription()
 }
 
 
-DOKArrayDataDescription::DOKArrayDataDescription() :
-    DataDescription( DESCRIPTION_DOK_ARRAY )
+DokArrayDataDescription::DokArrayDataDescription() :
+    BaseDataDescription( DESCRIPTION_DOK_ARRAY )
 {
 }
 
 
-DOKArrayDataDescription::~DOKArrayDataDescription()
+void DokArrayDataDescription::addDelegates( set<FmlObjectHandle> &delegates )
+{
+    delegates.insert( denseIndexes.begin(), denseIndexes.end() );
+    delegates.insert( sparseIndexes.begin(), sparseIndexes.end() );
+}
+
+
+FmlErrorNumber DokArrayDataDescription::addIndexEvaluator( bool isSparse, FmlObjectHandle evaluator, FmlObjectHandle orderEvaluator )
+{
+    if( isSparse )
+    {
+        sparseIndexes.push_back( evaluator );
+    }
+    else
+    {
+        denseIndexes.push_back( evaluator );
+        denseOrders.push_back( orderEvaluator );
+    }
+    
+    return FML_ERR_NO_ERROR;
+}
+
+
+FmlErrorNumber DokArrayDataDescription::setIndexEvaluator( int index, bool isSparse, FmlObjectHandle evaluator, FmlObjectHandle orderEvaluator )
+{
+    if( index < 0 )
+    {
+        return FML_ERR_INVALID_INDEX;
+    }
+    
+    if( isSparse )
+    {
+        if( index >= sparseIndexes.size() )
+        {
+            return FML_ERR_INVALID_INDEX;
+        }
+        
+        sparseIndexes[index] = evaluator;
+        
+        return FML_ERR_NO_ERROR;
+    }
+    else
+    {
+        if( index >= denseIndexes.size() )
+        {
+            return FML_ERR_INVALID_INDEX;
+        }
+        
+        denseIndexes[index] = evaluator;
+        denseOrders[index] = orderEvaluator;
+        
+        return FML_ERR_NO_ERROR;
+    }
+}
+
+
+FmlErrorNumber DokArrayDataDescription::getIndexEvaluator( int index, bool isSparse, FmlObjectHandle &evaluator )
+{
+    if( index < 0 )
+    {
+        evaluator = FML_INVALID_HANDLE;
+        return FML_ERR_INVALID_INDEX;
+    }
+    
+    if( isSparse )
+    {
+        if( index >= sparseIndexes.size() )
+        {
+            evaluator = FML_INVALID_HANDLE;
+            return FML_ERR_INVALID_INDEX;
+        }
+        
+        evaluator = sparseIndexes[index];
+        return FML_ERR_NO_ERROR;
+    }
+    else
+    {
+        if( index >= denseIndexes.size() )
+        {
+            evaluator = FML_INVALID_HANDLE;
+            return FML_ERR_INVALID_INDEX;
+        }
+        
+        evaluator = denseIndexes[index];
+        return FML_ERR_NO_ERROR;
+    }
+}
+
+
+FmlErrorNumber DokArrayDataDescription::getIndexOrder( int index, FmlObjectHandle &order )
+{
+    if( index < 0 )
+    {
+        order = FML_INVALID_HANDLE;
+        return FML_ERR_INVALID_INDEX;
+    }
+    
+    if( index >= denseIndexes.size() )
+    {
+        order = FML_INVALID_HANDLE;
+        return FML_ERR_INVALID_INDEX;
+    }
+    
+    order = denseOrders[index];
+    return FML_ERR_NO_ERROR;
+}
+
+
+FmlErrorNumber DokArrayDataDescription::setIndexEvaluator( int index, FmlObjectHandle evaluator, FmlObjectHandle orderEvaluator )
+{
+    if( index >= sparseIndexes.size() )
+    {
+        index -= sparseIndexes.size();
+        return setIndexEvaluator( index, false, evaluator );
+    }
+    else
+    {
+        return setIndexEvaluator( index, true, evaluator );
+    }
+}
+
+
+FmlErrorNumber DokArrayDataDescription::getIndexEvaluator( int index, FmlObjectHandle &evaluator )
+{
+    if( index >= sparseIndexes.size() )
+    {
+        index -= sparseIndexes.size();
+        return getIndexEvaluator( index, false, evaluator );
+    }
+    else
+    {
+        return getIndexEvaluator( index, true, evaluator );
+    }
+}
+
+
+int DokArrayDataDescription::getIndexCount( bool isSparse )
+{
+    if( isSparse )
+    {
+        return sparseIndexes.size();
+    }
+    else
+    {
+        return denseIndexes.size();
+    }
+}
+
+
+DokArrayDataDescription::~DokArrayDataDescription()
 {
 }
 
 
-TextDataSource::TextDataSource( const string _name, TextDataResource *_resource, int _firstLine, int _count, int _length, int _head, int _tail ) :
-    DataSource<TextDataResource>( _name, _resource, DATA_SOURCE_TEXT ),
-    firstLine( _firstLine ),
-    count( _count ),
-    length( _length ),
-    head( _head ),
-    tail( _tail )
+template<class ResourceType> DataSource<ResourceType>::DataSource( const std::string _name, ResourceType *_resource, DataSourceType _type ) :
+    FieldmlObject( _name, FHT_DATA_SOURCE, false ),
+    resource( _resource ),
+    type( _type )
 {
 }
 
 
-TextDataSource::~TextDataSource()
+template<class ResourceType> BaseArrayDataSource<ResourceType>::BaseArrayDataSource( const std::string _name, ResourceType *_resource, DataSourceType _type, int _rank ) :
+    DataSource<ResourceType>( _name, _resource, _type ),
+    rank( _rank )
+{
+    sizes.assign( rank, 0 );
+    offsets.assign( rank, 0 );
+}
+
+
+template<class ResourceType> BaseArrayDataSource<ResourceType>::~BaseArrayDataSource()
 {
 }
 
 
-ArrayDataSource::ArrayDataSource( const string _name, ArrayDataResource *_resource, const string _sourceName ) :
-    DataSource<ArrayDataResource>( _name, _resource, DATA_SOURCE_ARRAY ),
+TextArrayDataSource::TextArrayDataSource( const string _name, TextResource *_resource, int _firstLine, int _rank ) :
+    BaseArrayDataSource<TextResource>( _name, _resource, DATA_SOURCE_TEXT_ARRAY, _rank ),
+    firstLine( _firstLine )
+{
+    textSizes.assign( rank, 0 );
+}
+
+
+TextArrayDataSource::~TextArrayDataSource()
+{
+}
+
+
+ArrayDataSource::ArrayDataSource( const string _name, ArrayDataResource *_resource, const string _sourceName, int _rank ) :
+    BaseArrayDataSource<ArrayDataResource>( _name, _resource, DATA_SOURCE_ARRAY, _rank ),
     sourceName( _sourceName )
 {
 }

@@ -47,7 +47,6 @@
 #include <libxml/xmlmemory.h>
 #include <libxml/xmlschemas.h>
 
-#include "InputStream.h"
 #include "fieldml_api.h"
 
 
@@ -312,56 +311,6 @@ int testWrite( const char *filename )
 }
 
 
-void testStream()
-{
-    FieldmlInputStream *stream;
-    int iActual;
-    int iExpected[7] = { 129, 24, 333, 456, -512, 6324, 123 };
-    double dExpected[10] = { 129, 24.1, -78.239, -21.34, 65.12, 3.0, 3.2, 0.092, -0.873, 0.005 };
-    double dActual; 
-    int i;
-    bool testOk = true;
-    
-    stream = FieldmlInputStream::createStringStream( "129 24 ,, 333 .. 456 -512  \n 6324 \r\n asc123asc" );
-    for( i = 0; i < 7; i++ )
-    {
-        iActual = stream->readInt();
-        
-        if( iActual != iExpected[i] )
-        {
-            testOk = false;
-            fprintf( stderr, "Mismatch at %d: %d != %d\n", i, iExpected[i], iActual );
-        }
-    }
-    
-    delete stream;
-    
-    stream = FieldmlInputStream::createStringStream( "129 ,, 24.1 -78.239 -21.34 65.12,,\r\n\t asf3asf3.2asf.092xxx-.873 0.5e-02" );
-
-    for( i = 0; i < 10; i++ )
-    {
-        dActual = stream->readDouble();
-        
-        if( dActual != dExpected[i] )
-        {
-            testOk = false;
-            fprintf( stderr, "Mismatch at %d: %f != %f\n", i, dExpected[i], dActual );
-        }
-    }
-
-    delete stream;
-
-    if( testOk ) 
-    {
-        printf( "TestStream - ok\n" );
-    }
-    else
-    {
-        printf( "TestStream - failed\n" );
-    }
-}
-
-
 void testMisc()
 {
     bool testOk = true;
@@ -394,15 +343,16 @@ void testMisc()
     FmlObjectHandle realType = Fieldml_AddImport( handle, importHandle, "real.1d", "real.1d" );
     
     FmlObjectHandle parametersResource = Fieldml_CreateTextInlineDataResource( handle, "test.resource.parameters_data" );
-    FmlObjectHandle parametersData = Fieldml_CreateTextDataSource( handle, "test.parameters_data", parametersResource, 1, 1, 3, 0, 0 );
+    FmlObjectHandle parametersData = Fieldml_CreateTextArrayDataSource( handle, "test.parameters_data", parametersResource, 1, 1 );
     
     FmlObjectHandle parameters = Fieldml_CreateParameterEvaluator( handle, "test.ensemble_parameters", realType );
-    Fieldml_SetParameterDataDescription( handle, parameters, DESCRIPTION_SEMIDENSE );
+    Fieldml_SetParameterDataDescription( handle, parameters, DESCRIPTION_DENSE_ARRAY );
     Fieldml_SetDataSource( handle, parameters, parametersData );
     
     FmlObjectHandle rc3Index = Fieldml_CreateArgumentEvaluator( handle, "test.rc_3d.argument", rc3Ensemble );
     Fieldml_AddDenseIndexEvaluator( handle, parameters, rc3Index, FML_INVALID_HANDLE );
     
+#if 0
     writer = Fieldml_OpenTextWriter( handle, parametersData, 1 );
     Fieldml_WriteDoubleValues( handle, writer, values, 3 );
     Fieldml_CloseWriter( handle, writer );
@@ -486,7 +436,7 @@ void testMisc()
     }
     
     Fieldml_CloseReader( handle, reader );
-
+#endif
 
     Fieldml_Destroy( handle );
     if( testOk ) 
@@ -518,7 +468,7 @@ int testCycles()
     
     FmlObjectHandle ref1 = Fieldml_CreateReferenceEvaluator( session, "test.reference1", external );
     FmlObjectHandle ref2 = Fieldml_CreateReferenceEvaluator( session, "test.reference2", ref1 );
-    
+
     if( Fieldml_SetBind( session, ref1, arg1, ref2 ) != FML_ERR_CYCLIC_DEPENDENCY )
     {
         printf( "TestCycles - ReferenceEvaluator test failed\n" );
@@ -526,7 +476,7 @@ int testCycles()
     }
     
     FmlObjectHandle param = Fieldml_CreateParameterEvaluator( session, "test.parameter", ensemble );
-    Fieldml_SetParameterDataDescription( session, param, DESCRIPTION_SEMIDENSE );
+    Fieldml_SetParameterDataDescription( session, param, DESCRIPTION_DOK_ARRAY );
     
     FmlObjectHandle ref3 = Fieldml_CreateReferenceEvaluator( session, "test.reference3", param );
     
@@ -582,12 +532,12 @@ int testHdf5()
     FmlSessionHandle session = Fieldml_Create( "test", "test" );
     
     FmlObjectHandle resource = Fieldml_CreateArrayDataResource( session, "test.resource", "HDF5", "test.h5" );
-    FmlObjectHandle sourceI = Fieldml_CreateArrayDataSource( session, "test.source_int", resource, "test/fooI16BE" );
-    FmlObjectHandle sourceD = Fieldml_CreateArrayDataSource( session, "test.source_double", resource, "test/foo2" );
+    FmlObjectHandle sourceI = Fieldml_CreateArrayDataSource( session, "test.source_int", resource, "test/fooI16BE", 2 );
+    FmlObjectHandle sourceD = Fieldml_CreateArrayDataSource( session, "test.source_double", resource, "test/foo2", 2 );
     
     FmlObjectHandle resource2 = Fieldml_CreateArrayDataResource( session, "test.resource2", "HDF5", "I16BE.h5" );
-    FmlObjectHandle source2I = Fieldml_CreateArrayDataSource( session, "test.source2_int", resource2, "I16BE" );
-    FmlObjectHandle source2D = Fieldml_CreateArrayDataSource( session, "test.source2_double", resource2, "DOUBLE" );
+    FmlObjectHandle source2I = Fieldml_CreateArrayDataSource( session, "test.source2_int", resource2, "I16BE", 2 );
+    FmlObjectHandle source2D = Fieldml_CreateArrayDataSource( session, "test.source2_double", resource2, "DOUBLE", 2 );
     
     FmlObjectHandle cType = Fieldml_CreateContinuousType( session, "test.scalar_real" );
 
@@ -629,7 +579,7 @@ int testHdf5()
         dataD[i] = i * 100.001;
     }
     sizes[0] = 12;
-    FmlObjectHandle writer = Fieldml_OpenArrayWriter( session, source2D, cType, 1, sizes, 1 );
+    FmlObjectHandle writer = Fieldml_OpenWriter( session, source2D, cType, 1, sizes, 1 );
 
     offsets[0] = 0;
     sizes[0] = 6;
@@ -663,7 +613,7 @@ int main( int argc, char **argv )
     }
     testMisc();
     
-    testStream();
+//    testStream();
     
     testCycles();
     

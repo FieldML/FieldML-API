@@ -42,13 +42,11 @@
 #ifndef H_ARRAY_DATA_WRITER
 #define H_ARRAY_DATA_WRITER
 
-#include "DataWriter.h"
 #include "FieldmlErrorHandler.h"
 
 #include "fieldml_structs.h"
 
-class ArrayDataWriter :
-    public DataWriter
+class ArrayDataWriter
 {
 private:
 
@@ -58,11 +56,7 @@ protected:
     ArrayDataWriter( FieldmlErrorHandler *_eHandler );
     
 public:
-    virtual int writeIntValues( int *values, int count );
-    
     virtual int writeIntSlab( int *offsets, int *sizes, int *valueBuffer ) = 0;
-    
-    virtual int writeDoubleValues( double *value, int count ); 
     
     virtual int writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer ) = 0;
     
