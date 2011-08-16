@@ -55,7 +55,7 @@ namespace FmlUtil
     
     
     template <typename T, typename S>
-    bool contains( T &v, S value )
+    bool contains( const T &v, const S value )
     {
         return find( v.begin(), v.end(), value ) != v.end();
     }
