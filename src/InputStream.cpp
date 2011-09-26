@@ -41,7 +41,8 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <cstring> 
+#include <cstring>
+#include <string>
 
 #include "fieldml_api.h"
 #include "InputStream.h"
@@ -70,7 +71,7 @@ class StringInputStream :
     public FieldmlInputStream
 {
 private:
-    const char *string;
+    const string string;
     int stringPos;
     int stringMaxLen;
 
@@ -81,7 +82,7 @@ public:
     virtual long tell();
     virtual bool seek( long pos );
     
-    StringInputStream( const char *string );
+    StringInputStream( const std::string _string );
     virtual ~StringInputStream();
 };
 
@@ -236,7 +237,7 @@ FieldmlInputStream *FieldmlInputStream::createTextFileStream( const string filen
 }
 
 
-FieldmlInputStream *FieldmlInputStream::createStringStream( const char *sourceString )
+FieldmlInputStream *FieldmlInputStream::createStringStream( const string sourceString )
 {
     return new StringInputStream( sourceString );
 }
@@ -302,11 +303,11 @@ bool FileInputStream::seek( long pos )
 }
 
 
-StringInputStream::StringInputStream( const char * const _string ) :
+StringInputStream::StringInputStream( const std::string _string ) :
     string( _string )
 {
     stringPos = 0;
-    stringMaxLen = strlen( _string );
+    stringMaxLen = string.length();
 }
 
 
@@ -321,7 +322,8 @@ int StringInputStream::loadBuffer()
     {
         len = stringMaxLen - stringPos;
     }
-    memcpy( buffer, string, len );
+    //NOTE: Ugly. Maybe just remove the idea of a superclass buffer. 
+    memcpy( buffer, string.c_str() + stringPos, len );
     stringPos += len;
     bufferCount = len;
 
@@ -337,7 +339,7 @@ int StringInputStream::loadBuffer()
 
 long StringInputStream::tell()
 {
-    return stringPos;
+    return stringPos - ( bufferCount - bufferPos );
 }
 
 

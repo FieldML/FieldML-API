@@ -527,7 +527,7 @@ public:
         const int rank = getIntAttribute( node, RANK_ATTRIB, -1 );
         int err;
         
-        FmlObjectHandle dataSource = Fieldml_CreateArrayDataSource( state.session, name, resource, sourceName, rank );
+        FmlObjectHandle dataSource = Fieldml_CreateBinaryArrayDataSource( state.session, name, resource, sourceName, rank );
         if( dataSource == FML_INVALID_HANDLE )
         {
             state.errorHandler->logError( "Malformed ArrayDataSource" );

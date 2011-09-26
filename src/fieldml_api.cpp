@@ -53,6 +53,7 @@
 #include "Util.h"
 
 #include "ArrayDataReader.h"
+
 #include "ArrayDataWriter.h"
 #include "FieldmlRegion.h"
 
@@ -332,7 +333,7 @@ static int cappedCopyAndFree( const char *source, char *buffer, int bufferLength
 }
 
 
-static DataSource<DataResource> *objectAsDataSource( FieldmlSession *session, FmlObjectHandle objectHandle )
+static DataSource *objectAsDataSource( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
     FieldmlObject *object = getObject( session, objectHandle );
 
@@ -347,13 +348,13 @@ static DataSource<DataResource> *objectAsDataSource( FieldmlSession *session, Fm
         return NULL;
     }
     
-    return (DataSource<DataResource>*)object;
+    return (DataSource*)object;
 }
 
 
-static BaseArrayDataSource<DataResource> *getArrayDataSource( FieldmlSession *session, FmlObjectHandle objectHandle )
+static BaseArrayDataSource *getArrayDataSource( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
-    DataSource<DataResource> *dataSource = objectAsDataSource( session, objectHandle );
+    DataSource *dataSource = objectAsDataSource( session, objectHandle );
     
     if( dataSource == NULL )
     {
@@ -366,14 +367,14 @@ static BaseArrayDataSource<DataResource> *getArrayDataSource( FieldmlSession *se
         return NULL;
     }
 
-    BaseArrayDataSource<DataResource> *arraySource = (BaseArrayDataSource<DataResource>*)dataSource;
+    BaseArrayDataSource *arraySource = (BaseArrayDataSource*)dataSource;
     return arraySource;
 }
 
 
 static TextArrayDataSource *getTextArrayDataSource( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
-    DataSource<DataResource> *dataSource = objectAsDataSource( session, objectHandle );
+    DataSource *dataSource = objectAsDataSource( session, objectHandle );
     
     if( dataSource == NULL )
     {
@@ -2549,8 +2550,6 @@ FmlErrorNumber Fieldml_SetIndexEvaluator( FmlSessionHandle handle, FmlObjectHand
     }
     else if( object->type == FHT_PARAMETER_EVALUATOR )
     {
-        int count;
-        
         ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
         session->setError( parameterEvaluator->dataDescription->setIndexEvaluator( index-1, evaluatorHandle, FML_INVALID_HANDLE ) );
     }
@@ -2610,8 +2609,6 @@ FmlObjectHandle Fieldml_GetIndexEvaluator( FmlSessionHandle handle, FmlObjectHan
     }
     else if( object->type == FHT_PARAMETER_EVALUATOR )
     {
-        int count;
-
         FmlObjectHandle evaluator;
         ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
         session->setError( parameterEvaluator->dataDescription->getIndexEvaluator( index-1, evaluator ) );
@@ -2649,7 +2646,6 @@ FmlObjectHandle Fieldml_GetParameterIndexOrder( FmlSessionHandle handle, FmlObje
     }
     
     ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-    vector<FmlObjectHandle> *orders = NULL;
 
     FmlObjectHandle order;
     FmlErrorNumber err = parameterEvaluator->dataDescription->getIndexOrder( index-1, order );
@@ -2954,10 +2950,15 @@ FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle obj
     }
 
     ArrayDataReader *reader = NULL;
-    DataSource<DataResource> *dataSource = objectAsDataSource( session, objectHandle );
+    DataSource *dataSource = objectAsDataSource( session, objectHandle );
     if( dataSource->type == DATA_SOURCE_ARRAY )
     {
-        ArrayDataSource *arraySource = (ArrayDataSource*)dataSource;
+        BinaryArrayDataSource *arraySource = (BinaryArrayDataSource*)dataSource;
+        reader = ArrayDataReader::create( session, session->region->getRoot().c_str(), arraySource );
+    }
+    else if( dataSource->type == DATA_SOURCE_TEXT_ARRAY )
+    {
+        TextArrayDataSource *arraySource = (TextArrayDataSource*)dataSource;
         reader = ArrayDataReader::create( session, session->region->getRoot().c_str(), arraySource );
     }
     else
@@ -3084,14 +3085,19 @@ FmlWriterHandle Fieldml_OpenWriter( FmlSessionHandle handle, FmlObjectHandle obj
         return FML_INVALID_HANDLE;
     }
 
-    DataSource<DataResource> *dataSource = objectAsDataSource( session, objectHandle );
-    if( dataSource->type != DATA_SOURCE_ARRAY )
+    ArrayDataWriter *writer = NULL;
+    DataSource *dataSource = objectAsDataSource( session, objectHandle );
+    if( dataSource->type == DATA_SOURCE_ARRAY )
     {
-        return session->setError( FML_ERR_INVALID_OBJECT );
+        BinaryArrayDataSource *arraySource = (BinaryArrayDataSource*)dataSource;
+        writer = ArrayDataWriter::create( session, session->region->getRoot().c_str(), arraySource, isDouble, ( append == 1 ), sizes, rank );
     }
-
-    ArrayDataSource *arraySource = (ArrayDataSource*)dataSource;
-    ArrayDataWriter *writer = ArrayDataWriter::create( session, session->region->getRoot().c_str(), arraySource, isDouble, ( append == 1 ), sizes, rank );
+    else if( dataSource->type == DATA_SOURCE_TEXT_ARRAY )
+    {
+        TextArrayDataSource *arraySource = (TextArrayDataSource*)dataSource;
+        writer = ArrayDataWriter::create( session, session->region->getRoot().c_str(), arraySource, isDouble, ( append == 1 ), sizes, rank );
+    }
+    
 
     if( writer == NULL )
     {
@@ -3153,7 +3159,7 @@ FmlErrorNumber Fieldml_CloseWriter( FmlSessionHandle handle, FmlWriterHandle wri
     }
 
     session->removeWriter( writerHandle );
-
+    
     delete writer;
     
     return session->setError( FML_ERR_NO_ERROR );
@@ -3667,7 +3673,7 @@ DataSourceType Fieldml_GetDataSourceType( FmlSessionHandle handle, FmlObjectHand
         return DATA_SOURCE_UNKNOWN;
     }
     
-    DataSource<DataResource> *dataSource = objectAsDataSource( session, objectHandle );
+    DataSource *dataSource = objectAsDataSource( session, objectHandle );
     if( dataSource == NULL )
     {
         return DATA_SOURCE_UNKNOWN;
@@ -3903,18 +3909,18 @@ FmlObjectHandle Fieldml_GetDataSourceResource( FmlSessionHandle handle, FmlObjec
         return FML_INVALID_HANDLE;
     }
     
-    DataSource<DataResource> *source = objectAsDataSource( session, objectHandle );
+    DataSource *source = objectAsDataSource( session, objectHandle );
     if( source == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     
-    if( source->resource == NULL )
+    if( source->getResource() == NULL )
     {
         return FML_ERR_MISCONFIGURED_OBJECT;
     }
     
-    return session->region->getNamedObject( source->resource->name );
+    return session->region->getNamedObject( source->getResource()->name );
 }
 
 
@@ -4010,18 +4016,12 @@ int Fieldml_GetArrayDataSourceRank( FmlSessionHandle handle, FmlObjectHandle obj
         return NULL;
     }
     
-    DataSource<DataResource> *source = (DataSource<DataResource>*)object;
-    if( source->type == DATA_SOURCE_ARRAY )
+    DataSource *source = (DataSource*)object;
+    if( ( source->type == DATA_SOURCE_ARRAY ) || ( source->type == DATA_SOURCE_TEXT_ARRAY ) )
     {
-        ArrayDataSource *arraySource = (ArrayDataSource*)source;
+        BaseArrayDataSource *arraySource = (BaseArrayDataSource*)source;
         return arraySource->rank;
     }
-    if( source->type == DATA_SOURCE_TEXT_ARRAY )
-    {
-        TextArrayDataSource *arraySource = (TextArrayDataSource*)source;
-        return arraySource->rank;
-    }
-    
     
     session->setError( FML_ERR_INVALID_OBJECT );
     return -1;
@@ -4036,7 +4036,7 @@ int Fieldml_GetArrayDataSourceSizes( FmlSessionHandle handle, FmlObjectHandle ob
         return session->getLastError();
     }
 
-    BaseArrayDataSource<DataResource> *source = getArrayDataSource( session, objectHandle );
+    BaseArrayDataSource *source = getArrayDataSource( session, objectHandle );
     if( source == NULL )
     {
         return session->getLastError();
@@ -4059,7 +4059,7 @@ int Fieldml_SetArrayDataSourceSizes( FmlSessionHandle handle, FmlObjectHandle ob
         return session->getLastError();
     }
 
-    BaseArrayDataSource<DataResource> *source = getArrayDataSource( session, objectHandle );
+    BaseArrayDataSource *source = getArrayDataSource( session, objectHandle );
     if( source == NULL )
     {
         return session->getLastError();
@@ -4146,7 +4146,7 @@ int Fieldml_GetArrayDataSourceOffsets( FmlSessionHandle handle, FmlObjectHandle 
         return session->getLastError();
     }
 
-    BaseArrayDataSource<DataResource> *source = getArrayDataSource( session, objectHandle );
+    BaseArrayDataSource *source = getArrayDataSource( session, objectHandle );
     if( source == NULL )
     {
         return session->getLastError();
@@ -4169,7 +4169,7 @@ int Fieldml_SetArrayDataSourceOffsets( FmlSessionHandle handle, FmlObjectHandle 
         return session->getLastError();
     }
 
-    BaseArrayDataSource<DataResource> *source = getArrayDataSource( session, objectHandle );
+    BaseArrayDataSource *source = getArrayDataSource( session, objectHandle );
     if( source == NULL )
     {
         return session->getLastError();
@@ -4193,7 +4193,7 @@ int Fieldml_SetArrayDataSourceOffsets( FmlSessionHandle handle, FmlObjectHandle 
 }
 
 
-FmlErrorNumber Fieldml_CreateArrayDataSource( FmlSessionHandle handle, const char *name, FmlObjectHandle resource, const char *sourceName, int rank )
+FmlErrorNumber Fieldml_CreateBinaryArrayDataSource( FmlSessionHandle handle, const char *name, FmlObjectHandle resource, const char *sourceName, int rank )
 {
     FieldmlSession *session = getSession( handle );
     if( session == NULL )
@@ -4239,7 +4239,7 @@ FmlErrorNumber Fieldml_CreateArrayDataSource( FmlSessionHandle handle, const cha
     
     ArrayDataResource *arrayResource = (ArrayDataResource*)dataResource;
 
-    ArrayDataSource *source = new ArrayDataSource( name, arrayResource, sourceName, rank );
+    BinaryArrayDataSource *source = new BinaryArrayDataSource( name, arrayResource, sourceName, rank );
 
     session->setError( FML_ERR_NO_ERROR );
     FmlObjectHandle sourceHandle = addObject( session, source );
@@ -4269,14 +4269,14 @@ char * Fieldml_GetDataSourceArraySource( FmlSessionHandle handle, FmlObjectHandl
         return NULL;
     }
     
-    DataSource<DataResource> *source = (DataSource<DataResource>*)object;
+    DataSource *source = (DataSource*)object;
     if( source->type != DATA_SOURCE_ARRAY )
     {
         session->setError( FML_ERR_INVALID_OBJECT );
         return NULL;
     }
     
-    ArrayDataSource *arraySource = (ArrayDataSource*)source;
+    BinaryArrayDataSource *arraySource = (BinaryArrayDataSource*)source;
     
     return cstrCopy( arraySource->sourceName );
 }

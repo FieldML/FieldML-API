@@ -39,34 +39,46 @@
  *
  */
 
-#ifndef H_FIELDML_INPUT_STREAM
-#define H_FIELDML_INPUT_STREAM
+#ifndef H_HDF5_ARRAY_DATA_READER
+#define H_HDF5_ARRAY_DATA_READER
 
-#include <string>
+#include "FieldmlErrorHandler.h"
+#include "ArrayDataReader.h"
 
-class FieldmlInputStream
+#include "fieldml_structs.h"
+
+#if defined FIELDML_HDF5_ARRAY || FIELDML_PHDF5_ARRAY
+#include <hdf5.h>
+
+class Hdf5ArrayDataReader :
+    public ArrayDataReader
 {
-protected:
-    char *buffer;
-    int bufferCount;
-    int bufferPos;
-    bool isEof;
-
-    virtual int loadBuffer() = 0;
+private:
+    hid_t file;
+    hid_t dataset;
+    hid_t dataspace;
     
-    FieldmlInputStream();
+    //Note: In the future, support will be added for non-scalar types that correspond to structured FieldML types.
+    //The datatype will need to be checked against the FieldML type to ensure commensurability.
+    hid_t datatype;
+    int rank;
+    hsize_t *hStrides;
+    hsize_t *hSizes;
+    hsize_t *hOffsets;
+
+    Hdf5ArrayDataReader( FieldmlErrorHandler *eHandler, const char *root, BinaryArrayDataSource *source, hid_t fileAccessProperties );
+    
 public:
-    int readInt();
-    double readDouble();
-    int skipLine();
-    bool eof();
-    virtual ~FieldmlInputStream();
-    
-    virtual long tell() = 0;
-    virtual bool seek( long pos ) = 0;
-    
-    static FieldmlInputStream *createTextFileStream( const std::string filename );
-    static FieldmlInputStream *createStringStream( const std::string string );
-};
+    bool ok;
 
-#endif //H_FIELDML_INPUT_STREAM
+    virtual int readIntSlab( int *offsets, int *sizes, int *valueBuffer );
+    
+    virtual int readDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
+    
+    virtual ~Hdf5ArrayDataReader();
+
+    static Hdf5ArrayDataReader *create( FieldmlErrorHandler *eHandler, const char *root, BinaryArrayDataSource *source );
+};
+#endif //defined FIELDML_HDF5_ARRAY || FIELDML_PHDF5_ARRAY
+    
+#endif //H_HDF5_ARRAY_DATA_READER

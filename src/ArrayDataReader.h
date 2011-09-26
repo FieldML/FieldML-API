@@ -61,8 +61,10 @@ public:
     virtual int readDoubleSlab( int *offsets, int *sizes, double *valueBuffer ) = 0;
     
     virtual ~ArrayDataReader();
+
+    static ArrayDataReader *create( FieldmlErrorHandler *eHandler, const char *root, TextArrayDataSource *source );
     
-    static ArrayDataReader *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source );
+    static ArrayDataReader *create( FieldmlErrorHandler *eHandler, const char *root, BinaryArrayDataSource *source );
 };
 
 

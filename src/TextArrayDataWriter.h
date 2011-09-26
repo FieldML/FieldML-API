@@ -39,34 +39,41 @@
  *
  */
 
-#ifndef H_FIELDML_INPUT_STREAM
-#define H_FIELDML_INPUT_STREAM
+#ifndef H_TEXT_ARRAY_DATA_WRITER
+#define H_TEXT_ARRAY_DATA_WRITER
 
-#include <string>
+#include "FieldmlErrorHandler.h"
+#include "ArrayDataWriter.h"
+#include "OutputStream.h"
 
-class FieldmlInputStream
+#include "fieldml_structs.h"
+
+class TextArrayDataWriter :
+    public ArrayDataWriter
 {
-protected:
-    char *buffer;
-    int bufferCount;
-    int bufferPos;
-    bool isEof;
+private:
+    FieldmlOutputStream * stream;
+    
+    TextArrayDataSource * const source;
+    
+    int offset;
 
-    virtual int loadBuffer() = 0;
-    
-    FieldmlInputStream();
+    int writeIntSlice( int *sizes, int *valueBuffer, int depth, int *bufferPos );
+
+    int writeDoubleSlice( int *sizes, double *valueBuffer, int depth, int *bufferPos );
+
 public:
-    int readInt();
-    double readDouble();
-    int skipLine();
-    bool eof();
-    virtual ~FieldmlInputStream();
+    bool ok;
+
+    TextArrayDataWriter( FieldmlErrorHandler *eHandler, const char *root, TextArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank );
     
-    virtual long tell() = 0;
-    virtual bool seek( long pos ) = 0;
+    virtual int writeIntSlab( int *offsets, int *sizes, int *valueBuffer );
     
-    static FieldmlInputStream *createTextFileStream( const std::string filename );
-    static FieldmlInputStream *createStringStream( const std::string string );
+    virtual int writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
+    
+    virtual ~TextArrayDataWriter();
+    
+    static TextArrayDataWriter *create( FieldmlErrorHandler *eHandler, const char *root, TextArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank );
 };
 
-#endif //H_FIELDML_INPUT_STREAM
+#endif //H_TEXT_ARRAY_DATA_WRITER

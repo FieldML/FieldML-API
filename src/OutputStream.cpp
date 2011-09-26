@@ -73,12 +73,12 @@ class StringOutputStream :
     public FieldmlOutputStream
 {
 private:
-    char ** const destination;
+    string &destination;
     const bool append;
     stringstream buffer;
     
 public:
-    StringOutputStream( char **_destination, bool _append );
+    StringOutputStream( string &_destination, bool _append );
     int writeInt( int value );
     int writeDouble( double value );
     int writeNewline();
@@ -120,18 +120,12 @@ FieldmlOutputStream *FieldmlOutputStream::createTextFileStream( const string fil
         return NULL;
     }
     
-    
     return new FileOutputStream( file );
 }
 
 
-FieldmlOutputStream *FieldmlOutputStream::createStringStream( char ** const destination, bool append )
+FieldmlOutputStream *FieldmlOutputStream::createStringStream( string &destination, bool append )
 {
-    if( destination == NULL )
-    {
-        return NULL;
-    }
-    
     return new StringOutputStream( destination, append );
 }
 
@@ -184,7 +178,7 @@ FileOutputStream::~FileOutputStream()
 }
 
 
-StringOutputStream::StringOutputStream( char ** _destination, bool _append ) :
+StringOutputStream::StringOutputStream( string &_destination, bool _append ) :
     destination( _destination ),
     append( _append )
 {
@@ -217,14 +211,12 @@ int StringOutputStream::writeNewline()
 
 StringOutputStream::~StringOutputStream()
 {
-    if( *destination != NULL )
+    if( append )
     {
-        free( *destination );
-        *destination = NULL;
+        destination += buffer.str();
     }
-    
-    char *charBuffer = (char*)malloc( buffer.str().length() + 1 );
-    strcpy( charBuffer, buffer.str().c_str() );
-    
-    *destination = charBuffer;
+    else
+    {
+        destination = buffer.str();
+    }
 }

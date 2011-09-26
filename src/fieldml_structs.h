@@ -247,25 +247,25 @@ public:
 };
 
     
-template<class ResourceType> class DataSource :
+class DataSource :
     public FieldmlObject
 {
 protected:
-    DataSource( const std::string _name, ResourceType *_resource, DataSourceType _type );
+    DataSource( const std::string _name, DataSourceType _type );
     
 public:
     const DataSourceType type;
     
-    const ResourceType *resource;
-
+    virtual DataResource *getResource() = 0;
+    
     virtual ~DataSource()
     {
     }
 };
 
     
-template<class ResourceType> class BaseArrayDataSource :
-    public DataSource<ResourceType>
+class BaseArrayDataSource :
+    public DataSource
 {
 public:
     const int rank;
@@ -274,38 +274,46 @@ public:
     
     std::vector<int> sizes;
     
-    BaseArrayDataSource( const std::string _name, ResourceType *_resource, DataSourceType _type, int _rank );
+    BaseArrayDataSource( const std::string _name, DataSourceType _type, int _rank );
     
     virtual ~BaseArrayDataSource();
 };
 
 
 class TextArrayDataSource :
-    public BaseArrayDataSource<TextResource>
+    public BaseArrayDataSource
 {
 public:
+    TextResource * const resource;
+        
     const int firstLine;
     
     std::vector<int> textSizes;
     
     TextArrayDataSource( const std::string _name, TextResource *_resource, int _firstLine, int _rank );
     
+    virtual TextResource *getResource();
+    
     virtual ~TextArrayDataSource();
 };
 
 
-class ArrayDataSource :
-    public BaseArrayDataSource<ArrayDataResource>
+class BinaryArrayDataSource :
+    public BaseArrayDataSource
 {
 public:
+    ArrayDataResource * const resource;
+        
     const std::string sourceName;
     
-    ArrayDataSource( const std::string _name, ArrayDataResource *_resource, const std::string _sourceName, int _rank );
+    BinaryArrayDataSource( const std::string _name, ArrayDataResource *_resource, const std::string _sourceName, int _rank );
     
-    virtual ~ArrayDataSource();
+    virtual ArrayDataResource *getResource();
+    
+    virtual ~BinaryArrayDataSource();
 };
 
-
+        
 class BaseDataDescription
 {
 public:

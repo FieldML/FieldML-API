@@ -62,7 +62,9 @@ void testRead( const char * filename )
     FmlObjectHandle oHandle;
     FmlSessionHandle handle;
 
-    handle = Fieldml_CreateFromFile( filename );
+    printf( "Test read...\n" );
+    
+   handle = Fieldml_CreateFromFile( filename );
     
     Fieldml_SetDebug( handle, 1 );
 
@@ -120,16 +122,6 @@ void testRead( const char * filename )
         fprintf( stdout, "    " );
         count2 = Fieldml_GetMemberCount( handle, oHandle );
         fprintf( stdout, "  %d elements:  \n", count2 );
-        //TODO Dirty, dirty hack.
-        for( int e = 1; e <= count2; e++ )
-        {
-            const char *shape = Fieldml_GetMeshElementShape( handle, oHandle, e, 1 );
-            if( shape != NULL )
-            {
-                printf( "  %d -> %s\n", e, shape );
-            }
-        }
-        fprintf( stdout, "\n" );
     }
 
     count = Fieldml_GetObjectCount( handle, FHT_PARAMETER_EVALUATOR );
@@ -295,6 +287,8 @@ int testWrite( const char *filename )
     char *outputFilename;
     int result;
 
+    printf( "Test write...\n" );
+    
     handle = Fieldml_CreateFromFile( filename );
     
     Fieldml_SetDebug( handle, 1 );
@@ -314,7 +308,6 @@ int testWrite( const char *filename )
 void testMisc()
 {
     bool testOk = true;
-    int i;
     FmlSessionHandle handle;
     FmlReaderHandle reader;
     FmlWriterHandle writer;
@@ -326,6 +319,9 @@ void testMisc()
     int dummy[] = { 0 };
     double readValues[9] = { 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef };
     int readIndexes[2] = { -1, -1 };
+    int sizes[10], offsets[10];
+    
+    printf( "Test misc...\n" );
     
     handle = Fieldml_Create( "", "test" );
     
@@ -344,6 +340,10 @@ void testMisc()
     
     FmlObjectHandle parametersResource = Fieldml_CreateTextInlineDataResource( handle, "test.resource.parameters_data" );
     FmlObjectHandle parametersData = Fieldml_CreateTextArrayDataSource( handle, "test.parameters_data", parametersResource, 1, 1 );
+
+    sizes[0] = 3;
+    Fieldml_SetTextArrayDataSourceSizes( handle, parametersData, sizes );
+    Fieldml_SetArrayDataSourceSizes( handle, parametersData, sizes );
     
     FmlObjectHandle parameters = Fieldml_CreateParameterEvaluator( handle, "test.ensemble_parameters", realType );
     Fieldml_SetParameterDataDescription( handle, parameters, DESCRIPTION_DENSE_ARRAY );
@@ -352,16 +352,17 @@ void testMisc()
     FmlObjectHandle rc3Index = Fieldml_CreateArgumentEvaluator( handle, "test.rc_3d.argument", rc3Ensemble );
     Fieldml_AddDenseIndexEvaluator( handle, parameters, rc3Index, FML_INVALID_HANDLE );
     
-#if 0
-    writer = Fieldml_OpenTextWriter( handle, parametersData, 1 );
-    Fieldml_WriteDoubleValues( handle, writer, values, 3 );
+    sizes[0] = 3;
+    offsets[0] = 0;
+    writer = Fieldml_OpenWriter( handle, parametersData, realType, 0, sizes, 1 );
+    Fieldml_WriteDoubleSlab( handle, writer, offsets, sizes, values );
     Fieldml_CloseWriter( handle, writer );
     
     reader = Fieldml_OpenReader( handle, parametersData );
-    Fieldml_ReadDoubleValues( handle, reader, readValues, 3 );
+    Fieldml_ReadDoubleSlab( handle, reader, offsets, sizes, readValues );
     Fieldml_CloseReader( handle, reader );
 
-    for( i = 0; i < 3; i++ )
+    for( int i = 0; i < 3; i++ )
     {
         if( values[i] != readValues[i] ) 
         {
@@ -371,11 +372,24 @@ void testMisc()
     }
     
     FmlObjectHandle parametersResource2 = Fieldml_CreateTextInlineDataResource( handle, "test.resource.parameters_data2" );
-    FmlObjectHandle parametersData2 = Fieldml_CreateTextDataSource( handle, "test.parameters_data2", parametersResource2, 1, 2, 11, 0, 0 );
+    FmlObjectHandle parameters2KeyData = Fieldml_CreateTextArrayDataSource( handle, "test.parameters2_keydata", parametersResource2, 1, 2 );
+    FmlObjectHandle parameters2ValueData = Fieldml_CreateTextArrayDataSource( handle, "test.parameters2_valuedata", parametersResource2, 2, 3 );
+    
+    sizes[0] = 2;
+    sizes[1] = 2;
+    Fieldml_SetTextArrayDataSourceSizes( handle, parameters2KeyData, sizes );
+    Fieldml_SetArrayDataSourceSizes( handle, parameters2KeyData, sizes );
+
+    sizes[0] = 3;
+    sizes[1] = 3;
+    sizes[2] = 2;
+    Fieldml_SetTextArrayDataSourceSizes( handle, parameters2ValueData, sizes );
+    Fieldml_SetArrayDataSourceSizes( handle, parameters2ValueData, sizes );
     
     FmlObjectHandle parameters2 = Fieldml_CreateParameterEvaluator( handle, "test.ensemble_parameters.2", realType );
-    Fieldml_SetParameterDataDescription( handle, parameters2, DESCRIPTION_SEMIDENSE );
-    Fieldml_SetDataSource( handle, parameters2, parametersData2 );
+    Fieldml_SetParameterDataDescription( handle, parameters2, DESCRIPTION_DOK_ARRAY );
+    Fieldml_SetKeyDataSource( handle, parameters2, parameters2KeyData );
+    Fieldml_SetDataSource( handle, parameters2, parameters2ValueData );
     
     FmlObjectHandle rc3Index1 = Fieldml_CreateArgumentEvaluator( handle, "test.rc_3d.argument.21", rc3Ensemble );
     Fieldml_AddDenseIndexEvaluator( handle, parameters2, rc3Index1, FML_INVALID_HANDLE );
@@ -389,54 +403,95 @@ void testMisc()
     FmlObjectHandle rc3Index4 = Fieldml_CreateArgumentEvaluator( handle, "test.rc_3d.argument.24", rc3Ensemble );
     Fieldml_AddSparseIndexEvaluator( handle, parameters2, rc3Index4 );
 
-    writer = Fieldml_OpenTextWriter( handle, parametersData2, 1 );
-    Fieldml_WriteIntValues( handle, writer, indexValues1, 2 );
-    Fieldml_WriteDoubleValues( handle, writer, rawValues1, 9 );
-    Fieldml_WriteIntValues( handle, writer, indexValues2, 2 );
-    Fieldml_WriteDoubleValues( handle, writer, rawValues2, 9 );
+    sizes[0] = 2;
+    sizes[1] = 2;
+    offsets[0] = 0;
+    offsets[1] = 0;
+    writer = Fieldml_OpenWriter( handle, parameters2KeyData, rc3Ensemble, 0, sizes, 2 );
+    
+    sizes[0] = 2;
+    sizes[1] = 1;
+    Fieldml_WriteIntSlab( handle, writer, offsets, sizes, indexValues1 );
+    Fieldml_WriteIntSlab( handle, writer, offsets, sizes, indexValues2 );
     Fieldml_CloseWriter( handle, writer );
     
-    reader = Fieldml_OpenReader( handle, parametersData2 );
+    sizes[0] = 3;
+    sizes[1] = 3;
+    sizes[2] = 2;
+    writer = Fieldml_OpenWriter( handle, parameters2ValueData, realType, 1, sizes, 3 );
+    
+    sizes[0] = 3;
+    sizes[1] = 3;
+    sizes[2] = 1;
+    offsets[0] = 0;
+    offsets[1] = 0;
+    offsets[2] = 0;
+    Fieldml_WriteDoubleSlab( handle, writer, offsets, sizes, rawValues1 );
+    offsets[2] = 1;
+    Fieldml_WriteDoubleSlab( handle, writer, offsets, sizes, rawValues2 );
+    Fieldml_CloseWriter( handle, writer );
+    
+    reader = Fieldml_OpenReader( handle, parameters2KeyData );
 
-    Fieldml_ReadIntValues( handle, reader, readIndexes, 2 );
-    if( ( indexValues1[0] != readIndexes[0] ) && ( indexValues1[1] != readIndexes[1] ) ) 
+    offsets[0] = 0;
+    offsets[1] = 0;
+    sizes[0] = 2;
+    sizes[1] = 1;
+    Fieldml_ReadIntSlab( handle, reader, offsets, sizes, readIndexes );
+    for( int i = 0; i < 2; i++ )
     {
-        testOk = false;
-        printf( "Parameter stream semidense first index read failed: index %d %d != %d\n", i, indexValues1[i], readIndexes[i] );
-    }
-
-    Fieldml_ReadDoubleValues( handle, reader, readValues, 3 );
-    Fieldml_ReadDoubleValues( handle, reader, readValues+3, 6 );
-
-    for( i = 0; i < 9; i++ )
-    {
-        if( rawValues1[i] != readValues[i] ) 
+        if( indexValues1[i] != readIndexes[i] )
         {
             testOk = false;
-            printf( "Parameter stream semidense first values read failed: %d %g != %g\n", i, rawValues1[i], readValues[i] );
+            printf( "Parameter stream DOK test first index read failed: index %d %d != %d\n", i, indexValues1[i], readIndexes[i] );
         }
     }
     
-    Fieldml_ReadIntValues( handle, reader, readIndexes, 2 );
-    if( ( indexValues2[0] != readIndexes[0] ) && ( indexValues2[1] != readIndexes[1] ) ) 
+    offsets[1] = 1;
+    Fieldml_ReadIntSlab( handle, reader, offsets, sizes, readIndexes );
+    for( int i = 0; i < 2; i++ )
     {
-        testOk = false;
-        printf( "Parameter stream test second index read failed: index %d %d != %d\n", i, indexValues2[i], readIndexes[i] );
-    }
-
-    Fieldml_ReadDoubleValues( handle, reader, readValues, 9 );
-
-    for( i = 0; i < 9; i++ )
-    {
-        if( rawValues2[i] != readValues[i] ) 
+        if( indexValues2[i] != readIndexes[i] )
         {
             testOk = false;
-            printf( "Parameter stream test second values read failed: %d %g != %g\n", i, rawValues2[i], readValues[i] );
+            printf( "Parameter stream DOK test second index read failed: index %d %d != %d\n", i, indexValues2[i], readIndexes[i] );
         }
     }
     
     Fieldml_CloseReader( handle, reader );
-#endif
+    
+    reader = Fieldml_OpenReader( handle, parameters2ValueData );
+    
+    offsets[0] = 0;
+    offsets[1] = 0;
+    offsets[2] = 0;
+    sizes[0] = 3;
+    sizes[1] = 3;
+    sizes[2] = 1;
+    Fieldml_ReadDoubleSlab( handle, reader, offsets, sizes, readValues );
+
+    for( int i = 0; i < 9; i++ )
+    {
+        if( rawValues1[i] != readValues[i] ) 
+        {
+            testOk = false;
+            printf( "Parameter stream DOK test first values read failed: %d %g != %g\n", i, rawValues1[i], readValues[i] );
+        }
+    }
+    
+    offsets[2] = 1;
+    Fieldml_ReadDoubleSlab( handle, reader, offsets, sizes, readValues );
+
+    for( int i = 0; i < 9; i++ )
+    {
+        if( rawValues2[i] != readValues[i] ) 
+        {
+            testOk = false;
+            printf( "Parameter stream DOK test second values read failed: %d %g != %g\n", i, rawValues2[i], readValues[i] );
+        }
+    }
+    
+    Fieldml_CloseReader( handle, reader );
 
     Fieldml_Destroy( handle );
     if( testOk ) 
@@ -453,6 +508,8 @@ void testMisc()
 int testCycles()
 {
     bool testOk = true;
+    
+    printf( "Test cycles...\n" );
     
     FmlSessionHandle session = Fieldml_Create( "test", "test" );
     
@@ -532,12 +589,12 @@ int testHdf5()
     FmlSessionHandle session = Fieldml_Create( "test", "test" );
     
     FmlObjectHandle resource = Fieldml_CreateArrayDataResource( session, "test.resource", "HDF5", "test.h5" );
-    FmlObjectHandle sourceI = Fieldml_CreateArrayDataSource( session, "test.source_int", resource, "test/fooI16BE", 2 );
-    FmlObjectHandle sourceD = Fieldml_CreateArrayDataSource( session, "test.source_double", resource, "test/foo2", 2 );
+    FmlObjectHandle sourceI = Fieldml_CreateBinaryArrayDataSource( session, "test.source_int", resource, "test/fooI16BE", 2 );
+    FmlObjectHandle sourceD = Fieldml_CreateBinaryArrayDataSource( session, "test.source_double", resource, "test/foo2", 2 );
     
     FmlObjectHandle resource2 = Fieldml_CreateArrayDataResource( session, "test.resource2", "HDF5", "I16BE.h5" );
-    FmlObjectHandle source2I = Fieldml_CreateArrayDataSource( session, "test.source2_int", resource2, "I16BE", 2 );
-    FmlObjectHandle source2D = Fieldml_CreateArrayDataSource( session, "test.source2_double", resource2, "DOUBLE", 2 );
+    FmlObjectHandle source2I = Fieldml_CreateBinaryArrayDataSource( session, "test.source2_int", resource2, "I16BE", 2 );
+    FmlObjectHandle source2D = Fieldml_CreateBinaryArrayDataSource( session, "test.source2_double", resource2, "DOUBLE", 2 );
     
     FmlObjectHandle cType = Fieldml_CreateContinuousType( session, "test.scalar_real" );
 

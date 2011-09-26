@@ -577,16 +577,15 @@ DokArrayDataDescription::~DokArrayDataDescription()
 }
 
 
-template<class ResourceType> DataSource<ResourceType>::DataSource( const std::string _name, ResourceType *_resource, DataSourceType _type ) :
+DataSource::DataSource( const std::string _name, DataSourceType _type ) :
     FieldmlObject( _name, FHT_DATA_SOURCE, false ),
-    resource( _resource ),
     type( _type )
 {
 }
 
 
-template<class ResourceType> BaseArrayDataSource<ResourceType>::BaseArrayDataSource( const std::string _name, ResourceType *_resource, DataSourceType _type, int _rank ) :
-    DataSource<ResourceType>( _name, _resource, _type ),
+BaseArrayDataSource::BaseArrayDataSource( const std::string _name, DataSourceType _type, int _rank ) :
+    DataSource( _name, _type ),
     rank( _rank )
 {
     sizes.assign( rank, 0 );
@@ -594,16 +593,23 @@ template<class ResourceType> BaseArrayDataSource<ResourceType>::BaseArrayDataSou
 }
 
 
-template<class ResourceType> BaseArrayDataSource<ResourceType>::~BaseArrayDataSource()
+BaseArrayDataSource::~BaseArrayDataSource()
 {
 }
 
 
 TextArrayDataSource::TextArrayDataSource( const string _name, TextResource *_resource, int _firstLine, int _rank ) :
-    BaseArrayDataSource<TextResource>( _name, _resource, DATA_SOURCE_TEXT_ARRAY, _rank ),
+    BaseArrayDataSource( _name, DATA_SOURCE_TEXT_ARRAY, _rank ),
+    resource( _resource ),
     firstLine( _firstLine )
 {
     textSizes.assign( rank, 0 );
+}
+
+
+TextResource *TextArrayDataSource::getResource()
+{
+    return resource;
 }
 
 
@@ -612,13 +618,20 @@ TextArrayDataSource::~TextArrayDataSource()
 }
 
 
-ArrayDataSource::ArrayDataSource( const string _name, ArrayDataResource *_resource, const string _sourceName, int _rank ) :
-    BaseArrayDataSource<ArrayDataResource>( _name, _resource, DATA_SOURCE_ARRAY, _rank ),
+BinaryArrayDataSource:: BinaryArrayDataSource( const string _name, ArrayDataResource *_resource, const string _sourceName, int _rank ) :
+    BaseArrayDataSource( _name, DATA_SOURCE_ARRAY, _rank ),
+    resource( _resource ),
     sourceName( _sourceName )
 {
 }
 
 
-ArrayDataSource::~ArrayDataSource()
+ArrayDataResource * BinaryArrayDataSource::getResource()
+{
+    return resource;
+}
+
+
+BinaryArrayDataSource::~ BinaryArrayDataSource()
 {
 }

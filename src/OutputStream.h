@@ -56,7 +56,7 @@ public:
     
     static FieldmlOutputStream *createTextFileStream( const std::string filename, bool append );
 
-    static FieldmlOutputStream *createStringStream( char **const destination, bool append );
+    static FieldmlOutputStream *createStringStream( std::string &destination, bool append );
 };
 
 #endif //H_FIELDML_OUTPUT_STREAM

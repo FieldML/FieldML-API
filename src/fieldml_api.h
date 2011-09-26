@@ -1201,8 +1201,6 @@ FmlWriterHandle Fieldml_OpenWriter( FmlSessionHandle handle, FmlObjectHandle obj
  * 
  * \see Fieldml_OpenWriter
  */
-FmlErrorNumber Fieldml_WriteIntValues( FmlSessionHandle handle, FmlWriterHandle writer, int *indexBuffer, int bufferSize );
-
 FmlErrorNumber Fieldml_WriteIntSlab( FmlSessionHandle handle, FmlWriterHandle writer, int *offsets, int *sizes, int *valueBuffer );
 
 /**
@@ -1212,8 +1210,6 @@ FmlErrorNumber Fieldml_WriteIntSlab( FmlSessionHandle handle, FmlWriterHandle wr
  * 
  * \see Fieldml_OpenWriter
  */
-FmlErrorNumber Fieldml_WriteDoubleValues( FmlSessionHandle handle, FmlWriterHandle writer, double *indexBuffer, int bufferSize );
-
 FmlErrorNumber Fieldml_WriteDoubleSlab( FmlSessionHandle handle, FmlWriterHandle writer, int *offsets, int *sizes, double *valueBuffer );
 
 
@@ -1370,7 +1366,7 @@ DataResourceType Fieldml_GetDataResourceType( FmlSessionHandle handle, FmlObject
  */
 FmlErrorNumber Fieldml_CreateTextArrayDataSource( FmlSessionHandle handle, const char *name, FmlObjectHandle dataResource, int firstLine, int rank );
 
-FmlObjectHandle Fieldml_CreateArrayDataSource( FmlSessionHandle handle, const char *name, FmlObjectHandle dataResource, const char *sourceName, int rank );
+FmlObjectHandle Fieldml_CreateBinaryArrayDataSource( FmlSessionHandle handle, const char *name, FmlObjectHandle dataResource, const char *sourceName, int rank );
 
 /**
  * \return The number of data sources associated with the given data resource.

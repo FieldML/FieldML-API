@@ -39,34 +39,50 @@
  *
  */
 
-#ifndef H_FIELDML_INPUT_STREAM
-#define H_FIELDML_INPUT_STREAM
+#ifndef H_HDF5_ARRAY_DATA_WRITER
+#define H_HDF5_ARRAY_DATA_WRITER
 
-#include <string>
+#include "FieldmlErrorHandler.h"
 
-class FieldmlInputStream
+#include "fieldml_structs.h"
+#include "ArrayDataWriter.h"
+
+#if defined FIELDML_HDF5_ARRAY || defined FIELDML_PHDF5_ARRAY
+#include <hdf5.h>
+
+class Hdf5ArrayDataWriter :
+    public ArrayDataWriter
 {
-protected:
-    char *buffer;
-    int bufferCount;
-    int bufferPos;
-    bool isEof;
-
-    virtual int loadBuffer() = 0;
+private:
+    hid_t file;
+    hid_t dataset;
+    hid_t dataspace;
     
-    FieldmlInputStream();
+    //Note: In the future, support will be added for non-scalar types that correspond to structured FieldML types.
+    //The datatype will need to be checked against the FieldML type to ensure commensurability.
+    hid_t datatype;
+    int rank;
+    hsize_t *hStrides;
+    hsize_t *hSizes;
+    hsize_t *hOffsets;
+    
+    bool initializeWithExistingDataset( int *sizes );
+    
+    bool initializeWithNewDataset( const std::string sourceName, int *sizes, bool isDouble );
+
 public:
-    int readInt();
-    double readDouble();
-    int skipLine();
-    bool eof();
-    virtual ~FieldmlInputStream();
-    
-    virtual long tell() = 0;
-    virtual bool seek( long pos ) = 0;
-    
-    static FieldmlInputStream *createTextFileStream( const std::string filename );
-    static FieldmlInputStream *createStringStream( const std::string string );
-};
+    bool ok;
 
-#endif //H_FIELDML_INPUT_STREAM
+    Hdf5ArrayDataWriter( FieldmlErrorHandler *eHandler, const char *root, BinaryArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank, hid_t fileAccessProperties );
+    
+    virtual int writeIntSlab( int *offsets, int *sizes, int *valueBuffer );
+    
+    virtual int writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
+    
+    virtual ~Hdf5ArrayDataWriter();
+    
+    static Hdf5ArrayDataWriter *create( FieldmlErrorHandler *eHandler, const char *root, BinaryArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank );
+};
+#endif //FIELDML_HDF5_ARRAY || FIELDML_PHDF5_ARRAY
+
+#endif //H_HDF5_ARRAY_DATA_WRITER

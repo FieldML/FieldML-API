@@ -39,34 +39,47 @@
  *
  */
 
-#ifndef H_FIELDML_INPUT_STREAM
-#define H_FIELDML_INPUT_STREAM
+#ifndef H_TEXT_ARRAY_DATA_READER
+#define H_TEXT_ARRAY_DATA_READER
 
-#include <string>
+#include "FieldmlErrorHandler.h"
+#include "ArrayDataReader.h"
+#include "InputStream.h"
 
-class FieldmlInputStream
+#include "fieldml_structs.h"
+
+class TextArrayDataReader :
+    public ArrayDataReader
 {
-protected:
-    char *buffer;
-    int bufferCount;
-    int bufferPos;
-    bool isEof;
+private:
+    FieldmlInputStream *stream;
+    
+    TextArrayDataSource *source;
+    
+    //The seek position of the start of the array data. This is a minor optimization to save us from having to line-skip for each read.
+    long startPos;
 
-    virtual int loadBuffer() = 0;
+    TextArrayDataReader( FieldmlInputStream *_stream, TextArrayDataSource *_source, FieldmlErrorHandler *_eHandler );
     
-    FieldmlInputStream();
+    virtual bool checkDimensions( int *offsets, int *sizes );
+    
+    virtual bool applyOffsets( int *offsets, int depth );
+    
+    virtual FmlErrorNumber readIntSlice( int *offsets, int *sizes, int *valueBuffer, int depth, int *bufferPos );
+    
+    virtual FmlErrorNumber readDoubleSlice( int *offsets, int *sizes, double *valueBuffer, int depth, int *bufferPos );
+    
+    virtual FmlErrorNumber skipPreamble();
+
 public:
-    int readInt();
-    double readDouble();
-    int skipLine();
-    bool eof();
-    virtual ~FieldmlInputStream();
+    virtual FmlErrorNumber readIntSlab( int *offsets, int *sizes, int *valueBuffer );
     
-    virtual long tell() = 0;
-    virtual bool seek( long pos ) = 0;
+    virtual FmlErrorNumber readDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
     
-    static FieldmlInputStream *createTextFileStream( const std::string filename );
-    static FieldmlInputStream *createStringStream( const std::string string );
+    virtual ~TextArrayDataReader();
+    
+    static TextArrayDataReader *create( FieldmlErrorHandler *eHandler, const char *root, TextArrayDataSource *source );
 };
 
-#endif //H_FIELDML_INPUT_STREAM
+
+#endif //H_TEXT_ARRAY_DATA_READER

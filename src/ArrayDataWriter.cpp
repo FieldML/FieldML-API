@@ -44,85 +44,35 @@
 
 #include "FieldmlErrorHandler.h"
 #include "ArrayDataWriter.h"
+#include "Hdf5ArrayDataWriter.h"
+#include "TextArrayDataWriter.h"
 
 using namespace std;
 
-#if defined FIELDML_HDF5_ARRAY || defined FIELDML_PHDF5_ARRAY
-#include <hdf5.h>
-
-class Hdf5DataWriter :
-    public ArrayDataWriter
-{
-private:
-    hid_t file;
-    hid_t dataset;
-    hid_t dataspace;
-    
-    //Note: In the future, support will be added for non-scalar types that correspond to structured FieldML types.
-    //The datatype will need to be checked against the FieldML type to ensure commensurability.
-    hid_t datatype;
-    int rank;
-    hsize_t *hStrides;
-    hsize_t *hSizes;
-    hsize_t *hOffsets;
-    
-    bool initializeWithExistingDataset( int *sizes );
-    
-    bool initializeWithNewDataset( const string sourceName, int *sizes, bool isDouble );
-
-public:
-    bool ok;
-
-    Hdf5DataWriter( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank, hid_t fileAccessProperties );
-    
-    virtual int writeIntSlab( int *offsets, int *sizes, int *valueBuffer );
-    
-    virtual int writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
-    
-    virtual ~Hdf5DataWriter();
-};
-#endif //FIELDML_HDF5_ARRAY || FIELDML_PHDF5_ARRAY
-    
-
-ArrayDataWriter *ArrayDataWriter::create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank )
+ArrayDataWriter *ArrayDataWriter::create( FieldmlErrorHandler *eHandler, const char *root, BinaryArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank )
 {
     ArrayDataWriter *writer = NULL;
     
-    if( source->resource->format == HDF5_NAME )
+    if( source->getResource()->format == HDF5_NAME )
     {
 #ifdef FIELDML_HDF5_ARRAY
-        Hdf5DataWriter *hdf5writer = new Hdf5DataWriter( eHandler, root, source, isDouble, append, sizes, rank, H5P_DEFAULT );
-        if( !hdf5writer->ok )
-        {
-            delete hdf5writer;
-        }
-        else
-        {
-            writer = hdf5writer;
-        }
+        writer = Hdf5ArrayDataWriter::create( eHandler, root, source, isDouble, append, sizes, rank );
 #endif //FIELDML_HDF5_ARRAY
     }
-    else if( source->resource->format == PHDF5_NAME )
+    else if( source->getResource()->format == PHDF5_NAME )
     {
 #ifdef FIELDML_PHDF5_ARRAY
-        hid_t accessProperties = H5Pcreate( H5P_FILE_ACCESS );
-        if( H5Pset_fapl_mpio( accessProperties, MPI_COMM_WORLD, MPI_INFO_NULL ) >= 0 )
-        {
-            Hdf5DataWriter *hdf5writer = new Hdf5DataWriter( eHandler, root, source, isDouble, append, sizes, rank, accessProperties );
-            if( !hdf5writer->ok )
-            {
-                delete hdf5writer;
-            }
-            else
-            {
-                writer = hdf5writer;
-            }
-        }
-        H5Pclose( accessProperties );
+        writer = Hdf5ArrayDataWriter::create( eHandler, root, source, isDouble, append, sizes, rank );
 #endif //FIELDML_PHDF5_ARRAY
     }
     
     return writer;
+}
+
+
+ArrayDataWriter *ArrayDataWriter::create( FieldmlErrorHandler *eHandler, const char *root, TextArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank )
+{
+    return TextArrayDataWriter::create( eHandler, root, source, isDouble, append, sizes, rank );
 }
 
 
@@ -135,243 +85,3 @@ ArrayDataWriter::ArrayDataWriter( FieldmlErrorHandler *_eHandler ) :
 ArrayDataWriter::~ArrayDataWriter()
 {
 }
-
-
-#if defined FIELDML_HDF5_ARRAY || defined FIELDML_PHDF5_ARRAY
-Hdf5DataWriter::Hdf5DataWriter( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int _rank, hid_t accessProperties ) :
-    ArrayDataWriter( eHandler )
-{
-    rank = _rank;
-    file = -1;
-    dataset = -1;
-    dataspace = -1;
-    
-    hStrides = NULL;
-    hSizes = NULL;
-    hOffsets = NULL;
-    
-    ok = false;
-    
-    const string filename = makeFilename( root, source->resource->href );
-    while( true )
-    {
-        //TODO Add an API-level enum to allow the user to append data, nuke any existing file, or fail if the file already exists. 
-        if( !append )
-        {
-            file = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, accessProperties );
-        }
-        else
-        {
-            file = H5Fopen( filename.c_str(), H5F_ACC_RDWR, accessProperties );
-            if( file < 0 )
-            {
-                file = H5Fcreate( filename.c_str(), H5F_ACC_EXCL, H5P_DEFAULT, accessProperties );
-            }
-        }
-        
-        if( file < 0 )
-        {
-            break;
-        }
-
-        hOffsets = new hsize_t[rank];
-        hSizes = new hsize_t[rank];
-        hStrides = new hsize_t[rank];
-        for( int i = 0; i < rank; i++ )
-        {
-            hStrides[i] = 1;
-        }
-        
-        dataset = H5Dopen( file, source->sourceName.c_str(), H5P_DEFAULT );
-        if( dataset < 0 )
-        {
-            if( !initializeWithNewDataset( source->sourceName, sizes, isDouble ) )
-            {
-                break;
-            }
-        }
-        else
-        {
-            if( !initializeWithExistingDataset( sizes ) )
-            {
-                break;
-            }
-        }
-
-        datatype = H5Dget_type( dataset );
-        if( datatype < 0 )
-        {
-            break;
-        }
-        //Note: At the moment, only native int and native double can be written, so we get the native type immediately.
-        
-        hid_t nativeType = H5Tget_native_type( datatype, H5T_DIR_DESCEND );
-        if( H5Tequal( nativeType, H5T_NATIVE_INT ) || H5Tequal( nativeType, H5T_NATIVE_SHORT ) )
-        {
-            datatype = H5T_NATIVE_INT;
-        }
-        else if( H5Tequal( nativeType, H5T_NATIVE_DOUBLE ) || H5Tequal( nativeType, H5T_NATIVE_FLOAT ) )
-        {
-            datatype = H5T_NATIVE_DOUBLE;
-        }
-        
-        ok = true;
-        break;
-    }
-}
-
-
-bool Hdf5DataWriter::initializeWithNewDataset( const string sourceName, int *sizes, bool isDouble )
-{
-    for( int i = 0; i < rank; i++ )
-    {
-        hSizes[i] = sizes[i];
-    }
-    dataspace = H5Screate_simple( rank, hSizes, NULL );
-    if( dataspace < 0 )
-    {
-        return false;
-    }
-    
-    if( isDouble )
-    {
-        datatype = H5T_NATIVE_DOUBLE;
-    }
-    else
-    {
-        datatype = H5T_NATIVE_INT;
-    }
-
-    dataset = H5Dcreate( file, sourceName.c_str(), datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
-    if( dataset < 0 )
-    {
-        return false;
-    }
-    
-    return true;
-}
-
-
-bool Hdf5DataWriter::initializeWithExistingDataset( int *sizes )
-{
-    //The dataset already exists. Make sure its dataspace is compatible with the one requested.
-    dataspace = H5Dget_space( dataset );
-    if( dataspace < 0 )
-    {
-        return false;
-    }
-    
-    int existingRank = H5Sget_simple_extent_ndims( dataspace );
-    if( ( existingRank < 0 ) || ( existingRank != rank ) ) 
-    {
-        return false;
-    }
-    
-    existingRank = H5Sget_simple_extent_dims( dataspace, NULL, hSizes );
-    if( existingRank != rank )
-    {
-        return false;
-    }
-    
-    for( int i = 0; i < rank; i++ )
-    {
-        if( ( hSizes[i] != H5S_UNLIMITED ) && ( hSizes[i] < sizes[i] ) )
-        {
-            existingRank = -1;
-        }
-    }
-    if( existingRank < 0 )
-    {
-        return false;
-    }
-
-    //The dataset already exists. Make sure its datatype is compatible with the one requested.
-    
-    return true;
-}
-
-int Hdf5DataWriter::writeIntSlab( int *offsets, int *sizes, int *valueBuffer )
-{
-    if( datatype != H5T_NATIVE_INT )
-    {
-        eHandler->setError( FML_ERR_IO_UNSUPPORTED );
-        return -1;
-    }
-
-    for( int i = 0; i < rank; i++ )
-    {
-        hOffsets[i] = offsets[i];
-        hSizes[i] = sizes[i];
-    }
-    
-    hid_t bufferSpace = H5Screate_simple( rank, hSizes, NULL );
-    
-    herr_t status;
-    status = H5Sselect_hyperslab( dataspace, H5S_SELECT_SET, hOffsets, NULL, hSizes, NULL );
-    
-    hid_t transferProperties = H5P_DEFAULT;
-
-//    if( collective )
-//    {
-//        transferProperties = H5Pcreate (H5P_DATASET_XFER);
-//        H5Pset_dxpl_mpio(transferProperties, H5FD_MPIO_COLLECTIVE);
-//    }
-    
-    status = H5Dwrite( dataset, H5T_NATIVE_INT, bufferSpace, dataspace, transferProperties, valueBuffer );
-
-//    H5Pclose( transferProperties );    
-    
-    H5Sclose( bufferSpace );
-    
-    return 1;
-}
-
-
-int Hdf5DataWriter::writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer )
-{
-    if( datatype != H5T_NATIVE_DOUBLE )
-    {
-        eHandler->setError( FML_ERR_IO_UNSUPPORTED );
-        return -1;
-    }
-    
-    for( int i = 0; i < rank; i++ )
-    {
-        hOffsets[i] = offsets[i];
-        hSizes[i] = sizes[i];
-    }
-    
-    hid_t bufferSpace = H5Screate_simple( rank, hSizes, NULL );
-    
-    herr_t status;
-    status = H5Sselect_hyperslab( dataspace, H5S_SELECT_SET, hOffsets, NULL, hSizes, NULL );
-
-    hid_t transferProperties = H5P_DEFAULT;
-
-//    if( collective )
-//    {
-//        transferProperties = H5Pcreate (H5P_DATASET_XFER);
-//        H5Pset_dxpl_mpio(transferProperties, H5FD_MPIO_COLLECTIVE);
-//    }
-    
-    status = H5Dwrite( dataset, H5T_NATIVE_DOUBLE, bufferSpace, dataspace, transferProperties, valueBuffer );
-    
-//    H5Pclose( transferProperties );
-    
-    H5Sclose( bufferSpace );
-    
-    return 1;
-}
-
-
-Hdf5DataWriter::~Hdf5DataWriter()
-{
-    H5Sclose( dataspace );
-    H5Dclose( dataset );
-    H5Fclose( file );
-    
-    delete[] hStrides;
-    delete[] hSizes;
-    delete[] hOffsets;
-}
-#endif //FIELDML_HDF5_ARRAY
