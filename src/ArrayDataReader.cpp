@@ -51,10 +51,10 @@
 using namespace std;
 
 
-ArrayDataReader * ArrayDataReader::create( FieldmlErrorHandler *eHandler, const char *root, BinaryArrayDataSource *source )
+ArrayDataReader * ArrayDataReader::create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source )
 {
     ArrayDataReader *reader = NULL;
-    
+
     if( source->resource->format == HDF5_NAME )
     {
 #ifdef FIELDML_HDF5_ARRAY
@@ -67,14 +67,12 @@ ArrayDataReader * ArrayDataReader::create( FieldmlErrorHandler *eHandler, const 
         reader = Hdf5ArrayDataReader::create( eHandler, root, source );
 #endif //FIELDML_PHDF5_ARRAY
     }
+    else if( source->resource->format == PLAIN_TEXT_NAME )
+    {
+        reader = TextArrayDataReader::create( eHandler, root, source );
+    }
     
     return reader;
-}
-
-
-ArrayDataReader * ArrayDataReader::create( FieldmlErrorHandler *eHandler, const char *root, TextArrayDataSource *source )
-{
-    return TextArrayDataReader::create( eHandler, root, source );
 }
 
 

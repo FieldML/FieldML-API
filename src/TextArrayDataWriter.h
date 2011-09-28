@@ -54,7 +54,7 @@ class TextArrayDataWriter :
 private:
     FieldmlOutputStream * stream;
     
-    TextArrayDataSource * const source;
+    ArrayDataSource * const source;
     
     int offset;
 
@@ -65,7 +65,7 @@ private:
 public:
     bool ok;
 
-    TextArrayDataWriter( FieldmlErrorHandler *eHandler, const char *root, TextArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank );
+    TextArrayDataWriter( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank );
     
     virtual int writeIntSlab( int *offsets, int *sizes, int *valueBuffer );
     
@@ -73,7 +73,7 @@ public:
     
     virtual ~TextArrayDataWriter();
     
-    static TextArrayDataWriter *create( FieldmlErrorHandler *eHandler, const char *root, TextArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank );
+    static TextArrayDataWriter *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank );
 };
 
 #endif //H_TEXT_ARRAY_DATA_WRITER

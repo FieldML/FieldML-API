@@ -49,10 +49,10 @@ using namespace std;
 
 #if defined FIELDML_HDF5_ARRAY || FIELDML_PHDF5_ARRAY
 
-Hdf5ArrayDataReader *Hdf5ArrayDataReader::create( FieldmlErrorHandler *eHandler, const char *root, BinaryArrayDataSource *source )
+Hdf5ArrayDataReader *Hdf5ArrayDataReader::create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source )
 {
     Hdf5ArrayDataReader *reader = NULL;
-    
+
     if( source->resource->format == HDF5_NAME )
     {
 #ifdef FIELDML_HDF5_ARRAY
@@ -92,7 +92,7 @@ Hdf5ArrayDataReader *Hdf5ArrayDataReader::create( FieldmlErrorHandler *eHandler,
 
 
 #if defined FIELDML_HDF5_ARRAY || FIELDML_PHDF5_ARRAY
-Hdf5ArrayDataReader::Hdf5ArrayDataReader( FieldmlErrorHandler *eHandler, const char *root, BinaryArrayDataSource *source, hid_t accessProperties ) :
+Hdf5ArrayDataReader::Hdf5ArrayDataReader( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, hid_t accessProperties ) :
     ArrayDataReader( eHandler )
 {
     hStrides = NULL;
@@ -101,7 +101,7 @@ Hdf5ArrayDataReader::Hdf5ArrayDataReader( FieldmlErrorHandler *eHandler, const c
     
     ok = false;
     
-    const string filename = makeFilename( root, source->resource->href );
+    const string filename = makeFilename( root, source->resource->description );
     while( true )
     {
         file = H5Fopen( filename.c_str(), H5F_ACC_RDONLY, accessProperties );
@@ -110,7 +110,7 @@ Hdf5ArrayDataReader::Hdf5ArrayDataReader( FieldmlErrorHandler *eHandler, const c
             break;
         }
         
-        dataset = H5Dopen( file, source->sourceName.c_str(), H5P_DEFAULT );
+        dataset = H5Dopen( file, source->location.c_str(), H5P_DEFAULT );
         if( dataset < 0 )
         {
             break;

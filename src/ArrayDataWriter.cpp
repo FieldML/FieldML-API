@@ -49,30 +49,28 @@
 
 using namespace std;
 
-ArrayDataWriter *ArrayDataWriter::create( FieldmlErrorHandler *eHandler, const char *root, BinaryArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank )
+ArrayDataWriter *ArrayDataWriter::create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank )
 {
     ArrayDataWriter *writer = NULL;
     
-    if( source->getResource()->format == HDF5_NAME )
+    if( source->resource->format == HDF5_NAME )
     {
 #ifdef FIELDML_HDF5_ARRAY
         writer = Hdf5ArrayDataWriter::create( eHandler, root, source, isDouble, append, sizes, rank );
 #endif //FIELDML_HDF5_ARRAY
     }
-    else if( source->getResource()->format == PHDF5_NAME )
+    else if( source->resource->format == PHDF5_NAME )
     {
 #ifdef FIELDML_PHDF5_ARRAY
         writer = Hdf5ArrayDataWriter::create( eHandler, root, source, isDouble, append, sizes, rank );
 #endif //FIELDML_PHDF5_ARRAY
     }
+    else if( source->resource->format == PLAIN_TEXT_NAME )
+    {
+        writer = TextArrayDataWriter::create( eHandler, root, source, isDouble, append, sizes, rank );
+    }
     
     return writer;
-}
-
-
-ArrayDataWriter *ArrayDataWriter::create( FieldmlErrorHandler *eHandler, const char *root, TextArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank )
-{
-    return TextArrayDataWriter::create( eHandler, root, source, isDouble, append, sizes, rank );
 }
 
 

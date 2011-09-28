@@ -62,9 +62,7 @@ public:
     
     virtual ~ArrayDataReader();
 
-    static ArrayDataReader *create( FieldmlErrorHandler *eHandler, const char *root, TextArrayDataSource *source );
-    
-    static ArrayDataReader *create( FieldmlErrorHandler *eHandler, const char *root, BinaryArrayDataSource *source );
+    static ArrayDataReader *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source );
 };
 
 

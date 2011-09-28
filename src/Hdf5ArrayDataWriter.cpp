@@ -51,11 +51,11 @@ using namespace std;
 
 #if defined FIELDML_HDF5_ARRAY || defined FIELDML_PHDF5_ARRAY
 
-Hdf5ArrayDataWriter *Hdf5ArrayDataWriter::create( FieldmlErrorHandler *eHandler, const char *root,BinaryArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank )
+Hdf5ArrayDataWriter *Hdf5ArrayDataWriter::create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank )
 {
     Hdf5ArrayDataWriter *writer = NULL;
     
-    if( source->getResource()->format == HDF5_NAME )
+    if( source->resource->format == HDF5_NAME )
     {
 #ifdef FIELDML_HDF5_ARRAY
         Hdf5ArrayDataWriter *hdf5writer = new Hdf5ArrayDataWriter( eHandler, root, source, isDouble, append, sizes, rank, H5P_DEFAULT );
@@ -69,7 +69,7 @@ Hdf5ArrayDataWriter *Hdf5ArrayDataWriter::create( FieldmlErrorHandler *eHandler,
         }
 #endif //FIELDML_HDF5_ARRAY
     }
-    else if( source->getResource()->format == PHDF5_NAME )
+    else if( source->resource->format == PHDF5_NAME )
     {
 #ifdef FIELDML_PHDF5_ARRAY
         hid_t accessProperties = H5Pcreate( H5P_FILE_ACCESS );
@@ -93,7 +93,7 @@ Hdf5ArrayDataWriter *Hdf5ArrayDataWriter::create( FieldmlErrorHandler *eHandler,
 }
 
 
-Hdf5ArrayDataWriter::Hdf5ArrayDataWriter( FieldmlErrorHandler *eHandler, const char *root, BinaryArrayDataSource *source, bool isDouble, bool append, int *sizes, int _rank, hid_t accessProperties ) :
+Hdf5ArrayDataWriter::Hdf5ArrayDataWriter( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int _rank, hid_t accessProperties ) :
     ArrayDataWriter( eHandler )
 {
     rank = _rank;
@@ -107,7 +107,7 @@ Hdf5ArrayDataWriter::Hdf5ArrayDataWriter( FieldmlErrorHandler *eHandler, const c
     
     ok = false;
     
-    const string filename = makeFilename( root, source->getResource()->href );
+    const string filename = makeFilename( root, source->resource->description );
     while( true )
     {
         //TODO Add an API-level enum to allow the user to append data, nuke any existing file, or fail if the file already exists. 
@@ -137,10 +137,10 @@ Hdf5ArrayDataWriter::Hdf5ArrayDataWriter( FieldmlErrorHandler *eHandler, const c
             hStrides[i] = 1;
         }
         
-        dataset = H5Dopen( file, source->sourceName.c_str(), H5P_DEFAULT );
+        dataset = H5Dopen( file, source->location.c_str(), H5P_DEFAULT );
         if( dataset < 0 )
         {
-            if( !initializeWithNewDataset( source->sourceName, sizes, isDouble ) )
+            if( !initializeWithNewDataset( source->location, sizes, isDouble ) )
             {
                 break;
             }
@@ -176,7 +176,7 @@ Hdf5ArrayDataWriter::Hdf5ArrayDataWriter( FieldmlErrorHandler *eHandler, const c
 }
 
 
-bool Hdf5ArrayDataWriter::initializeWithNewDataset( const string sourceName, int *sizes, bool isDouble )
+bool Hdf5ArrayDataWriter::initializeWithNewDataset( const string location, int *sizes, bool isDouble )
 {
     for( int i = 0; i < rank; i++ )
     {
@@ -197,7 +197,7 @@ bool Hdf5ArrayDataWriter::initializeWithNewDataset( const string sourceName, int
         datatype = H5T_NATIVE_INT;
     }
 
-    dataset = H5Dcreate( file, sourceName.c_str(), datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+    dataset = H5Dcreate( file, location.c_str(), datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
     if( dataset < 0 )
     {
         return false;

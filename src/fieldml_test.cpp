@@ -316,7 +316,6 @@ void testMisc()
     double rawValues1[] = { -98.7, -87.6, -76.5, -65.4, -54.3, -43.2, -32.1, -21.0, -10.0 };
     int indexValues2[] = { 2, 2 };
     double rawValues2[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-    int dummy[] = { 0 };
     double readValues[9] = { 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef };
     int readIndexes[2] = { -1, -1 };
     int sizes[10], offsets[10];
@@ -326,7 +325,7 @@ void testMisc()
     handle = Fieldml_Create( "", "test" );
     
     FmlObjectHandle continousType = Fieldml_CreateContinuousType( handle, "example.continuous_type" );
-    FmlObjectHandle componentEnsemble = Fieldml_CreateContinuousTypeComponents( handle, continousType, "example.component_ensemble", 3 );
+    Fieldml_CreateContinuousTypeComponents( handle, continousType, "example.component_ensemble", 3 );
     
     Fieldml_WriteFile( handle, "foo.xml" );
     
@@ -338,11 +337,11 @@ void testMisc()
     FmlObjectHandle rc3Ensemble = Fieldml_AddImport( handle, importHandle, "chart.3d.component", "chart.3d.component" );
     FmlObjectHandle realType = Fieldml_AddImport( handle, importHandle, "real.1d", "real.1d" );
     
-    FmlObjectHandle parametersResource = Fieldml_CreateTextInlineDataResource( handle, "test.resource.parameters_data" );
-    FmlObjectHandle parametersData = Fieldml_CreateTextArrayDataSource( handle, "test.parameters_data", parametersResource, 1, 1 );
+    FmlObjectHandle parametersResource = Fieldml_CreateInlineDataResource( handle, "test.resource.parameters_data" );
+    FmlObjectHandle parametersData = Fieldml_CreateArrayDataSource( handle, "test.parameters_data", parametersResource, "1", 1 );
 
     sizes[0] = 3;
-    Fieldml_SetTextArrayDataSourceSizes( handle, parametersData, sizes );
+    Fieldml_SetArrayDataSourceRawSizes( handle, parametersData, sizes );
     Fieldml_SetArrayDataSourceSizes( handle, parametersData, sizes );
     
     FmlObjectHandle parameters = Fieldml_CreateParameterEvaluator( handle, "test.ensemble_parameters", realType );
@@ -371,19 +370,19 @@ void testMisc()
         }
     }
     
-    FmlObjectHandle parametersResource2 = Fieldml_CreateTextInlineDataResource( handle, "test.resource.parameters_data2" );
-    FmlObjectHandle parameters2KeyData = Fieldml_CreateTextArrayDataSource( handle, "test.parameters2_keydata", parametersResource2, 1, 2 );
-    FmlObjectHandle parameters2ValueData = Fieldml_CreateTextArrayDataSource( handle, "test.parameters2_valuedata", parametersResource2, 2, 3 );
+    FmlObjectHandle parametersResource2 = Fieldml_CreateInlineDataResource( handle, "test.resource.parameters_data2" );
+    FmlObjectHandle parameters2KeyData = Fieldml_CreateArrayDataSource( handle, "test.parameters2_keydata", parametersResource2, "1", 2 );
+    FmlObjectHandle parameters2ValueData = Fieldml_CreateArrayDataSource( handle, "test.parameters2_valuedata", parametersResource2, "2", 3 );
     
     sizes[0] = 2;
     sizes[1] = 2;
-    Fieldml_SetTextArrayDataSourceSizes( handle, parameters2KeyData, sizes );
+    Fieldml_SetArrayDataSourceRawSizes( handle, parameters2KeyData, sizes );
     Fieldml_SetArrayDataSourceSizes( handle, parameters2KeyData, sizes );
 
     sizes[0] = 3;
     sizes[1] = 3;
     sizes[2] = 2;
-    Fieldml_SetTextArrayDataSourceSizes( handle, parameters2ValueData, sizes );
+    Fieldml_SetArrayDataSourceRawSizes( handle, parameters2ValueData, sizes );
     Fieldml_SetArrayDataSourceSizes( handle, parameters2ValueData, sizes );
     
     FmlObjectHandle parameters2 = Fieldml_CreateParameterEvaluator( handle, "test.ensemble_parameters.2", realType );
@@ -519,7 +518,6 @@ int testCycles()
     Fieldml_SetEnsembleMembersRange( session, ensemble, 1, 20, 1 );
     
     FmlObjectHandle arg1 = Fieldml_CreateArgumentEvaluator( session, "test.arg1", type );
-    FmlObjectHandle arg2 = Fieldml_CreateArgumentEvaluator( session, "test.arg2", type );
     
     FmlObjectHandle external = Fieldml_CreateExternalEvaluator( session, "test.external", type );
     
@@ -586,15 +584,16 @@ int testHdf5()
 {
     bool testOk = true;
     
+    printf("Testing HDF5 array read\n");
+
     FmlSessionHandle session = Fieldml_Create( "test", "test" );
     
-    FmlObjectHandle resource = Fieldml_CreateArrayDataResource( session, "test.resource", "HDF5", "test.h5" );
-    FmlObjectHandle sourceI = Fieldml_CreateBinaryArrayDataSource( session, "test.source_int", resource, "test/fooI16BE", 2 );
-    FmlObjectHandle sourceD = Fieldml_CreateBinaryArrayDataSource( session, "test.source_double", resource, "test/foo2", 2 );
+    FmlObjectHandle resource = Fieldml_CreateHrefDataResource( session, "test.resource", "HDF5", "test.h5" );
+    FmlObjectHandle sourceD = Fieldml_CreateArrayDataSource( session, "test.source_double", resource, "test/foo2", 2 );
     
-    FmlObjectHandle resource2 = Fieldml_CreateArrayDataResource( session, "test.resource2", "HDF5", "I16BE.h5" );
-    FmlObjectHandle source2I = Fieldml_CreateBinaryArrayDataSource( session, "test.source2_int", resource2, "I16BE", 2 );
-    FmlObjectHandle source2D = Fieldml_CreateBinaryArrayDataSource( session, "test.source2_double", resource2, "DOUBLE", 2 );
+    FmlObjectHandle resource2 = Fieldml_CreateHrefDataResource( session, "test.resource2", "HDF5", "I16BE.h5" );
+    FmlObjectHandle source2I = Fieldml_CreateArrayDataSource( session, "test.source2_int", resource2, "I16BE", 2 );
+    FmlObjectHandle source2D = Fieldml_CreateArrayDataSource( session, "test.source2_double", resource2, "DOUBLE", 2 );
     
     FmlObjectHandle cType = Fieldml_CreateContinuousType( session, "test.scalar_real" );
 
@@ -629,7 +628,7 @@ int testHdf5()
     
     Fieldml_CloseReader( session, reader );
     
-    printf("Testing array write\n");
+    printf("Testing HDF5 array write\n");
     
     for( int i = 0; i < 20; i++ )
     {

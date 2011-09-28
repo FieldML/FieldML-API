@@ -205,45 +205,20 @@ public:
 class DataResource :
     public FieldmlObject
 {
-protected:
-    DataResource( const std::string _name, DataResourceType _type );
-        
 public:
-    std::vector<FmlObjectHandle> dataSources;
-
-    const DataResourceType type;
+    //NOTE: if isInline, this is the inline string. Otherwise, it's an href.
+    std::string description;
     
-    virtual ~DataResource();
-};
- 
-    
-class TextResource :
-    public DataResource
-{
-public:
-    std::string href;
-    
-    std::string arrayString;
-    
-    std::vector<int> size;
-    
-    TextResource( const std::string _name, DataResourceType _type );
-    
-    virtual ~TextResource(); 
-};
-    
-
-class ArrayDataResource :
-    public DataResource
-{
-public:
+    //NOTE: At the moment, inline resources may only be TEXT_PLAIN. 
     const std::string format;
-
-    const std::string href;
-
-    ArrayDataResource( const std::string _name, const std::string _type, const std::string _href );
     
-    virtual ~ArrayDataResource();
+    const DataResourceType type;
+
+    std::vector<FmlObjectHandle> dataSources;
+    
+    DataResource( const std::string _name, DataResourceType _type, const std::string _format, const std::string _description );
+        
+    virtual ~DataResource();
 };
 
     
@@ -251,12 +226,12 @@ class DataSource :
     public FieldmlObject
 {
 protected:
-    DataSource( const std::string _name, DataSourceType _type );
+    DataSource( const std::string _name, DataResource *_resource, DataSourceType _type );
     
 public:
     const DataSourceType type;
     
-    virtual DataResource *getResource() = 0;
+    DataResource * const resource;
     
     virtual ~DataSource()
     {
@@ -264,56 +239,28 @@ public:
 };
 
     
-class BaseArrayDataSource :
+class ArrayDataSource :
     public DataSource
 {
 public:
+    //NOTE: For text resources, this is a line number. For HDF5 files, this is a dataset name.
+    const std::string location;
+    
     const int rank;
     
     std::vector<int> offsets;
     
     std::vector<int> sizes;
     
-    BaseArrayDataSource( const std::string _name, DataSourceType _type, int _rank );
+    //NOTE: Optional for formats that internally specify sizes.
+    std::vector<int> rawSizes;
     
-    virtual ~BaseArrayDataSource();
+    ArrayDataSource( const std::string _name, DataResource *_resource, const std::string _location, int _rank );
+    
+    virtual ~ArrayDataSource();
 };
 
 
-class TextArrayDataSource :
-    public BaseArrayDataSource
-{
-public:
-    TextResource * const resource;
-        
-    const int firstLine;
-    
-    std::vector<int> textSizes;
-    
-    TextArrayDataSource( const std::string _name, TextResource *_resource, int _firstLine, int _rank );
-    
-    virtual TextResource *getResource();
-    
-    virtual ~TextArrayDataSource();
-};
-
-
-class BinaryArrayDataSource :
-    public BaseArrayDataSource
-{
-public:
-    ArrayDataResource * const resource;
-        
-    const std::string sourceName;
-    
-    BinaryArrayDataSource( const std::string _name, ArrayDataResource *_resource, const std::string _sourceName, int _rank );
-    
-    virtual ArrayDataResource *getResource();
-    
-    virtual ~BinaryArrayDataSource();
-};
-
-        
 class BaseDataDescription
 {
 public:

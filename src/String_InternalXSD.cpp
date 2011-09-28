@@ -76,51 +76,45 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
       </xs:simpleContent> \
     </xs:complexType> \
  \
-    <xs:complexType name=\"ArrayDataSource_Type\"> \
-      <xs:choice minOccurs=\"1\" maxOccurs=\"unbounded\"> \
-          <xs:element name=\"ArrayDataSize\" type=\"ArrayDataSize_Type\" minOccurs=\"0\" maxOccurs=\"1\"/> \
-          <xs:element name=\"ArrayDataOffset\" type=\"ArrayDataOffset_Type\" minOccurs=\"0\" maxOccurs=\"1\"/> \
-      </xs:choice> \
-      <xs:attribute name=\"name\" type=\"xs:string\" use=\"required\" /> \
-      <xs:attribute name=\"sourceName\" type=\"xs:string\" use=\"required\" /> \
-      <xs:attribute name=\"rank\" type=\"xs:positiveInteger\" use=\"required\" /> \
-    </xs:complexType> \
- \
-    <xs:complexType name=\"ArrayDataResource_Type\"> \
-      <xs:choice minOccurs=\"1\" maxOccurs=\"unbounded\"> \
-          <xs:element name=\"ArrayDataSource\" type=\"ArrayDataSource_Type\" /> \
-      </xs:choice> \
-      <xs:attribute name=\"name\" type=\"xs:string\" use=\"required\" /> \
-      <xs:attribute name=\"format\" type=\"xs:string\" use=\"required\" /> \
-      <xs:attribute ref=\"xlink:href\" use=\"required\" /> \
-    </xs:complexType> \
- \
-    <xs:complexType name=\"TextResourceHref_Type\"> \
-      <xs:attribute ref=\"xlink:href\" use=\"required\" /> \
-    </xs:complexType> \
- \
-    <xs:complexType name=\"TextResourceString_Type\"> \
+    <xs:complexType name=\"RawArraySize_Type\"> \
       <xs:simpleContent> \
         <xs:extension base=\"xs:string\" /> \
       </xs:simpleContent> \
     </xs:complexType> \
  \
-    <xs:complexType name=\"TextArrayDataSource_Type\"> \
+    <xs:complexType name=\"ArrayDataSource_Type\"> \
       <xs:choice minOccurs=\"1\" maxOccurs=\"unbounded\"> \
-          <xs:element name=\"TextArraySize\" type=\"ArrayDataSize_Type\" minOccurs=\"1\" maxOccurs=\"1\"/> \
           <xs:element name=\"ArrayDataSize\" type=\"ArrayDataSize_Type\" minOccurs=\"0\" maxOccurs=\"1\"/> \
           <xs:element name=\"ArrayDataOffset\" type=\"ArrayDataOffset_Type\" minOccurs=\"0\" maxOccurs=\"1\"/> \
+          <xs:element name=\"RawArraySize\" type=\"RawArraySize_Type\" minOccurs=\"0\" maxOccurs=\"1\"/> \
       </xs:choice> \
       <xs:attribute name=\"name\" type=\"xs:string\" use=\"required\" /> \
-      <xs:attribute name=\"firstLine\" type=\"xs:positiveInteger\" use=\"required\" /> \
+      <xs:attribute name=\"location\" type=\"xs:string\" use=\"required\" /> \
       <xs:attribute name=\"rank\" type=\"xs:positiveInteger\" use=\"required\" /> \
     </xs:complexType> \
  \
-    <xs:complexType name=\"TextResource_Type\"> \
+    <xs:complexType name=\"DataResourceHref_Type\"> \
+      <xs:attribute ref=\"xlink:href\" use=\"required\" /> \
+      <xs:attribute name=\"format\" type=\"xs:string\" use=\"required\" /> \
+    </xs:complexType> \
+ \
+    <xs:complexType name=\"DataResourceString_Type\"> \
+      <xs:simpleContent> \
+        <xs:extension base=\"xs:string\" /> \
+      </xs:simpleContent> \
+    </xs:complexType> \
+ \
+    <xs:complexType name=\"DataResourceDescription_Type\"> \
+        <xs:choice minOccurs=\"1\" maxOccurs=\"1\"> \
+            <xs:element name=\"DataResourceHref\" type=\"DataResourceHref_Type\" /> \
+            <xs:element name=\"DataResourceString\" type=\"DataResourceString_Type\" /> \
+        </xs:choice> \
+    </xs:complexType> \
+ \
+    <xs:complexType name=\"DataResource_Type\"> \
       <xs:choice minOccurs=\"1\" maxOccurs=\"unbounded\"> \
-        <xs:element name=\"TextArrayDataSource\" type=\"TextArrayDataSource_Type\" /> \
-        <xs:element name=\"TextResourceHref\" type=\"TextResourceHref_Type\" minOccurs=\"0\" maxOccurs=\"1\"/> \
-        <xs:element name=\"TextResourceString\" type=\"TextResourceString_Type\" minOccurs=\"0\" maxOccurs=\"1\"/> \
+          <xs:element name=\"DataResourceDescription\" type=\"DataResourceDescription_Type\" minOccurs=\"1\" maxOccurs=\"1\"/> \
+          <xs:element name=\"ArrayDataSource\" type=\"ArrayDataSource_Type\" /> \
       </xs:choice> \
       <xs:attribute name=\"name\" type=\"xs:string\" use=\"required\" /> \
     </xs:complexType> \
@@ -404,8 +398,7 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
             <xs:extension base=\"FieldmlRdfTargetType\"> \
                 <xs:choice minOccurs=\"0\" maxOccurs=\"unbounded\"> \
                     <xs:element name=\"Import\" type=\"Import_Type\" /> \
-                    <xs:element name=\"TextResource\" type=\"TextResource_Type\" /> \
-                    <xs:element name=\"ArrayDataResource\" type=\"ArrayDataResource_Type\" /> \
+                    <xs:element name=\"DataResource\" type=\"DataResource_Type\" /> \
                     <xs:element name=\"EnsembleType\" type=\"EnsembleType_Type\" /> \
                     <xs:element name=\"ContinuousType\" type=\"ContinuousType_Type\" /> \
                     <xs:element name=\"MeshType\" type=\"MeshType_Type\" /> \

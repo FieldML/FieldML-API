@@ -48,20 +48,24 @@
 
 using namespace std;
 
-TextArrayDataReader *TextArrayDataReader::create( FieldmlErrorHandler *eHandler, const char *root, TextArrayDataSource *source )
+TextArrayDataReader *TextArrayDataReader::create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source )
 {
     FieldmlInputStream *stream = NULL;
     
-    TextResource *resource = source->getResource();
-    
-    if( resource->type == DATA_RESOURCE_TEXT_HREF )
+    if( source->resource->format != PLAIN_TEXT_NAME )
     {
-        stream = FieldmlInputStream::createTextFileStream( makeFilename( root, resource->href ) );
+        eHandler->setError( FML_ERR_INVALID_OBJECT );
+        return NULL;
     }
-    else if( resource->type == DATA_RESOURCE_TEXT_INLINE )
+
+    if( source->resource->type == DATA_RESOURCE_HREF )
+    {
+        stream = FieldmlInputStream::createTextFileStream( makeFilename( root, source->resource->description ) );
+    }
+    else if( source->resource->type == DATA_RESOURCE_INLINE )
     {
         //TODO This is unsafe, as the user can modify the string while the reader is still active.
-        stream = FieldmlInputStream::createStringStream( resource->arrayString.c_str() );
+        stream = FieldmlInputStream::createStringStream( source->resource->description );
     }
     
     if( stream == NULL )
@@ -73,7 +77,7 @@ TextArrayDataReader *TextArrayDataReader::create( FieldmlErrorHandler *eHandler,
 }
 
 
-TextArrayDataReader::TextArrayDataReader( FieldmlInputStream *_stream, TextArrayDataSource *_source, FieldmlErrorHandler *_eHandler ) :
+TextArrayDataReader::TextArrayDataReader( FieldmlInputStream *_stream, ArrayDataSource *_source, FieldmlErrorHandler *_eHandler ) :
     ArrayDataReader( _eHandler ),
     stream( _stream ),
     source( _source )
@@ -106,7 +110,14 @@ bool TextArrayDataReader::checkDimensions( int *offsets, int *sizes )
 
 FmlErrorNumber TextArrayDataReader::skipPreamble()
 {
-    for( int i = 1; i < source->firstLine; i++ )
+    bool ok;
+    int lineNumber = getInt( source->location, ok );
+    if( !ok )
+    {
+        return FML_ERR_INVALID_PARAMETERS;
+    }
+    
+    for( int i = 1; i < lineNumber; i++ )
     {
         stream->skipLine();
     }
@@ -129,7 +140,7 @@ bool TextArrayDataReader::applyOffsets( int *offsets, int depth )
     for( int i = 0; i < depth - 1; i++ )
     {
         //NOTE This could overflow in the event that someone puts that much data into a text file. Probability: Lilliputian.
-        count *= source->textSizes[i];
+        count *= source->rawSizes[i];
     }
     
     for( int j = 0; j < source->offsets[depth-1] + offsets[depth-1]; j++ )

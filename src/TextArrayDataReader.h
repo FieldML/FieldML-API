@@ -54,12 +54,12 @@ class TextArrayDataReader :
 private:
     FieldmlInputStream *stream;
     
-    TextArrayDataSource *source;
+    ArrayDataSource *source;
     
     //The seek position of the start of the array data. This is a minor optimization to save us from having to line-skip for each read.
     long startPos;
 
-    TextArrayDataReader( FieldmlInputStream *_stream, TextArrayDataSource *_source, FieldmlErrorHandler *_eHandler );
+    TextArrayDataReader( FieldmlInputStream *_stream, ArrayDataSource *_source, FieldmlErrorHandler *_eHandler );
     
     virtual bool checkDimensions( int *offsets, int *sizes );
     
@@ -78,7 +78,7 @@ public:
     
     virtual ~TextArrayDataReader();
     
-    static TextArrayDataReader *create( FieldmlErrorHandler *eHandler, const char *root, TextArrayDataSource *source );
+    static TextArrayDataReader *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source );
 };
 
 

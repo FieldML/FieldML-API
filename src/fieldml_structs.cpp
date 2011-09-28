@@ -206,9 +206,11 @@ void AggregateEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
 }
 
 
-DataResource::DataResource( const string _name, DataResourceType _resourceType ) :
+DataResource::DataResource( const string _name, DataResourceType _resourceType, const string _format, const string _description ) : 
     FieldmlObject( _name, FHT_DATA_RESOURCE, false ),
-    type( _resourceType )
+    type( _resourceType ),
+    format( _format ),
+    description( _description )
 {
 }
 
@@ -218,29 +220,6 @@ DataResource::~DataResource()
 }
 
     
-TextResource::TextResource( const string _name, DataResourceType _type ) :
-    DataResource( _name, _type )
-{
-}
-
-
-TextResource::~TextResource()
-{
-}
-
-
-ArrayDataResource::ArrayDataResource( const string _name, const string _format, const string _href ) : 
-    DataResource( _name, DATA_RESOURCE_ARRAY ),
-    format( _format ),
-    href( _href )
-{
-}
-
-ArrayDataResource::~ArrayDataResource()
-{
-}
-
-
 BaseDataDescription::BaseDataDescription( DataDescriptionType _descriptionType ) :
     descriptionType( _descriptionType )
 {
@@ -577,61 +556,25 @@ DokArrayDataDescription::~DokArrayDataDescription()
 }
 
 
-DataSource::DataSource( const std::string _name, DataSourceType _type ) :
+DataSource::DataSource( const std::string _name, DataResource *_resource, DataSourceType _type ) :
     FieldmlObject( _name, FHT_DATA_SOURCE, false ),
+    resource( _resource ),
     type( _type )
 {
 }
 
 
-BaseArrayDataSource::BaseArrayDataSource( const std::string _name, DataSourceType _type, int _rank ) :
-    DataSource( _name, _type ),
-    rank( _rank )
+ArrayDataSource:: ArrayDataSource( const string _name, DataResource *_resource, const string _location, int _rank ) :
+    DataSource( _name, _resource, DATA_SOURCE_ARRAY ),
+    rank( _rank ),
+    location( _location )
 {
+    rawSizes.assign( rank, 0 );
     sizes.assign( rank, 0 );
     offsets.assign( rank, 0 );
 }
 
 
-BaseArrayDataSource::~BaseArrayDataSource()
-{
-}
-
-
-TextArrayDataSource::TextArrayDataSource( const string _name, TextResource *_resource, int _firstLine, int _rank ) :
-    BaseArrayDataSource( _name, DATA_SOURCE_TEXT_ARRAY, _rank ),
-    resource( _resource ),
-    firstLine( _firstLine )
-{
-    textSizes.assign( rank, 0 );
-}
-
-
-TextResource *TextArrayDataSource::getResource()
-{
-    return resource;
-}
-
-
-TextArrayDataSource::~TextArrayDataSource()
-{
-}
-
-
-BinaryArrayDataSource:: BinaryArrayDataSource( const string _name, ArrayDataResource *_resource, const string _sourceName, int _rank ) :
-    BaseArrayDataSource( _name, DATA_SOURCE_ARRAY, _rank ),
-    resource( _resource ),
-    sourceName( _sourceName )
-{
-}
-
-
-ArrayDataResource * BinaryArrayDataSource::getResource()
-{
-    return resource;
-}
-
-
-BinaryArrayDataSource::~ BinaryArrayDataSource()
+ArrayDataSource::~ ArrayDataSource()
 {
 }

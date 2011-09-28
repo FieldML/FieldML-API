@@ -262,6 +262,11 @@ FmlSessionHandle FieldmlSession::getSessionHandle()
 void FieldmlSession::logError( const string error )
 {
     addError( error );
+    if( debug )
+    {
+        fprintf( stderr, "FIELDML %s (%s): Error %s at %s:%d\n", FML_VERSION_STRING, __DATE__, error.c_str(), contextFile, contextLine );
+    }
+        
 }
 
 void FieldmlSession::logError( const char *error, const char *name1, const char *name2 )

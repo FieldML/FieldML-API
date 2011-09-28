@@ -73,7 +73,7 @@ private:
 public:
     bool ok;
 
-    Hdf5ArrayDataWriter( FieldmlErrorHandler *eHandler, const char *root, BinaryArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank, hid_t fileAccessProperties );
+    Hdf5ArrayDataWriter( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank, hid_t fileAccessProperties );
     
     virtual int writeIntSlab( int *offsets, int *sizes, int *valueBuffer );
     
@@ -81,7 +81,7 @@ public:
     
     virtual ~Hdf5ArrayDataWriter();
     
-    static Hdf5ArrayDataWriter *create( FieldmlErrorHandler *eHandler, const char *root, BinaryArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank );
+    static Hdf5ArrayDataWriter *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank );
 };
 #endif //FIELDML_HDF5_ARRAY || FIELDML_PHDF5_ARRAY
 

@@ -62,9 +62,7 @@ public:
     
     virtual ~ArrayDataWriter();
     
-    static ArrayDataWriter *create( FieldmlErrorHandler *eHandler, const char *root, BinaryArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank );
-    
-    static ArrayDataWriter *create( FieldmlErrorHandler *eHandler, const char *root, TextArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank );
+    static ArrayDataWriter *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank );
 };
 
 

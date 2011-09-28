@@ -39,6 +39,7 @@
  *
  */
 #include <cstring>
+#include <sstream>
 
 #include "string_const.h"
 
@@ -68,8 +69,7 @@ const xmlChar * const ARGUMENT_EVALUATOR_TAG            = (const xmlChar* const)
 const xmlChar * const MESH_TYPE_TAG                     = (const xmlChar* const)"MeshType";
 const xmlChar * const CONTINUOUS_TYPE_TAG               = (const xmlChar* const)"ContinuousType";
 const xmlChar * const ENSEMBLE_TYPE_TAG                 = (const xmlChar* const)"EnsembleType";
-const xmlChar * const ARRAY_DATA_RESOURCE_TAG           = (const xmlChar* const)"ArrayDataResource";
-const xmlChar * const TEXT_RESOURCE_TAG                 = (const xmlChar* const)"TextResource";
+const xmlChar * const DATA_RESOURCE_TAG                 = (const xmlChar* const)"DataResource";
 const xmlChar * const IMPORT_TAG                        = (const xmlChar* const)"Import";
 const xmlChar * const COMPONENT_EVALUATORS_TAG          = (const xmlChar* const)"ComponentEvaluators";
 const xmlChar * const DOK_ARRAY_DATA_TAG                = (const xmlChar* const)"DOKArrayData";
@@ -99,11 +99,11 @@ const xmlChar * const BIND_INDEX_TAG                    = (const xmlChar* const)
 const xmlChar * const INDEX_EVALUATOR_TAG               = (const xmlChar* const)"IndexEvaluator";
 const xmlChar * const IMPORT_EVALUATOR_TAG              = (const xmlChar* const)"ImportEvaluator";
 const xmlChar * const IMPORT_TYPE_TAG                   = (const xmlChar* const)"ImportType";
-const xmlChar * const TEXT_RESOURCE_STRING_TAG          = (const xmlChar* const)"TextResourceString";
-const xmlChar * const TEXT_RESOURCE_HREF_TAG            = (const xmlChar* const)"TextResourceHref";
-const xmlChar * const TEXT_ARRAY_DATA_SOURCE_TAG        = (const xmlChar* const)"TextArrayDataSource";
-const xmlChar * const TEXT_ARRAY_SIZE_TAG               = (const xmlChar* const)"TextArraySize";
 const xmlChar * const ARRAY_DATA_SOURCE_TAG             = (const xmlChar* const)"ArrayDataSource";
+const xmlChar * const DATA_RESOURCE_DESCRIPTION_TAG     = (const xmlChar* const)"DataResourceDescription";
+const xmlChar * const DATA_RESOURCE_STRING_TAG          = (const xmlChar* const)"DataResourceString";
+const xmlChar * const DATA_RESOURCE_HREF_TAG            = (const xmlChar* const)"DataResourceHref";
+const xmlChar * const RAW_ARRAY_SIZE_TAG                = (const xmlChar* const)"RawArraySize";
 const xmlChar * const ARRAY_DATA_OFFSET_TAG             = (const xmlChar* const)"ArrayDataOffset";
 const xmlChar * const ARRAY_DATA_SIZE_TAG               = (const xmlChar* const)"ArrayDataSize";
 
@@ -130,10 +130,9 @@ const xmlChar * const EVALUATOR_ATTRIB                  = (const xmlChar* const)
 const xmlChar * const REGION_ATTRIB                     = (const xmlChar* const)"region";
 const xmlChar * const REMOTE_NAME_ATTRIB                = (const xmlChar* const)"remoteName";
 const xmlChar * const LOCAL_NAME_ATTRIB                 = (const xmlChar* const)"localName";
-const xmlChar * const RANK_ATTRIB                       = (const xmlChar* const)"rank";
-const xmlChar * const FIRST_LINE_ATTRIB                 = (const xmlChar* const)"firstLine";
 const xmlChar * const FORMAT_ATTRIB                     = (const xmlChar* const)"format";
-const xmlChar * const SOURCE_NAME_ATTRIB                = (const xmlChar* const)"sourceName";
+const xmlChar * const RANK_ATTRIB                       = (const xmlChar* const)"rank";
+const xmlChar * const LOCATION_ATTRIB                   = (const xmlChar* const)"location";
 const xmlChar * const NAME_ATTRIB                       = (const xmlChar* const)"name";
 const xmlChar * const ID_ATTRIB                         = (const xmlChar* const)"id";
 
@@ -141,6 +140,7 @@ const xmlChar * const ID_ATTRIB                         = (const xmlChar* const)
 const xmlChar * const HREF_ATTRIB                       = (const xmlChar* const)"href";
 const xmlChar * const QUALIFIED_HREF_ATTRIB             = (const xmlChar* const)"xlink:href";
 
+const char * const PLAIN_TEXT_NAME                     = "PLAIN_TEXT";
 const char * const HDF5_NAME                           = "HDF5";
 const char * const PHDF5_NAME                          = "PHDF5";
 
@@ -218,4 +218,20 @@ const string makeFilename( const string dir, const string file )
     }
     
     return file;
+}
+
+
+int getInt( const string str, bool &ok )
+{
+    std::istringstream sstr(str);
+    
+    int i;
+    if( ! ( sstr >> i ) )
+    {
+        ok = false;
+        return 0;
+    }
+    
+    ok = true;
+    return i;
 }

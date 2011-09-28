@@ -185,9 +185,8 @@ enum DataDescriptionType
 enum DataResourceType
 {
     DATA_RESOURCE_UNKNOWN,     ///< The data's type is unknown.
-    DATA_RESOURCE_TEXT_HREF,   ///< The data is a text string or file
-    DATA_RESOURCE_TEXT_INLINE, ///< The data is a text string or file
-    DATA_RESOURCE_ARRAY,       ///< The data is a binary array format, including HDF5, netCEF and PnetCDF
+    DATA_RESOURCE_HREF,        ///< The data is a resource specified by an href.
+    DATA_RESOURCE_INLINE,      ///< The data is inline text.
 };
 
 
@@ -201,8 +200,7 @@ enum DataResourceType
 enum DataSourceType
 {
     DATA_SOURCE_UNKNOWN,      ///< The data source's type is unknown.
-    DATA_SOURCE_TEXT_ARRAY,   ///< The data source is a text array. The array dimensions are given by accompanying data.
-    DATA_SOURCE_ARRAY,        ///< The data source is a binary array. The array dimensions are given by the binary data itself.
+    DATA_SOURCE_ARRAY,        ///< The data source is an array. The array dimensions are given by the associated raw source in the resource data itself.
 };
 
 
@@ -268,7 +266,7 @@ extern "C" {
  * 
  * \see Fieldml_Destroy
  */
-FmlSessionHandle Fieldml_CreateFromFile( const char *filename );
+FmlSessionHandle Fieldml_CreateFromFile( const char * filename );
 
 
 /**
@@ -280,7 +278,7 @@ FmlSessionHandle Fieldml_CreateFromFile( const char *filename );
  * 
  * \see Fieldml_Destroy
  */
-FmlSessionHandle Fieldml_Create( const char *location, const char *name );
+FmlSessionHandle Fieldml_Create( const char * location, const char * name );
 
 
 /**
@@ -308,7 +306,7 @@ FmlErrorNumber Fieldml_GetLastError( FmlSessionHandle handle );
  * \note For diagnostic purposes, errors encountered during writing will not cause the
  * file to be deleted.
  */
-FmlErrorNumber Fieldml_WriteFile( FmlSessionHandle handle, const char *filename );
+FmlErrorNumber Fieldml_WriteFile( FmlSessionHandle handle, const char * filename );
 
 
 /**
@@ -326,7 +324,7 @@ void Fieldml_Destroy( FmlSessionHandle handle );
  * 
  * \see Fieldml_GetRegionName
  */
-FmlErrorNumber Fieldml_FreeString( char *string );
+FmlErrorNumber Fieldml_FreeString( char * string );
 
 
 /**
@@ -351,7 +349,7 @@ char * Fieldml_GetRegionName( FmlSessionHandle handle );
  * 
  * \note It is recommended that FieldML object names be less than 128 characters. Preferably much less.
  */
-int Fieldml_CopyRegionName( FmlSessionHandle handle, char *buffer, int bufferLength );
+int Fieldml_CopyRegionName( FmlSessionHandle handle, char * buffer, int bufferLength );
 
 
 /**
@@ -379,7 +377,7 @@ char * Fieldml_GetError( FmlSessionHandle handle, int index );
  * \see Fieldml_GetError
  * \see Fieldml_CopyRegionName
  */
-int Fieldml_CopyError( FmlSessionHandle handle, int errorIndex, char *buffer, int bufferLength );
+int Fieldml_CopyError( FmlSessionHandle handle, int errorIndex, char * buffer, int bufferLength );
 
 
 /**
@@ -422,13 +420,13 @@ int Fieldml_GetObjectCount( FmlSessionHandle handle, FieldmlHandleType type );
  * 
  * \see Fieldml_GetObjectCount
  */
-FmlObjectHandle Fieldml_GetObject( FmlSessionHandle handle, FieldmlHandleType type, int objectIndex );
+FmlObjectHandle Fieldml_GetObject( FmlSessionHandle handle, FieldmlHandleType objectType, int objectIndex );
 
 
 /**
  * \return The type of the given object.
  */
-FieldmlHandleType Fieldml_GetObjectType( FmlSessionHandle handle, FmlObjectHandle object );
+FieldmlHandleType Fieldml_GetObjectType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
@@ -473,7 +471,7 @@ char * Fieldml_GetObjectName( FmlSessionHandle handle, FmlObjectHandle objectHan
  * \see Fieldml_CopyRegionName
  * \see Fieldml_GetObjectName
  */
-int Fieldml_CopyObjectName( FmlSessionHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength );
+int Fieldml_CopyObjectName( FmlSessionHandle handle, FmlObjectHandle objectHandle, char * buffer, int bufferLength );
 
 
 /**
@@ -493,7 +491,7 @@ char * Fieldml_GetObjectDeclaredName( FmlSessionHandle handle, FmlObjectHandle o
  * \see Fieldml_CopyRegionName
  * \see Fieldml_GetObjectDeclaredName
  */
-int Fieldml_CopyObjectDeclaredName( FmlSessionHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength );
+int Fieldml_CopyObjectDeclaredName( FmlSessionHandle handle, FmlObjectHandle objectHandle, char * buffer, int bufferLength );
 
 
 /**
@@ -502,7 +500,7 @@ int Fieldml_CopyObjectDeclaredName( FmlSessionHandle handle, FmlObjectHandle obj
  * 
  * \see Fieldml_GetObjectInt
  */
-FmlErrorNumber Fieldml_SetObjectInt( FmlSessionHandle handle, FmlObjectHandle object, int value );
+FmlErrorNumber Fieldml_SetObjectInt( FmlSessionHandle handle, FmlObjectHandle objectHandle, int value );
 
 
 /**
@@ -510,7 +508,7 @@ FmlErrorNumber Fieldml_SetObjectInt( FmlSessionHandle handle, FmlObjectHandle ob
  * 
  * \see Fieldml_SetObjectInt
  */
-int Fieldml_GetObjectInt( FmlSessionHandle handle, FmlObjectHandle object );
+int Fieldml_GetObjectInt( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
@@ -563,7 +561,7 @@ FmlObjectHandle Fieldml_CreateContinuousType( FmlSessionHandle handle, const cha
  * \see Fieldml_CreateEnsembleType
  * \see Fieldml_GetTypeComponentEnsemble
  */
-FmlObjectHandle Fieldml_CreateContinuousTypeComponents( FmlSessionHandle handle, FmlObjectHandle typeHandle, const char *name, const int count );
+FmlObjectHandle Fieldml_CreateContinuousTypeComponents( FmlSessionHandle handle, FmlObjectHandle typeHandle, const char * name, const int count );
 
 /**
  * Creates a mesh type with the given name.
@@ -591,7 +589,7 @@ FmlObjectHandle Fieldml_CreateMeshType( FmlSessionHandle handle, const char * na
  * \see Fieldml_CreateEnsembleType
  * \see Fieldml_CreateMeshType
  */
-FmlObjectHandle Fieldml_CreateMeshElementsType( FmlSessionHandle handle, FmlObjectHandle meshHandle, const char *name );
+FmlObjectHandle Fieldml_CreateMeshElementsType( FmlSessionHandle handle, FmlObjectHandle meshHandle, const char * name );
 
 /**
  * Create the chart type for the given mesh type. The result is a newly initialized continuous type,
@@ -604,7 +602,7 @@ FmlObjectHandle Fieldml_CreateMeshElementsType( FmlSessionHandle handle, FmlObje
  * \see Fieldml_CreateMeshType
  * \see Fieldml_GetMeshChartType
  */
-FmlObjectHandle Fieldml_CreateMeshChartType( FmlSessionHandle handle, FmlObjectHandle meshHandle, const char *name );
+FmlObjectHandle Fieldml_CreateMeshChartType( FmlSessionHandle handle, FmlObjectHandle meshHandle, const char * name );
 
 
 /**
@@ -613,7 +611,7 @@ FmlObjectHandle Fieldml_CreateMeshChartType( FmlSessionHandle handle, FmlObjectH
  * 
  * \see Fieldml_CreateMeshChartType
  */
-FmlObjectHandle Fieldml_GetMeshChartType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+FmlObjectHandle Fieldml_GetMeshChartType( FmlSessionHandle handle, FmlObjectHandle meshHandle );
 
 
 /**
@@ -621,7 +619,7 @@ FmlObjectHandle Fieldml_GetMeshChartType( FmlSessionHandle handle, FmlObjectHand
  * 
  * \see Fieldml_CreateMeshChartType
  */
-FmlObjectHandle Fieldml_GetMeshChartComponentType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+FmlObjectHandle Fieldml_GetMeshChartComponentType( FmlSessionHandle handle, FmlObjectHandle meshHandle );
 
 
 /**
@@ -630,7 +628,7 @@ FmlObjectHandle Fieldml_GetMeshChartComponentType( FmlSessionHandle handle, FmlO
  * 
  * \see Fieldml_CreateMeshElementsType
  */
-FmlObjectHandle Fieldml_GetMeshElementsType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+FmlObjectHandle Fieldml_GetMeshElementsType( FmlSessionHandle handle, FmlObjectHandle meshHandle );
 
 
 /**
@@ -646,7 +644,7 @@ FmlObjectHandle Fieldml_GetMeshElementsType( FmlSessionHandle handle, FmlObjectH
  * \see Fieldml_SetMeshDefaultShape
  * \see Fieldml_SetMeshElementShape
  */
-char * Fieldml_GetMeshElementShape( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlEnsembleValue elementNumber, FmlBoolean allowDefault );
+char * Fieldml_GetMeshElementShape( FmlSessionHandle handle, FmlObjectHandle meshHandle, FmlEnsembleValue elementNumber, FmlBoolean allowDefault );
 
 
 /**
@@ -655,7 +653,7 @@ char * Fieldml_GetMeshElementShape( FmlSessionHandle handle, FmlObjectHandle obj
  * \see Fieldml_GetMeshElementShape
  * \see Fieldml_CopyRegionName
  */
-int Fieldml_CopyMeshElementShape( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlEnsembleValue elementNumber, FmlBoolean allowDefault, char *buffer, int bufferLength );
+int Fieldml_CopyMeshElementShape( FmlSessionHandle handle, FmlObjectHandle meshHandle, FmlEnsembleValue elementNumber, FmlBoolean allowDefault, char * buffer, int bufferLength );
 
 
 /**
@@ -665,7 +663,7 @@ int Fieldml_CopyMeshElementShape( FmlSessionHandle handle, FmlObjectHandle objec
  * \see Fieldml_GetMeshElementShape
  * \see Fieldml_GetMeshDefaultShape
  */
-FmlErrorNumber Fieldml_SetMeshDefaultShape( FmlSessionHandle handle, FmlObjectHandle mesh, const char * shape );
+FmlErrorNumber Fieldml_SetMeshDefaultShape( FmlSessionHandle handle, FmlObjectHandle meshHandle, const char * shape );
 
 
 /**
@@ -675,7 +673,7 @@ FmlErrorNumber Fieldml_SetMeshDefaultShape( FmlSessionHandle handle, FmlObjectHa
  * \see Fieldml_GetRegionName
  * \see Fieldml_FreeString
  */
-char * Fieldml_GetMeshDefaultShape( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+char * Fieldml_GetMeshDefaultShape( FmlSessionHandle handle, FmlObjectHandle meshHandle );
 
 
 /**
@@ -684,7 +682,7 @@ char * Fieldml_GetMeshDefaultShape( FmlSessionHandle handle, FmlObjectHandle obj
  * \see Fieldml_CopyRegionName
  * \see Fieldml_GetMeshDefaultShape
  */
-int Fieldml_CopyMeshDefaultShape( FmlSessionHandle handle, FmlObjectHandle mesh, char * buffer, int bufferLength );
+int Fieldml_CopyMeshDefaultShape( FmlSessionHandle handle, FmlObjectHandle meshHandle, char * buffer, int bufferLength );
 
 
 /**
@@ -692,7 +690,7 @@ int Fieldml_CopyMeshDefaultShape( FmlSessionHandle handle, FmlObjectHandle mesh,
  * 
  * \see Fieldml_GetMeshElementShape
  */
-FmlErrorNumber Fieldml_SetMeshElementShape( FmlSessionHandle handle, FmlObjectHandle mesh, FmlEnsembleValue elementNumber, const char * shape );
+FmlErrorNumber Fieldml_SetMeshElementShape( FmlSessionHandle handle, FmlObjectHandle meshHandle, FmlEnsembleValue elementNumber, const char * shape );
 
 
 /**
@@ -728,7 +726,7 @@ FmlObjectHandle Fieldml_GetValueType( FmlSessionHandle handle, FmlObjectHandle o
  * 
  * \see Fieldml_SetBind
  */
-FmlObjectHandle Fieldml_CreateArgumentEvaluator( FmlSessionHandle handle, const char *name, FmlObjectHandle valueType );
+FmlObjectHandle Fieldml_CreateArgumentEvaluator( FmlSessionHandle handle, const char * name, FmlObjectHandle valueType );
 
 
 /**
@@ -741,7 +739,7 @@ FmlObjectHandle Fieldml_CreateArgumentEvaluator( FmlSessionHandle handle, const 
  * 
  * \see Fieldml_AddArgument
  */
-FmlObjectHandle Fieldml_CreateExternalEvaluator( FmlSessionHandle handle, const char *name, FmlObjectHandle valueType );
+FmlObjectHandle Fieldml_CreateExternalEvaluator( FmlSessionHandle handle, const char * name, FmlObjectHandle valueType );
 
 
 /**
@@ -752,7 +750,7 @@ FmlObjectHandle Fieldml_CreateExternalEvaluator( FmlSessionHandle handle, const 
  * \see Fieldml_SetParameterDataDescription
  * \see Fieldml_SetDataSource
  */
-FmlObjectHandle Fieldml_CreateParameterEvaluator( FmlSessionHandle handle, const char *name, FmlObjectHandle valueType );
+FmlObjectHandle Fieldml_CreateParameterEvaluator( FmlSessionHandle handle, const char * name, FmlObjectHandle valueType );
 
 
 /**
@@ -814,6 +812,7 @@ FmlErrorNumber Fieldml_AddDenseIndexEvaluator( FmlSessionHandle handle, FmlObjec
  * \see Fieldml_AddDenseIndexEvaluator
  */
 FmlErrorNumber Fieldml_AddSparseIndexEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle );
+
 
 /**
  * \return The number of sparse or dense index evaluators of the parameter evaluator
@@ -886,7 +885,7 @@ FmlObjectHandle Fieldml_CreateAggregateEvaluator( FmlSessionHandle handle, const
  * \see Fieldml_CreatePiecewiseEvaluator
  * \see Fieldml_GetIndexEvaluator
  */
-FmlErrorNumber Fieldml_SetIndexEvaluator( FmlSessionHandle handle, FmlObjectHandle valueType, int index, FmlObjectHandle indexHandle );
+FmlErrorNumber Fieldml_SetIndexEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index, FmlObjectHandle evaluatorHandle );
 
 /**
  * Sets the default evaluator for the given piecewise or aggregate evaluator.
@@ -984,7 +983,7 @@ int Fieldml_GetIndexEvaluatorCount( FmlSessionHandle handle, FmlObjectHandle obj
  * 
  * \see Fieldml_GetIndexEvaluatorCount
  */
-FmlObjectHandle Fieldml_GetIndexEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, int indexIndex );
+FmlObjectHandle Fieldml_GetIndexEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, int indexNumber );
 
 
 /**
@@ -1045,7 +1044,7 @@ FmlObjectHandle Fieldml_GetArgument( FmlSessionHandle handle, FmlObjectHandle ob
  * \see Fieldml_GetBindEvaluator
  * \see Fieldml_GetBindByArgument
  */
-FmlErrorNumber Fieldml_SetBind( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle argumentEvaluator, FmlObjectHandle sourceEvaluator );
+FmlErrorNumber Fieldml_SetBind( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle argumentHandle, FmlObjectHandle sourceHandle );
 
 
 /**
@@ -1100,7 +1099,7 @@ EnsembleMembersType Fieldml_GetEnsembleMembersType( FmlSessionHandle handle, Fml
  * \see Fieldml_GetEnsembleMembersType
  * \see Fieldml_CreateEnsembleType
  */
-FmlErrorNumber Fieldml_SetEnsembleMembersDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle, EnsembleMembersType type, int count, FmlObjectHandle dataSource );
+FmlErrorNumber Fieldml_SetEnsembleMembersDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle, EnsembleMembersType type, int count, FmlObjectHandle dataSourceHandle );
 
 /**
  * Sets the given ensemble's member list directly via a minimum, maximum and stride triple (the maximum is inclusive).
@@ -1181,7 +1180,7 @@ FmlErrorNumber Fieldml_ReadDoubleSlab( FmlSessionHandle handle, FmlReaderHandle 
  * 
  * \see Fieldml_OpenReader
  */
-FmlErrorNumber Fieldml_CloseReader( FmlSessionHandle handle, FmlReaderHandle reader );
+FmlErrorNumber Fieldml_CloseReader( FmlSessionHandle handle, FmlReaderHandle readerHandle );
 
 
 /**
@@ -1201,7 +1200,7 @@ FmlWriterHandle Fieldml_OpenWriter( FmlSessionHandle handle, FmlObjectHandle obj
  * 
  * \see Fieldml_OpenWriter
  */
-FmlErrorNumber Fieldml_WriteIntSlab( FmlSessionHandle handle, FmlWriterHandle writer, int *offsets, int *sizes, int *valueBuffer );
+FmlErrorNumber Fieldml_WriteIntSlab( FmlSessionHandle handle, FmlWriterHandle writerHandle, int *offsets, int *sizes, int *valueBuffer );
 
 /**
  * Write out some double-precision floating point values to the given data writer.
@@ -1210,7 +1209,7 @@ FmlErrorNumber Fieldml_WriteIntSlab( FmlSessionHandle handle, FmlWriterHandle wr
  * 
  * \see Fieldml_OpenWriter
  */
-FmlErrorNumber Fieldml_WriteDoubleSlab( FmlSessionHandle handle, FmlWriterHandle writer, int *offsets, int *sizes, double *valueBuffer );
+FmlErrorNumber Fieldml_WriteDoubleSlab( FmlSessionHandle handle, FmlWriterHandle writerHandle, int *offsets, int *sizes, double *valueBuffer );
 
 
 /**
@@ -1218,7 +1217,7 @@ FmlErrorNumber Fieldml_WriteDoubleSlab( FmlSessionHandle handle, FmlWriterHandle
  * 
  * \see Fieldml_OpenWriter
  */
-FmlErrorNumber Fieldml_CloseWriter( FmlSessionHandle handle, FmlWriterHandle writer );
+FmlErrorNumber Fieldml_CloseWriter( FmlSessionHandle handle, FmlWriterHandle writerHandle );
 
 
 /**
@@ -1245,7 +1244,7 @@ FmlErrorNumber Fieldml_CloseWriter( FmlSessionHandle handle, FmlWriterHandle wri
  * \see Fieldml_CopyImportRemoteName
  * \see Fieldml_GetImportObject
  */
-int Fieldml_AddImportSource( FmlSessionHandle handle, const char *href, const char *regionName );
+int Fieldml_AddImportSource( FmlSessionHandle handle, const char * href, const char * regionName );
 
 
 /**
@@ -1255,7 +1254,7 @@ int Fieldml_AddImportSource( FmlSessionHandle handle, const char *href, const ch
  * 
  * \see Fieldml_AddImportSource
  */
-FmlObjectHandle Fieldml_AddImport( FmlSessionHandle handle, int importSourceIndex, const char *localName, const char *remoteName );
+FmlObjectHandle Fieldml_AddImport( FmlSessionHandle handle, int importSourceIndex, const char * localName, const char * remoteName );
 
 
 /**
@@ -1272,7 +1271,7 @@ int Fieldml_GetImportSourceCount( FmlSessionHandle handle );
  * \see Fieldml_AddImportSource
  * \see Fieldml_CopyRegionName
  */
-int Fieldml_CopyImportSourceHref( FmlSessionHandle handle, int importSourceIndex, char *buffer, int bufferLength );
+int Fieldml_CopyImportSourceHref( FmlSessionHandle handle, int importSourceIndex, char * buffer, int bufferLength );
 
 
 /**
@@ -1281,7 +1280,7 @@ int Fieldml_CopyImportSourceHref( FmlSessionHandle handle, int importSourceIndex
  * \see Fieldml_AddImportSource
  * \see Fieldml_CopyRegionName
  */
-int Fieldml_CopyImportSourceRegionName( FmlSessionHandle handle, int importSourceIndex, char *buffer, int bufferLength );
+int Fieldml_CopyImportSourceRegionName( FmlSessionHandle handle, int importSourceIndex, char * buffer, int bufferLength );
 
 
 /**
@@ -1299,7 +1298,7 @@ int Fieldml_GetImportCount( FmlSessionHandle handle, int importSourceIndex );
  * \see Fieldml_AddImport
  * \see Fieldml_CopyRegionName
  */
-int Fieldml_CopyImportLocalName( FmlSessionHandle handle, int importSourceIndex, int importIndex, char *buffer, int bufferLength );
+int Fieldml_CopyImportLocalName( FmlSessionHandle handle, int importSourceIndex, int importIndex, char * buffer, int bufferLength );
 
 
 /**
@@ -1308,7 +1307,7 @@ int Fieldml_CopyImportLocalName( FmlSessionHandle handle, int importSourceIndex,
  * \see Fieldml_AddImport
  * \see Fieldml_CopyRegionName
  */
-int Fieldml_CopyImportRemoteName( FmlSessionHandle handle, int importSourceIndex, int importIndex, char *buffer, int bufferLength );
+int Fieldml_CopyImportRemoteName( FmlSessionHandle handle, int importSourceIndex, int importIndex, char * buffer, int bufferLength );
 
 
 /**
@@ -1319,16 +1318,7 @@ int Fieldml_CopyImportRemoteName( FmlSessionHandle handle, int importSourceIndex
 FmlObjectHandle Fieldml_GetImportObject( FmlSessionHandle handle, int importSourceIndex, int importIndex );
 
 
-/**
- * Creates a new text-based file data resource with the given name and href. The resulting data resource
- * object can then have one or more data sources associated with it.
- * 
- * \note Currently, the only valid hrefs supported are local filenames.
- * 
- * \see Fieldml_CreateTextDataSource
- */
-FmlObjectHandle Fieldml_CreateTextFileDataResource( FmlSessionHandle handle, const char *name, const char *href );
-
+FmlObjectHandle Fieldml_CreateHrefDataResource( FmlSessionHandle handle, const char * name, const char * format, const char * href );
 
 /**
  * Creates a new text-based inline data resource. The resource will initially be an empty string, but its contents
@@ -1338,9 +1328,7 @@ FmlObjectHandle Fieldml_CreateTextFileDataResource( FmlSessionHandle handle, con
  * 
  * \see Fieldml_CreateTextDataSource
  */
-FmlObjectHandle Fieldml_CreateTextInlineDataResource( FmlSessionHandle handle, const char *name );
-
-FmlObjectHandle Fieldml_CreateArrayDataResource( FmlSessionHandle handle, const char *name, const char *format, const char *href );
+FmlObjectHandle Fieldml_CreateInlineDataResource( FmlSessionHandle handle, const char * name );
 
 
 /**
@@ -1364,9 +1352,7 @@ DataResourceType Fieldml_GetDataResourceType( FmlSessionHandle handle, FmlObject
  * \see Fieldml_OpenReader
  * \see Fieldml_GetDataSourceResource
  */
-FmlErrorNumber Fieldml_CreateTextArrayDataSource( FmlSessionHandle handle, const char *name, FmlObjectHandle dataResource, int firstLine, int rank );
-
-FmlObjectHandle Fieldml_CreateBinaryArrayDataSource( FmlSessionHandle handle, const char *name, FmlObjectHandle dataResource, const char *sourceName, int rank );
+FmlObjectHandle Fieldml_CreateArrayDataSource( FmlSessionHandle handle, const char * name, FmlObjectHandle resourceHandle, const char * location, int rank );
 
 /**
  * \return The number of data sources associated with the given data resource.
@@ -1395,12 +1381,9 @@ FmlObjectHandle Fieldml_GetDataSourceByIndex( FmlSessionHandle handle, FmlObject
  */
 FmlObjectHandle Fieldml_GetDataSourceResource( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
-/**
- * \return The first line for the given text array data source.
- * 
- * \see Fieldml_CreateTextArrayDataSource
- */
-int Fieldml_GetTextArrayDataSourceFirstLine( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+const char * Fieldml_GetArrayDataSourceLocation( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+
+int Fieldml_CopyArrayDataSourceLocation( FmlSessionHandle handle, FmlObjectHandle objectHandle, char * buffer, int bufferLength );
 
 
 /**
@@ -1410,42 +1393,66 @@ int Fieldml_GetTextArrayDataSourceFirstLine( FmlSessionHandle handle, FmlObjectH
  */
 int Fieldml_GetArrayDataSourceRank( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
+
 /**
- * \return The entry length for the given text data source.
+ * Raw sizes are optional. Values will be set to 0 if not present.
+ */
+FmlErrorNumber Fieldml_GetArrayDataSourceRawSizes( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *sizes );
+
+
+FmlErrorNumber Fieldml_SetArrayDataSourceRawSizes( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *sizes );
+
+/**
+ * Get the offsets of the array data accessible via the given data source.
+ * 
+ * \see Fieldml_SetArrayDataSourceOffsets
+ */
+FmlErrorNumber Fieldml_GetArrayDataSourceOffsets( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *offsets );
+
+
+/**
+ * Sets the offsets of the array data accessible via the given data source. These are offsets into the containing
+ * array exposed via the data source's associated resource.
  * 
  * \see Fieldml_CreateTextDataSource
+ * \see Fieldml_CreateBinaryArrayDataSource
  */
-FmlErrorNumber Fieldml_GetTextArrayDataSourceSizes( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *sizes );
+FmlErrorNumber Fieldml_SetArrayDataSourceOffsets( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *offsets );
 
-FmlErrorNumber Fieldml_SetTextArrayDataSourceSizes( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *sizes );
 
-int Fieldml_GetArrayDataSourceOffsets( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *offsets );
+/**
+ * Get the sizes of the array data accessible via the given data source.
+ * 
+ * \see Fieldml_SetArrayDataSourceSizes
+ */
+FmlErrorNumber Fieldml_GetArrayDataSourceSizes( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *sizes );
 
-int Fieldml_SetArrayDataSourceOffsets( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *offsets );
 
-int Fieldml_GetArrayDataSourceSizes( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *sizes );
+/**
+ * Sets the sizes of the array data accessible via the given data source.
+ * 
+ * \see Fieldml_CreateTextDataSource
+ * \see Fieldml_CreateBinaryArrayDataSource
+ */
+FmlErrorNumber Fieldml_SetArrayDataSourceSizes( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *sizes );
 
-int Fieldml_SetArrayDataSourceSizes( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *sizes );
 
 /**
  * \return The data source type of the given data source.
  * 
- * \note Currently, only text data sources are supported.
- * 
  * \see Fieldml_CreateTextDataSource
+ * \see Fieldml_CreateBinaryArrayDataSource
  */
 DataSourceType Fieldml_GetDataSourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
-
-char * Fieldml_GetDataSourceArraySource( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
  * Appends the given string to the given data resource's inline data. The data resource's type must be
- * ::DATA_RESOURCE_TEXT_INLINE.
+ * DataResourceType::DATA_RESOURCE_TEXT_INLINE.
  * 
  * \see Fieldml_CreateTextInlineDataResource
  */
-FmlErrorNumber Fieldml_AddInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandle, const char *data, const int length );
+FmlErrorNumber Fieldml_AddInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandle, const char * data, const int length );
 
 
 /**
@@ -1476,10 +1483,10 @@ char * Fieldml_GetInlineData( FmlSessionHandle handle, FmlObjectHandle objectHan
  * \see Fieldml_CopyRegionName
  * \see Fieldml_CreateTextInlineDataResource
  */
-int Fieldml_CopyInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength, int offset );
+int Fieldml_CopyInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandle, char * buffer, int bufferLength, int offset );
 
 /**
- * \return The href of the data resource's file. The data resource's type must be ::DATA_RESOURCE_TEXT_FILE.
+ * \return The href of the data resource's file. The data resource's type must be DataResourceType::DATA_RESOURCE_TEXT_HREF.
 
  * \see Fieldml_GetRegionName
  * \see Fieldml_FreeString
@@ -1487,19 +1494,31 @@ int Fieldml_CopyInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandl
  */
 char * Fieldml_GetDataResourceHref( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
+
 /**
- * Copies the given data resource's href into the givn buffer. The data resource's type must be ::DATA_RESOURCE_TEXT_FILE.
+ * Copies the given data resource's href into the given buffer. The data resource's type must be DataResourceType::DATA_RESOURCE_TEXT_HREF.
  *  
  * \see Fieldml_CopyRegionName
  * \see Fieldml_CreateTextFileDataResource
  */
-int Fieldml_CopyDataResourceHref( FmlSessionHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength );
+int Fieldml_CopyDataResourceHref( FmlSessionHandle handle, FmlObjectHandle objectHandle, char * buffer, int bufferLength );
 
+/**
+ * \return The data format of the given data resource's format into the given buffer. The data resource's type must be DataResourceType::DATA_RESOURCE_ARRAY.
+ * 
+ * \see Fieldml_CreateArrayDataResource
+ */
 char * Fieldml_GetDataResourceFormat( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
-int Fieldml_CopyDataResourceFormat( FmlSessionHandle handle, FmlObjectHandle objectHandle, char *buffer, int bufferLength );
 
+/**
+ * Copies the given data resource's format into the given buffer. The data resource's type must be DataResourceType::DATA_RESOURCE_ARRAY.
+ * 
+ * \see Fieldml_CreateArrayDataResource
+ */
+int Fieldml_CopyDataResourceFormat( FmlSessionHandle handle, FmlObjectHandle objectHandle, char * buffer, int bufferLength );
 }
+
 #endif // __cplusplus
 
 #endif // H_FIELDML_API

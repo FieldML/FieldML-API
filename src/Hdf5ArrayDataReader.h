@@ -66,7 +66,7 @@ private:
     hsize_t *hSizes;
     hsize_t *hOffsets;
 
-    Hdf5ArrayDataReader( FieldmlErrorHandler *eHandler, const char *root, BinaryArrayDataSource *source, hid_t fileAccessProperties );
+    Hdf5ArrayDataReader( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, hid_t fileAccessProperties );
     
 public:
     bool ok;
@@ -77,7 +77,7 @@ public:
     
     virtual ~Hdf5ArrayDataReader();
 
-    static Hdf5ArrayDataReader *create( FieldmlErrorHandler *eHandler, const char *root, BinaryArrayDataSource *source );
+    static Hdf5ArrayDataReader *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source );
 };
 #endif //defined FIELDML_HDF5_ARRAY || FIELDML_PHDF5_ARRAY
     

@@ -48,9 +48,17 @@
 
 using namespace std;
 
-TextArrayDataWriter *TextArrayDataWriter::create( FieldmlErrorHandler *eHandler, const char *root, TextArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank )
+TextArrayDataWriter *TextArrayDataWriter::create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank )
 {
-    TextArrayDataWriter *writer = new TextArrayDataWriter( eHandler, root, source, isDouble, append, sizes, rank );
+    TextArrayDataWriter *writer = NULL;
+    
+    if( source->resource->format != PLAIN_TEXT_NAME )
+    {
+        eHandler->setError( FML_ERR_INVALID_OBJECT );
+        return writer;
+    }
+    
+    writer = new TextArrayDataWriter( eHandler, root, source, isDouble, append, sizes, rank );
     if( !writer->ok )
     {
         delete writer;
@@ -60,20 +68,20 @@ TextArrayDataWriter *TextArrayDataWriter::create( FieldmlErrorHandler *eHandler,
 }
 
 
-TextArrayDataWriter::TextArrayDataWriter( FieldmlErrorHandler *eHandler, const char *root, TextArrayDataSource *_source, bool isDouble, bool append, int *sizes, int _rank ) :
+TextArrayDataWriter::TextArrayDataWriter( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *_source, bool isDouble, bool append, int *sizes, int _rank ) :
     ArrayDataWriter( eHandler ),
     source( _source )
 {
     offset = 0;
     
-    if( source->resource->type == DATA_RESOURCE_TEXT_HREF )
+    if( source->resource->type == DATA_RESOURCE_HREF )
     {
-        string path = makeFilename( root, source->resource->href );
+        string path = makeFilename( root, source->resource->description );
         stream = FieldmlOutputStream::createTextFileStream( path, append );
     }
-    else
+    else if( source->resource->type == DATA_RESOURCE_INLINE )
     {
-        stream = FieldmlOutputStream::createStringStream( source->resource->arrayString, append );
+        stream = FieldmlOutputStream::createStringStream( source->resource->description, append );
     }
     
     if( stream == NULL )

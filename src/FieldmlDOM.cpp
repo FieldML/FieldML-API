@@ -136,6 +136,15 @@ static int validate( FieldmlErrorHandler *errorHandler, xmlParserInputBufferPtr 
 
     xmlSchemaFree( schemas );
     
+    xmlErrorPtr err = xmlGetLastError();
+    if( ( err != NULL ) && ( err->message != NULL ) )
+    {
+        string errorMessage = "Validation error ";
+        errorMessage += err->message;
+        errorMessage += " at line " + err->line;
+        errorHandler->logError( errorMessage );
+    }
+    
     return result;
 }
 
@@ -358,78 +367,6 @@ public:
 };
 
 
-class TextArrayDataSourceParser :
-    public NodeParser
-{
-private:
-    const FmlObjectHandle resource;
-
-public:
-    TextArrayDataSourceParser( FmlObjectHandle _resource ) :
-        resource( _resource ) {}
-
-    int parseNode( xmlNodePtr node, ParseState &state )
-    {
-        const char *name = getStringAttribute( node, NAME_ATTRIB );
-        int firstLine = getIntAttribute( node, FIRST_LINE_ATTRIB, 1 );
-        int rank = getIntAttribute( node, RANK_ATTRIB, 1 );
-        int err;
-        
-        FmlObjectHandle dataSource = Fieldml_CreateTextArrayDataSource( state.session, name, resource, firstLine, rank );
-        if( dataSource == FML_INVALID_HANDLE )
-        {
-            state.errorHandler->logError( "Malformed TextArrayDataSource entry data" );
-            return 1;
-        }
-
-        IntVectorParser vectorParser( rank );
-
-        err = vectorParser.parseNode( getFirstChild( node, TEXT_ARRAY_SIZE_TAG ), state );
-        if( err != 0 )
-        {
-            state.errorHandler->logError( "Malformed TextArrayDataSource size data" );
-            return err;
-        }
-        if( Fieldml_SetTextArrayDataSourceSizes( state.session, dataSource, vectorParser.values ) != FML_ERR_NO_ERROR )
-        {
-            state.errorHandler->logError( "TextArrayDataSource has invalid size specification", name );
-        }
-     
-        xmlNodePtr offsetNode = getFirstChild( node, ARRAY_DATA_OFFSET_TAG );
-        if( offsetNode != NULL )
-        {
-            err = vectorParser.parseNode( offsetNode, state );
-            if( err != 0 )
-            {
-                state.errorHandler->logError( "Malformed TextArrayDataSource offset data" );
-                return err;
-            }
-            if( Fieldml_SetArrayDataSourceOffsets( state.session, dataSource, vectorParser.values ) != FML_ERR_NO_ERROR )
-            {
-                state.errorHandler->logError( "TextArrayDataSource has invalid offset specification", name );
-            }
-        }
-
-        xmlNodePtr sizeNode = getFirstChild( node, ARRAY_DATA_SIZE_TAG );
-        if( sizeNode != NULL )
-        {
-            err = vectorParser.parseNode( sizeNode, state );
-            if( err != 0 )
-            {
-                state.errorHandler->logError( "Malformed TextArrayDataSource size data" );
-                return err;
-            }
-            if( Fieldml_SetArrayDataSourceSizes( state.session, dataSource, vectorParser.values ) != FML_ERR_NO_ERROR )
-            {
-                state.errorHandler->logError( "TextArrayDataSource has invalid size specification", name );
-            }
-        }
-
-        return 1;
-    }
-};
-
-
 class TextStringParser :
     public NodeParser
 {
@@ -456,60 +393,6 @@ public:
 };
 
 
-class TextResourceParser :
-    public NodeParser
-{
-public:
-    TextResourceParser() {}
-    
-    int parseNode( xmlNodePtr node, ParseState &state )
-    {
-        const char *name = getStringAttribute( node, NAME_ATTRIB );
-
-        xmlNodePtr textHrefNode = getFirstChild( node, TEXT_RESOURCE_HREF_TAG );
-        xmlNodePtr textStringNode = getFirstChild( node, TEXT_RESOURCE_STRING_TAG );
-        if( ( textHrefNode == NULL ) == ( textStringNode == NULL ) )
-        {
-            state.errorHandler->logError( "Malformed TextResource" );
-            return 1;
-        }
-        
-        FmlObjectHandle resource;
-        
-        if( textHrefNode != NULL )
-        {
-            const char *href = getStringAttribute( textHrefNode, HREF_ATTRIB, XLINK_NAMESPACE_STRING );
-            resource = Fieldml_CreateTextFileDataResource( state.session, name, href );
-        }
-        else
-        {
-            resource = Fieldml_CreateTextInlineDataResource( state.session, name );
-            TextStringParser textStringParser( resource );
-            int err = textStringParser.parseNode( textStringNode, state );
-            if( err != 0 )
-            {
-                return err;
-            }
-        }
-        
-        if( resource == FML_INVALID_HANDLE )
-        {
-            state.errorHandler->logError( "Malformed TextResource" );
-            return 1;
-        }
-        
-        TextArrayDataSourceParser textArrayDataSourceParser( resource );
-        int err = processChildren( node, TEXT_ARRAY_DATA_SOURCE_TAG, state, textArrayDataSourceParser );
-        if( err != 0 )
-        {
-            return err;
-        }
-        
-        return 0;
-    }
-};
-
-
 class ArrayDataSourceParser :
     public NodeParser
 {
@@ -523,11 +406,11 @@ public:
     int parseNode( xmlNodePtr node, ParseState &state )
     {
         const char *name = getStringAttribute( node, NAME_ATTRIB );
-        const char *sourceName = getStringAttribute( node, SOURCE_NAME_ATTRIB );
+        const char *location = getStringAttribute( node, LOCATION_ATTRIB );
         const int rank = getIntAttribute( node, RANK_ATTRIB, -1 );
         int err;
         
-        FmlObjectHandle dataSource = Fieldml_CreateBinaryArrayDataSource( state.session, name, resource, sourceName, rank );
+        FmlObjectHandle dataSource = Fieldml_CreateArrayDataSource( state.session, name, resource, location, rank );
         if( dataSource == FML_INVALID_HANDLE )
         {
             state.errorHandler->logError( "Malformed ArrayDataSource" );
@@ -536,7 +419,7 @@ public:
         
         IntVectorParser vectorParser( rank );
 
-        xmlNodePtr offsetNode = getFirstChild( node, ARRAY_DATA_SIZE_TAG );
+        xmlNodePtr offsetNode = getFirstChild( node, ARRAY_DATA_OFFSET_TAG );
         if( offsetNode != NULL )
         {
             err = vectorParser.parseNode( offsetNode, state );
@@ -565,25 +448,62 @@ public:
                 state.errorHandler->logError( "ArrayDataSource has invalid size specification", name );
             }
         }
+        
+        xmlNodePtr rawSizeNode = getFirstChild( node, RAW_ARRAY_SIZE_TAG );
+        if( rawSizeNode != NULL )
+        {
+            err = vectorParser.parseNode( rawSizeNode, state );
+            if( err != 0 )
+            {
+                state.errorHandler->logError( "Malformed raw array size data" );
+                return err;
+            }
+            if( Fieldml_SetArrayDataSourceRawSizes( state.session, dataSource, vectorParser.values ) != FML_ERR_NO_ERROR )
+            {
+                state.errorHandler->logError( "ArrayDataSource has invalid raw size specification", name );
+            }
+        }
 
         return 0;
     }
 };
 
     
-class ArrayDataResourceParser :
+class DataResourceParser :
     public NodeParser
 {
 public:
-    ArrayDataResourceParser() {}
+    DataResourceParser() {}
     
     int parseNode( xmlNodePtr node, ParseState &state )
     {
         const char *name = getStringAttribute( node, NAME_ATTRIB );
-        const char *href = getStringAttribute( node, HREF_ATTRIB, XLINK_NAMESPACE_STRING );
-        const char *format = getStringAttribute( node, FORMAT_ATTRIB );
+        
+        xmlNodePtr description = getFirstChild( node, DATA_RESOURCE_DESCRIPTION_TAG );
+        
+        xmlNodePtr hrefDescription = getFirstChild( description, DATA_RESOURCE_HREF_TAG );
+        xmlNodePtr stringDescription = getFirstChild( description, DATA_RESOURCE_STRING_TAG );
+        
+        FmlObjectHandle resource = FML_INVALID_HANDLE;
+        
+        if( hrefDescription != NULL )
+        {
+            const char *href = getStringAttribute( hrefDescription, HREF_ATTRIB, XLINK_NAMESPACE_STRING );
+            const char *format = getStringAttribute( hrefDescription, FORMAT_ATTRIB );
+            
+            resource = Fieldml_CreateHrefDataResource( state.session, name, format, href );
+        }
+        else if( stringDescription != NULL )
+        {
+            resource = Fieldml_CreateInlineDataResource( state.session, name );
+            TextStringParser textStringParser( resource );
+            int err = textStringParser.parseNode( stringDescription, state );
+            if( err != 0 )
+            {
+                return err;
+            }
+        }
     
-        FmlObjectHandle resource = Fieldml_CreateArrayDataResource( state.session, name, format, href );
         if( resource == FML_INVALID_HANDLE )
         {
             state.errorHandler->logError( "Invalid array data resource specification", name );
@@ -1345,13 +1265,9 @@ static int parseObjectNode( xmlNodePtr objectNode, ParseState &state )
     state.parseStack.push_back( objectNode );
     
     int err = 0;
-    if( checkName( objectNode, TEXT_RESOURCE_TAG ) )
+    if( checkName( objectNode, DATA_RESOURCE_TAG ) )
     {
-        err = TextResourceParser().parseNode( objectNode, state );
-    }
-    else if( checkName( objectNode, ARRAY_DATA_RESOURCE_TAG ) )
-    {
-        err = ArrayDataResourceParser().parseNode( objectNode, state );
+        err = DataResourceParser().parseNode( objectNode, state );
     }
     else if( checkName( objectNode, REFERENCE_EVALUATOR_TAG ) )
     {
