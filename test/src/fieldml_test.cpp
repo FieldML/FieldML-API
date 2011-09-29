@@ -40,12 +40,8 @@
  */
 
 #include <cstring>
-
-#include <libxml/globals.h>
-#include <libxml/xmlerror.h>
-#include <libxml/parser.h>
-#include <libxml/xmlmemory.h>
-#include <libxml/xmlschemas.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "fieldml_api.h"
 
@@ -674,9 +670,6 @@ int main( int argc, char **argv )
     testCycles();
     
     testHdf5();
-
-    xmlCleanupParser( );
-    xmlMemoryDump( );
     
     return 0;
 }
