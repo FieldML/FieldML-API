@@ -70,8 +70,11 @@ using namespace std;
 static FieldmlSession *getSessionAndSetContext( FmlSessionHandle handle, char * file, int line )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
-    session->setErrorContext( file, line );
-    session->setError( FML_ERR_NO_ERROR );
+    if( session != NULL )
+    {
+        session->setErrorContext( file, line );
+        session->setError( FML_ERR_NO_ERROR );
+    }
     return session;
 }
 
