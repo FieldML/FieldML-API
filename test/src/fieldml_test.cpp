@@ -323,7 +323,7 @@ void testMisc()
     FmlObjectHandle continousType = Fieldml_CreateContinuousType( handle, "example.continuous_type" );
     Fieldml_CreateContinuousTypeComponents( handle, continousType, "example.component_ensemble", 3 );
     
-    Fieldml_WriteFile( handle, "foo.xml" );
+    Fieldml_WriteFile( handle, ".\\output\\foo.xml" );
     
     Fieldml_Destroy( handle );
     
@@ -576,7 +576,7 @@ int testCycles()
 }
 
 
-int testHdf5()
+int testHdf5Read()
 {
     bool testOk = true;
     
@@ -584,16 +584,15 @@ int testHdf5()
 
     FmlSessionHandle session = Fieldml_Create( "test", "test" );
     
-    FmlObjectHandle resource = Fieldml_CreateHrefDataResource( session, "test.resource", "HDF5", "test.h5" );
-    FmlObjectHandle sourceD = Fieldml_CreateArrayDataSource( session, "test.source_double", resource, "test/foo2", 2 );
+    FmlObjectHandle resource = Fieldml_CreateHrefDataResource( session, "test.resource2", "HDF5", "./input/I16BE.h5" );
+    FmlObjectHandle sourceI = Fieldml_CreateArrayDataSource( session, "test.source2_int", resource, "I16BE", 2 );
+    FmlObjectHandle sourceD = Fieldml_CreateArrayDataSource( session, "test.source2_double", resource, "DOUBLE", 2 );
     
-    FmlObjectHandle resource2 = Fieldml_CreateHrefDataResource( session, "test.resource2", "HDF5", "I16BE.h5" );
-    FmlObjectHandle source2I = Fieldml_CreateArrayDataSource( session, "test.source2_int", resource2, "I16BE", 2 );
-    FmlObjectHandle source2D = Fieldml_CreateArrayDataSource( session, "test.source2_double", resource2, "DOUBLE", 2 );
+    FmlObjectHandle reader = Fieldml_OpenReader( session, sourceI );
     
-    FmlObjectHandle cType = Fieldml_CreateContinuousType( session, "test.scalar_real" );
-
-    FmlObjectHandle reader = Fieldml_OpenReader( session, source2I );
+    const int INT_FILL = 12345;
+    const double DOUBLE_FILL = 0.12345f;
+    const double TOLERANCE = 1e-10;
     
     int offsets[1];
     offsets[0] = 2;
@@ -604,34 +603,117 @@ int testHdf5()
     int dataI[20];
     for( int i = 0; i < 20; i++ )
     {
-        dataI[i] = 12345;
+        dataI[i] = INT_FILL;
     }
 
     Fieldml_ReadIntSlab( session, reader, offsets, sizes, dataI );
-    
+        
     Fieldml_CloseReader( session, reader );
+
+    for( int i = 0; i < sizes[0]; i++ )
+    {
+        const int index = i + offsets[0];
+        const int expected = (index * 100) + index;
+        if( dataI[i] != expected )
+        {
+            printf("Data mismatch in I16BE.h5/I16BE. Expecting %d, got %d\n", expected, dataI[i] );
+            testOk = false;
+            break;
+        }
+    }
+    for( int i = sizes[0]; i < 20; i++ )
+    {
+        if( dataI[i] != INT_FILL )
+        {
+            printf("Data over-read in I16BE.h5/I16BE. Expecting %d, got %d\n", INT_FILL, dataI[i] );
+            testOk = false;
+            break;
+        }
+    }
     
     reader = Fieldml_OpenReader( session, sourceD );
+    
+    offsets[0] = 4;
+    sizes[0] = 6;
     
     double dataD[20];
     for( int i = 0; i < 20; i++ )
     {
-        dataD[i] = 0.12345;
+        dataD[i] = DOUBLE_FILL;
     }
     
-    sizes[0] = 2;
     Fieldml_ReadDoubleSlab( session, reader, offsets, sizes, dataD );
     
+    reader = Fieldml_OpenReader( session, sourceD );
+    
     Fieldml_CloseReader( session, reader );
+
+    for( int i = 0; i < sizes[0]; i++ )
+    {
+        const int index = (i + offsets[0])%6;
+        const double expected = (index * 100) + ( index *0.001 );
+        double delta = dataD[i] - expected;
+        if( delta > TOLERANCE )
+        {
+            printf("Data mismatch in I16BE.h5/I16BE. Expecting %g got %g (%g)\n", expected, dataD[i], delta );
+            testOk = false;
+            break;
+        }
+    }
+    for( int i = sizes[0]; i < 20; i++ )
+    {
+        if( dataD[i] != DOUBLE_FILL )
+        {
+            printf("Data over-read in I16BE.h5/I16BE. Expecting %g, got %g\n", DOUBLE_FILL, dataD[i] );
+            testOk = false;
+            break;
+        }
+    }
+    
+    Fieldml_Destroy( session );
+    
+    if( testOk ) 
+    {
+        printf( "TestHdf5Read - ok\n" );
+    }
+    else
+    {
+        printf( "TestHdf5Read - failed\n" );
+    }
+    
+    return 0;
+}
+
+
+int testHdf5Write()
+{
+    bool testOk = true;
     
     printf("Testing HDF5 array write\n");
+
+    FmlSessionHandle session = Fieldml_Create( "test", "test" );
     
+    FmlObjectHandle cType = Fieldml_CreateContinuousType( session, "test.scalar_real" );
+    
+    FmlObjectHandle resource = Fieldml_CreateHrefDataResource( session, "test.resource", "HDF5", "./output/test.h5" );
+    FmlObjectHandle sourceD = Fieldml_CreateArrayDataSource( session, "test.source_double", resource, "foo2", 2 );
+    
+    double dataD[20];
+    const double DOUBLE_FILL = 0.12345;
     for( int i = 0; i < 20; i++ )
     {
-        dataD[i] = i * 100.001;
+        dataD[i] = DOUBLE_FILL;
     }
-    sizes[0] = 12;
-    FmlObjectHandle writer = Fieldml_OpenWriter( session, source2D, cType, 1, sizes, 1 );
+
+    for( int i = 0; i < 6; i++ )
+    {
+        dataD[i] = ( 200 * i ) + ( 0.002 * i );
+    }
+    
+    int offsets[1];
+    int sizes[1];
+
+    FmlObjectHandle writer = Fieldml_OpenWriter( session, sourceD, cType, 1, sizes, 1 );
 
     offsets[0] = 0;
     sizes[0] = 6;
@@ -643,13 +725,15 @@ int testHdf5()
     
     Fieldml_CloseWriter( session, writer );
     
+    Fieldml_Destroy( session );
+    
     if( testOk ) 
     {
-        printf( "TestHdf5 - ok\n" );
+        printf( "TestHdf5Write - ok\n" );
     }
     else
     {
-        printf( "TestHdf5 - failed\n" );
+        printf( "TestHdf5Write - failed\n" );
     }
     
     return 0;
@@ -665,11 +749,11 @@ int main( int argc, char **argv )
     }
     testMisc();
     
-//    testStream();
-    
     testCycles();
     
-    testHdf5();
+    testHdf5Read();
+    
+    testHdf5Write();
     
     return 0;
 }
