@@ -56,10 +56,7 @@ class SimpleTestException
 public:
     const std::string message;
 
-    SimpleTestException( std::string _message ) :
-        message( _message )
-    {
-    }
+    SimpleTestException( std::string _message );
 };
 
 
@@ -75,54 +72,19 @@ private:
     int excepted;
 
 public:
-    SimpleTestRecorder()
-    {
-    }
-
-    
-    void reset()
-    {
-        passed = 0;
-        failed = 0;
-        excepted = 0;
-    }
-
-    
-    void checkAndThrow( int expr, const std::string &message )
-    {
-        if( !expr )
-        {
-            excepted++;
-            throw SimpleTestException( message );
-        }
-        else
-        {
-            passed++;
-        }
-    }
+    SimpleTestRecorder();
     
     
-    void checkAndReport( int expr, const std::string &message )
-    {
-        if( !expr )
-        {
-            failed++;
-            std::cout << message << std::endl;
-        }
-        else
-        {
-            passed++;
-        }
-    }
+    void reset();
+    
+    
+    void checkAndThrow( int expr, const std::string &message );
+    
+    
+    void checkAndReport( int expr, const std::string &message );
+    
 
-
-    void assert( int expr, const std::string &exprString )
-    {
-        std::stringstream message;
-
-        message << "Assert failed on " << exprString << ".";
-        checkAndThrow( expr, message.str() );
-    }
+    void assert( int expr, const std::string &exprString );
 
 
     template<typename T> void assertEquals( T const &expected, T const &actual, const std::string &actualName )
@@ -146,19 +108,10 @@ public:
     }
 
     
-    void assertEquals( const char *const &expected, char *const &actual, const std::string &actualName )
-    {
-        assertEquals( std::string( expected ), std::string( actual ), actualName );
-    }
+    void assertEquals( const char *const &expected, char *const &actual, const std::string &actualName );
 
-
-    void check( int expr, const char * const exprString )
-    {
-        std::stringstream message;
-        
-        message << "Check failed on " << exprString << ".";
-        checkAndReport( expr, message.str() );
-    }
+    
+    void check( int expr, const char * const exprString );
 
 
     template<typename T, typename S> void checkEquals( T const &expected, S const &actual, const std::string &actualName )
@@ -182,18 +135,10 @@ public:
     }
 
     
-    void checkEquals( const char *const &expected, char *const &actual, const std::string &actualName )
-    {
-        checkEquals( std::string( expected ), std::string( actual ), actualName );
-    }
+    void checkEquals( const char *const &expected, char *const &actual, const std::string &actualName );
 
 
-    void report()
-    {
-        std::cout << "Passed: " << passed << std::endl;
-        std::cout << "Failed: " << failed << std::endl;
-        std::cout << "Excepted: " << excepted << std::endl;
-    }
+    void report();
 };
 
 
@@ -207,23 +152,16 @@ public:
 
     const std::string name;
 
-    SimpleTest( void (*_testFunction)( SimpleTestRecorder &__recorder ), const std::string &_name ) :
-        name( _name )
-    {
-        testFunction = _testFunction;
-        tests.push_back( this );
-    }
+    SimpleTest( void (*_testFunction)( SimpleTestRecorder &__recorder ), const std::string &_name );
 };
 
-std::vector<SimpleTest*> SimpleTest::tests;
-
-//Macro tried to avoid name-collision with SimpleTestRecorder parameter name, as it is hidden from the user.
+//Macro tries to avoid name-collision with SimpleTestRecorder parameter name, as it is hidden from the user.
 #define SIMPLE_TEST( name ) \
-    void name( SimpleTestRecorder &__recorder ); \
+    static void name( SimpleTestRecorder &__recorder ); \
     static SimpleTest SimpleTest##name( name, #name ); \
-    void name( SimpleTestRecorder &__recorder )
+    static void name( SimpleTestRecorder &__recorder )
 
-#define SIMPLE_ASSERT( expr ) __recorder.assert( ( expr ) , #expr )
+#define SIMPLE_ASSERT( expr ) __recorder.assert( ( expr ), #expr )
 
 #define SIMPLE_ASSERT_EQUALS( expected, actual ) __recorder.assertEquals( ( expected ), ( actual ), #actual )
 
@@ -232,30 +170,4 @@ std::vector<SimpleTest*> SimpleTest::tests;
 #define SIMPLE_CHECK_EQUALS( expected, actual ) __recorder.checkEquals( ( expected ), ( actual ) , #actual )
 
 
-int main( int argc, char **argv )
-{
-    SimpleTestRecorder recorder;
-    
-    recorder.reset();
-
-    std::cout << "Running tests..." << std::endl;
-
-    for( std::vector<SimpleTest*>::const_iterator i = SimpleTest::tests.begin(); i != SimpleTest::tests.end(); i++ )
-    {
-        std::cout << (*i)->name << "..." << std::endl;
-        try
-        {
-            (*i)->testFunction( recorder );
-        }
-        catch( SimpleTestException e )
-        {
-            std::cout << e.message << std::endl;
-        }
-    }
-    
-    recorder.report();
-
-    std::cout << "Done." << std::endl;
-}
-
-#endif //HEST
+#endif //H_SIMPLE_TEST

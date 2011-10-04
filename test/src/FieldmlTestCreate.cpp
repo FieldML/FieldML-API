@@ -43,12 +43,16 @@
 
 #include "SimpleTest.h"
 
+/**
+ * Ensure that newly created sessions have the correct state.
+ */
 SIMPLE_TEST( FieldmlCreateTest )
 {
     const int MAX_STRLEN = 255;
     char *strbuf = (char*)malloc(MAX_STRLEN);
 
     FmlSessionHandle session = Fieldml_Create( "test_path", "test" );
+    Fieldml_SetDebug( session, 0 );
     SIMPLE_ASSERT( session != FML_INVALID_HANDLE );
     
     int length = Fieldml_CopyRegionName( session, strbuf, MAX_STRLEN );
@@ -62,8 +66,144 @@ SIMPLE_TEST( FieldmlCreateTest )
     SIMPLE_ASSERT_EQUALS( 0, count );
 
     Fieldml_Destroy( session );
+}
+
+
+SIMPLE_TEST( FieldmlCreateContinuousTypeTest )
+{
+    FmlSessionHandle session = Fieldml_Create( "test_path", "test" );
+    Fieldml_SetDebug( session, 0 );
+    SIMPLE_ASSERT( session != FML_INVALID_HANDLE );
+
+    int count = Fieldml_GetObjectCount( session, FHT_CONTINUOUS_TYPE );
+    SIMPLE_ASSERT_EQUALS( 0, count );
     
-    count = Fieldml_GetTotalObjectCount( session );
+    const char *name = "test.continuous";
+    FmlObjectHandle typeHandle = Fieldml_CreateContinuousType( session, NULL );
+    SIMPLE_ASSERT( typeHandle == FML_INVALID_HANDLE );
+
+    typeHandle = Fieldml_CreateContinuousType( -1, name );
+    SIMPLE_ASSERT( typeHandle == FML_INVALID_HANDLE );
+
+    
+    //Check the uninitialized state of the continuous type.
+    typeHandle = Fieldml_CreateContinuousType( session, name );
+    SIMPLE_ASSERT( typeHandle != FML_INVALID_HANDLE );
+    
+    FmlObjectHandle components = Fieldml_GetTypeComponentEnsemble( session, typeHandle );
+    SIMPLE_ASSERT_EQUALS( FML_INVALID_HANDLE, components );
+    
+    count = Fieldml_GetTypeComponentCount( session, typeHandle );
+    //NOTE: Componentless continuous types are scalars, so they have one component, but no index.
+    SIMPLE_ASSERT_EQUALS( 1, count );
+    
+    
+    //Give the continuous type some components. 
+    const char *componentName = "test.continuous.component";
+    const int COMPONENT_COUNT = 3;
+    components = Fieldml_CreateContinuousTypeComponents( session, typeHandle, componentName, COMPONENT_COUNT );
+    SIMPLE_ASSERT( components != FML_INVALID_HANDLE );
+    
+    count = Fieldml_GetTypeComponentCount( session, typeHandle );
+    SIMPLE_ASSERT_EQUALS( COMPONENT_COUNT, count );
+    
+    FmlObjectHandle componentType = Fieldml_GetTypeComponentEnsemble( session, typeHandle );
+    SIMPLE_ASSERT( componentType == components );
+    
+    
+    //Attempt to give the continuous type some new components.
+    const int NEW_COMPONENT_COUNT = 8;
+    const char *newComponentName = "test.continuous.new_component";
+    FmlObjectHandle newComponents = Fieldml_CreateContinuousTypeComponents( session, typeHandle, newComponentName, NEW_COMPONENT_COUNT );
+    SIMPLE_ASSERT( newComponents == FML_INVALID_HANDLE );
+    
+    componentType = Fieldml_GetTypeComponentEnsemble( session, typeHandle );
+    SIMPLE_ASSERT( componentType == components );
+
+    
+    //Change the component count.
+    FmlErrorNumber err = Fieldml_SetEnsembleMembersRange( session, components, 1, NEW_COMPONENT_COUNT, 1 );
+    SIMPLE_ASSERT_EQUALS( FML_ERR_NO_ERROR, err );
+    
+    count = Fieldml_GetTypeComponentCount( session, typeHandle );
+    SIMPLE_ASSERT_EQUALS( NEW_COMPONENT_COUNT, count );
+    
+    count = Fieldml_GetMemberCount( session, components );
+    SIMPLE_ASSERT_EQUALS( NEW_COMPONENT_COUNT, count );
+
+    count = Fieldml_GetObjectCount( session, FHT_CONTINUOUS_TYPE );
+    SIMPLE_ASSERT_EQUALS( 1, count );
+    
+    
+    Fieldml_Destroy( session );
+}
+
+
+SIMPLE_TEST( FieldmlCreateEnsembleTypeTest )
+{
+    FmlSessionHandle session = Fieldml_Create( "test_path", "test" );
+    Fieldml_SetDebug( session, 0 );
+    SIMPLE_ASSERT( session != FML_INVALID_HANDLE );
+
+    int count = Fieldml_GetObjectCount( session, FHT_ENSEMBLE_TYPE );
+    SIMPLE_ASSERT_EQUALS( 0, count );
+    
+    const char *name = "test.ensemble";
+    FmlObjectHandle typeHandle = Fieldml_CreateEnsembleType( session, NULL );
+    SIMPLE_ASSERT( typeHandle == FML_INVALID_HANDLE );
+
+    typeHandle = Fieldml_CreateEnsembleType( -1, name );
+    SIMPLE_ASSERT( typeHandle == FML_INVALID_HANDLE );
+
+    
+    //Check the uninitialized state of the ensemble type.
+    typeHandle = Fieldml_CreateEnsembleType( session, name );
+    SIMPLE_ASSERT( typeHandle != FML_INVALID_HANDLE );
+    
+    count = Fieldml_GetMemberCount( session, typeHandle );
+    SIMPLE_ASSERT_EQUALS( 0, count );
+
+    FmlErrorNumber err = Fieldml_SetEnsembleMembersRange( session, typeHandle, -1, -8, 1 );
+    SIMPLE_ASSERT( err != FML_ERR_NO_ERROR );
+
+    const int COMPONENT_MAX = 10;
+    const int COMPONENT_MIN = 3;
+    const int COMPONENT_STRIDE = 2;
+    err = Fieldml_SetEnsembleMembersRange( session, typeHandle, COMPONENT_MIN, COMPONENT_MAX, COMPONENT_STRIDE );
+    SIMPLE_ASSERT_EQUALS( FML_ERR_NO_ERROR, err );
+    
+    count = Fieldml_GetMemberCount( session, typeHandle );
+    SIMPLE_ASSERT_EQUALS( (COMPONENT_MAX - COMPONENT_MIN + 1)/2, count );
+    
+    count = Fieldml_GetEnsembleMembersMin( session, typeHandle );
+    SIMPLE_ASSERT_EQUALS( COMPONENT_MIN, count );
+    
+    count = Fieldml_GetEnsembleMembersMax( session, typeHandle );
+    SIMPLE_ASSERT_EQUALS( COMPONENT_MAX, count );
+    
+    count = Fieldml_GetEnsembleMembersStride( session, typeHandle );
+    SIMPLE_ASSERT_EQUALS( COMPONENT_STRIDE, count );
+
+
+    count = Fieldml_GetObjectCount( session, FHT_ENSEMBLE_TYPE );
+    SIMPLE_ASSERT_EQUALS( 1, count );
+    
+    Fieldml_Destroy( session );
+}
+
+
+/**
+ * Ensure that destroyed sessions are inaccessible.
+ */
+SIMPLE_TEST( FieldmlDestroyTest )
+{
+    FmlSessionHandle session = Fieldml_Create( "test_path", "test" );
+    Fieldml_SetDebug( session, 0 );
+    SIMPLE_ASSERT( session != FML_INVALID_HANDLE );
+    
+    Fieldml_Destroy( session );
+
+    int count = Fieldml_GetTotalObjectCount( session );
     SIMPLE_ASSERT_EQUALS( -1, count );
     
     count = Fieldml_GetImportSourceCount( session );
