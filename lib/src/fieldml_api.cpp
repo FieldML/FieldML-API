@@ -575,7 +575,8 @@ FmlErrorNumber Fieldml_SetDebug( FmlSessionHandle handle, int debug )
 
 FmlErrorNumber Fieldml_GetLastError( FmlSessionHandle handle )
 {
-    FieldmlSession *session = getSession( handle );
+    //Bypass the error state reset in getSession.
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
@@ -2673,6 +2674,11 @@ FmlObjectHandle Fieldml_CreateContinuousTypeComponents( FmlSessionHandle handle,
     }
     
     ContinuousType *type = (ContinuousType*)object;
+    if( type->componentType != FML_INVALID_HANDLE )
+    {
+        session->setError( FML_ERR_INVALID_OBJECT );
+        return FML_INVALID_HANDLE;
+    }
     
     if( count < 1 )
     {
