@@ -147,7 +147,7 @@ int main( int argc, char **argv )
 
     for( std::vector<SimpleTest*>::const_iterator i = SimpleTest::tests.begin(); i != SimpleTest::tests.end(); i++ )
     {
-        std::cout << ( *i )->name << "..." << std::endl;
+        std::cout << ( *i )->name << std::endl;
         try
         {
             ( *i )->testFunction( recorder );
