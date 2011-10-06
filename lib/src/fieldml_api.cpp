@@ -1687,6 +1687,16 @@ FmlErrorNumber Fieldml_SetKeyDataSource( FmlSessionHandle handle, FmlObjectHandl
     {
         return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
+    
+    ArrayDataSource *source = getArrayDataSource( session, dataSource );
+    if( source == NULL )
+    {
+        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+    }
+    else if( source->rank != 2 )
+    {
+        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+    }
 
     FieldmlObject *object = getObject( session, objectHandle );
     if( object == NULL )
@@ -1747,11 +1757,23 @@ FmlErrorNumber Fieldml_AddDenseIndexEvaluator( FmlSessionHandle handle, FmlObjec
         return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
     
-    if( ( orderHandle != FML_INVALID_HANDLE ) && ( Fieldml_GetObjectType( handle, orderHandle ) != FHT_DATA_SOURCE ) )
+    if( orderHandle != FML_INVALID_HANDLE )
     {
-        return session->setError( FML_ERR_INVALID_PARAMETER_4 );
+        if( Fieldml_GetObjectType( handle, orderHandle ) != FHT_DATA_SOURCE )
+        {
+            return session->setError( FML_ERR_INVALID_PARAMETER_4 );
+        }
+            
+        ArrayDataSource *orderSource = getArrayDataSource( session, orderHandle );
+        if( orderSource == NULL )
+        {
+            return session->setError( FML_ERR_INVALID_PARAMETER_4 );
+        }
+        else if( orderSource->rank != 1 )
+        {
+            return session->setError( FML_ERR_INVALID_PARAMETER_4 );
+        }
     }
-
     
     if( !checkCyclicDependency( session, objectHandle, indexHandle ) )
     {
@@ -3687,7 +3709,7 @@ FmlObjectHandle Fieldml_GetDataSource( FmlSessionHandle handle, FmlObjectHandle 
     FieldmlSession *session = getSession( handle );
     if( session == NULL )
     {
-        return -1;
+        return FML_INVALID_HANDLE;
     }
 
     FieldmlObject *object = getObject( session, objectHandle );
@@ -3739,7 +3761,7 @@ FmlObjectHandle Fieldml_GetDataSource( FmlSessionHandle handle, FmlObjectHandle 
         dataSourceHandle = FML_INVALID_HANDLE;
     }
     
-    return dataSourceHandle;;
+    return dataSourceHandle;
 }
 
 
@@ -3778,7 +3800,7 @@ FmlObjectHandle Fieldml_GetKeyDataSource( FmlSessionHandle handle, FmlObjectHand
         dataSourceHandle = FML_INVALID_HANDLE;
     }
     
-    return dataSourceHandle;;
+    return dataSourceHandle;
 }
 
 
