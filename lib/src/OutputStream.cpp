@@ -47,8 +47,6 @@
 #include "fieldml_api.h"
 #include "OutputStream.h"
 
-static const int BUFFER_SIZE = 1024;
-
 //Using a #define because the relevant buffer is allocated on stack.
 #define NBUFFER_SIZE 64
 

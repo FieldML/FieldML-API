@@ -63,7 +63,7 @@ private:
     
     virtual bool checkDimensions( int *offsets, int *sizes );
     
-    virtual bool applyOffsets( int *offsets, int depth );
+    virtual bool applyOffsets( int *offsets, int *sizes, int depth, bool isHead );
     
     virtual FmlErrorNumber readIntSlice( int *offsets, int *sizes, int *valueBuffer, int depth, int *bufferPos );
     

@@ -3530,8 +3530,7 @@ FmlErrorNumber Fieldml_AddInlineData( FmlSessionHandle handle, FmlObjectHandle o
     }
     if( data == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
-        return FML_INVALID_HANDLE;
+        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
 
     if( !checkLocal( session, objectHandle ) )
@@ -3617,7 +3616,7 @@ int Fieldml_CopyInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandl
     if( resource->type != DATA_RESOURCE_INLINE )
     {
         session->setError( FML_ERR_INVALID_OBJECT );
-        return NULL;
+        return -1;
     }
     
     if( offset >= resource->description.length() )

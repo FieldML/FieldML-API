@@ -71,6 +71,10 @@ ArrayDataReader * ArrayDataReader::create( FieldmlErrorHandler *eHandler, const 
     {
         reader = TextArrayDataReader::create( eHandler, root, source );
     }
+    else
+    {
+        eHandler->setError( FML_ERR_UNSUPPORTED );
+    }
     
     return reader;
 }

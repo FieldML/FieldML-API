@@ -69,6 +69,10 @@ ArrayDataWriter *ArrayDataWriter::create( FieldmlErrorHandler *eHandler, const c
     {
         writer = TextArrayDataWriter::create( eHandler, root, source, isDouble, append, sizes, rank );
     }
+    else
+    {
+        eHandler->setError( FML_ERR_UNSUPPORTED );
+    }
     
     return writer;
 }

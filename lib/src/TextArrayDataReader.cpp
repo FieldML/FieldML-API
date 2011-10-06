@@ -98,7 +98,14 @@ bool TextArrayDataReader::checkDimensions( int *offsets, int *sizes )
         {
             return false;
         }
-        if( source->offsets[i] + offsets[i] + sizes[i] > source->sizes[i] )
+        
+        int rawSize = source->sizes[i];
+        if( rawSize == 0 )
+        {
+            //NOTE: Intentional. If the array-source size has not been set, use the underlying size.
+            rawSize = source->rawSizes[i];
+        }
+        if( source->offsets[i] + offsets[i] + sizes[i] > rawSize )
         {
             return false;
         }
@@ -133,17 +140,27 @@ FmlErrorNumber TextArrayDataReader::skipPreamble()
 }
 
 
-bool TextArrayDataReader::applyOffsets( int *offsets, int depth )
+bool TextArrayDataReader::applyOffsets( int *offsets, int *sizes, int depth, bool isHead )
 {
     long count = 1;
     
-    for( int i = 0; i < depth - 1; i++ )
+    for( int i = depth+1; i < source->rank; i++ )
     {
         //NOTE This could overflow in the event that someone puts that much data into a text file. Probability: Lilliputian.
         count *= source->rawSizes[i];
     }
     
-    for( int j = 0; j < source->offsets[depth-1] + offsets[depth-1]; j++ )
+    int sliceCount;
+    if( isHead )
+    {
+        sliceCount = source->offsets[depth] + offsets[depth];
+    }
+    else
+    {
+        sliceCount = source->rawSizes[depth] - ( source->offsets[depth] + offsets[depth] + sizes[depth] );
+    }
+    
+    for( int j = 0; j < sliceCount; j++ )
     {
         for( int i = 0; i < count; i++ )
         {
@@ -157,14 +174,14 @@ bool TextArrayDataReader::applyOffsets( int *offsets, int depth )
 
 FmlErrorNumber TextArrayDataReader::readIntSlice( int *offsets, int *sizes, int *valueBuffer, int depth, int *bufferPos )
 {
-    if( !applyOffsets( offsets, depth ) )
+    if( !applyOffsets( offsets, sizes, depth, true ) )
     {
         return eHandler->setError( FML_ERR_IO_UNEXPECTED_EOF );
     }
     
-    if( depth == 1 )
+    if( depth == source->rank - 1 )
     {
-        for( int i = 0; i < sizes[0]; i++ )
+        for( int i = 0; i < sizes[depth]; i++ )
         {
             valueBuffer[*bufferPos] = stream->readInt();
             (*bufferPos)++;
@@ -173,18 +190,23 @@ FmlErrorNumber TextArrayDataReader::readIntSlice( int *offsets, int *sizes, int 
         {
             return eHandler->setError( FML_ERR_IO_UNEXPECTED_EOF );
         }
-        
-        return FML_ERR_NO_ERROR;
     }
-
-    int err;
-    for( int i = 0; i < sizes[depth-1]; i++ )
+    else
     {
-        err = readIntSlice( offsets, sizes, valueBuffer, depth - 1, bufferPos );
-        if( err != FML_ERR_NO_ERROR )
+        int err;
+        for( int i = 0; i < sizes[depth]; i++ )
         {
-            return err;
+            err = readIntSlice( offsets, sizes, valueBuffer, depth + 1, bufferPos );
+            if( err != FML_ERR_NO_ERROR )
+            {
+                return err;
+            }
         }
+    }
+    
+    if( ( depth > 0 ) && ( !applyOffsets( offsets, sizes, depth, false ) ) )
+    {
+        return eHandler->setError( FML_ERR_IO_UNEXPECTED_EOF );
     }
     
     return FML_ERR_NO_ERROR;
@@ -212,20 +234,20 @@ FmlErrorNumber TextArrayDataReader::readIntSlab( int *offsets, int *sizes, int *
     }
     
     int bufferPos = 0;
-    return readIntSlice( offsets, sizes, valueBuffer, source->rank, &bufferPos );
+    return readIntSlice( offsets, sizes, valueBuffer, 0, &bufferPos );
 }
 
 
 FmlErrorNumber TextArrayDataReader::readDoubleSlice( int *offsets, int *sizes, double *valueBuffer, int depth, int *bufferPos )
 {
-    if( !applyOffsets( offsets, depth ) )
+    if( !applyOffsets( offsets, sizes, depth, true ) )
     {
         return eHandler->setError( FML_ERR_IO_UNEXPECTED_EOF );
     }
     
-    if( depth == 1 )
+    if( depth == source->rank - 1 )
     {
-        for( int i = 0; i < sizes[0]; i++ )
+        for( int i = 0; i < sizes[depth]; i++ )
         {
             valueBuffer[*bufferPos] = stream->readDouble();
             (*bufferPos)++;
@@ -234,23 +256,26 @@ FmlErrorNumber TextArrayDataReader::readDoubleSlice( int *offsets, int *sizes, d
         {
             return eHandler->setError( FML_ERR_IO_UNEXPECTED_EOF );
         }
-        
-        return FML_ERR_NO_ERROR;
     }
     else
     {
         int err;
-        for( int i = 0; i < sizes[depth-1]; i++ )
+        for( int i = 0; i < sizes[depth]; i++ )
         {
-            err = readDoubleSlice( offsets, sizes, valueBuffer, depth - 1, bufferPos );
+            err = readDoubleSlice( offsets, sizes, valueBuffer, depth + 1, bufferPos );
             if( err != FML_ERR_NO_ERROR )
             {
                 return err;
             }
         }
-        
-        return FML_ERR_NO_ERROR;
     }
+    
+    if( ( depth > 0 ) && ( !applyOffsets( offsets, sizes, depth, false ) ) )
+    {
+        return eHandler->setError( FML_ERR_IO_UNEXPECTED_EOF );
+    }
+    
+    return FML_ERR_NO_ERROR;
 }
 
 
@@ -275,7 +300,7 @@ FmlErrorNumber TextArrayDataReader::readDoubleSlab( int *offsets, int *sizes, do
     }
     
     int bufferPos = 0;
-    return readDoubleSlice( offsets, sizes, valueBuffer, source->rank, &bufferPos );
+    return readDoubleSlice( offsets, sizes, valueBuffer, 0, &bufferPos );
 }
 
 
