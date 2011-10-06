@@ -75,6 +75,10 @@ class NodeParser
 {
 public:
     virtual int parseNode( xmlNodePtr node, ParseState &state ) = 0;
+    
+    virtual ~NodeParser()
+    {
+    }
 };
 
 //========================================================================
