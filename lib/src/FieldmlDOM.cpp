@@ -143,9 +143,10 @@ static int validate( FieldmlErrorHandler *errorHandler, xmlParserInputBufferPtr 
     xmlErrorPtr err = xmlGetLastError();
     if( ( err != NULL ) && ( err->message != NULL ) )
     {
-        string errorMessage = "Validation error ";
+        string errorMessage = "Validation error in ";
+        errorMessage += resourceName;
+        errorMessage += ": ";
         errorMessage += err->message;
-        errorMessage += " at line " + err->line;
         errorHandler->logError( errorMessage );
     }
     
@@ -1267,7 +1268,7 @@ static int parseObjectNode( xmlNodePtr objectNode, ParseState &state )
     }
     
     state.parseStack.push_back( objectNode );
-    
+
     int err = 0;
     if( checkName( objectNode, DATA_RESOURCE_TAG ) )
     {
