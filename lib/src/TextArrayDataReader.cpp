@@ -103,9 +103,9 @@ bool TextArrayDataReader::checkDimensions( int *offsets, int *sizes )
         if( rawSize == 0 )
         {
             //NOTE: Intentional. If the array-source size has not been set, use the underlying size.
-            rawSize = source->rawSizes[i];
+            rawSize = source->rawSizes[i] - source->offsets[i];
         }
-        if( source->offsets[i] + offsets[i] + sizes[i] > rawSize )
+        if( offsets[i] + sizes[i] > rawSize )
         {
             return false;
         }
