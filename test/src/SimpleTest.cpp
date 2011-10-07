@@ -41,8 +41,10 @@
 
 #include "SimpleTest.h"
 
+using namespace std;
 
-SimpleTestException::SimpleTestException( std::string _message ) :
+
+SimpleTestException::SimpleTestException( string _message ) :
     message( _message )
 {
 }
@@ -61,7 +63,7 @@ void SimpleTestRecorder::reset()
 }
 
 
-void SimpleTestRecorder::checkAndThrow( int expr, const std::string &message )
+void SimpleTestRecorder::checkAndThrow( int expr, const string &message )
 {
     if( !expr )
     {
@@ -75,66 +77,65 @@ void SimpleTestRecorder::checkAndThrow( int expr, const std::string &message )
 }
 
 
-void SimpleTestRecorder::checkAndReport( int expr, const std::string &message )
+void SimpleTestRecorder::assert( int expr, const string &exprString )
 {
-    if( !expr )
-    {
-        failed++;
-        std::cout << message << std::endl;
-    }
-    else
-    {
-        passed++;
-    }
-}
-
-
-void SimpleTestRecorder::assert( int expr, const std::string &exprString )
-{
-    std::stringstream message;
+    stringstream message;
 
     message << "Assert failed on " << exprString << ".";
     checkAndThrow( expr, message.str() );
 }
 
 
-void SimpleTestRecorder::assertEquals( const char * const &expected, char * const &actual, const std::string &actualName )
+void SimpleTestRecorder::assertEquals( const char * const &expected, char * const &actual, const string &actualName )
 {
-    assertEquals( std::string( expected ), std::string( actual ), actualName );
+    assertEquals( string( expected ), string( actual ), actualName );
 }
 
 
-void SimpleTestRecorder::check( int expr, const char * const exprString )
+void SimpleTestRecorder::assertEquals( const int &expected, const unsigned int &actual, const string &actualName )
 {
-    std::stringstream message;
-
-    message << "Check failed on " << exprString << ".";
-    checkAndReport( expr, message.str() );
+    if( expected < 0 )
+    {
+        stringstream message;
+        
+        message << "Assert failed on " << actualName << ". Expected " << expected << ", got " << actual << ".";
+        checkAndThrow( false, message.str() );
+    }
+    
+    assertEquals( (const unsigned int)expected, actual, actualName );
 }
 
 
-void SimpleTestRecorder::checkEquals( const char * const &expected, char * const &actual, const std::string &actualName )
+void SimpleTestRecorder::assertEquals( const unsigned int &expected, const int &actual, const string &actualName )
 {
-    checkEquals( std::string( expected ), std::string( actual ), actualName );
+    if( actual < 0 )
+    {
+        stringstream message;
+        
+        message << "Assert failed on " << actualName << ". Expected " << expected << ", got " << actual << ".";
+        checkAndThrow( false, message.str() );
+    }
+
+    assertEquals( expected, (const unsigned int)actual, actualName );
 }
 
 
 void SimpleTestRecorder::report()
 {
-    std::cout << "Passed: " << passed << std::endl;
-    std::cout << "Failed: " << failed << std::endl;
-    std::cout << "Excepted: " << excepted << std::endl;
+    cout << "Passed: " << passed << endl;
+    cout << "Failed: " << failed << endl;
+    cout << "Excepted: " << excepted << endl;
 }
 
 
-SimpleTest::SimpleTest( void(*_testFunction)( SimpleTestRecorder &__recorder ), const std::string &_name ) :
+SimpleTest::SimpleTest( void(*_testFunction)( SimpleTestRecorder &__recorder ), const string &_name ) :
     name( _name )
 {
     testFunction = _testFunction;
     tests.push_back( this );
 }
 
-std::vector<SimpleTest*> SimpleTest::tests;
+vector<SimpleTest*> SimpleTest::tests;
 
 
 int main( int argc, char **argv )
@@ -143,22 +144,22 @@ int main( int argc, char **argv )
 
     recorder.reset();
 
-    std::cout << "Running tests..." << std::endl;
+    cout << "Running tests..." << endl;
 
-    for( std::vector<SimpleTest*>::const_iterator i = SimpleTest::tests.begin(); i != SimpleTest::tests.end(); i++ )
+    for( vector<SimpleTest*>::const_iterator i = SimpleTest::tests.begin(); i != SimpleTest::tests.end(); i++ )
     {
-        std::cout << ( *i )->name << std::endl;
+        cout << ( *i )->name << endl;
         try
         {
             ( *i )->testFunction( recorder );
         }
-        catch( SimpleTestException e )
+        catch( SimpleTestException &e )
         {
-            std::cout << e.message << std::endl;
+            cout << e.message << endl;
         }
     }
 
-    std::cout << "Done." << std::endl;
+    cout << "Done." << endl;
 
     recorder.report();
 }

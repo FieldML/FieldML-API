@@ -49,9 +49,9 @@
 using namespace std;
 
 /**
- * Ensure that newly created data sources have the correct state.
+ * Ensure that newly created text data sources have the correct state.
  */
-SIMPLE_TEST( FieldmlDataArrayCreateTest )
+SIMPLE_TEST( FieldmlDataTextArrayCreateTest )
 {
     const int MAX_STRLEN = 255;
     char *strbuf = (char*)malloc(MAX_STRLEN);
@@ -60,9 +60,10 @@ SIMPLE_TEST( FieldmlDataArrayCreateTest )
     Fieldml_SetDebug( session, 0 );
     SIMPLE_ASSERT( session != FML_INVALID_HANDLE );
     
+    const int rank = 3;
     FmlObjectHandle resource = Fieldml_CreateInlineDataResource( session, "test.resource" );
-    FmlObjectHandle source = Fieldml_CreateArrayDataSource( session, "test.source", resource, "1", 3 );
-    int sizes[] = { 2, 3, 4 };
+    FmlObjectHandle source = Fieldml_CreateArrayDataSource( session, "test.source", resource, "1", rank );
+    int sizes[rank] = { 2, 3, 4 };
     Fieldml_SetArrayDataSourceRawSizes( session, source, sizes );
     const string rawData = "1 2 3 4\n5 6 7 8\n9 10 11 12\n\n13 14 15 16\n17 18 19 20\n21 22 23 24\n";
     int err = Fieldml_AddInlineData( session, resource, rawData.c_str(), rawData.length() );
@@ -71,18 +72,18 @@ SIMPLE_TEST( FieldmlDataArrayCreateTest )
     Fieldml_CopyDataResourceFormat( session, resource, strbuf, MAX_STRLEN );
     SIMPLE_ASSERT_EQUALS( "PLAIN_TEXT", strbuf );
     
-    int rank = Fieldml_GetArrayDataSourceRank( session, source );
-    SIMPLE_ASSERT_EQUALS( 3, rank );
+    int testRank = Fieldml_GetArrayDataSourceRank( session, source );
+    SIMPLE_ASSERT_EQUALS( rank, testRank );
     
-    int realSizes[] = { -1, -1, -1 };
+    int realSizes[rank] = { -1, -1, -1 };
     err = Fieldml_GetArrayDataSourceRawSizes( session, source, realSizes );
     SIMPLE_ASSERT_EQUALS( FML_ERR_NO_ERROR, err );
     SIMPLE_ASSERT_EQUALS( sizes[0], realSizes[0] );
     SIMPLE_ASSERT_EQUALS( sizes[1], realSizes[1] );
     SIMPLE_ASSERT_EQUALS( sizes[2], realSizes[2] );
     
-    unsigned int length = Fieldml_CopyArrayDataSourceLocation( session, source, strbuf, MAX_STRLEN );
-    SIMPLE_ASSERT_EQUALS( 1U, length );
+    int length = Fieldml_CopyArrayDataSourceLocation( session, source, strbuf, MAX_STRLEN );
+    SIMPLE_ASSERT_EQUALS( 1, length );
     SIMPLE_ASSERT_EQUALS( "1", strbuf );
     
     memset( strbuf, 0, MAX_STRLEN );
@@ -95,7 +96,7 @@ SIMPLE_TEST( FieldmlDataArrayCreateTest )
 
 
 /**
- * Ensure that various kinds of reads work with arrays based on inline resources.
+ * Ensure that various kinds of reads work with arrays based on inline text resources.
  */
 SIMPLE_TEST( FieldmlDataArrayReadTest )
 {
@@ -104,48 +105,52 @@ SIMPLE_TEST( FieldmlDataArrayReadTest )
     SIMPLE_ASSERT( session != FML_INVALID_HANDLE );
     
     FmlObjectHandle resource = Fieldml_CreateInlineDataResource( session, "test.resource" );
-    FmlObjectHandle source = Fieldml_CreateArrayDataSource( session, "test.source", resource, "1", 3 );
-    int sizes[] = { 2, 3, 4 };
+
+    const int rank = 3;
+    const int totalSize = 24;
+    FmlObjectHandle source = Fieldml_CreateArrayDataSource( session, "test.source", resource, "1", rank );
+    
+    int sizes[rank] = { 2, 3, 4 };
     Fieldml_SetArrayDataSourceRawSizes( session, source, sizes );
     const string rawData = "1 2 3 4\n5 6 7 8\n9 10 11 12\n\n13 14 15 16\n17 18 19 20\n21 22 23 24\n";
     int err = Fieldml_AddInlineData( session, resource, rawData.c_str(), rawData.length() );
     SIMPLE_ASSERT_EQUALS( FML_ERR_NO_ERROR, err );
 
-    int readOffsets[] = { 0, 0, 0 };
-    int readSizes[] = { 2, 3, 4 };
-    int buffer[24];
+    int readOffsets[rank] = { 0, 0, 0 };
+    int readSizes[rank] = { 2, 3, 4 };
+    int buffer[totalSize];
     
     FmlObjectHandle reader = Fieldml_OpenReader( session, source );
     SIMPLE_ASSERT( FML_INVALID_HANDLE != reader );
     
+    for( int i = 0; i < totalSize; i++ ) buffer[i] = -1;
     err = Fieldml_ReadIntSlab( session, reader, readOffsets, readSizes, buffer );
     SIMPLE_ASSERT_EQUALS( FML_ERR_NO_ERROR, err );
     
     stringstream rawStream( rawData );
     int expected; 
-    for( int i = 0; i < 24; i++ )
+    for( int i = 0; i < totalSize; i++ )
     {
         rawStream >> expected;
         SIMPLE_ASSERT_EQUALS( expected, buffer[i] );
     }
-    for( int i = 0; i < 24; i++ ) buffer[i] = -1;
     
     readOffsets[0] = 1;
     readSizes[0] = 1;
     
+    for( int i = 0; i < totalSize; i++ ) buffer[i] = -1;
     err = Fieldml_ReadIntSlab( session, reader, readOffsets, readSizes, buffer );
     SIMPLE_ASSERT_EQUALS( FML_ERR_NO_ERROR, err );
     
     rawStream.seekg( 0 );
-    for( int i = 0; i < 24; i++ )
+    for( int i = 0; i < totalSize; i++ )
     {
         rawStream >> expected;
         if( i >= 12 )
         {
-            SIMPLE_ASSERT_EQUALS( expected, (buffer[i-12]) );
+            SIMPLE_ASSERT_EQUALS( expected, buffer[i-12] );
         }
     }
-    for( int i = 0; i < 24; i++ ) buffer[i] = -1;
     
     readOffsets[0] = 0;
     readSizes[0] = 2;
@@ -153,6 +158,8 @@ SIMPLE_TEST( FieldmlDataArrayReadTest )
     readSizes[1] = 2;
     readOffsets[2] = 2;
     readSizes[2] = 1;
+
+    for( int i = 0; i < totalSize; i++ ) buffer[i] = -1;
     err = Fieldml_ReadIntSlab( session, reader, readOffsets, readSizes, buffer );
     SIMPLE_ASSERT_EQUALS( FML_ERR_NO_ERROR, err );
 
@@ -163,5 +170,130 @@ SIMPLE_TEST( FieldmlDataArrayReadTest )
     
     Fieldml_CloseReader( session, reader );
     
+    Fieldml_Destroy( session );
+}
+
+
+/**
+ * Ensure that newly created HDF5 data sources have the correct state.
+ */
+SIMPLE_TEST( FieldmlDataHdf5ArrayCreateTest )
+{
+    const int MAX_STRLEN = 255;
+    char *strbuf = (char*)malloc(MAX_STRLEN);
+
+    FmlSessionHandle session = Fieldml_Create( "test_path", "test" );
+    Fieldml_SetDebug( session, 0 );
+    SIMPLE_ASSERT( session != FML_INVALID_HANDLE );
+    
+    FmlObjectHandle resource = Fieldml_CreateHrefDataResource( session, "test.resource", "HDF5", ".\\input\\I16BE.h5" );
+
+    const int rank = 3;
+    FmlObjectHandle source = Fieldml_CreateArrayDataSource( session, "test.source", resource, "ArrayReadTestData", rank );
+    
+    int err = Fieldml_AddInlineData( session, resource, "foo", 3 );
+    SIMPLE_ASSERT( FML_ERR_NO_ERROR != err );
+    
+    Fieldml_CopyDataResourceFormat( session, resource, strbuf, MAX_STRLEN );
+    SIMPLE_ASSERT_EQUALS( "HDF5", strbuf );
+    
+    int testRank = Fieldml_GetArrayDataSourceRank( session, source );
+    SIMPLE_ASSERT_EQUALS( rank, testRank );
+    
+    int length = Fieldml_CopyArrayDataSourceLocation( session, source, strbuf, MAX_STRLEN );
+    SIMPLE_ASSERT_EQUALS( 17, length );
+    SIMPLE_ASSERT_EQUALS( "ArrayReadTestData", strbuf );
+    
+    memset( strbuf, 0, MAX_STRLEN );
+    int llength = Fieldml_CopyInlineData( session, resource, strbuf, MAX_STRLEN, 0 );
+    SIMPLE_ASSERT_EQUALS( -1, llength );
+    
+    Fieldml_Destroy( session );
+}
+
+
+/**
+ * Ensure that various kinds of reads work with arrays based on inline text resources.
+ */
+SIMPLE_TEST( FieldmlDataHdf5ArrayReadTest )
+{
+    FmlSessionHandle session = Fieldml_Create( "test_path", "test" );
+    Fieldml_SetDebug( session, 0 );
+    SIMPLE_ASSERT( session != FML_INVALID_HANDLE );
+    
+    FmlObjectHandle resource = Fieldml_CreateHrefDataResource( session, "test.resource", "HDF5", ".\\input\\I16BE.h5" );
+
+    const int rank = 3;
+    const int totalSize = 60;
+    FmlObjectHandle source = Fieldml_CreateArrayDataSource( session, "test.source", resource, "ArrayReadTestData", rank );
+
+    int readOffsets[rank] = { 0, 0, 0 };
+    int readSizes[rank] = { 3, 4, 5 };
+    double buffer[totalSize];
+    int fakeBuffer[1];
+    
+    FmlObjectHandle reader = Fieldml_OpenReader( session, source );
+    SIMPLE_ASSERT( FML_INVALID_HANDLE != reader );
+    
+    FmlErrorNumber err = Fieldml_ReadIntSlab( session, reader, readOffsets, readSizes, fakeBuffer );
+    SIMPLE_ASSERT( FML_ERR_NO_ERROR != err );
+    
+    for( int i = 0; i < totalSize; i++ ) buffer[i] = -1;
+    err = Fieldml_ReadDoubleSlab( session, reader, readOffsets, readSizes, buffer );
+    SIMPLE_ASSERT_EQUALS( FML_ERR_NO_ERROR, err );
+    
+    double expected;
+    for( int i = 0; i < totalSize; i++ )
+    {
+        int x = ( ( i % 60 ) / 20 ) + readOffsets[0];
+        int y = ( ( i % 20 ) / 5 ) + readOffsets[1];
+        int z = ( ( i % 5 ) / 1 ) + readOffsets[2];
+        
+        expected = ( 100.0 * x ) + ( 10.0 * y ) + ( 1.0 * z );
+        
+        SIMPLE_ASSERT_EQUALS( expected, buffer[i] );
+    }
+
+    readOffsets[0] = 1;
+    readSizes[0] = 1;
+    
+    for( int i = 0; i < totalSize; i++ ) buffer[i] = -1;
+    err = Fieldml_ReadDoubleSlab( session, reader, readOffsets, readSizes, buffer );
+    SIMPLE_ASSERT_EQUALS( FML_ERR_NO_ERROR, err );
+    
+    for( int i = 0; i < 20; i++ )
+    {
+        int x = ( ( i % 20 ) / 20 ) + readOffsets[0];
+        int y = ( ( i % 20 ) / 5 ) + readOffsets[1];
+        int z = ( ( i % 5 ) / 1 ) + readOffsets[2];
+        
+        expected = ( 100.0 * x ) + ( 10.0 * y ) + ( 1.0 * z );
+        
+        SIMPLE_ASSERT_EQUALS( expected, buffer[i] );
+    }
+    
+    readOffsets[0] = 0;
+    readSizes[0] = 2;
+    readOffsets[1] = 1;
+    readSizes[1] = 2;
+    readOffsets[2] = 2;
+    readSizes[2] = 1;
+    for( int i = 0; i < totalSize; i++ ) buffer[i] = -1;
+    err = Fieldml_ReadDoubleSlab( session, reader, readOffsets, readSizes, buffer );
+    SIMPLE_ASSERT_EQUALS( FML_ERR_NO_ERROR, err );
+
+    for( int i = 0; i < 4; i++ )
+    {
+        int x = ( ( i % 4 ) / 2 ) + readOffsets[0];
+        int y = ( ( i % 2 ) / 1 ) + readOffsets[1];
+        int z = ( ( i % 1 ) / 1 ) + readOffsets[2];
+        
+        expected = ( 100.0 * x ) + ( 10.0 * y ) + ( 1.0 * z );
+        
+        SIMPLE_ASSERT_EQUALS( expected, (buffer[i]) );
+    }
+    
+    Fieldml_CloseReader( session, reader );
+
     Fieldml_Destroy( session );
 }

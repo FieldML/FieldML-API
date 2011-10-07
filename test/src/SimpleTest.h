@@ -109,35 +109,14 @@ public:
 
     
     void assertEquals( const char *const &expected, char *const &actual, const std::string &actualName );
+    
+    
+    void assertEquals( const int &expected, const unsigned int &actual, const std::string &actualName );
+
+
+    void assertEquals( const unsigned int &expected, const int &actual, const std::string &actualName );
 
     
-    void check( int expr, const char * const exprString );
-
-
-    template<typename T, typename S> void checkEquals( T const &expected, S const &actual, const std::string &actualName )
-    {
-        std::stringstream message;
-        
-        message << "Check failed on " << actualName << ". Expected " << expected << ", got " << actual << ".";
-        checkAndReport( expected == actual, message.str() );
-    }
-
-
-    template<> void checkEquals<char *>( char *const&expected, char *const&actual, const std::string &actualName )
-    {
-        checkEquals( std::string( expected ), std::string( actual ), actualName );
-    }
-
-
-    template<> void checkEquals<const char *>( const char *const&expected, const char *const&actual, const std::string &actualName )
-    {
-        checkEquals( std::string( expected ), std::string( actual ), actualName );
-    }
-
-    
-    void checkEquals( const char *const &expected, char *const &actual, const std::string &actualName );
-
-
     void report();
 };
 
