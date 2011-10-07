@@ -159,12 +159,11 @@ Hdf5ArrayDataReader::Hdf5ArrayDataReader( FieldmlErrorHandler *eHandler, const c
 }
 
 
-int Hdf5ArrayDataReader::readIntSlab( int *offsets, int *sizes, int *valueBuffer )
+FmlErrorNumber Hdf5ArrayDataReader::readIntSlab( int *offsets, int *sizes, int *valueBuffer )
 {
     if( datatype != H5T_NATIVE_INT )
     {
-        eHandler->setError( FML_ERR_IO_UNSUPPORTED );
-        return -1;
+        return eHandler->setError( FML_ERR_IO_UNSUPPORTED );
     }
 
     for( int i = 0; i < rank; i++ )
@@ -192,16 +191,20 @@ int Hdf5ArrayDataReader::readIntSlab( int *offsets, int *sizes, int *valueBuffer
     
     H5Sclose( bufferSpace );
     
-    return 1;
+    if( status >= 0 )
+    {
+        return FML_ERR_NO_ERROR;
+    }
+    
+    return eHandler->setError( FML_ERR_IO_READ_ERR );
 }
 
 
-int Hdf5ArrayDataReader::readDoubleSlab( int *offsets, int *sizes, double *valueBuffer )
+FmlErrorNumber Hdf5ArrayDataReader::readDoubleSlab( int *offsets, int *sizes, double *valueBuffer )
 {
     if( datatype != H5T_NATIVE_DOUBLE )
     {
-        eHandler->setError( FML_ERR_IO_UNSUPPORTED );
-        return -1;
+        return eHandler->setError( FML_ERR_IO_UNSUPPORTED );
     }
     
     for( int i = 0; i < rank; i++ )
@@ -229,7 +232,12 @@ int Hdf5ArrayDataReader::readDoubleSlab( int *offsets, int *sizes, double *value
     
     H5Sclose( bufferSpace );
     
-    return 1;
+    if( status >= 0 )
+    {
+        return FML_ERR_NO_ERROR;
+    }
+    
+    return eHandler->setError( FML_ERR_IO_READ_ERR );
 }
 
 

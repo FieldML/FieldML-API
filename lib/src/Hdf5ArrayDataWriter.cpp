@@ -136,8 +136,16 @@ Hdf5ArrayDataWriter::Hdf5ArrayDataWriter( FieldmlErrorHandler *eHandler, const c
         {
             hStrides[i] = 1;
         }
-        
+
+        //Temporarily disable errors. 
+        H5E_auto1_t func;
+        void *client_data;
+        H5Eget_auto1( &func, &client_data ); 
+        H5Eset_auto1( NULL, NULL );
+        //It's fine if this call fails.
         dataset = H5Dopen( file, source->location.c_str(), H5P_DEFAULT );
+        H5Eset_auto1( func, client_data );
+
         if( dataset < 0 )
         {
             if( !initializeWithNewDataset( source->location, sizes, isDouble ) )
@@ -245,7 +253,7 @@ bool Hdf5ArrayDataWriter::initializeWithExistingDataset( int *sizes )
     return true;
 }
 
-int Hdf5ArrayDataWriter::writeIntSlab( int *offsets, int *sizes, int *valueBuffer )
+FmlErrorNumber Hdf5ArrayDataWriter::writeIntSlab( int *offsets, int *sizes, int *valueBuffer )
 {
     if( datatype != H5T_NATIVE_INT )
     {
@@ -278,11 +286,16 @@ int Hdf5ArrayDataWriter::writeIntSlab( int *offsets, int *sizes, int *valueBuffe
     
     H5Sclose( bufferSpace );
     
-    return 1;
+    if( status >= 0 )
+    {
+        return FML_ERR_NO_ERROR;
+    }
+    
+    return eHandler->setError( FML_ERR_IO_WRITE_ERR );
 }
 
 
-int Hdf5ArrayDataWriter::writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer )
+FmlErrorNumber Hdf5ArrayDataWriter::writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer )
 {
     if( datatype != H5T_NATIVE_DOUBLE )
     {
@@ -315,7 +328,12 @@ int Hdf5ArrayDataWriter::writeDoubleSlab( int *offsets, int *sizes, double *valu
     
     H5Sclose( bufferSpace );
     
-    return 1;
+    if( status >= 0 )
+    {
+        return FML_ERR_NO_ERROR;
+    }
+    
+    return eHandler->setError( FML_ERR_IO_WRITE_ERR );
 }
 
 

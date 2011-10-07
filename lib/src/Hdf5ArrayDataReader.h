@@ -71,9 +71,9 @@ private:
 public:
     bool ok;
 
-    virtual int readIntSlab( int *offsets, int *sizes, int *valueBuffer );
+    virtual FmlErrorNumber readIntSlab( int *offsets, int *sizes, int *valueBuffer );
     
-    virtual int readDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
+    virtual FmlErrorNumber readDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
     
     virtual ~Hdf5ArrayDataReader();
 

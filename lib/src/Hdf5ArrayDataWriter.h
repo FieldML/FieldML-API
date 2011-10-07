@@ -75,9 +75,9 @@ public:
 
     Hdf5ArrayDataWriter( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank, hid_t fileAccessProperties );
     
-    virtual int writeIntSlab( int *offsets, int *sizes, int *valueBuffer );
+    virtual FmlErrorNumber writeIntSlab( int *offsets, int *sizes, int *valueBuffer );
     
-    virtual int writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
+    virtual FmlErrorNumber writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
     
     virtual ~Hdf5ArrayDataWriter();
     
