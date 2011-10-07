@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<Fieldml version="0.4.0"
+<Fieldml version="0.4.1"
   xsi:noNamespaceSchemaLocation="http://www.fieldml.org/resources/xml/0.4/FieldML_0.4.xsd"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
  <Region name="library">

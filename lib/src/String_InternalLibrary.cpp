@@ -44,7 +44,7 @@
 const char * const FML_INTERNAL_LIBRARY_NAME = "http://www.fieldml.org/resources/xml/0.4/FieldML_Library_0.4.xml";
 
 const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?> \
-<Fieldml version=\"0.4.0\" \
+<Fieldml version=\"0.4.1\" \
   xsi:noNamespaceSchemaLocation=\"http://www.fieldml.org/resources/xml/0.4/FieldML_0.4.xsd\" \
   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"> \
  <Region name=\"library\"> \

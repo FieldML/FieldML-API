@@ -54,7 +54,7 @@ const char NIX_PATH_SEP = '/';
 #define DEFAULT_SEP NIX_PATH_SEP
 #endif
 
-const char * const FML_VERSION_STRING                  = "0.4.0";
+const char * const FML_VERSION_STRING                  = "0.4.1";
 
 const xmlChar * const XLINK_NAMESPACE_STRING           = (const xmlChar* const)"http://www.w3.org/1999/xlink";
 
