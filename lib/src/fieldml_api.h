@@ -175,12 +175,12 @@ enum DataDescriptionType
 /**
  * Describes the type of external data encapsulated by a DataResource object.
  * 
- * \note Currently, only inline and external text is supported, but it is intended
- * that additional formats such as HDF5 be added.
+ * \note Currently, only local files (via href) and inline text is supported, but it is intended
+ * that support for additional types (such as web-based resources) will be added.
  * 
  * \see Fieldml_GetDataResourceType
- * \see Fieldml_CreateTextFileDataResource
- * \see Fieldml_CreateTextInlineDataResource
+ * \see Fieldml_CreateHrefDataResource
+ * \see Fieldml_CreateInlineDataResource
  */
 enum DataResourceType
 {
@@ -195,7 +195,7 @@ enum DataResourceType
  * used with that DataSource.
  * 
  * \see Fieldml_GetDataSourceType
- * \see Fieldml_CreateTextDataSource
+ * \see Fieldml_CreateArrayDataSource
  */
 enum DataSourceType
 {
@@ -220,9 +220,9 @@ enum DataSourceType
  * \see Fieldml_CreateParameterEvaluator
  * \see Fieldml_CreatePiecewiseEvaluator
  * \see Fieldml_CreateAggregateEvaluator
- * \see Fieldml_CreateTextFileDataResource
- * \see Fieldml_CreateTextInlineDataResource
- * \see Fieldml_CreateTextDataSource
+ * \see Fieldml_CreateHrefDataResource
+ * \see Fieldml_CreateInlineDataResource
+ * \see Fieldml_CreateArrayDataSource
  */
 enum FieldmlHandleType
 {
@@ -764,12 +764,17 @@ FmlErrorNumber Fieldml_SetParameterDataDescription( FmlSessionHandle handle, Fml
  * \return The data source used by the given object.
  * 
  * \see Fieldml_OpenReader
- * \see Fieldml_OpenWriter
+ * \see Fieldml_OpenArrayWriter
  * \see Fieldml_SetDataSource
  * \see Fieldml_SetEnsembleMembersDataSource
  */
 FmlObjectHandle Fieldml_GetDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
+/**
+ * \return The data source for key values required by the given object.
+ * 
+ * \note Currently, this only applies to ParameterEvaluators using the dictionary-of-keys data description.
+ */
 FmlObjectHandle Fieldml_GetKeyDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 /**
@@ -781,7 +786,14 @@ FmlObjectHandle Fieldml_GetKeyDataSource( FmlSessionHandle handle, FmlObjectHand
  */
 FmlErrorNumber Fieldml_SetDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle dataSource );
 
+
+/**
+ * Sets data source for key values required by the given object.
+ * 
+ * \note Currently, this only applies to ParameterEvaluators using the dictionary-of-keys data description.
+ */
 FmlErrorNumber Fieldml_SetKeyDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle dataSource );
+
 
 /**
  * \return The data description type of the given parameter evaluator.
@@ -1194,28 +1206,30 @@ FmlErrorNumber Fieldml_CloseReader( FmlSessionHandle handle, FmlReaderHandle rea
 FmlWriterHandle Fieldml_OpenArrayWriter( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle typeHandle, FmlBoolean append, int *sizes, int rank );
 
 /**
- * Write out some integer values to the given data writer.
+ * Write out some integer values to the given data writer. The data will be interpreted as an n-dimensional array of
+ * the given size, and written out at the given offset.
  * 
- * \return The number of values written, or -1 on error.
+ * \note For text-based arrays, there are limitations on the permissible offsets and sizes. 
  * 
- * \see Fieldml_OpenWriter
+ * \see Fieldml_OpenArrayWriter
  */
 FmlErrorNumber Fieldml_WriteIntSlab( FmlSessionHandle handle, FmlWriterHandle writerHandle, int *offsets, int *sizes, int *valueBuffer );
 
 /**
- * Write out some double-precision floating point values to the given data writer.
+ * Write out some double-precision values to the given data writer. The data will be interpreted as an n-dimensional array of
+ * the given size, and written out at the given offset.
  * 
- * \return The number of values written, or -1 on error.
+ * \note For text-based arrays, there are limitations on the permissible offsets and sizes. 
  * 
- * \see Fieldml_OpenWriter
+ * \see Fieldml_OpenArrayWriter
  */
 FmlErrorNumber Fieldml_WriteDoubleSlab( FmlSessionHandle handle, FmlWriterHandle writerHandle, int *offsets, int *sizes, double *valueBuffer );
 
 
 /**
- * Closes the given raw data writer. The writer's handle should not be used after this call.
+ * Closes the given data writer. The writer's handle cannot be used after this call.
  * 
- * \see Fieldml_OpenWriter
+ * \see Fieldml_OpenArrayWriter
  */
 FmlErrorNumber Fieldml_CloseWriter( FmlSessionHandle handle, FmlWriterHandle writerHandle );
 
@@ -1318,6 +1332,14 @@ int Fieldml_CopyImportRemoteName( FmlSessionHandle handle, int importSourceIndex
 FmlObjectHandle Fieldml_GetImportObject( FmlSessionHandle handle, int importSourceIndex, int importIndex );
 
 
+/**
+ * Creates a new href-based inline data resource. Currently, the resource must be a local file. The contents
+ * of the file can be access via FieldML reader and writer calls. The format can be an aribitrary string.
+ * The resulting data resource object can then have one or more data sources associated with it.
+ * 
+ * \see Fieldml_CreateInlineDataResource
+ * \see Fieldml_CreateArrayDataSource
+ */
 FmlObjectHandle Fieldml_CreateHrefDataResource( FmlSessionHandle handle, const char * name, const char * format, const char * href );
 
 /**
@@ -1326,7 +1348,8 @@ FmlObjectHandle Fieldml_CreateHrefDataResource( FmlSessionHandle handle, const c
  * text data will be serialized as character data in the FieldML document. The resulting data resource object
  * can then have one or more data sources associated with it.
  * 
- * \see Fieldml_CreateTextDataSource
+ * \see Fieldml_CreateHrefDataSource
+ * \see Fieldml_CreateArrayDataSource
  */
 FmlObjectHandle Fieldml_CreateInlineDataResource( FmlSessionHandle handle, const char * name );
 
@@ -1334,30 +1357,37 @@ FmlObjectHandle Fieldml_CreateInlineDataResource( FmlSessionHandle handle, const
 /**
  * \return The type of the given data resource.
  * 
- * \see Fieldml_CreateTextFileDataResource
- * \see Fieldml_CreateTextInlineDataResource
+ * \see Fieldml_CreateHrefDataResource
+ * \see Fieldml_CreateInlineDataResource
  */
 DataResourceType Fieldml_GetDataResourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- * Creates a new text-based data source. The given data resource must also be text-based. The remaining parameters
- * are used by data readers to pre-process the raw data. Once opened, the data reader will skip forward until firstLine
- * (if firstLine is 1, no lines will be skipped). From that point, the text data will be treated as a sequence of numbers
- * separated but non-numerical characters (e.g. commas, spaces, linefeeds). Any combination of such characters will
- * be treated as a single delimiter. Decimal points and exponential notation is permitted when reading doubles, but
- * will generate an error when reading integers. Each record will then be read by skipping 'head' numbers,
- * reading 'length' numbers, then skipping 'tail' more numbers. For more information, see the FieldML documentation. 
+ * Creates a new array-based data source, exposing data represented by the given data resource as a multi-dimensional
+ * contiguous array and the given rank. The location string's interpretation varies depending on the data resources
+ * format. e.g. For text-based resources, it is the line-number at which the data starts. For HDF5-based resources, it is
+ * the name of the dataset.
+ * 
+ * ArrayDataSources represent a contiguous sub-array within the raw array (i.e. the actual on-disk data). The sizes and
+ * offsets of this sub-array can be set via the API. Initially, both sizes and offsets are set to zero (Zero sizes are
+ * interpreted as the maximum possible size). The size of the raw array may also be specified.
+ * 
+ * \warn For text-based arrays, the raw size must be set.
  * 
  * \see Fieldml_OpenReader
+ * \see Fieldml_OpenArrayWriter
  * \see Fieldml_GetDataSourceResource
+ * \see Fieldml_SetArrayDataSourceRawSizes
+ * \see Fieldml_SetArrayDataSourceSizes
+ * \see Fieldml_SetArrayDataSourceOffsets
  */
 FmlObjectHandle Fieldml_CreateArrayDataSource( FmlSessionHandle handle, const char * name, FmlObjectHandle resourceHandle, const char * location, int rank );
 
 /**
  * \return The number of data sources associated with the given data resource.
  * 
- * \see Fieldml_CreateTextDataSource
+ * \see Fieldml_CreateArrayDataSource
  * \see Fieldml_GetDataSourceByIndex
  */
 int Fieldml_GetDataSourceCount( FmlSessionHandle handle, FmlObjectHandle objectHandle );
@@ -1366,7 +1396,7 @@ int Fieldml_GetDataSourceCount( FmlSessionHandle handle, FmlObjectHandle objectH
 /**
  * \return The nth data source associated with the given data resource.
  * 
- * \see Fieldml_CreateTextDataSource
+ * \see Fieldml_CreateArrayDataSource
  * \see Fieldml_GetDataSourceCount
  */
 FmlObjectHandle Fieldml_GetDataSourceByIndex( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index );
@@ -1375,36 +1405,62 @@ FmlObjectHandle Fieldml_GetDataSourceByIndex( FmlSessionHandle handle, FmlObject
 /**
  * \return The data resource used by the given data source.
  * 
- * \see Fieldml_CreateTextDataSource
- * \see Fieldml_CreateTextFileDataResource
- * \see Fieldml_CreateTextInlineDataResource
+ * \see Fieldml_CreateArrayDataSource
+ * \see Fieldml_CreateHrefDataResource
+ * \see Fieldml_CreateInlineDataResource
  */
 FmlObjectHandle Fieldml_GetDataSourceResource( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
+
+/**
+ * \return The location of the given array data source. The interpretation of this value depends on the format of the associated resource.
+ * 
+ * \see Fieldml_CreateArrayDataSource
+ * \see Fieldml_FreeString
+ */
 const char * Fieldml_GetArrayDataSourceLocation( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
+/**
+ * Copies the location of the given array data source into the given buffer.
+ * 
+ * \see Fieldml_CreateArrayDataSource
+ */
 int Fieldml_CopyArrayDataSourceLocation( FmlSessionHandle handle, FmlObjectHandle objectHandle, char * buffer, int bufferLength );
 
 
 /**
  * \return The array rank for the given array data source.
  * 
- * \see Fieldml_CreateTextDataSource
+ * \see Fieldml_CreateArrayDataSource
  */
 int Fieldml_GetArrayDataSourceRank( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- * Raw sizes are optional. Values will be set to 0 if not present.
+ * Get the raw size of the given array data source. This is optional for self-describing data-resource, but must be set
+ * plain-text data resources. The sizes argument must be large enough to take a number of values equal to the data
+ * source's rank.
+ * 
+ * \see Fieldml_CreateArrayDataSource
+ * \see Fieldml_SetArrayDataSourceRawSizes
  */
 FmlErrorNumber Fieldml_GetArrayDataSourceRawSizes( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *sizes );
 
 
+/**
+ * Set the raw size of the given array data source. This is optional for self-describing data-resource, but must be set
+ * plain-text data resources. The sizes argument must contain a number of values equal to the data source's rank.
+ * 
+ * \see Fieldml_CreateArrayDataSource
+ * \see Fieldml_SetArrayDataSourceRawSizes
+ */
 FmlErrorNumber Fieldml_SetArrayDataSourceRawSizes( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *sizes );
 
 /**
  * Get the offsets of the array data accessible via the given data source.
+ * The offsets argument must contain a number of values equal to the data source's rank.
  * 
+ * \see Fieldml_CreateArrayDataSource
  * \see Fieldml_SetArrayDataSourceOffsets
  */
 FmlErrorNumber Fieldml_GetArrayDataSourceOffsets( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *offsets );
@@ -1412,16 +1468,19 @@ FmlErrorNumber Fieldml_GetArrayDataSourceOffsets( FmlSessionHandle handle, FmlOb
 
 /**
  * Sets the offsets of the array data accessible via the given data source. These are offsets into the containing
- * array exposed via the data source's associated resource.
- * 
- * \see Fieldml_CreateTextDataSource
- * \see Fieldml_CreateBinaryArrayDataSource
+ * array exposed via the data source's associated resource. Offsets are initialised to zero.
+ * The offsets argument must contain a number of values equal to the data source's rank.
+ *   
+ * \see Fieldml_CreateArrayDataSource
+ * \see Fieldml_GetArrayDataSourceOffsets
  */
 FmlErrorNumber Fieldml_SetArrayDataSourceOffsets( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *offsets );
 
 
 /**
- * Get the sizes of the array data accessible via the given data source.
+ * Get the sizes of the array data accessible via the given data source. Offsets are initialised to zero. Values
+ * of zero will be interpreted as the maximum possible size given the arrays raw size, and the data sources own 
+ * offsets and size.
  * 
  * \see Fieldml_SetArrayDataSourceSizes
  */
@@ -1429,10 +1488,11 @@ FmlErrorNumber Fieldml_GetArrayDataSourceSizes( FmlSessionHandle handle, FmlObje
 
 
 /**
- * Sets the sizes of the array data accessible via the given data source.
+ * Sets the sizes of the array data accessible via the given data source. Values
+ * of zero will be interpreted as the maximum possible size given the arrays raw size, and the data sources own 
+ * offsets and size.
  * 
- * \see Fieldml_CreateTextDataSource
- * \see Fieldml_CreateBinaryArrayDataSource
+ * \see Fieldml_CreateArrayDataSource
  */
 FmlErrorNumber Fieldml_SetArrayDataSourceSizes( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *sizes );
 
@@ -1440,17 +1500,16 @@ FmlErrorNumber Fieldml_SetArrayDataSourceSizes( FmlSessionHandle handle, FmlObje
 /**
  * \return The data source type of the given data source.
  * 
- * \see Fieldml_CreateTextDataSource
- * \see Fieldml_CreateBinaryArrayDataSource
+ * \see Fieldml_CreateArrayDataSource
  */
 DataSourceType Fieldml_GetDataSourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
  * Appends the given string to the given data resource's inline data. The data resource's type must be
- * DataResourceType::DATA_RESOURCE_TEXT_INLINE.
+ * DataResourceType::DATA_RESOURCE_INLINE.
  * 
- * \see Fieldml_CreateTextInlineDataResource
+ * \see Fieldml_CreateInlineDataResource
  */
 FmlErrorNumber Fieldml_AddInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandle, const char * data, const int length );
 
@@ -1458,7 +1517,7 @@ FmlErrorNumber Fieldml_AddInlineData( FmlSessionHandle handle, FmlObjectHandle o
 /**
  * \return The number of characters in the data resource's inline data.
  * 
- * \see Fieldml_CreateTextInlineDataResource
+ * \see Fieldml_CreateInlineDataResource
  */
 int Fieldml_GetInlineDataLength( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
@@ -1471,7 +1530,7 @@ int Fieldml_GetInlineDataLength( FmlSessionHandle handle, FmlObjectHandle object
 
  * \see Fieldml_GetRegionName
  * \see Fieldml_FreeString
- * \see Fieldml_CreateTextInlineDataResource
+ * \see Fieldml_CreateInlineDataResource
  */
 char * Fieldml_GetInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
@@ -1481,25 +1540,25 @@ char * Fieldml_GetInlineData( FmlSessionHandle handle, FmlObjectHandle objectHan
  * either when the buffer is full, or the end of the inline data is reached.
  * 
  * \see Fieldml_CopyRegionName
- * \see Fieldml_CreateTextInlineDataResource
+ * \see Fieldml_CreateInlineDataResource
  */
 int Fieldml_CopyInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandle, char * buffer, int bufferLength, int offset );
 
 /**
- * \return The href of the data resource's file. The data resource's type must be DataResourceType::DATA_RESOURCE_TEXT_HREF.
+ * \return The href of the data resource's file. The data resource's type must be DataResourceType::DATA_RESOURCE_HREF.
 
  * \see Fieldml_GetRegionName
  * \see Fieldml_FreeString
- * \see Fieldml_CreateTextFileDataResource
+ * \see Fieldml_CreateHrefDataResource
  */
 char * Fieldml_GetDataResourceHref( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
- * Copies the given data resource's href into the given buffer. The data resource's type must be DataResourceType::DATA_RESOURCE_TEXT_HREF.
+ * Copies the given data resource's href into the given buffer. The data resource's type must be DataResourceType::DATA_RESOURCE_HREF.
  *  
  * \see Fieldml_CopyRegionName
- * \see Fieldml_CreateTextFileDataResource
+ * \see Fieldml_CreateHrefDataResource
  */
 int Fieldml_CopyDataResourceHref( FmlSessionHandle handle, FmlObjectHandle objectHandle, char * buffer, int bufferLength );
 
