@@ -71,7 +71,7 @@ class StringInputStream :
     public FieldmlInputStream
 {
 private:
-    const string string;
+    const std::string string;
     int stringPos;
     int stringMaxLen;
 
@@ -287,7 +287,7 @@ int FileInputStream::loadBuffer()
 
 long FileInputStream::tell()
 {
-    return ftell( file );
+    return ftell( file ) - ( bufferCount - bufferPos );
 }
 
 

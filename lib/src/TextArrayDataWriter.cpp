@@ -62,6 +62,7 @@ TextArrayDataWriter *TextArrayDataWriter::create( FieldmlErrorHandler *eHandler,
     if( !writer->ok )
     {
         delete writer;
+        writer = NULL;
     }
     
     return writer;
@@ -74,6 +75,8 @@ TextArrayDataWriter::TextArrayDataWriter( FieldmlErrorHandler *eHandler, const c
 {
     offset = 0;
     
+    ok = false;
+    
     if( source->resource->type == DATA_RESOURCE_HREF )
     {
         string path = makeFilename( root, source->resource->description );
@@ -84,18 +87,18 @@ TextArrayDataWriter::TextArrayDataWriter( FieldmlErrorHandler *eHandler, const c
         stream = FieldmlOutputStream::createStringStream( source->resource->description, append );
     }
     
-    if( stream == NULL )
+    if( stream != NULL )
     {
-        ok = false;
+        ok = true;
     }
 }
 
 
 int TextArrayDataWriter::writeIntSlice( int *sizes, int *valueBuffer, int depth, int *bufferPos )
 {
-    if( depth == 1 )
+    if( depth == source->rank - 1 )
     {
-        for( int i = 0; i < sizes[0]; i++ )
+        for( int i = 0; i < sizes[depth]; i++ )
         {
             stream->writeInt( valueBuffer[*bufferPos] );
             (*bufferPos)++;
@@ -104,9 +107,9 @@ int TextArrayDataWriter::writeIntSlice( int *sizes, int *valueBuffer, int depth,
     }
     
     int err;
-    for( int i = 0; i < sizes[depth-1]; i++ )
+    for( int i = 0; i < sizes[depth]; i++ )
     {
-        err = writeIntSlice( sizes, valueBuffer, depth - 1, bufferPos );
+        err = writeIntSlice( sizes, valueBuffer, depth + 1, bufferPos );
         if( err != FML_ERR_NO_ERROR )
         {
             return err;
@@ -119,39 +122,41 @@ int TextArrayDataWriter::writeIntSlice( int *sizes, int *valueBuffer, int depth,
 
 int TextArrayDataWriter::writeIntSlab( int *offsets, int *sizes, int *valueBuffer )
 {
-    if( offsets[source->rank-1] != offset )
+    if( offsets[0] != offset )
     {
-        eHandler->setError( FML_ERR_IO_UNSUPPORTED );
-        return -1;
+        return eHandler->setError( FML_ERR_IO_UNSUPPORTED );
     }
     
-    for( int i = 0; i < source->rank-1; i++ )
+    for( int i = 1; i < source->rank; i++ )
     {
         if( offsets[i] != 0 )
         {
-            eHandler->setError( FML_ERR_IO_UNSUPPORTED );
-            return -1;
+            return eHandler->setError( FML_ERR_IO_UNSUPPORTED );
         }
         
         if( sizes[i] != source->sizes[i] )
         {
-            eHandler->setError( FML_ERR_IO_UNSUPPORTED );
-            return -1;
+            return eHandler->setError( FML_ERR_IO_UNSUPPORTED );
         }
     }
     
     int bufferPos = 0;
-    writeIntSlice( sizes, valueBuffer, source->rank, &bufferPos );
+    int err = writeIntSlice( sizes, valueBuffer, 0, &bufferPos );
 
-    return 1;
+    if( err == FML_ERR_NO_ERROR )
+    {
+        offset += sizes[0];
+    }
+
+    return err;
 }
 
 
 int TextArrayDataWriter::writeDoubleSlice( int *sizes, double *valueBuffer, int depth, int *bufferPos )
 {
-    if( depth == 1 )
+    if( depth == source->rank - 1 )
     {
-        for( int i = 0; i < sizes[0]; i++ )
+        for( int i = 0; i < sizes[depth]; i++ )
         {
             stream->writeDouble( valueBuffer[*bufferPos] );
             (*bufferPos)++;
@@ -160,9 +165,9 @@ int TextArrayDataWriter::writeDoubleSlice( int *sizes, double *valueBuffer, int 
     }
     
     int err;
-    for( int i = 0; i < sizes[depth-1]; i++ )
+    for( int i = 0; i < sizes[depth]; i++ )
     {
-        err = writeDoubleSlice( sizes, valueBuffer, depth - 1, bufferPos );
+        err = writeDoubleSlice( sizes, valueBuffer, depth + 1, bufferPos );
         if( err != FML_ERR_NO_ERROR )
         {
             return err;
@@ -175,12 +180,12 @@ int TextArrayDataWriter::writeDoubleSlice( int *sizes, double *valueBuffer, int 
 
 FmlErrorNumber TextArrayDataWriter::writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer )
 {
-    if( offsets[source->rank-1] != offset )
+    if( offsets[0] != offset )
     {
         return eHandler->setError( FML_ERR_IO_UNSUPPORTED );
     }
     
-    for( int i = 0; i < source->rank-1; i++ )
+    for( int i = 1; i < source->rank; i++ )
     {
         if( offsets[i] != 0 )
         {
@@ -194,17 +199,23 @@ FmlErrorNumber TextArrayDataWriter::writeDoubleSlab( int *offsets, int *sizes, d
     }
     
     int bufferPos = 0;
-    writeDoubleSlice( sizes, valueBuffer, source->rank, &bufferPos );
+    int err = writeDoubleSlice( sizes, valueBuffer, 0, &bufferPos );
     
-    offset = offsets[source->rank-1] + sizes[source->rank-1];
+    if( err == FML_ERR_NO_ERROR )
+    {
+        offset += sizes[0];
+    }
 
-    return FML_ERR_NO_ERROR;
+    return err;
 }
 
 
 TextArrayDataWriter::~TextArrayDataWriter()
 {
     //TODO: This behaviour should be controllable from elsewhere.
-    stream->writeNewline();
-    delete stream;
+    if( stream != NULL )
+    {
+        stream->writeNewline();
+        delete stream;
+    }
 }

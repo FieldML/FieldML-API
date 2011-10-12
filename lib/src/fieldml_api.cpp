@@ -67,7 +67,7 @@ using namespace std;
 
 #define getSession( handle ) getSessionAndSetContext( handle, __FILE__, __LINE__ )
 
-static FieldmlSession *getSessionAndSetContext( FmlSessionHandle handle, char * file, int line )
+static FieldmlSession *getSessionAndSetContext( FmlSessionHandle handle, const char * file, int line )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session != NULL )
@@ -3023,7 +3023,7 @@ FmlErrorNumber Fieldml_CloseReader( FmlSessionHandle handle, FmlReaderHandle rea
 }
 
 
-FmlWriterHandle Fieldml_OpenWriter( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle typeHandle, FmlBoolean append, int *sizes, int rank )
+FmlWriterHandle Fieldml_OpenArrayWriter( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle typeHandle, FmlBoolean append, int *sizes, int rank )
 {
     FieldmlSession *session = getSession( handle );
     if( session == NULL )

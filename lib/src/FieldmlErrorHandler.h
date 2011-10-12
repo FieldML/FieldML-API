@@ -59,7 +59,7 @@ public:
 
     virtual void logError( const char *error, const char *name1 = NULL, const char *name2 = NULL ) = 0;
     
-    virtual ~FieldmlErrorHandler();
+    virtual ~FieldmlErrorHandler() {}
 };
 
 #endif //H_FIELDML_ERROR_HANDLER
