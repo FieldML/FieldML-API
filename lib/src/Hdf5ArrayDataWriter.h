@@ -68,20 +68,24 @@ private:
     
     bool initializeWithExistingDataset( int *sizes );
     
-    bool initializeWithNewDataset( const std::string sourceName, int *sizes, bool isDouble );
+    bool initializeWithNewDataset( const std::string sourceName, int *sizes, FieldmlHandleType handleType );
+
+    FmlErrorNumber writeSlab( int *offsets, int *sizes, hid_t requiredDatatype, void *valueBuffer );
 
 public:
     bool ok;
 
-    Hdf5ArrayDataWriter( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank, hid_t fileAccessProperties );
+    Hdf5ArrayDataWriter( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, FieldmlHandleType handleType, bool append, int *sizes, int rank, hid_t fileAccessProperties );
     
     virtual FmlErrorNumber writeIntSlab( int *offsets, int *sizes, int *valueBuffer );
     
     virtual FmlErrorNumber writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
     
+    virtual FmlErrorNumber writeBooleanSlab( int *offsets, int *sizes, bool *valueBuffer );
+    
     virtual ~Hdf5ArrayDataWriter();
     
-    static Hdf5ArrayDataWriter *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank );
+    static Hdf5ArrayDataWriter *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, FieldmlHandleType handleType, bool append, int *sizes, int rank );
 };
 #endif //FIELDML_HDF5_ARRAY || FIELDML_PHDF5_ARRAY
 

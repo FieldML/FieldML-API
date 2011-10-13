@@ -68,6 +68,7 @@ const xmlChar * const EXTERNAL_EVALUATOR_TAG            = (const xmlChar* const)
 const xmlChar * const ARGUMENT_EVALUATOR_TAG            = (const xmlChar* const)"ArgumentEvaluator";
 const xmlChar * const MESH_TYPE_TAG                     = (const xmlChar* const)"MeshType";
 const xmlChar * const CONTINUOUS_TYPE_TAG               = (const xmlChar* const)"ContinuousType";
+const xmlChar * const BOOLEAN_TYPE_TAG                  = (const xmlChar* const)"BooleanType";
 const xmlChar * const ENSEMBLE_TYPE_TAG                 = (const xmlChar* const)"EnsembleType";
 const xmlChar * const DATA_RESOURCE_TAG                 = (const xmlChar* const)"DataResource";
 const xmlChar * const IMPORT_TAG                        = (const xmlChar* const)"Import";

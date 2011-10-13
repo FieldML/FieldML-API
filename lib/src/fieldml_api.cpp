@@ -394,34 +394,31 @@ static DataResource *getDataResource( FieldmlSession *session, FmlObjectHandle o
 }
 
 
-static bool checkIsValueType( FieldmlSession *session, FmlObjectHandle objectHandle, bool allowContinuous, bool allowEnsemble, bool allowMesh )
+static bool checkIsValueType( FieldmlSession *session, FmlObjectHandle objectHandle, bool allowContinuous, bool allowEnsemble, bool allowMesh, bool allowBoolean )
 {
     FieldmlObject *object = getObject( session, objectHandle );
     if( object == NULL )
     {
         return false;
     }
-    
-    if( object->type == FHT_CONTINUOUS_TYPE && allowContinuous )
+
+    switch( object->type )
     {
-        return true;
-    }
-    else if( object->type == FHT_ENSEMBLE_TYPE && allowEnsemble )
-    {
-        return true;
-    }
-    else if( object->type == FHT_MESH_TYPE && allowMesh )
-    {
-        return true;
-    }
-    else
-    {
+    case FHT_CONTINUOUS_TYPE:
+        return allowContinuous;
+    case FHT_ENSEMBLE_TYPE:
+        return allowEnsemble;
+    case FHT_MESH_TYPE:
+        return allowMesh;
+    case FHT_BOOLEAN_TYPE:
+        return allowBoolean;
+    default:
         return false;
     }
 }
 
 
-static bool checkIsEvaluatorType( FieldmlSession *session, FmlObjectHandle objectHandle, bool allowContinuous, bool allowEnsemble )
+static bool checkIsEvaluatorType( FieldmlSession *session, FmlObjectHandle objectHandle, bool allowContinuous, bool allowEnsemble, bool allowBoolean )
 {
     FieldmlObject *object = getObject( session, objectHandle );
     if( object == NULL )
@@ -439,29 +436,37 @@ static bool checkIsEvaluatorType( FieldmlSession *session, FmlObjectHandle objec
         return false;
     }
     
-    return checkIsValueType( session, Fieldml_GetValueType( session->getSessionHandle(), objectHandle ), allowContinuous, allowEnsemble, false );
+    return checkIsValueType( session, Fieldml_GetValueType( session->getSessionHandle(), objectHandle ), allowContinuous, allowEnsemble, false, allowBoolean );
 }
 
 
 static bool checkIsTypeCompatible( FieldmlSession *session, FmlObjectHandle objectHandle1, FmlObjectHandle objectHandle2 )
 {
-    if( !checkIsValueType( session, objectHandle1, true, true, false ) )
+    if( !checkIsValueType( session, objectHandle1, true, true, false, true ) )
     {
         return false;
     }
-    if( !checkIsValueType( session, objectHandle2, true, true, false ) )
+    if( !checkIsValueType( session, objectHandle2, true, true, false, true ) )
     {
         return false;
     }
 
     FieldmlObject *object1 = getObject( session, objectHandle1 );
     FieldmlObject *object2 = getObject( session, objectHandle2 );
-    
-    if( ( object1->type == FHT_ENSEMBLE_TYPE ) && ( object2->type == FHT_ENSEMBLE_TYPE ) )
+
+    if( object1->type != object2->type )
+    {
+        return false;
+    }
+    else if( object1->type == FHT_BOOLEAN_TYPE )
+    {
+        return true;
+    }
+    else if( object1->type == FHT_ENSEMBLE_TYPE )
     {
         return objectHandle1 == objectHandle2;
     }
-    else if( ( object1->type == FHT_CONTINUOUS_TYPE ) && ( object2->type == FHT_CONTINUOUS_TYPE ) )
+    else if( object1->type == FHT_CONTINUOUS_TYPE )
     {
         FmlObjectHandle component1 = Fieldml_GetTypeComponentEnsemble( session->getSessionHandle(), objectHandle1 );
         FmlObjectHandle component2 = Fieldml_GetTypeComponentEnsemble( session->getSessionHandle(), objectHandle2 );
@@ -486,11 +491,11 @@ static bool checkIsTypeCompatible( FieldmlSession *session, FmlObjectHandle obje
 
 static bool checkIsEvaluatorTypeCompatible( FieldmlSession *session, FmlObjectHandle objectHandle1, FmlObjectHandle objectHandle2 )
 {
-    if( !checkIsEvaluatorType( session, objectHandle1, true, true ) )
+    if( !checkIsEvaluatorType( session, objectHandle1, true, true, true ) )
     {
         return false;
     }
-    if( !checkIsEvaluatorType( session, objectHandle2, true, true ) )
+    if( !checkIsEvaluatorType( session, objectHandle2, true, true, true ) )
     {
         return false;
     }
@@ -1397,7 +1402,7 @@ FmlObjectHandle Fieldml_CreateArgumentEvaluator( FmlSessionHandle handle, const 
         return session->getLastError();
     }
 
-    if( !checkIsValueType( session, valueType, true, true, true ) )
+    if( !checkIsValueType( session, valueType, true, true, true, true ) )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
@@ -1476,7 +1481,7 @@ FmlObjectHandle Fieldml_CreateExternalEvaluator( FmlSessionHandle handle, const 
         return session->getLastError();
     }
 
-    if( !checkIsValueType( session, valueType, true, true, false ) )
+    if( !checkIsValueType( session, valueType, true, true, false, true ) )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
@@ -1507,7 +1512,7 @@ FmlObjectHandle Fieldml_CreateParameterEvaluator( FmlSessionHandle handle, const
         return session->getLastError();
     }
 
-    if( !checkIsValueType( session, valueType, true, true, false ) )
+    if( !checkIsValueType( session, valueType, true, true, false, true ) )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
@@ -1752,7 +1757,7 @@ FmlErrorNumber Fieldml_AddDenseIndexEvaluator( FmlSessionHandle handle, FmlObjec
         return session->getLastError();
     }
 
-    if( !checkIsEvaluatorType( session, indexHandle, false, true ) )
+    if( !checkIsEvaluatorType( session, indexHandle, false, true, false ) )
     {
         return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
@@ -1817,7 +1822,7 @@ FmlErrorNumber Fieldml_AddSparseIndexEvaluator( FmlSessionHandle handle, FmlObje
         return session->getLastError();
     }
 
-    if( !checkIsEvaluatorType( session, indexHandle, false, true ) )
+    if( !checkIsEvaluatorType( session, indexHandle, false, true, false ) )
     {
         return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
@@ -1922,7 +1927,7 @@ FmlObjectHandle Fieldml_CreatePiecewiseEvaluator( FmlSessionHandle handle, const
         return session->getLastError();
     }
 
-    if( !checkIsValueType( session, valueType, true, true, false ) )
+    if( !checkIsValueType( session, valueType, true, true, false, true ) )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
@@ -1953,7 +1958,7 @@ FmlObjectHandle Fieldml_CreateAggregateEvaluator( FmlSessionHandle handle, const
         return session->getLastError();
     }
 
-    if( !checkIsValueType( session, valueType, true, false, false ) )
+    if( !checkIsValueType( session, valueType, true, false, false, false ) )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
@@ -1985,7 +1990,7 @@ FmlErrorNumber Fieldml_SetDefaultEvaluator( FmlSessionHandle handle, FmlObjectHa
 
     if( Fieldml_GetObjectType( handle, objectHandle ) == FHT_AGGREGATE_EVALUATOR )
     {
-        if( !checkIsEvaluatorType( session, evaluator, true, false ) )
+        if( !checkIsEvaluatorType( session, evaluator, true, false, false ) )
         {
             return session->setError( FML_ERR_INVALID_PARAMETER_3 );
         }
@@ -2067,7 +2072,7 @@ FmlErrorNumber Fieldml_SetEvaluator( FmlSessionHandle handle, FmlObjectHandle ob
 
     if( Fieldml_GetObjectType( handle, objectHandle ) == FHT_AGGREGATE_EVALUATOR )
     {
-        if( !checkIsEvaluatorType( session, evaluator, true, false ) )
+        if( !checkIsEvaluatorType( session, evaluator, true, false, false ) )
         {
             return session->setError( FML_ERR_INVALID_PARAMETER_3 );
         }
@@ -2492,7 +2497,7 @@ FmlErrorNumber Fieldml_SetIndexEvaluator( FmlSessionHandle handle, FmlObjectHand
         return session->getLastError();
     }
 
-    if( !checkIsEvaluatorType( session, evaluatorHandle, false, true ) )
+    if( !checkIsEvaluatorType( session, evaluatorHandle, false, true, false ) )
     {
         return session->setError( FML_ERR_INVALID_PARAMETER_4 );
     }
@@ -2641,6 +2646,26 @@ FmlObjectHandle Fieldml_GetParameterIndexOrder( FmlSessionHandle handle, FmlObje
     session->setError( err );
     
     return order;
+}
+
+
+FmlObjectHandle Fieldml_CreateBooleanType( FmlSessionHandle handle, const char * name )
+{
+    FieldmlSession *session = getSession( handle );
+    if( session == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+    if( name == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        return FML_INVALID_HANDLE;
+    }
+
+    BooleanType *booleanType = new BooleanType( name, false );
+    
+    session->setError( FML_ERR_NO_ERROR );
+    return addObject( session, booleanType );
 }
 
 
@@ -3001,6 +3026,24 @@ FmlErrorNumber Fieldml_ReadDoubleSlab( FmlSessionHandle handle, FmlReaderHandle 
 }
 
 
+FmlErrorNumber Fieldml_ReadBooleanSlab( FmlSessionHandle handle, FmlReaderHandle readerHandle, int *offsets, int *sizes, bool *valueBuffer )
+{
+    FieldmlSession *session = getSession( handle );
+    if( session == NULL )
+    {
+        return FML_ERR_UNKNOWN_HANDLE;
+    }
+
+    ArrayDataReader *reader = session->handleToReader( readerHandle );
+    if( reader == NULL )
+    {
+        return session->setError( FML_ERR_INVALID_OBJECT );
+    }
+
+    return reader->readBooleanSlab( offsets, sizes, valueBuffer );
+}
+
+
 FmlErrorNumber Fieldml_CloseReader( FmlSessionHandle handle, FmlReaderHandle readerHandle )
 {
     FieldmlSession *session = getSession( handle );
@@ -3045,9 +3088,6 @@ FmlWriterHandle Fieldml_OpenArrayWriter( FmlSessionHandle handle, FmlObjectHandl
         return FML_INVALID_HANDLE;
     }
     
-    //NOTE: Currently, IO only supports scalar ensemble or continuous values, so this boolean is sufficient. 
-    bool isDouble;
-    
     FieldmlObject *typeObject = getObject( session, typeHandle );
     if( typeObject == NULL )
     {
@@ -3056,20 +3096,21 @@ FmlWriterHandle Fieldml_OpenArrayWriter( FmlSessionHandle handle, FmlObjectHandl
     }
     if( typeObject->type == FHT_ENSEMBLE_TYPE )
     {
-        isDouble = false;
+        //Ensemble types can always be serialized.
     }
     else if( typeObject->type == FHT_CONTINUOUS_TYPE )
     {
         ContinuousType *continuousType = (ContinuousType*)typeObject;
-        if( continuousType->componentType == FML_INVALID_HANDLE )
+        if( continuousType->componentType != FML_INVALID_HANDLE )
         {
-            isDouble = true;
-        }
-        else
-        {
+            //Only scalars are supported for now.
             session->setError( FML_ERR_INVALID_PARAMETER_3 );
             return FML_INVALID_HANDLE;
         }
+    }
+    else if( typeObject->type == FHT_BOOLEAN_TYPE )
+    {
+        //Boolean values can always scalar, and can always be serialized.
     }
     else
     {
@@ -3082,7 +3123,7 @@ FmlWriterHandle Fieldml_OpenArrayWriter( FmlSessionHandle handle, FmlObjectHandl
     if( dataSource->type == DATA_SOURCE_ARRAY )
     {
         ArrayDataSource *arraySource = (ArrayDataSource*)dataSource;
-        writer = ArrayDataWriter::create( session, session->region->getRoot().c_str(), arraySource, isDouble, ( append == 1 ), sizes, rank );
+        writer = ArrayDataWriter::create( session, session->region->getRoot().c_str(), arraySource, typeObject->type, ( append == 1 ), sizes, rank );
     }
     
 
@@ -3128,6 +3169,24 @@ FmlErrorNumber Fieldml_WriteDoubleSlab( FmlSessionHandle handle, FmlWriterHandle
     }
 
     return writer->writeDoubleSlab( offsets, sizes, valueBuffer );
+}
+
+
+FmlErrorNumber Fieldml_WriteBooleanSlab( FmlSessionHandle handle, FmlWriterHandle writerHandle, int *offsets, int *sizes, bool *valueBuffer )
+{
+    FieldmlSession *session = getSession( handle );
+    if( session == NULL )
+    {
+        return FML_ERR_UNKNOWN_HANDLE;
+    }
+
+    ArrayDataWriter *writer = session->handleToWriter( writerHandle );
+    if( writer == NULL )
+    {
+        return session->setError( FML_ERR_INVALID_OBJECT );
+    }
+
+    return writer->writeBooleanSlab( offsets, sizes, valueBuffer );
 }
 
 

@@ -689,6 +689,28 @@ public:
 };
     
 
+class BooleanTypeParser :
+    public NodeParser
+{
+public:
+    BooleanTypeParser() {}
+    
+    int parseNode( xmlNodePtr objectNode, ParseState &state )
+    {
+        const char *name = getStringAttribute( objectNode, NAME_ATTRIB );
+        
+        FmlObjectHandle handle = Fieldml_CreateBooleanType( state.session, name );
+        if( handle == FML_INVALID_HANDLE )
+        {
+            state.errorHandler->logError( "BooleanType creation failed", name );
+            return 1;
+        }
+        
+        return 0;
+    }
+};
+
+
 class EnsembleTypeParser :
     public NodeParser
 {
@@ -1281,6 +1303,10 @@ static int parseObjectNode( xmlNodePtr objectNode, ParseState &state )
     else if( checkName( objectNode, CONTINUOUS_TYPE_TAG ) )
     {
         err = ContinuousTypeParser().parseNode( objectNode, state );
+    }
+    else if( checkName( objectNode, BOOLEAN_TYPE_TAG ) )
+    {
+        err = BooleanTypeParser().parseNode( objectNode, state );
     }
     else if( checkName( objectNode, ENSEMBLE_TYPE_TAG ) )
     {

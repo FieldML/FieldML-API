@@ -261,6 +261,12 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
         </xs:choice> \
     </xs:complexType> \
  \
+    <xs:complexType name=\"BooleanType_Type\"> \
+        <xs:complexContent> \
+            <xs:extension base=\"FieldmlObject_Type\" /> \
+        </xs:complexContent> \
+    </xs:complexType> \
+ \
     <xs:complexType name=\"EnsembleType_Type\"> \
         <xs:complexContent> \
             <xs:extension base=\"FieldmlObject_Type\"> \
@@ -399,6 +405,7 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
                 <xs:choice minOccurs=\"0\" maxOccurs=\"unbounded\"> \
                     <xs:element name=\"Import\" type=\"Import_Type\" /> \
                     <xs:element name=\"DataResource\" type=\"DataResource_Type\" /> \
+                    <xs:element name=\"BooleanType\" type=\"BooleanType_Type\" /> \
                     <xs:element name=\"EnsembleType\" type=\"EnsembleType_Type\" /> \
                     <xs:element name=\"ContinuousType\" type=\"ContinuousType_Type\" /> \
                     <xs:element name=\"MeshType\" type=\"MeshType_Type\" /> \

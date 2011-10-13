@@ -49,25 +49,25 @@
 
 using namespace std;
 
-ArrayDataWriter *ArrayDataWriter::create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank )
+ArrayDataWriter *ArrayDataWriter::create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, FieldmlHandleType handleType, bool append, int *sizes, int rank )
 {
     ArrayDataWriter *writer = NULL;
     
     if( source->resource->format == HDF5_NAME )
     {
 #ifdef FIELDML_HDF5_ARRAY
-        writer = Hdf5ArrayDataWriter::create( eHandler, root, source, isDouble, append, sizes, rank );
+        writer = Hdf5ArrayDataWriter::create( eHandler, root, source, handleType, append, sizes, rank );
 #endif //FIELDML_HDF5_ARRAY
     }
     else if( source->resource->format == PHDF5_NAME )
     {
 #ifdef FIELDML_PHDF5_ARRAY
-        writer = Hdf5ArrayDataWriter::create( eHandler, root, source, isDouble, append, sizes, rank );
+        writer = Hdf5ArrayDataWriter::create( eHandler, root, source, handleType, append, sizes, rank );
 #endif //FIELDML_PHDF5_ARRAY
     }
     else if( source->resource->format == PLAIN_TEXT_NAME )
     {
-        writer = TextArrayDataWriter::create( eHandler, root, source, isDouble, append, sizes, rank );
+        writer = TextArrayDataWriter::create( eHandler, root, source, handleType, append, sizes, rank );
     }
     else
     {

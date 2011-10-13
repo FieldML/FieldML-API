@@ -48,6 +48,9 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
   xsi:noNamespaceSchemaLocation=\"http://www.fieldml.org/resources/xml/0.4/FieldML_0.4.xsd\" \
   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"> \
  <Region name=\"library\"> \
+  <BooleanType name=\"boolean\"/> \
+  <ArgumentEvaluator name=\"boolean.argument\" valueType=\"boolean\"/> \
+ \
   <ContinuousType name=\"real.1d\"/> \
   <ArgumentEvaluator name=\"real.1d.argument\" valueType=\"real.1d\"/> \
  \

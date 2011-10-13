@@ -58,6 +58,7 @@ protected:
 public:
     int readInt();
     double readDouble();
+    bool readBoolean();
     int skipLine();
     bool eof();
     virtual ~FieldmlInputStream();

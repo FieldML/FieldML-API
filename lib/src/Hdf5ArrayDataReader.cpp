@@ -133,7 +133,6 @@ Hdf5ArrayDataReader::Hdf5ArrayDataReader( FieldmlErrorHandler *eHandler, const c
         {
             break;
         }
-        //Note: At the moment, only native int and native double can be read, so we get the native type immediately.
         
         hOffsets = new hsize_t[rank];
         hSizes = new hsize_t[rank];
@@ -152,6 +151,10 @@ Hdf5ArrayDataReader::Hdf5ArrayDataReader( FieldmlErrorHandler *eHandler, const c
         {
             datatype = H5T_NATIVE_DOUBLE;
         }
+        else if( H5Tequal( nativeType, H5T_NATIVE_INT8 ) )
+        {
+            datatype = H5T_NATIVE_INT8;
+        }
         
         ok = true;
         break;
@@ -159,9 +162,9 @@ Hdf5ArrayDataReader::Hdf5ArrayDataReader( FieldmlErrorHandler *eHandler, const c
 }
 
 
-FmlErrorNumber Hdf5ArrayDataReader::readIntSlab( int *offsets, int *sizes, int *valueBuffer )
+FmlErrorNumber Hdf5ArrayDataReader::readSlab( int *offsets, int *sizes, hid_t requiredDatatype, void *valueBuffer )
 {
-    if( datatype != H5T_NATIVE_INT )
+    if( datatype != requiredDatatype )
     {
         return eHandler->setError( FML_ERR_IO_UNSUPPORTED );
     }
@@ -185,7 +188,7 @@ FmlErrorNumber Hdf5ArrayDataReader::readIntSlab( int *offsets, int *sizes, int *
     //    H5Pset_dxpl_mpio(transferProperties, H5FD_MPIO_COLLECTIVE);
     //}
         
-    status = H5Dread( dataset, H5T_NATIVE_INT, bufferSpace, dataspace, transferProperties, valueBuffer );
+    status = H5Dread( dataset, requiredDatatype, bufferSpace, dataspace, transferProperties, valueBuffer );
     
     //H5Pclose( transferProperties );
     
@@ -200,44 +203,21 @@ FmlErrorNumber Hdf5ArrayDataReader::readIntSlab( int *offsets, int *sizes, int *
 }
 
 
+FmlErrorNumber Hdf5ArrayDataReader::readIntSlab( int *offsets, int *sizes, int *valueBuffer )
+{
+    return readSlab( offsets, sizes, H5T_NATIVE_INT, valueBuffer );
+}
+
+
 FmlErrorNumber Hdf5ArrayDataReader::readDoubleSlab( int *offsets, int *sizes, double *valueBuffer )
 {
-    if( datatype != H5T_NATIVE_DOUBLE )
-    {
-        return eHandler->setError( FML_ERR_IO_UNSUPPORTED );
-    }
-    
-    for( int i = 0; i < rank; i++ )
-    {
-        hOffsets[i] = offsets[i];
-        hSizes[i] = sizes[i];
-    }
-    
-    hid_t bufferSpace = H5Screate_simple( rank, hSizes, NULL );
-    
-    herr_t status;
-    status = H5Sselect_hyperslab( dataspace, H5S_SELECT_SET, hOffsets, NULL, hSizes, NULL );
+    return readSlab( offsets, sizes, H5T_NATIVE_DOUBLE, valueBuffer );
+}
 
-    hid_t transferProperties = H5P_DEFAULT;
 
-    //if( collective )
-    //{
-    //    transferProperties = H5Pcreate (H5P_DATASET_XFER);
-    //    H5Pset_dxpl_mpio(transferProperties, H5FD_MPIO_COLLECTIVE);
-    //}
-        
-    status = H5Dread( dataset, H5T_NATIVE_DOUBLE, bufferSpace, dataspace, transferProperties, valueBuffer );
-    
-    //H5Pclose( transferProperties );
-    
-    H5Sclose( bufferSpace );
-    
-    if( status >= 0 )
-    {
-        return FML_ERR_NO_ERROR;
-    }
-    
-    return eHandler->setError( FML_ERR_IO_READ_ERR );
+FmlErrorNumber Hdf5ArrayDataReader::readBooleanSlab( int *offsets, int *sizes, bool *valueBuffer )
+{
+    return readSlab( offsets, sizes, H5T_NATIVE_INT8, valueBuffer );
 }
 
 

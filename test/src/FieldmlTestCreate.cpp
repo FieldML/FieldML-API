@@ -134,6 +134,8 @@ SIMPLE_TEST( FieldmlCreateContinuousTypeTest )
     count = Fieldml_GetObjectCount( session, FHT_CONTINUOUS_TYPE );
     SIMPLE_ASSERT_EQUALS( 1, count );
     
+    FmlObjectHandle altHandle = Fieldml_GetObject( session, FHT_CONTINUOUS_TYPE, 1 );
+    SIMPLE_ASSERT_EQUALS( typeHandle, altHandle );
     
     Fieldml_Destroy( session );
 }
@@ -187,6 +189,39 @@ SIMPLE_TEST( FieldmlCreateEnsembleTypeTest )
 
     count = Fieldml_GetObjectCount( session, FHT_ENSEMBLE_TYPE );
     SIMPLE_ASSERT_EQUALS( 1, count );
+    
+    FmlObjectHandle altHandle = Fieldml_GetObject( session, FHT_ENSEMBLE_TYPE, 1 );
+    SIMPLE_ASSERT_EQUALS( typeHandle, altHandle );
+    
+    Fieldml_Destroy( session );
+}
+
+
+SIMPLE_TEST( FieldmlCreateBooleanTypeTest )
+{
+    FmlSessionHandle session = Fieldml_Create( "test_path", "test" );
+    Fieldml_SetDebug( session, 0 );
+    SIMPLE_ASSERT( session != FML_INVALID_HANDLE );
+
+    int count = Fieldml_GetObjectCount( session, FHT_BOOLEAN_TYPE );
+    SIMPLE_ASSERT_EQUALS( 0, count );
+    
+    const char *name = "test.boolean";
+    FmlObjectHandle typeHandle = Fieldml_CreateBooleanType( session, NULL );
+    SIMPLE_ASSERT( typeHandle == FML_INVALID_HANDLE );
+
+    typeHandle = Fieldml_CreateBooleanType( -1, name );
+    SIMPLE_ASSERT( typeHandle == FML_INVALID_HANDLE );
+
+    
+    typeHandle = Fieldml_CreateBooleanType( session, name );
+    SIMPLE_ASSERT( typeHandle != FML_INVALID_HANDLE );
+    
+    count = Fieldml_GetObjectCount( session, FHT_BOOLEAN_TYPE );
+    SIMPLE_ASSERT_EQUALS( 1, count );
+    
+    FmlObjectHandle altHandle = Fieldml_GetObject( session, FHT_BOOLEAN_TYPE, 1 );
+    SIMPLE_ASSERT_EQUALS( typeHandle, altHandle );
     
     Fieldml_Destroy( session );
 }

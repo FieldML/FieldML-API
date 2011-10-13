@@ -60,9 +60,12 @@ public:
     
     virtual int writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer ) = 0;
     
+    //TODO Provide options for writing from 32/64 bit packed boolean arrays?
+    virtual int writeBooleanSlab( int *offsets, int *sizes, bool *valueBuffer ) = 0;
+    
     virtual ~ArrayDataWriter();
     
-    static ArrayDataWriter *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank );
+    static ArrayDataWriter *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, FieldmlHandleType handleType, bool append, int *sizes, int rank );
 };
 
 

@@ -55,6 +55,8 @@ class FieldmlObject
 public:
     const FieldmlHandleType type;
     const std::string name;
+    
+    //Virtual objects are either imports, or objects which are strict sub-objects (e.g. component ensembles, mesh element/chart arguments)/
     const bool isVirtual;
 
     int intValue;
@@ -96,6 +98,14 @@ public:
     SimpleBitset members;
     
     ElementSequence( const std::string _name, FmlObjectHandle _componentType );
+};
+
+
+class BooleanType :
+    public FieldmlObject
+{
+public:
+    BooleanType( const std::string _name, bool _isVirtual );
 };
 
 

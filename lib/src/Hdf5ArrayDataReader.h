@@ -67,6 +67,8 @@ private:
     hsize_t *hOffsets;
 
     Hdf5ArrayDataReader( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, hid_t fileAccessProperties );
+
+    FmlErrorNumber readSlab( int *offsets, int *sizes, hid_t requiredDatatype, void *valueBuffer );
     
 public:
     bool ok;
@@ -74,6 +76,8 @@ public:
     virtual FmlErrorNumber readIntSlab( int *offsets, int *sizes, int *valueBuffer );
     
     virtual FmlErrorNumber readDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
+    
+    virtual FmlErrorNumber readBooleanSlab( int *offsets, int *sizes, bool *valueBuffer );
     
     virtual ~Hdf5ArrayDataReader();
 

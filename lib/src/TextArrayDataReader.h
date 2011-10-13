@@ -48,6 +48,8 @@
 
 #include "fieldml_structs.h"
 
+class BufferReader;
+
 class TextArrayDataReader :
     public ArrayDataReader
 {
@@ -61,20 +63,24 @@ private:
 
     TextArrayDataReader( FieldmlInputStream *_stream, ArrayDataSource *_source, FieldmlErrorHandler *_eHandler );
     
-    virtual bool checkDimensions( int *offsets, int *sizes );
+    bool checkDimensions( int *offsets, int *sizes );
     
-    virtual bool applyOffsets( int *offsets, int *sizes, int depth, bool isHead );
+    bool applyOffsets( int *offsets, int *sizes, int depth, bool isHead );
     
-    virtual FmlErrorNumber readIntSlice( int *offsets, int *sizes, int *valueBuffer, int depth, int *bufferPos );
+    FmlErrorNumber readPreSlab( int *offsets, int *sizes );
     
-    virtual FmlErrorNumber readDoubleSlice( int *offsets, int *sizes, double *valueBuffer, int depth, int *bufferPos );
+    FmlErrorNumber readSlice( int *offsets, int *sizes, int depth, BufferReader &reader );
     
-    virtual FmlErrorNumber skipPreamble();
+    FmlErrorNumber readSlab( int *offsets, int *sizes, BufferReader &reader );
+    
+    FmlErrorNumber skipPreamble();
 
 public:
     virtual FmlErrorNumber readIntSlab( int *offsets, int *sizes, int *valueBuffer );
     
     virtual FmlErrorNumber readDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
+    
+    virtual FmlErrorNumber readBooleanSlab( int *offsets, int *sizes, bool *valueBuffer );
     
     virtual ~TextArrayDataReader();
     

@@ -48,6 +48,87 @@
 
 using namespace std;
 
+/**
+ * A pseudo-lambda class that removes the need to duplicate the slab and slice reading implementations.
+ * No point in making this a template class, as we need to use a different method on stream depending on the type,
+ * and there's no superclass functionality, so template specialization is redundant.
+ */
+class BufferReader
+{
+protected:
+    int bufferPos;
+    FieldmlInputStream * const stream;
+    
+public:
+    BufferReader( FieldmlInputStream *_stream ) :
+        stream( _stream ), bufferPos( 0 ) {}
+    
+    virtual ~BufferReader() {}
+    
+    virtual void read( int count ) = 0;
+};
+
+
+class DoubleBufferReader :
+    public BufferReader
+{
+private:
+    double * const buffer;
+    
+public:
+    DoubleBufferReader( FieldmlInputStream *_stream, double *_buffer ) :
+        BufferReader( _stream ), buffer( _buffer ) {}
+    
+    void read( int count )
+    {
+        for( int i = 0; i < count; i++ )
+        {
+            buffer[bufferPos++] = stream->readDouble();
+        }
+    }
+};
+
+
+class IntBufferReader :
+    public BufferReader
+{
+private:
+    int * const buffer;
+    
+public:
+    IntBufferReader( FieldmlInputStream *_stream, int *_buffer ) :
+        BufferReader( _stream ), buffer( _buffer ) {}
+    
+    void read( int count )
+    {
+        for( int i = 0; i < count; i++ )
+        {
+            buffer[bufferPos++] = stream->readInt();
+        }
+    }
+};
+
+
+class BooleanBufferReader :
+    public BufferReader
+{
+private:
+    bool * const buffer;
+    
+public:
+    BooleanBufferReader( FieldmlInputStream *_stream, bool *_buffer ) :
+        BufferReader( _stream ), buffer( _buffer ) {}
+    
+    void read( int count )
+    {
+        for( int i = 0; i < count; i++ )
+        {
+            buffer[bufferPos++] = stream->readBoolean();
+        }
+    }
+};
+
+    
 TextArrayDataReader *TextArrayDataReader::create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source )
 {
     FieldmlInputStream *stream = NULL;
@@ -172,7 +253,31 @@ bool TextArrayDataReader::applyOffsets( int *offsets, int *sizes, int depth, boo
 }
 
 
-FmlErrorNumber TextArrayDataReader::readIntSlice( int *offsets, int *sizes, int *valueBuffer, int depth, int *bufferPos )
+FmlErrorNumber TextArrayDataReader::readPreSlab( int *offsets, int *sizes )
+{
+    if( !checkDimensions( offsets, sizes ) )
+    {
+        return eHandler->setError( FML_ERR_INVALID_PARAMETERS );
+    }
+    
+    if( startPos == -1 )
+    {
+        int err = skipPreamble();
+        if( err != FML_ERR_NO_ERROR )
+        {
+            return err;
+        }
+    }
+    else
+    {
+        stream->seek( startPos );
+    }
+    
+    return FML_ERR_NO_ERROR;
+}
+
+
+FmlErrorNumber TextArrayDataReader::readSlice( int *offsets, int *sizes, int depth, BufferReader &reader )
 {
     if( !applyOffsets( offsets, sizes, depth, true ) )
     {
@@ -181,11 +286,7 @@ FmlErrorNumber TextArrayDataReader::readIntSlice( int *offsets, int *sizes, int 
     
     if( depth == source->rank - 1 )
     {
-        for( int i = 0; i < sizes[depth]; i++ )
-        {
-            valueBuffer[*bufferPos] = stream->readInt();
-            (*bufferPos)++;
-        }
+        reader.read( sizes[depth] );
         if( stream->eof() )
         {
             return eHandler->setError( FML_ERR_IO_UNEXPECTED_EOF );
@@ -196,7 +297,7 @@ FmlErrorNumber TextArrayDataReader::readIntSlice( int *offsets, int *sizes, int 
         int err;
         for( int i = 0; i < sizes[depth]; i++ )
         {
-            err = readIntSlice( offsets, sizes, valueBuffer, depth + 1, bufferPos );
+            err = readSlice( offsets, sizes, depth + 1, reader );
             if( err != FML_ERR_NO_ERROR )
             {
                 return err;
@@ -210,97 +311,42 @@ FmlErrorNumber TextArrayDataReader::readIntSlice( int *offsets, int *sizes, int 
     }
     
     return FML_ERR_NO_ERROR;
+}
+
+
+FmlErrorNumber TextArrayDataReader::readSlab( int *offsets, int *sizes, BufferReader &reader )
+{
+    int err = readPreSlab( offsets, sizes );
+    if( err != FML_ERR_NO_ERROR )
+    {
+        return err;
+    }
+    
+    return readSlice( offsets, sizes, 0, reader );
 }
 
 
 FmlErrorNumber TextArrayDataReader::readIntSlab( int *offsets, int *sizes, int *valueBuffer )
 {
-    if( !checkDimensions( offsets, sizes ) )
-    {
-        return eHandler->setError( FML_ERR_INVALID_PARAMETERS );
-    }
+    IntBufferReader reader( stream, valueBuffer );
     
-    if( startPos == -1 )
-    {
-        int err = skipPreamble();
-        if( err != FML_ERR_NO_ERROR )
-        {
-            return err;
-        }
-    }
-    else
-    {
-        stream->seek( startPos );
-    }
-    
-    int bufferPos = 0;
-    return readIntSlice( offsets, sizes, valueBuffer, 0, &bufferPos );
-}
-
-
-FmlErrorNumber TextArrayDataReader::readDoubleSlice( int *offsets, int *sizes, double *valueBuffer, int depth, int *bufferPos )
-{
-    if( !applyOffsets( offsets, sizes, depth, true ) )
-    {
-        return eHandler->setError( FML_ERR_IO_UNEXPECTED_EOF );
-    }
-    
-    if( depth == source->rank - 1 )
-    {
-        for( int i = 0; i < sizes[depth]; i++ )
-        {
-            valueBuffer[*bufferPos] = stream->readDouble();
-            (*bufferPos)++;
-        }
-        if( stream->eof() )
-        {
-            return eHandler->setError( FML_ERR_IO_UNEXPECTED_EOF );
-        }
-    }
-    else
-    {
-        int err;
-        for( int i = 0; i < sizes[depth]; i++ )
-        {
-            err = readDoubleSlice( offsets, sizes, valueBuffer, depth + 1, bufferPos );
-            if( err != FML_ERR_NO_ERROR )
-            {
-                return err;
-            }
-        }
-    }
-    
-    if( ( depth > 0 ) && ( !applyOffsets( offsets, sizes, depth, false ) ) )
-    {
-        return eHandler->setError( FML_ERR_IO_UNEXPECTED_EOF );
-    }
-    
-    return FML_ERR_NO_ERROR;
+    return readSlab( offsets, sizes, reader );
 }
 
 
 FmlErrorNumber TextArrayDataReader::readDoubleSlab( int *offsets, int *sizes, double *valueBuffer )
 {
-    if( !checkDimensions( offsets, sizes ) )
-    {
-        return eHandler->setError( FML_ERR_INVALID_PARAMETERS );
-    }
+    DoubleBufferReader reader( stream, valueBuffer );
     
-    if( startPos == -1 )
-    {
-        int err = skipPreamble();
-        if( err != FML_ERR_NO_ERROR )
-        {
-            return err;
-        }
-    }
-    else
-    {
-        stream->seek( startPos );
-    }
+    return readSlab( offsets, sizes, reader );
+}
+
+
+FmlErrorNumber TextArrayDataReader::readBooleanSlab( int *offsets, int *sizes, bool *valueBuffer )
+{
+    BooleanBufferReader reader( stream, valueBuffer );
     
-    int bufferPos = 0;
-    return readDoubleSlice( offsets, sizes, valueBuffer, 0, &bufferPos );
+    return readSlab( offsets, sizes, reader );
 }
 
 

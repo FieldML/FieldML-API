@@ -231,6 +231,7 @@ enum FieldmlHandleType
     FHT_ENSEMBLE_TYPE,        ///< The object is an EnsembleType.
     FHT_CONTINUOUS_TYPE,      ///< The object is a ContinuousType.
     FHT_MESH_TYPE,            ///< The object is a MeshType.
+    FHT_BOOLEAN_TYPE,         ///< The object is a BooleanType.
     FHT_ARGUMENT_EVALUATOR,   ///< The object is an ArgumentEvaluator.
     FHT_EXTERNAL_EVALUATOR,   ///< The object is an ExternalEvaluator.
     FHT_REFERENCE_EVALUATOR,  ///< The object is a ReferenceEvaluator.
@@ -540,6 +541,12 @@ int Fieldml_GetTypeComponentCount( FmlSessionHandle handle, FmlObjectHandle obje
  * \see Fieldml_GetDataSource
  */
 FmlObjectHandle Fieldml_CreateEnsembleType( FmlSessionHandle handle, const char * name );
+
+
+/**
+ * Creates a boolean type with the given name.
+ */
+FmlObjectHandle Fieldml_CreateBooleanType( FmlSessionHandle handle, const char * name );
 
 
 /**
@@ -1166,25 +1173,34 @@ int Fieldml_GetEnsembleMembersStride( FmlSessionHandle handle, FmlObjectHandle o
 
 /**
  * Creates a new reader for the given data source's raw data. Fieldml_CloseReader() should be called
- * when the caller no longer needs to use it. Subsequent calls to Fieldml_ReadIntValues() and
- * Fieldml_ReadDoubleValues() will use the attributes of the associated data source to to preprocess
- * incoming data before extracting the values that will be placed into the given buffers.
+ * when the caller no longer needs to use it.
  * 
- * \note Currently, it is not possible to state the layout of the data to be read. It is up to the
- * caller to ensure that Fieldml_ReadIntValues() and Fieldml_ReadDoubleValues() is called at appropriate
- * times and with appropriate parameters.
- * 
- * \see Fieldml_ReadIntValues
- * \see Fieldml_ReadDoubleValues
+ * \see Fieldml_ReadIntSlab
+ * \see Fieldml_ReadDoubleSlab
  * \see Fieldml_CloseReader
  */
 FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
+/**
+ * Reads data from the multi-dimensional array specified by the given offsets and sizes into the given buffer. The first
+ * size/offset is applied to the outermost index, and so on.
+ */
 FmlErrorNumber Fieldml_ReadIntSlab( FmlSessionHandle handle, FmlReaderHandle readerHandle, int *offsets, int *sizes, int *valueBuffer );
 
 
+/**
+ * Reads data from the multi-dimensional array specified by the given offsets and sizes into the given buffer. The first
+ * size/offset is applied to the outermost index, and so on.
+ */
 FmlErrorNumber Fieldml_ReadDoubleSlab( FmlSessionHandle handle, FmlReaderHandle readerHandle, int *offsets, int *sizes, double *valueBuffer );
+
+
+/**
+ * Reads data from the multi-dimensional array specified by the given offsets and sizes into the given buffer. The first
+ * size/offset is applied to the outermost index, and so on.
+ */
+FmlErrorNumber Fieldml_ReadBooleanSlab( FmlSessionHandle handle, FmlReaderHandle readerHandle, int *offsets, int *sizes, bool *valueBuffer );
 
 
 /**
@@ -1207,7 +1223,8 @@ FmlWriterHandle Fieldml_OpenArrayWriter( FmlSessionHandle handle, FmlObjectHandl
 
 /**
  * Write out some integer values to the given data writer. The data will be interpreted as an n-dimensional array of
- * the given size, and written out at the given offset.
+ * the given size, and written out at the given offset. The first
+ * size/offset is applied to the outermost index, and so on.
  * 
  * \note For text-based arrays, there are limitations on the permissible offsets and sizes. 
  * 
@@ -1217,13 +1234,26 @@ FmlErrorNumber Fieldml_WriteIntSlab( FmlSessionHandle handle, FmlWriterHandle wr
 
 /**
  * Write out some double-precision values to the given data writer. The data will be interpreted as an n-dimensional array of
- * the given size, and written out at the given offset.
+ * the given size, and written out at the given offset. The first
+ * size/offset is applied to the outermost index, and so on.
  * 
  * \note For text-based arrays, there are limitations on the permissible offsets and sizes. 
  * 
  * \see Fieldml_OpenArrayWriter
  */
 FmlErrorNumber Fieldml_WriteDoubleSlab( FmlSessionHandle handle, FmlWriterHandle writerHandle, int *offsets, int *sizes, double *valueBuffer );
+
+
+/**
+ * Write out some boolean values to the given data writer. The data will be interpreted as an n-dimensional array of
+ * the given size, and written out at the given offset. The first
+ * size/offset is applied to the outermost index, and so on.
+ * 
+ * \note For text-based arrays, there are limitations on the permissible offsets and sizes. 
+ * 
+ * \see Fieldml_OpenArrayWriter
+ */
+FmlErrorNumber Fieldml_WriteBooleanSlab( FmlSessionHandle handle, FmlWriterHandle writerHandle, int *offsets, int *sizes, bool *valueBuffer );
 
 
 /**

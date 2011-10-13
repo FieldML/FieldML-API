@@ -48,7 +48,89 @@
 
 using namespace std;
 
-TextArrayDataWriter *TextArrayDataWriter::create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank )
+
+/**
+ * A pseudo-lambda class that removes the need to duplicate the slab and slice writing implementations.
+ * No point in making this a template class, as we need to use a different method on stream depending on the type,
+ * and there's no superclass functionality, so template specialization is redundant.
+ */
+class BufferWriter
+{
+protected:
+    int bufferPos;
+    FieldmlOutputStream * const stream;
+    
+public:
+    BufferWriter( FieldmlOutputStream *_stream ) :
+        stream( _stream ), bufferPos( 0 ) {}
+    
+    virtual ~BufferWriter() {}
+    
+    virtual void write( int count ) = 0;
+};
+
+
+class DoubleBufferWriter :
+    public BufferWriter
+{
+private:
+    double * const buffer;
+    
+public:
+    DoubleBufferWriter( FieldmlOutputStream *_stream, double *_buffer ) :
+        BufferWriter( _stream ), buffer( _buffer ) {}
+    
+    void write( int count )
+    {
+        for( int i = 0; i < count; i++ )
+        {
+            stream->writeDouble( buffer[bufferPos++] );
+        }
+    }
+};
+
+
+class IntBufferWriter :
+    public BufferWriter
+{
+private:
+    int * const buffer;
+    
+public:
+    IntBufferWriter( FieldmlOutputStream *_stream, int *_buffer ) :
+        BufferWriter( _stream ), buffer( _buffer ) {}
+    
+    void write( int count )
+    {
+        for( int i = 0; i < count; i++ )
+        {
+            stream->writeInt( buffer[bufferPos++] );
+        }
+    }
+};
+
+
+class BooleanBufferWriter :
+    public BufferWriter
+{
+private:
+    bool * const buffer;
+    
+public:
+    BooleanBufferWriter( FieldmlOutputStream *_stream, bool *_buffer ) :
+        BufferWriter( _stream ), buffer( _buffer ) {}
+    
+    void write( int count )
+    {
+        for( int i = 0; i < count; i++ )
+        {
+            stream->writeBoolean( buffer[bufferPos++] );
+        }
+    }
+};
+
+
+TextArrayDataWriter *TextArrayDataWriter::create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, FieldmlHandleType handleType, bool append, int *sizes, int rank )
 {
     TextArrayDataWriter *writer = NULL;
     
@@ -58,7 +140,7 @@ TextArrayDataWriter *TextArrayDataWriter::create( FieldmlErrorHandler *eHandler,
         return writer;
     }
     
-    writer = new TextArrayDataWriter( eHandler, root, source, isDouble, append, sizes, rank );
+    writer = new TextArrayDataWriter( eHandler, root, source, handleType, append, sizes, rank );
     if( !writer->ok )
     {
         delete writer;
@@ -69,7 +151,7 @@ TextArrayDataWriter *TextArrayDataWriter::create( FieldmlErrorHandler *eHandler,
 }
 
 
-TextArrayDataWriter::TextArrayDataWriter( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *_source, bool isDouble, bool append, int *sizes, int _rank ) :
+TextArrayDataWriter::TextArrayDataWriter( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *_source, FieldmlHandleType handleType, bool append, int *sizes, int _rank ) :
     ArrayDataWriter( eHandler ),
     source( _source )
 {
@@ -94,22 +176,18 @@ TextArrayDataWriter::TextArrayDataWriter( FieldmlErrorHandler *eHandler, const c
 }
 
 
-int TextArrayDataWriter::writeIntSlice( int *sizes, int *valueBuffer, int depth, int *bufferPos )
+int TextArrayDataWriter::writeSlice( int *sizes, int depth, BufferWriter &writer )
 {
     if( depth == source->rank - 1 )
     {
-        for( int i = 0; i < sizes[depth]; i++ )
-        {
-            stream->writeInt( valueBuffer[*bufferPos] );
-            (*bufferPos)++;
-        }
+        writer.write( sizes[depth] );
         return FML_ERR_NO_ERROR;
     }
     
     int err;
     for( int i = 0; i < sizes[depth]; i++ )
     {
-        err = writeIntSlice( sizes, valueBuffer, depth + 1, bufferPos );
+        err = writeSlice( sizes, depth + 1, writer );
         if( err != FML_ERR_NO_ERROR )
         {
             return err;
@@ -119,94 +197,59 @@ int TextArrayDataWriter::writeIntSlice( int *sizes, int *valueBuffer, int depth,
     return FML_ERR_NO_ERROR;
 }
     
+
+int TextArrayDataWriter::writeSlab( int *offsets, int *sizes, BufferWriter &writer )
+{
+    if( offsets[0] != offset )
+    {
+        return eHandler->setError( FML_ERR_IO_UNSUPPORTED );
+    }
+    
+    for( int i = 1; i < source->rank; i++ )
+    {
+        if( offsets[i] != 0 )
+        {
+            return eHandler->setError( FML_ERR_IO_UNSUPPORTED );
+        }
+        
+        if( sizes[i] != source->sizes[i] )
+        {
+            return eHandler->setError( FML_ERR_IO_UNSUPPORTED );
+        }
+    }
+    
+    int err = writeSlice( sizes, 0, writer );
+
+    if( err == FML_ERR_NO_ERROR )
+    {
+        offset += sizes[0];
+    }
+
+    return err;
+}
+
 
 int TextArrayDataWriter::writeIntSlab( int *offsets, int *sizes, int *valueBuffer )
 {
-    if( offsets[0] != offset )
-    {
-        return eHandler->setError( FML_ERR_IO_UNSUPPORTED );
-    }
+    IntBufferWriter writer( stream, valueBuffer );
     
-    for( int i = 1; i < source->rank; i++ )
-    {
-        if( offsets[i] != 0 )
-        {
-            return eHandler->setError( FML_ERR_IO_UNSUPPORTED );
-        }
-        
-        if( sizes[i] != source->sizes[i] )
-        {
-            return eHandler->setError( FML_ERR_IO_UNSUPPORTED );
-        }
-    }
-    
-    int bufferPos = 0;
-    int err = writeIntSlice( sizes, valueBuffer, 0, &bufferPos );
-
-    if( err == FML_ERR_NO_ERROR )
-    {
-        offset += sizes[0];
-    }
-
-    return err;
+    return writeSlab( offsets, sizes, writer );
 }
 
-
-int TextArrayDataWriter::writeDoubleSlice( int *sizes, double *valueBuffer, int depth, int *bufferPos )
-{
-    if( depth == source->rank - 1 )
-    {
-        for( int i = 0; i < sizes[depth]; i++ )
-        {
-            stream->writeDouble( valueBuffer[*bufferPos] );
-            (*bufferPos)++;
-        }
-        return FML_ERR_NO_ERROR;
-    }
-    
-    int err;
-    for( int i = 0; i < sizes[depth]; i++ )
-    {
-        err = writeDoubleSlice( sizes, valueBuffer, depth + 1, bufferPos );
-        if( err != FML_ERR_NO_ERROR )
-        {
-            return err;
-        }
-    }
-    
-    return FML_ERR_NO_ERROR;
-}
-    
 
 FmlErrorNumber TextArrayDataWriter::writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer )
 {
-    if( offsets[0] != offset )
-    {
-        return eHandler->setError( FML_ERR_IO_UNSUPPORTED );
-    }
+    DoubleBufferWriter writer( stream, valueBuffer );
     
-    for( int i = 1; i < source->rank; i++ )
-    {
-        if( offsets[i] != 0 )
-        {
-            return eHandler->setError( FML_ERR_IO_UNSUPPORTED );
-        }
-        
-        if( sizes[i] != source->sizes[i] )
-        {
-            return eHandler->setError( FML_ERR_IO_UNSUPPORTED );
-        }
-    }
-    
-    int bufferPos = 0;
-    int err = writeDoubleSlice( sizes, valueBuffer, 0, &bufferPos );
-    
-    if( err == FML_ERR_NO_ERROR )
-    {
-        offset += sizes[0];
-    }
+    return writeSlab( offsets, sizes, writer );
+}
 
-    return err;
+
+FmlErrorNumber TextArrayDataWriter::writeBooleanSlab( int *offsets, int *sizes, bool *valueBuffer )
+{
+    BooleanBufferWriter writer( stream, valueBuffer );
+    
+    return writeSlab( offsets, sizes, writer );
 }
 
 

@@ -60,6 +60,9 @@ public:
     
     virtual int readDoubleSlab( int *offsets, int *sizes, double *valueBuffer ) = 0;
     
+    //TODO Provide options for reading into 32/64 bit packed boolean arrays?
+    virtual int readBooleanSlab( int *offsets, int *sizes, bool *valueBuffer ) = 0;
+    
     virtual ~ArrayDataReader();
 
     static ArrayDataReader *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source );

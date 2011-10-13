@@ -62,6 +62,7 @@ public:
     FileOutputStream( FILE *_file );
     int writeInt( int value );
     int writeDouble( double value );
+    int writeBoolean( bool value );
     int writeNewline();
     virtual ~FileOutputStream();
 };
@@ -79,6 +80,7 @@ public:
     StringOutputStream( string &_destination, bool _append );
     int writeInt( int value );
     int writeDouble( double value );
+    int writeBoolean( bool value );
     int writeNewline();
     virtual ~StringOutputStream();
 };
@@ -125,6 +127,19 @@ FieldmlOutputStream *FieldmlOutputStream::createTextFileStream( const string fil
 FieldmlOutputStream *FieldmlOutputStream::createStringStream( string &destination, bool append )
 {
     return new StringOutputStream( destination, append );
+}
+
+
+int FileOutputStream::writeBoolean( bool value )
+{
+    int err = fprintf( file, "%d ", value ? 1 : 0 );
+
+    if( err < 0 )
+    {
+        return FML_ERR_IO_WRITE_ERR;
+    }
+    
+    return FML_ERR_NO_ERROR;
 }
 
 
@@ -186,6 +201,14 @@ StringOutputStream::StringOutputStream( string &_destination, bool _append ) :
 int StringOutputStream::writeDouble( double value )
 {
     buffer << value << " ";
+    
+    return FML_ERR_NO_ERROR;
+}
+
+
+int StringOutputStream::writeBoolean( bool value )
+{
+    buffer << (value?1:0) << " ";
     
     return FML_ERR_NO_ERROR;
 }

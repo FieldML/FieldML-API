@@ -297,6 +297,18 @@ static int writeEnsembleType( xmlTextWriterPtr writer, FmlSessionHandle handle, 
 }
 
 
+static int writeBooleanType( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObjectHandle object )
+{
+    xmlTextWriterStartElement( writer, BOOLEAN_TYPE_TAG );
+
+    writeObjectName( writer, NAME_ATTRIB, handle, object );
+
+    xmlTextWriterEndElement( writer );
+    
+    return 0;
+}
+
+
 static int writeMeshType( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObjectHandle object )
 {
     xmlTextWriterStartElement( writer, MESH_TYPE_TAG );
@@ -689,6 +701,8 @@ static int writeFieldmlObject( xmlTextWriterPtr writer, FmlSessionHandle handle,
     {
     case FHT_CONTINUOUS_TYPE:
         return writeContinuousType( writer, handle, object, CONTINUOUS_TYPE_TAG, "" );
+    case FHT_BOOLEAN_TYPE:
+        return writeBooleanType( writer, handle, object );
     case FHT_ENSEMBLE_TYPE:
         return writeEnsembleType( writer, handle, object, ENSEMBLE_TYPE_TAG, "" );
     case FHT_MESH_TYPE:
@@ -780,7 +794,8 @@ int writeFieldmlFile( FieldmlErrorHandler *errorHandler, FmlSessionHandle handle
             FieldmlHandleType objectType = Fieldml_GetObjectType( handle, objectHandle );
             if( ( objectType == FHT_CONTINUOUS_TYPE ) ||
                 ( objectType == FHT_ENSEMBLE_TYPE ) ||
-                ( objectType == FHT_MESH_TYPE ) )
+                ( objectType == FHT_MESH_TYPE ) ||
+                ( objectType == FHT_BOOLEAN_TYPE ) )
             {
                 xmlTextWriterStartElement( writer, IMPORT_TYPE_TAG );
             }

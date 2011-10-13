@@ -60,6 +60,7 @@ extern const xmlChar * const EXTERNAL_EVALUATOR_TAG;
 extern const xmlChar * const ARGUMENT_EVALUATOR_TAG;
 extern const xmlChar * const MESH_TYPE_TAG;
 extern const xmlChar * const CONTINUOUS_TYPE_TAG;
+extern const xmlChar * const BOOLEAN_TYPE_TAG;
 extern const xmlChar * const ENSEMBLE_TYPE_TAG;
 extern const xmlChar * const DATA_RESOURCE_TAG;
 extern const xmlChar * const IMPORT_TAG;

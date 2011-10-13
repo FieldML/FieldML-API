@@ -83,6 +83,12 @@ EnsembleType::EnsembleType( const string _name, bool _isComponentEnsemble, bool 
 }
 
 
+BooleanType::BooleanType( const string _name, bool _isVirtual ) :
+    FieldmlObject( _name, FHT_BOOLEAN_TYPE, _isVirtual )
+{
+}
+
+
 ContinuousType::ContinuousType( const string _name, bool _isVirtual ) :
     FieldmlObject( _name, FHT_CONTINUOUS_TYPE, _isVirtual )
 {

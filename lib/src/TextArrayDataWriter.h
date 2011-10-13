@@ -48,6 +48,8 @@
 
 #include "fieldml_structs.h"
 
+class BufferWriter;
+
 class TextArrayDataWriter :
     public ArrayDataWriter
 {
@@ -58,22 +60,24 @@ private:
     
     int offset;
 
-    int writeIntSlice( int *sizes, int *valueBuffer, int depth, int *bufferPos );
+    int writeSlice( int *sizes, int depth, BufferWriter &writer );
 
-    int writeDoubleSlice( int *sizes, double *valueBuffer, int depth, int *bufferPos );
+    int writeSlab( int *offsets, int *sizes, BufferWriter &writer );
 
 public:
     bool ok;
 
-    TextArrayDataWriter( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank );
+    TextArrayDataWriter( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, FieldmlHandleType handleType, bool append, int *sizes, int rank );
     
     virtual int writeIntSlab( int *offsets, int *sizes, int *valueBuffer );
     
     virtual int writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
     
+    virtual int writeBooleanSlab( int *offsets, int *sizes, bool *valueBuffer );
+    
     virtual ~TextArrayDataWriter();
     
-    static TextArrayDataWriter *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, bool isDouble, bool append, int *sizes, int rank );
+    static TextArrayDataWriter *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, FieldmlHandleType handleType, bool append, int *sizes, int rank );
 };
 
 #endif //H_TEXT_ARRAY_DATA_WRITER

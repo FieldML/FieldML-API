@@ -199,6 +199,48 @@ double FieldmlInputStream::readDouble()
 }
 
 
+bool FieldmlInputStream::readBoolean()
+{
+    int value = 0;
+    int gotDigit = 0;
+    int d;
+    
+    //Parses out ints, returns false if 0, true otherwise. This is probably far too permissive.
+    while( 1 )
+    {
+        if( bufferPos >= bufferCount )
+        {
+            if( !loadBuffer() )
+            {
+                if( gotDigit )
+                {
+                    return value != 0;
+                }
+                return 0;
+            }
+        }
+        
+        while( bufferPos < bufferCount )
+        {
+            d = buffer[bufferPos++];
+            if( ( d == '0' ) || ( d == '1' ) )
+            {
+                gotDigit = 1;
+                
+                value *= 10;
+                value += ( d - '0' );
+            }
+            else if( gotDigit )
+            {
+                bufferPos--;
+
+                return value != 0;
+            }
+        }
+    }
+}
+
+
 int FieldmlInputStream::skipLine()
 {
     while( true )

@@ -51,6 +51,7 @@ protected:
 public:
     virtual int writeInt( int value ) = 0;
     virtual int writeDouble( double value ) = 0;
+    virtual int writeBoolean( bool value ) = 0;
     virtual int writeNewline() = 0;
     virtual ~FieldmlOutputStream();
     
