@@ -349,7 +349,7 @@ void testMisc()
     
     sizes[0] = 3;
     offsets[0] = 0;
-    writer = Fieldml_OpenWriter( handle, parametersData, realType, 0, sizes, 1 );
+    writer = Fieldml_OpenArrayWriter( handle, parametersData, realType, 0, sizes, 1 );
     Fieldml_WriteDoubleSlab( handle, writer, offsets, sizes, values );
     Fieldml_CloseWriter( handle, writer );
     
@@ -375,9 +375,9 @@ void testMisc()
     Fieldml_SetArrayDataSourceRawSizes( handle, parameters2KeyData, sizes );
     Fieldml_SetArrayDataSourceSizes( handle, parameters2KeyData, sizes );
 
-    sizes[0] = 3;
+    sizes[0] = 2;
     sizes[1] = 3;
-    sizes[2] = 2;
+    sizes[2] = 3;
     Fieldml_SetArrayDataSourceRawSizes( handle, parameters2ValueData, sizes );
     Fieldml_SetArrayDataSourceSizes( handle, parameters2ValueData, sizes );
     
@@ -402,27 +402,28 @@ void testMisc()
     sizes[1] = 2;
     offsets[0] = 0;
     offsets[1] = 0;
-    writer = Fieldml_OpenWriter( handle, parameters2KeyData, rc3Ensemble, 0, sizes, 2 );
+    writer = Fieldml_OpenArrayWriter( handle, parameters2KeyData, rc3Ensemble, 0, sizes, 2 );
     
-    sizes[0] = 2;
-    sizes[1] = 1;
+    sizes[0] = 1;
+    sizes[1] = 2;
     Fieldml_WriteIntSlab( handle, writer, offsets, sizes, indexValues1 );
+    offsets[0] = 1;
     Fieldml_WriteIntSlab( handle, writer, offsets, sizes, indexValues2 );
     Fieldml_CloseWriter( handle, writer );
     
-    sizes[0] = 3;
+    sizes[0] = 2;
     sizes[1] = 3;
-    sizes[2] = 2;
-    writer = Fieldml_OpenWriter( handle, parameters2ValueData, realType, 1, sizes, 3 );
+    sizes[2] = 3;
+    writer = Fieldml_OpenArrayWriter( handle, parameters2ValueData, realType, 1, sizes, 3 );
     
-    sizes[0] = 3;
+    sizes[0] = 1;
     sizes[1] = 3;
-    sizes[2] = 1;
+    sizes[2] = 3;
     offsets[0] = 0;
     offsets[1] = 0;
     offsets[2] = 0;
     Fieldml_WriteDoubleSlab( handle, writer, offsets, sizes, rawValues1 );
-    offsets[2] = 1;
+    offsets[0] = 1;
     Fieldml_WriteDoubleSlab( handle, writer, offsets, sizes, rawValues2 );
     Fieldml_CloseWriter( handle, writer );
     
@@ -430,8 +431,8 @@ void testMisc()
 
     offsets[0] = 0;
     offsets[1] = 0;
-    sizes[0] = 2;
-    sizes[1] = 1;
+    sizes[0] = 1;
+    sizes[1] = 2;
     Fieldml_ReadIntSlab( handle, reader, offsets, sizes, readIndexes );
     for( int i = 0; i < 2; i++ )
     {
@@ -442,7 +443,7 @@ void testMisc()
         }
     }
     
-    offsets[1] = 1;
+    offsets[0] = 1;
     Fieldml_ReadIntSlab( handle, reader, offsets, sizes, readIndexes );
     for( int i = 0; i < 2; i++ )
     {
@@ -460,9 +461,9 @@ void testMisc()
     offsets[0] = 0;
     offsets[1] = 0;
     offsets[2] = 0;
-    sizes[0] = 3;
+    sizes[0] = 1;
     sizes[1] = 3;
-    sizes[2] = 1;
+    sizes[2] = 3;
     Fieldml_ReadDoubleSlab( handle, reader, offsets, sizes, readValues );
 
     for( int i = 0; i < 9; i++ )
@@ -474,7 +475,7 @@ void testMisc()
         }
     }
     
-    offsets[2] = 1;
+    offsets[0] = 1;
     Fieldml_ReadDoubleSlab( handle, reader, offsets, sizes, readValues );
 
     for( int i = 0; i < 9; i++ )
@@ -713,7 +714,8 @@ int testHdf5Write()
     int offsets[1];
     int sizes[1];
 
-    FmlObjectHandle writer = Fieldml_OpenWriter( session, sourceD, cType, 1, sizes, 1 );
+    sizes[0] = 12;
+    FmlObjectHandle writer = Fieldml_OpenArrayWriter( session, sourceD, cType, 1, sizes, 1 );
 
     offsets[0] = 0;
     sizes[0] = 6;
