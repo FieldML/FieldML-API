@@ -125,8 +125,7 @@ class MeshType :
 public:
     FmlObjectHandle chartType;
     FmlObjectHandle elementsType;
-    
-    SimpleMap<FmlEnsembleValue, std::string> shapes;
+    FmlObjectHandle shapes;
     
     MeshType( const std::string _name, bool _isVirtual );
 };

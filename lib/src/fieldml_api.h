@@ -639,65 +639,23 @@ FmlObjectHandle Fieldml_GetMeshElementsType( FmlSessionHandle handle, FmlObjectH
 
 
 /**
- * \return A string describing the shape of the given element in the given mesh.
+ * \return The bounds evaluator for the given mesh. Must be boolean-valued.
+ * 
+ * Typically a piecewise indexed by the mesh elements.
  *
- * If allowDefault is 1, the default shape will be returned if there is no shape explicitly associated with the given element.
- * 
- * \note Currently, shapes are only described via strings. This will be changed in later versions.
-
- * \see Fieldml_GetRegionName
- * \see Fieldml_FreeString
- * 
- * \see Fieldml_SetMeshDefaultShape
- * \see Fieldml_SetMeshElementShape
+ * \see Fieldml_SetMeshShapes
  */
-char * Fieldml_GetMeshElementShape( FmlSessionHandle handle, FmlObjectHandle meshHandle, FmlEnsembleValue elementNumber, FmlBoolean allowDefault );
+FmlObjectHandle Fieldml_GetMeshShapes( FmlSessionHandle handle, FmlObjectHandle meshHandle );
 
 
 /**
- * Copies the shape of the given element in the given mesh into the given buffer.
+ * Sets the default bounds evaluator for the mesh. Must be boolean-valued.
  * 
- * \see Fieldml_GetMeshElementShape
- * \see Fieldml_CopyRegionName
- */
-int Fieldml_CopyMeshElementShape( FmlSessionHandle handle, FmlObjectHandle meshHandle, FmlEnsembleValue elementNumber, FmlBoolean allowDefault, char * buffer, int bufferLength );
-
-
-/**
- * Sets the default shape for the mesh. This should be set unless all elements have been explicitly
- * assigned a shape.
+ * Typically a piecewise indexed by the mesh elements.
  * 
- * \see Fieldml_GetMeshElementShape
- * \see Fieldml_GetMeshDefaultShape
+ * \see Fieldml_GetMeshShapes
  */
-FmlErrorNumber Fieldml_SetMeshDefaultShape( FmlSessionHandle handle, FmlObjectHandle meshHandle, const char * shape );
-
-
-/**
- * Gets the default shape for the mesh.
- *
- * \see Fieldml_SetMeshDefaultShape
- * \see Fieldml_GetRegionName
- * \see Fieldml_FreeString
- */
-char * Fieldml_GetMeshDefaultShape( FmlSessionHandle handle, FmlObjectHandle meshHandle );
-
-
-/**
- * Copies default shape for the mesh into the given buffer.
- * 
- * \see Fieldml_CopyRegionName
- * \see Fieldml_GetMeshDefaultShape
- */
-int Fieldml_CopyMeshDefaultShape( FmlSessionHandle handle, FmlObjectHandle meshHandle, char * buffer, int bufferLength );
-
-
-/**
- * Sets the shape of the given element in the given mesh.
- * 
- * \see Fieldml_GetMeshElementShape
- */
-FmlErrorNumber Fieldml_SetMeshElementShape( FmlSessionHandle handle, FmlObjectHandle meshHandle, FmlEnsembleValue elementNumber, const char * shape );
+FmlErrorNumber Fieldml_SetMeshShapes( FmlSessionHandle handle, FmlObjectHandle meshHandle, FmlObjectHandle shapesHandle );
 
 
 /**

@@ -110,15 +110,6 @@ static void writeObjectName( xmlTextWriterPtr writer, const xmlChar *attribute, 
 }
 
 
-static void writeShapeMapEntry( xmlTextWriterPtr writer, const xmlChar *tagName, FmlEnsembleValue key, const char *value )
-{
-    xmlTextWriterStartElement( writer, tagName );
-    xmlTextWriterWriteFormatAttribute( writer, ELEMENT_ATTRIB, "%d", key );
-    xmlTextWriterWriteAttribute( writer, SHAPE_ATTRIB, (const xmlChar*) value );
-    xmlTextWriterEndElement( writer );
-}
-
-
 static void writeComponentEvaluator( xmlTextWriterPtr writer, const xmlChar *tagName, const xmlChar *attribName, FmlEnsembleValue key, const char *value )
 {
     xmlTextWriterStartElement( writer, tagName );
@@ -327,25 +318,13 @@ static int writeMeshType( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlO
         writeContinuousType( writer, handle, chartType, CHART_TAG, Fieldml_GetObjectName( handle, object ) );
     }
     
-    int elementCount = Fieldml_GetMemberCount( handle, elementsType );
-    
     xmlTextWriterStartElement( writer, SHAPES_TAG );
-    const char *defaultShape = Fieldml_GetMeshDefaultShape( handle, object );
-    if( defaultShape != NULL )
+    FmlObjectHandle shapes = Fieldml_GetMeshShapes( handle, object );
+    if( shapes != FML_INVALID_HANDLE )
     {
-        xmlTextWriterWriteFormatAttribute( writer, DEFAULT_ATTRIB, "%s", defaultShape );
+        writeObjectName( writer, NAME_ATTRIB, handle, shapes );
     }
     
-    //TODO Not robust, especially for sparse ensembles. Intended for replacement anyway.
-    for( FmlEnsembleValue i = 1; i <= elementCount; i++ )
-    {
-        const char *shape = Fieldml_GetMeshElementShape( handle, object, i, 0 );
-        if( shape == NULL )
-        {
-            continue;
-        }
-        writeShapeMapEntry( writer, SHAPE_TAG, i, shape );
-    }
     xmlTextWriterEndElement( writer );
 
     xmlTextWriterEndElement( writer );

@@ -67,6 +67,11 @@ struct ParseState
     FieldmlErrorHandler *errorHandler;
     vector<xmlNodePtr> parseStack;
     vector<xmlNodePtr> unparsedNodes;
+    
+    //14102011 CPL Currently, mesh shapes depends on an evaluator which typically depends on mesh-argument which depends on mesh.
+    //To work around this cyclic dependency, the shapes attribute is analysed after rest of the document has been parsed.
+    //In the long term, shapes will be a bound-type property of a mesh-type domain, so the problem will neatly vanish.
+    vector<pair<FmlObjectHandle,std::string>> shapesHACK;
 };
 
 //========================================================================
@@ -814,32 +819,6 @@ public:
 };
 
 
-class MeshShapeParser :
-    public NodeParser 
-{
-private:
-    const FmlObjectHandle mesh;
-    
-public:
-    MeshShapeParser( FmlObjectHandle _mesh ) :
-        mesh( _mesh ) {}
-    
-    int parseNode( xmlNodePtr shapeNode, ParseState &state )
-    {
-        const int element = getIntAttribute( shapeNode, ELEMENT_ATTRIB, -1 );
-        const char *shape = getStringAttribute( shapeNode, SHAPE_ATTRIB );
-        
-        if( Fieldml_SetMeshElementShape( state.session, mesh, element, shape ) != FML_ERR_NO_ERROR )
-        {
-            state.errorHandler->logError( "Invalid element/shape combination" );
-            return 1;
-        }
-        
-        return 0;
-    }
-};
-
-    
 class MeshTypeParser :
     NodeParser
 {
@@ -891,15 +870,17 @@ public:
             state.errorHandler->logError( "MeshType must have shape specification", name );
             return 1;
         }
-    
-        const char *defaultValue = getStringAttribute( shapesNode, DEFAULT_ATTRIB );
-        if( defaultValue != NULL )
-        {
-            Fieldml_SetMeshDefaultShape( state.session, handle, defaultValue );
-        }
 
-        MeshShapeParser meshShapeParser( handle );
-        return processChildren( shapesNode, SHAPE_TAG, state, meshShapeParser );
+        const char * shapesName = getStringAttribute( shapesNode, EVALUATOR_ATTRIB );
+        if( shapesName == NULL )
+        {
+            state.errorHandler->logError( "MeshType must have valid shape specification" );
+            return 1;
+        }
+        
+        state.shapesHACK.push_back( pair<FmlObjectHandle,string>( handle, shapesName ) );
+       
+        return 0;
     }
 };
     
@@ -995,7 +976,7 @@ public:
     
         if( Fieldml_SetIndexEvaluator( state.session, object, index, indexHandle ) != FML_ERR_NO_ERROR )
         {
-            state.errorHandler->logError( "Invalid index evaluation" );
+            state.errorHandler->logError( "Invalid index evaluator" );
             return 1;
         }
         
@@ -1082,7 +1063,7 @@ public:
         
         if( Fieldml_SetEvaluator( state.session, object, element, evaluator ) != FML_ERR_NO_ERROR )
         {
-            state.errorHandler->logError( "Invalid component evaluation" );
+            state.errorHandler->logError( "Invalid component evaluator" );
             return 1;
         }
     
@@ -1376,6 +1357,16 @@ static int parseDoc( xmlDocPtr doc, ParseState &state )
     while( state.unparsedNodes.size() != 0 )
     {
         parseObjectNode( state.unparsedNodes.back(), state );
+    }
+    
+    for( vector<pair<FmlObjectHandle,string>>::const_iterator i = state.shapesHACK.begin(); i != state.shapesHACK.end(); i++ )
+    {
+        FmlObjectHandle shapesEvaluator = Fieldml_GetObjectByName( state.session, i->second.c_str() );
+        if( Fieldml_SetMeshShapes( state.session, i->first, shapesEvaluator ) != FML_ERR_NO_ERROR )
+        {
+            state.errorHandler->logError( "MeshType must have valid shape evaluator" );
+            return 1;
+        }
     }
     
     return 0;

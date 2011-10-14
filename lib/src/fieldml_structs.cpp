@@ -97,9 +97,9 @@ ContinuousType::ContinuousType( const string _name, bool _isVirtual ) :
 
 
 MeshType::MeshType( const string _name, bool _isVirtual ) :
-    FieldmlObject( _name, FHT_MESH_TYPE, _isVirtual ),
-    shapes("")
+    FieldmlObject( _name, FHT_MESH_TYPE, _isVirtual )
 {
+    shapes = FML_INVALID_HANDLE;
     chartType = FML_INVALID_HANDLE;
     elementsType = FML_INVALID_HANDLE;
 }

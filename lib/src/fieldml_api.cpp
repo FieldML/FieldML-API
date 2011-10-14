@@ -262,26 +262,6 @@ static vector<FmlObjectHandle> getArgumentList( FieldmlSession *session, FmlObje
 }
 
 
-static SimpleMap<FmlEnsembleValue, string> *getShapeMap( FieldmlSession *session, FmlObjectHandle objectHandle )
-{
-    FieldmlObject *object = getObject( session, objectHandle );
-
-    if( object == NULL )
-    {
-        return NULL;
-    }
-
-    if( object->type == FHT_MESH_TYPE )
-    {
-        MeshType *meshType = (MeshType*)object;
-        return &meshType->shapes;
-    }
-
-    session->setError( FML_ERR_INVALID_OBJECT );
-    return NULL;
-}
-
-
 static bool checkCyclicDependency( FieldmlSession *session, FmlObjectHandle objectHandle, FmlObjectHandle objectDependancy )
 {
     set<FmlObjectHandle> delegates;
@@ -1136,27 +1116,27 @@ FmlObjectHandle Fieldml_GetMeshElementsType( FmlSessionHandle handle, FmlObjectH
 }
 
 
-char * Fieldml_GetMeshElementShape( FmlSessionHandle handle, FmlObjectHandle meshHandle, FmlEnsembleValue elementNumber, FmlBoolean allowDefault )
+FmlObjectHandle Fieldml_GetMeshShapes( FmlSessionHandle handle, FmlObjectHandle meshHandle )
 {
     FieldmlSession *session = getSession( handle );
     if( session == NULL )
     {
         return NULL;
     }
-        
-    SimpleMap<FmlEnsembleValue, string> *map = getShapeMap( session, meshHandle ); 
-    if( map == NULL )
+    FieldmlObject *object = getObject( session, meshHandle );
+
+    if( object == NULL )
     {
-        return NULL;
+        return FML_INVALID_HANDLE;
     }
-
-    return cstrCopy( map->get( elementNumber, (allowDefault == 1) ) );
-}
-
-
-int Fieldml_CopyMeshElementShape( FmlSessionHandle handle, FmlObjectHandle meshHandle, FmlEnsembleValue elementNumber, FmlBoolean allowDefault, char * buffer, int bufferLength )
-{
-    return cappedCopyAndFree( Fieldml_GetMeshElementShape( handle, meshHandle, elementNumber, allowDefault ), buffer, bufferLength );
+    if( object->type == FHT_MESH_TYPE ) 
+    {
+        MeshType *meshType = (MeshType *)object;
+        return meshType->shapes;
+    }
+    
+    session->setError( FML_ERR_INVALID_OBJECT );  
+    return FML_INVALID_HANDLE;
 }
 
 
@@ -2878,7 +2858,7 @@ FmlObjectHandle Fieldml_CreateMeshChartType( FmlSessionHandle handle, FmlObjectH
 }
 
 
-FmlErrorNumber Fieldml_SetMeshDefaultShape( FmlSessionHandle handle, FmlObjectHandle meshHandle, const char * shape )
+FmlErrorNumber Fieldml_SetMeshShapes( FmlSessionHandle handle, FmlObjectHandle meshHandle, FmlObjectHandle shapesHandle )
 {
     FieldmlSession *session = getSession( handle );
     if( session == NULL )
@@ -2890,62 +2870,31 @@ FmlErrorNumber Fieldml_SetMeshDefaultShape( FmlSessionHandle handle, FmlObjectHa
     {
         return session->getLastError();
     }
-
-    SimpleMap<FmlEnsembleValue, string> *map = getShapeMap( session, meshHandle ); 
-    if( map == NULL )
+    if( !checkLocal( session, shapesHandle ) )
     {
         return session->getLastError();
+    }
+
+    if( !checkIsEvaluatorType( session, shapesHandle, false, false, true ) )
+    {
+        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+    }
+
+    FieldmlObject *object = getObject( session, meshHandle );
+
+    if( object == NULL )
+    {
+    }
+    else if( object->type == FHT_MESH_TYPE ) 
+    {
+        MeshType *meshType = (MeshType *)object;
+        meshType->shapes = shapesHandle;
+    }
+    else
+    {
+        session->setError( FML_ERR_INVALID_OBJECT );
     }
     
-    map->setDefault( shape );
-    return session->getLastError();
-}
-
-
-char * Fieldml_GetMeshDefaultShape( FmlSessionHandle handle, FmlObjectHandle meshHandle )
-{
-    FieldmlSession *session = getSession( handle );
-    if( session == NULL )
-    {
-        return NULL;
-    }
-
-    SimpleMap<FmlEnsembleValue, string> *map = getShapeMap( session, meshHandle ); 
-    if( map == NULL )
-    {
-        return NULL;
-    }
-    
-    return cstrCopy( map->getDefault() );
-}
-
-
-int Fieldml_CopyMeshDefaultShape( FmlSessionHandle handle, FmlObjectHandle meshHandle, char * buffer, int bufferLength )
-{
-    return cappedCopyAndFree( Fieldml_GetMeshDefaultShape( handle, meshHandle ), buffer, bufferLength );
-}
-
-
-FmlErrorNumber Fieldml_SetMeshElementShape( FmlSessionHandle handle, FmlObjectHandle meshHandle, FmlEnsembleValue elementNumber, const char * shape )
-{
-    FieldmlSession *session = getSession( handle );
-    if( session == NULL )
-    {
-        return FML_ERR_UNKNOWN_HANDLE;
-    }
-
-    if( !checkLocal( session, meshHandle ) )
-    {
-        return session->getLastError();
-    }
-
-    SimpleMap<FmlEnsembleValue, string> *map = getShapeMap( session, meshHandle ); 
-    if( map == NULL )
-    {
-        return session->getLastError();
-    }
-
-    map->set( elementNumber, shape );
     return session->getLastError();
 }
 

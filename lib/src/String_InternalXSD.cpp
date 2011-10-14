@@ -184,16 +184,8 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
         <xs:attribute name=\"default\" type=\"xs:string\" use=\"optional\" /> \
     </xs:complexType> \
  \
-    <xs:complexType name=\"ShapeMapEntry_Type\"> \
-        <xs:attribute name=\"element\" type=\"xs:nonNegativeInteger\" use=\"required\" /> \
-        <xs:attribute name=\"shape\" type=\"xs:string\" use=\"required\" /> \
-    </xs:complexType> \
- \
     <xs:complexType name=\"ShapeMap_Type\"> \
-        <xs:choice minOccurs=\"0\" maxOccurs=\"unbounded\"> \
-            <xs:element name=\"Shape\" type=\"ShapeMapEntry_Type\" /> \
-        </xs:choice> \
-        <xs:attribute name=\"default\" type=\"xs:string\" use=\"optional\"/> \
+        <xs:attribute name=\"evaluator\" type=\"xs:string\" use=\"required\"/> \
     </xs:complexType> \
  \
     <xs:complexType name=\"ElementMapEntry_Type\"> \
