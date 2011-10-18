@@ -39,6 +39,8 @@
  *
  */
 
+#include <cstddef>
+
 #include "SimpleBitset.h"
 
 using namespace std;
