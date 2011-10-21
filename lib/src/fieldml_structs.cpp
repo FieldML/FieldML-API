@@ -112,6 +112,18 @@ Evaluator::Evaluator( const string _name, FieldmlHandleType _type, FmlObjectHand
 }
 
 
+ConstantEvaluator::ConstantEvaluator( const string _name, const string _valueString, FmlObjectHandle _valueType ) :
+    Evaluator( _name, FHT_CONSTANT_EVALUATOR, _valueType, false ),
+    valueString( _valueString )
+{
+}
+
+
+void ConstantEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
+{
+}
+
+
 ReferenceEvaluator::ReferenceEvaluator( const string _name, FmlObjectHandle _evaluator, FmlObjectHandle _valueType, bool _isVirtual ) :
     Evaluator( _name, FHT_REFERENCE_EVALUATOR, _valueType, _isVirtual ),
     sourceEvaluator( _evaluator ),

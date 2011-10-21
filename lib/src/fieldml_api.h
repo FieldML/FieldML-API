@@ -238,6 +238,7 @@ enum FieldmlHandleType
     FHT_PARAMETER_EVALUATOR,  ///< The object is a ParameterEvaluator.
     FHT_PIECEWISE_EVALUATOR,  ///< The object is a PiecewiseEvaluator.
     FHT_AGGREGATE_EVALUATOR,  ///< The object is a AggregateEvaluator.
+    FHT_CONSTANT_EVALUATOR,   ///< The object is a ConstantEvaluator
     FHT_DATA_RESOURCE,        ///< The object is a DataResource.
     FHT_DATA_SOURCE,          ///< The object is a DataSource.
 };
@@ -1564,6 +1565,31 @@ char * Fieldml_GetDataResourceFormat( FmlSessionHandle handle, FmlObjectHandle o
  * \see Fieldml_CreateArrayDataResource
  */
 int Fieldml_CopyDataResourceFormat( FmlSessionHandle handle, FmlObjectHandle objectHandle, char * buffer, int bufferLength );
+
+
+/**
+ * Creates a new constant evaluator whose value is determined by the given literal.
+ * 
+ * \see Fieldml_GetConstantEvaluatorValueString
+ */
+int Fieldml_CreateConstantEvaluator( FmlSessionHandle handle, const char * name, const char * literal, FmlObjectHandle valueType );
+
+
+/**
+ * \return The string describing the value of the given constant evaluator.
+ * 
+ * \see Fieldml_CreateConstantEvaluator
+ */
+char * Fieldml_GetConstantEvaluatorValueString( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+
+
+/**
+ * Copies the string describing the given constant evaluator's value into the given buffer.
+ * 
+ * \see Fieldml_CreateConstantEvaluator
+ * \see Fieldml_GetConstantEvaluatorValueString
+ */
+int Fieldml_CopyConstantEvaluatorValueString( FmlSessionHandle handle, FmlObjectHandle objectHandle, char * buffer, int bufferLength );
 }
 
 #endif // __cplusplus

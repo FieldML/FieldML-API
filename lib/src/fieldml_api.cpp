@@ -4150,3 +4150,73 @@ FmlObjectHandle Fieldml_CreateArrayDataSource( FmlSessionHandle handle, const ch
     
     return sourceHandle;
 }
+
+
+int Fieldml_CreateConstantEvaluator( FmlSessionHandle handle, const char * name, const char * literal, FmlObjectHandle valueType )
+{
+    FieldmlSession *session = getSession( handle );
+    if( session == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+    if( name == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        return FML_INVALID_HANDLE;
+    }
+    if( literal == NULL )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        return FML_INVALID_HANDLE;
+    }
+
+    if( !checkLocal( session, valueType ) )
+    {
+        return session->getLastError();
+    }
+
+    if( !checkIsValueType( session, valueType, true, true, false, true ) )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_4 );
+        return FML_INVALID_HANDLE;
+    }
+
+    ConstantEvaluator *evaluator = new ConstantEvaluator( name, literal, valueType );
+    
+    session->setError( FML_ERR_NO_ERROR );
+    return addObject( session, evaluator );
+}
+
+
+char * Fieldml_GetConstantEvaluatorValueString( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+{
+    FieldmlSession *session = getSession( handle );
+    if( session == NULL )
+    {
+        return NULL;
+    }
+
+    FieldmlObject *object = getObject( session, objectHandle );
+    if( object == NULL )
+    {
+        session->setError( FML_ERR_INVALID_OBJECT );
+        return NULL;
+    }
+
+    if( object->type != FHT_CONSTANT_EVALUATOR )
+    {
+        session->setError( FML_ERR_INVALID_OBJECT );
+        return NULL;
+    }
+    
+    ConstantEvaluator *evaluator = (ConstantEvaluator*)object;
+
+    return cstrCopy( evaluator->valueString );
+}
+
+
+int Fieldml_CopyConstantEvaluatorValueString( FmlSessionHandle handle, FmlObjectHandle objectHandle, char * buffer, int bufferLength )
+{
+    return cappedCopyAndFree( Fieldml_GetConstantEvaluatorValueString( handle, objectHandle ), buffer, bufferLength );
+}
+

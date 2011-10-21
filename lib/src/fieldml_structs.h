@@ -141,6 +141,18 @@ public:
     
     virtual void addDelegates( std::set<FmlObjectHandle> &delegates ) = 0;
 };
+    
+    
+class ConstantEvaluator :
+    public Evaluator
+{
+public:
+    const std::string valueString;
+    
+    ConstantEvaluator( const std::string _name, const std::string _literal, FmlObjectHandle _valueType );
+    
+    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
+};
 
 
 class ReferenceEvaluator :

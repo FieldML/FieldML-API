@@ -641,6 +641,29 @@ public:
 };
     
 
+class ConstantEvaluatorParser :
+    public NodeParser
+{
+public:
+    ConstantEvaluatorParser() {}
+    
+    int parseNode( xmlNodePtr objectNode, ParseState &state )
+    {
+        const char *name = getStringAttribute( objectNode, NAME_ATTRIB );
+        const char *value = getStringAttribute( objectNode, VALUE_ATTRIB );
+        FmlObjectHandle valueType = getObjectAttribute( objectNode, VALUE_TYPE_ATTRIB, state );
+        
+        FmlObjectHandle evaluator = Fieldml_CreateConstantEvaluator( state.session, name, value, valueType );
+        if( evaluator == FML_INVALID_HANDLE )
+        {
+            state.errorHandler->logError( "ConstantEvaluator creation failed", name );
+            return 1;
+        }
+        
+        return 0;
+    }
+};
+    
 
 class ContinuousTypeParser :
     public NodeParser
@@ -1308,6 +1331,10 @@ static int parseObjectNode( xmlNodePtr objectNode, ParseState &state )
     else if( checkName( objectNode, PIECEWISE_EVALUATOR_TAG ) )
     {
         err = PiecewiseEvaluatorParser().parseNode( objectNode, state );
+    }
+    else if( checkName( objectNode, CONSTANT_EVALUATOR_TAG ) )
+    {
+        err = ConstantEvaluatorParser().parseNode( objectNode, state );
     }
     else if( checkName( objectNode, AGGREGATE_EVALUATOR_TAG ) )
     {

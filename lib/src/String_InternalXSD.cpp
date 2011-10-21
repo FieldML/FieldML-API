@@ -319,6 +319,15 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
         </xs:complexContent> \
     </xs:complexType> \
  \
+    <xs:complexType name=\"ConstantEvaluator_Type\"> \
+        <xs:complexContent> \
+            <xs:extension base=\"FieldmlObject_Type\"> \
+                <xs:attribute name=\"value\" type=\"xs:string\" use=\"required\" /> \
+                <xs:attribute name=\"valueType\" type=\"xs:string\" use=\"required\" /> \
+            </xs:extension> \
+        </xs:complexContent> \
+    </xs:complexType> \
+ \
     <xs:complexType name=\"ReferenceEvaluator_Type\"> \
         <xs:complexContent> \
             <xs:extension base=\"FieldmlObject_Type\"> \
@@ -404,6 +413,7 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
                     <xs:element name=\"ArgumentEvaluator\" type=\"ArgumentEvaluator_Type\" /> \
                     <xs:element name=\"ExternalEvaluator\" type=\"ExternalEvaluator_Type\" /> \
                     <xs:element name=\"ReferenceEvaluator\" type=\"ReferenceEvaluator_Type\" /> \
+                    <xs:element name=\"ConstantEvaluator\" type=\"ConstantEvaluator_Type\" /> \
                     <xs:element name=\"PiecewiseEvaluator\" type=\"PiecewiseEvaluator_Type\" /> \
                     <xs:element name=\"ParameterEvaluator\" type=\"ParameterEvaluator_Type\" /> \
                     <xs:element name=\"AggregateEvaluator\" type=\"AggregateEvaluator_Type\" /> \
