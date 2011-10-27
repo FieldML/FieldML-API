@@ -968,7 +968,7 @@ public:
     
     int parseNode( xmlNodePtr node, ParseState &state )
     {
-        int element = getIntAttribute( node, INDEX_VALUE_ATTRIB, -1 );
+        int element = getIntAttribute( node, VALUE_ATTRIB, -1 );
         FmlObjectHandle evaluator = getObjectAttribute( node, EVALUATOR_ATTRIB, state );
         
         if( Fieldml_SetEvaluator( state.session, object, element, evaluator ) != FML_ERR_NO_ERROR )
@@ -1026,10 +1026,10 @@ public:
             return 1;
         }
         
-        xmlNodePtr evaluatorsNode = getFirstChild( objectNode, ELEMENT_EVALUATORS_TAG );
+        xmlNodePtr evaluatorsNode = getFirstChild( objectNode, EVALUATOR_MAP_TAG );
         if( evaluatorsNode == NULL )
         {
-            state.errorHandler->logError( "PiecewiseEvaluator must have element evaluators", name );
+            state.errorHandler->logError( "PiecewiseEvaluator must have an evaluator map", name );
             return 1;
         }
     
@@ -1044,7 +1044,7 @@ public:
         }
         
         PiecewiseMapParser piecewiseMapParser( evaluator );
-        int err = processChildren( evaluatorsNode, ELEMENT_EVALUATOR_TAG, state, piecewiseMapParser );
+        int err = processChildren( evaluatorsNode, EVALUATOR_MAP_ENTRY_TAG, state, piecewiseMapParser );
         if( err != 0 )
         {
             return err;

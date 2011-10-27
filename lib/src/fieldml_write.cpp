@@ -322,7 +322,7 @@ static int writeMeshType( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlO
     FmlObjectHandle shapes = Fieldml_GetMeshShapes( handle, object );
     if( shapes != FML_INVALID_HANDLE )
     {
-        writeObjectName( writer, NAME_ATTRIB, handle, shapes );
+        writeObjectName( writer, EVALUATOR_ATTRIB, handle, shapes );
     }
     
     xmlTextWriterEndElement( writer );
@@ -483,6 +483,20 @@ static int writeReferenceEvaluator( xmlTextWriterPtr writer, FmlSessionHandle ha
 }
 
 
+static int writeConstantEvaluator( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObjectHandle object )
+{
+    xmlTextWriterStartElement( writer, CONSTANT_EVALUATOR_TAG );
+    
+    writeObjectName( writer, NAME_ATTRIB, handle, object );
+    xmlTextWriterWriteFormatAttribute( writer, VALUE_ATTRIB, "%s", Fieldml_GetConstantEvaluatorValueString( handle, object ) );
+    writeObjectName( writer, VALUE_TYPE_ATTRIB, handle, Fieldml_GetValueType( handle, object ) );
+
+    xmlTextWriterEndElement( writer );
+    
+    return 0;
+}
+
+
 static int writePiecewiseEvaluator( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObjectHandle object )
 {
     xmlTextWriterStartElement( writer, PIECEWISE_EVALUATOR_TAG );
@@ -511,7 +525,7 @@ static int writePiecewiseEvaluator( xmlTextWriterPtr writer, FmlSessionHandle ha
     FmlObjectHandle defaultEvaluator = Fieldml_GetDefaultEvaluator( handle, object );
     if( ( count > 0 ) || ( defaultEvaluator != FML_INVALID_HANDLE ) )
     {
-        xmlTextWriterStartElement( writer, ELEMENT_EVALUATORS_TAG );
+        xmlTextWriterStartElement( writer, EVALUATOR_MAP_TAG );
         
         if( defaultEvaluator != FML_INVALID_HANDLE )
         {
@@ -526,7 +540,7 @@ static int writePiecewiseEvaluator( xmlTextWriterPtr writer, FmlSessionHandle ha
             {
                 continue;
             }
-            writeComponentEvaluator( writer, ELEMENT_EVALUATOR_TAG, INDEX_VALUE_ATTRIB, element, Fieldml_GetObjectName( handle, evaluator ) );
+            writeComponentEvaluator( writer, EVALUATOR_MAP_ENTRY_TAG, VALUE_ATTRIB, element, Fieldml_GetObjectName( handle, evaluator ) );
         }
 
         xmlTextWriterEndElement( writer );
@@ -700,6 +714,8 @@ static int writeFieldmlObject( xmlTextWriterPtr writer, FmlSessionHandle handle,
         return writeParameterEvaluator( writer, handle, object );
     case FHT_AGGREGATE_EVALUATOR:
         return writeAggregateEvaluator( writer, handle, object );
+    case FHT_CONSTANT_EVALUATOR:
+        return writeConstantEvaluator( writer, handle, object );
     default:
         break;
     }

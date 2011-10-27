@@ -188,18 +188,6 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
         <xs:attribute name=\"evaluator\" type=\"xs:string\" use=\"required\"/> \
     </xs:complexType> \
  \
-    <xs:complexType name=\"ElementMapEntry_Type\"> \
-        <xs:attribute name=\"indexValue\" type=\"xs:string\" use=\"required\" /> \
-        <xs:attribute name=\"evaluator\" type=\"xs:string\" use=\"required\" /> \
-    </xs:complexType> \
- \
-    <xs:complexType name=\"ElementMap_Type\"> \
-        <xs:choice minOccurs=\"0\" maxOccurs=\"unbounded\"> \
-            <xs:element name=\"ElementEvaluator\" type=\"ElementMapEntry_Type\" /> \
-        </xs:choice> \
-        <xs:attribute name=\"default\" type=\"xs:string\" use=\"optional\"/> \
-    </xs:complexType> \
- \
     <xs:complexType name=\"ArgumentListEntry_Type\"> \
         <xs:attribute name=\"name\" type=\"xs:string\" use=\"required\" /> \
     </xs:complexType> \
@@ -341,13 +329,25 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
         </xs:complexContent> \
     </xs:complexType> \
  \
+    <xs:complexType name=\"EvaluatorMapEntry_Type\"> \
+        <xs:attribute name=\"value\" type=\"xs:nonNegativeInteger\" use=\"required\" /> \
+        <xs:attribute name=\"evaluator\" type=\"xs:string\" use=\"required\" /> \
+    </xs:complexType> \
+ \
+    <xs:complexType name=\"EvaluatorMap_Type\"> \
+        <xs:choice minOccurs=\"1\" maxOccurs=\"unbounded\"> \
+            <xs:element name=\"EvaluatorMapEntry\" type=\"EvaluatorMapEntry_Type\" /> \
+        </xs:choice> \
+        <xs:attribute name=\"defaultEvaluator\" type=\"xs:string\" use=\"optional\" /> \
+    </xs:complexType> \
+ \
     <xs:complexType name=\"PiecewiseEvaluator_Type\"> \
         <xs:complexContent> \
             <xs:extension base=\"FieldmlEvaluator_Type\"> \
                 <xs:sequence> \
                     <xs:element name=\"Bindings\" type=\"BindMap_Type\" minOccurs=\"0\" maxOccurs=\"1\" /> \
                     <xs:element name=\"IndexEvaluators\" type=\"NumberedIndexEvaluatorList_Type\" minOccurs=\"0\" maxOccurs=\"1\" /> \
-                    <xs:element name=\"ElementEvaluators\" type=\"ElementMap_Type\" minOccurs=\"0\" maxOccurs=\"1\" /> \
+                    <xs:element name=\"EvaluatorMap\" type=\"EvaluatorMap_Type\" minOccurs=\"1\" maxOccurs=\"1\" /> \
                 </xs:sequence> \
             </xs:extension> \
         </xs:complexContent> \

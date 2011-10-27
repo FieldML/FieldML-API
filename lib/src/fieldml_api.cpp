@@ -220,7 +220,8 @@ static vector<FmlObjectHandle> getArgumentList( FieldmlSession *session, FmlObje
         ( object->type != FHT_EXTERNAL_EVALUATOR ) &&
         ( object->type != FHT_PARAMETER_EVALUATOR ) &&
         ( object->type != FHT_PIECEWISE_EVALUATOR ) &&
-        ( object->type != FHT_REFERENCE_EVALUATOR ) )
+        ( object->type != FHT_REFERENCE_EVALUATOR ) &&
+        ( object->type != FHT_CONSTANT_EVALUATOR ) )
     {
         session->setError( FML_ERR_INVALID_OBJECT );
         return args;
@@ -411,7 +412,8 @@ static bool checkIsEvaluatorType( FieldmlSession *session, FmlObjectHandle objec
         ( object->type != FHT_REFERENCE_EVALUATOR ) &&
         ( object->type != FHT_PIECEWISE_EVALUATOR ) &&
         ( object->type != FHT_ARGUMENT_EVALUATOR ) &&
-        ( object->type != FHT_EXTERNAL_EVALUATOR ) )
+        ( object->type != FHT_EXTERNAL_EVALUATOR ) &&
+        ( object->type != FHT_CONSTANT_EVALUATOR ) )
     {
         return false;
     }
@@ -1352,6 +1354,11 @@ FmlObjectHandle Fieldml_GetValueType( FmlSessionHandle handle, FmlObjectHandle o
     {
         ExternalEvaluator *externalEvaluator = (ExternalEvaluator *)object;
         return externalEvaluator->valueType;
+    }
+    else if( object->type == FHT_CONSTANT_EVALUATOR )
+    {
+        ConstantEvaluator *constantEvaluator = (ConstantEvaluator *)object;
+        return constantEvaluator->valueType;
     }
 
     session->setError( FML_ERR_INVALID_OBJECT );
