@@ -400,5 +400,23 @@
     </Arguments>
   </ExternalEvaluator>
 
+  <ExternalEvaluator name="shape.unit.line" valueType="boolean">
+    <Arguments>
+      <Argument name="chart.1d.argument"/>
+    </Arguments>
+  </ExternalEvaluator>
+
+  <ExternalEvaluator name="shape.unit.square" valueType="boolean">
+    <Arguments>
+      <Argument name="chart.2d.argument"/>
+    </Arguments>
+  </ExternalEvaluator>
+
+  <ExternalEvaluator name="shape.unit.cube" valueType="boolean">
+    <Arguments>
+      <Argument name="chart.3d.argument"/>
+    </Arguments>
+  </ExternalEvaluator>
+
  </Region>
 </Fieldml>

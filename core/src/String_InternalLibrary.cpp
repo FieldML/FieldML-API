@@ -66,7 +66,10 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
   <ArgumentEvaluator name=\"real.3d.component.argument\" valueType=\"real.3d.component\"/> \
   <ArgumentEvaluator name=\"real.3d.argument\" valueType=\"real.3d\"/> \
  \
-  <ContinuousType name=\"chart.1d\"/> \
+  <ContinuousType name=\"chart.1d\"> \
+    <Components name=\"chart.1d.component\" count=\"1\"/> \
+  </ContinuousType> \
+  <ArgumentEvaluator name=\"chart.1d.component.argument\" valueType=\"chart.1d.component\"/> \
   <ArgumentEvaluator name=\"chart.1d.argument\" valueType=\"chart.1d\"/> \
  \
   <ContinuousType name=\"chart.2d\"> \
@@ -439,6 +442,24 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     <Arguments> \
       <Argument name=\"chart.3d.argument\"/> \
       <Argument name=\"parameters.3d.unit.triquadraticSimplex.zienkiewicz.argument\"/> \
+    </Arguments> \
+  </ExternalEvaluator> \
+ \
+  <ExternalEvaluator name=\"shape.unit.line\" valueType=\"boolean\"> \
+    <Arguments> \
+      <Argument name=\"chart.1d.argument\"/> \
+    </Arguments> \
+  </ExternalEvaluator> \
+ \
+  <ExternalEvaluator name=\"shape.unit.square\" valueType=\"boolean\"> \
+    <Arguments> \
+      <Argument name=\"chart.2d.argument\"/> \
+    </Arguments> \
+  </ExternalEvaluator> \
+ \
+  <ExternalEvaluator name=\"shape.unit.cube\" valueType=\"boolean\"> \
+    <Arguments> \
+      <Argument name=\"chart.3d.argument\"/> \
     </Arguments> \
   </ExternalEvaluator> \
  \
