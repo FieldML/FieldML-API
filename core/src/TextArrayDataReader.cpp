@@ -164,6 +164,8 @@ TextArrayDataReader::TextArrayDataReader( FieldmlInputStream *_stream, ArrayData
     source( _source )
 {
     startPos = -1;
+    
+    nextOutermostOffset = -1;
 }
 
 
@@ -235,10 +237,19 @@ bool TextArrayDataReader::applyOffsets( int *offsets, int *sizes, int depth, boo
     if( isHead )
     {
         sliceCount = source->offsets[depth] + offsets[depth];
+        if( ( nextOutermostOffset >= 0 ) && ( sliceCount >= nextOutermostOffset ) )
+        {
+            sliceCount -= nextOutermostOffset;
+        }
     }
     else
     {
         sliceCount = source->rawSizes[depth] - ( source->offsets[depth] + offsets[depth] + sizes[depth] );
+    }
+    
+    if( sliceCount == 0 )
+    {
+        return true;
     }
     
     for( int j = 0; j < sliceCount; j++ )
@@ -258,6 +269,11 @@ FmlErrorNumber TextArrayDataReader::readPreSlab( int *offsets, int *sizes )
     if( !checkDimensions( offsets, sizes ) )
     {
         return eHandler->setError( FML_ERR_INVALID_PARAMETERS );
+    }
+    
+    if( ( nextOutermostOffset >= 0 ) && ( source->offsets[0] + offsets[0] >= nextOutermostOffset ) )
+    {
+        return FML_ERR_NO_ERROR;
     }
     
     if( startPos == -1 )
@@ -305,10 +321,15 @@ FmlErrorNumber TextArrayDataReader::readSlice( int *offsets, int *sizes, int dep
         }
     }
     
-    if( ( depth > 0 ) && ( !applyOffsets( offsets, sizes, depth, false ) ) )
+    if( depth == 0 )
+    {
+        nextOutermostOffset = source->offsets[0] + offsets[0] + sizes[0];
+    }
+    else if( !applyOffsets( offsets, sizes, depth, false ) )
     {
         return eHandler->setError( FML_ERR_IO_UNEXPECTED_EOF );
     }
+    
     
     return FML_ERR_NO_ERROR;
 }

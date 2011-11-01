@@ -58,6 +58,8 @@ private:
     
     ArrayDataSource *source;
     
+    int nextOutermostOffset;
+    
     //The seek position of the start of the array data. This is a minor optimization to save us from having to line-skip for each read.
     long startPos;
 
