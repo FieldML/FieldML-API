@@ -112,7 +112,6 @@ const xmlChar * const ARRAY_DATA_SIZE_TAG               = (const xmlChar* const)
 const xmlChar * const VERSION_ATTRIB                    = (const xmlChar* const)"version";
 const xmlChar * const VALUE_DATA_ATTRIB                 = (const xmlChar* const)"valueData";
 const xmlChar * const KEY_DATA_ATTRIB                   = (const xmlChar* const)"keyData";
-const xmlChar * const DEFAULT_EVALUATOR_ATTRIB          = (const xmlChar* const)"defaultEvaluator";
 const xmlChar * const VALUE_ATTRIB                      = (const xmlChar* const)"value";
 const xmlChar * const VALUE_TYPE_ATTRIB                 = (const xmlChar* const)"valueType";
 const xmlChar * const DATA_ATTRIB                       = (const xmlChar* const)"data";
