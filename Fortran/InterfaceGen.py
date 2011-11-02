@@ -204,7 +204,7 @@ def processLine( line, state ):
 
 
 def processFile():
-  headerFile = open( "../lib/src/fieldml_api.h" )
+  headerFile = open( "../core/src/fieldml_api.h" )
 
   state = ParseState.InHeader
   inComment = False
