@@ -1,0 +1,8 @@
+.*\.class
+.*~
+#.*#
+.*\.jar
+.*\.mod
+.*\.so
+.*\.dll
+jni/fieldml
