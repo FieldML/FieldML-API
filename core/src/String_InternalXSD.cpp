@@ -335,7 +335,7 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
     </xs:complexType> \
  \
     <xs:complexType name=\"EvaluatorMap_Type\"> \
-        <xs:choice minOccurs=\"1\" maxOccurs=\"unbounded\"> \
+        <xs:choice minOccurs=\"0\" maxOccurs=\"unbounded\"> \
             <xs:element name=\"EvaluatorMapEntry\" type=\"EvaluatorMapEntry_Type\" /> \
         </xs:choice> \
         <xs:attribute name=\"defaultEvaluator\" type=\"xs:string\" use=\"optional\" /> \
