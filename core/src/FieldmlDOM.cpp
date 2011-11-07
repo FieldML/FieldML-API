@@ -71,7 +71,7 @@ struct ParseState
     //14102011 CPL Currently, mesh shapes depends on an evaluator which typically depends on mesh-argument which depends on mesh.
     //To work around this cyclic dependency, the shapes attribute is analysed after rest of the document has been parsed.
     //In the long term, shapes will be a bound-type property of a mesh-type domain, so the problem will neatly vanish.
-    vector<pair<FmlObjectHandle,std::string>> shapesHACK;
+    vector<pair<FmlObjectHandle,std::string> > shapesHACK;
 };
 
 //========================================================================
@@ -1386,7 +1386,7 @@ static int parseDoc( xmlDocPtr doc, ParseState &state )
         parseObjectNode( state.unparsedNodes.back(), state );
     }
     
-    for( vector<pair<FmlObjectHandle,string>>::const_iterator i = state.shapesHACK.begin(); i != state.shapesHACK.end(); i++ )
+    for( vector<pair<FmlObjectHandle,string> >::const_iterator i = state.shapesHACK.begin(); i != state.shapesHACK.end(); i++ )
     {
         FmlObjectHandle shapesEvaluator = Fieldml_GetObjectByName( state.session, i->second.c_str() );
         if( Fieldml_SetMeshShapes( state.session, i->first, shapesEvaluator ) != FML_ERR_NO_ERROR )
