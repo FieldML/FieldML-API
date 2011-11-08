@@ -39,7 +39,6 @@
  *
  */
 #include <cstring>
-#include <sstream>
 
 #include "string_const.h"
 
@@ -140,8 +139,6 @@ const xmlChar * const HREF_ATTRIB                       = (const xmlChar* const)
 const xmlChar * const QUALIFIED_HREF_ATTRIB             = (const xmlChar* const)"xlink:href";
 
 const char * const PLAIN_TEXT_NAME                     = "PLAIN_TEXT";
-const char * const HDF5_NAME                           = "HDF5";
-const char * const PHDF5_NAME                          = "PHDF5";
 
 const char * const STRING_TRUE                      = "true";
 
@@ -217,20 +214,4 @@ const string makeFilename( const string dir, const string file )
     }
     
     return file;
-}
-
-
-int getInt( const string str, bool &ok )
-{
-    std::istringstream sstr(str);
-    
-    int i;
-    if( ! ( sstr >> i ) )
-    {
-        ok = false;
-        return 0;
-    }
-    
-    ok = true;
-    return i;
 }

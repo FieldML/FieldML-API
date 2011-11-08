@@ -53,10 +53,13 @@
  */
 class SimpleTestException
 {
+private:
+    std::string message;
+    
 public:
-    const std::string message;
-
-    SimpleTestException( std::string _message );
+    SimpleTestException( std::string _message, const char *_file, const int _line );
+    
+    const std::string getMessage();
 };
 
 
@@ -78,43 +81,40 @@ public:
     void reset();
     
     
-    void checkAndThrow( int expr, const std::string &message );
+    void checkAndThrow( int expr, const std::string &message, const char *_file, const int _line );
     
     
-    void checkAndReport( int expr, const std::string &message );
-    
-
-    void assert( int expr, const std::string &exprString );
+    void assert( int expr, const std::string &exprString, const char *_file, const int _line );
 
 
-    template<typename T> void assertEquals( T const &expected, T const &actual, const std::string &actualName )
+    template<typename T> void assertEquals( T const &expected, T const &actual, const std::string &actualName, const char *_file, const int _line )
     {
         std::stringstream message;
 
         message << "Assert failed on " << actualName << ". Expected " << expected << ", got " << actual << ".";
-        checkAndThrow( expected == actual, message.str() );
+        checkAndThrow( expected == actual, message.str(), _file, _line );
     }
 
 
-    template<> void assertEquals<char *>( char *const&expected, char *const&actual, const std::string &actualName )
+    template<> void assertEquals<char *>( char *const&expected, char *const&actual, const std::string &actualName, const char *_file, const int _line )
     {
-        assertEquals( std::string( expected ), std::string( actual ), actualName );
+        assertEquals( std::string( expected ), std::string( actual ), actualName, _file, _line );
     }
 
 
-    template<> void assertEquals<const char *>( const char *const&expected, const char *const&actual, const std::string &actualName )
+    template<> void assertEquals<const char *>( const char *const&expected, const char *const&actual, const std::string &actualName, const char *_file, const int _line )
     {
-        assertEquals( std::string( expected ), std::string( actual ), actualName );
+        assertEquals( std::string( expected ), std::string( actual ), actualName, _file, _line );
     }
 
     
-    void assertEquals( const char *const &expected, char *const &actual, const std::string &actualName );
+    void assertEquals( const char *const &expected, char *const &actual, const std::string &actualName, const char *_file, const int _line );
     
     
-    void assertEquals( const int &expected, const unsigned int &actual, const std::string &actualName );
+    void assertEquals( const int &expected, const unsigned int &actual, const std::string &actualName, const char *_file, const int _line );
 
 
-    void assertEquals( const unsigned int &expected, const int &actual, const std::string &actualName );
+    void assertEquals( const unsigned int &expected, const int &actual, const std::string &actualName, const char *_file, const int _line );
 
     
     void report();
@@ -140,13 +140,13 @@ public:
     static SimpleTest SimpleTest##name( name, #name ); \
     static void name( SimpleTestRecorder &__recorder )
 
-#define SIMPLE_ASSERT( expr ) __recorder.assert( ( expr ), #expr )
+#define SIMPLE_ASSERT( expr ) __recorder.assert( ( expr ), #expr, __FILE__, __LINE__ )
 
-#define SIMPLE_ASSERT_EQUALS( expected, actual ) __recorder.assertEquals( ( expected ), ( actual ), #actual )
+#define SIMPLE_ASSERT_EQUALS( expected, actual ) __recorder.assertEquals( ( expected ), ( actual ), #actual, __FILE__, __LINE__ )
 
-#define SIMPLE_CHECK( expr ) __recorder.check( ( expr ), #expr )
+#define SIMPLE_CHECK( expr ) __recorder.check( ( expr ), #expr, __FILE__, __LINE__ )
 
-#define SIMPLE_CHECK_EQUALS( expected, actual ) __recorder.checkEquals( ( expected ), ( actual ) , #actual )
+#define SIMPLE_CHECK_EQUALS( expected, actual ) __recorder.checkEquals( ( expected ), ( actual ) , #actual, __FILE__, __LINE__ )
 
 
 #endif //H_SIMPLE_TEST

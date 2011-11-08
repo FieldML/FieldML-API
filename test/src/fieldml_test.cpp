@@ -43,6 +43,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "FieldmlIoApi.h"
 #include "fieldml_api.h"
 
 
@@ -69,7 +70,7 @@ void testRead( const char * filename )
     for( i = 1; i <= count; i++ )
     {
         oHandle = Fieldml_GetObject( handle, FHT_CONTINUOUS_TYPE, i );
-        if( !Fieldml_IsObjectLocal( handle, oHandle ) )
+        if( !Fieldml_IsObjectLocal( handle, oHandle, 1 ) )
         {
             continue;
         }
@@ -90,7 +91,7 @@ void testRead( const char * filename )
     for( i = 1; i <= count; i++ )
     {
         oHandle = Fieldml_GetObject( handle, FHT_ENSEMBLE_TYPE, i );
-        if( !Fieldml_IsObjectLocal( handle, oHandle ) )
+        if( !Fieldml_IsObjectLocal( handle, oHandle, 1 ) )
         {
             continue;
         }
@@ -107,7 +108,7 @@ void testRead( const char * filename )
     for( i = 1; i <= count; i++ )
     {
         oHandle = Fieldml_GetObject( handle, FHT_MESH_TYPE, i );
-        if( !Fieldml_IsObjectLocal( handle, oHandle ) )
+        if( !Fieldml_IsObjectLocal( handle, oHandle, 1 ) )
         {
             continue;
         }
@@ -125,7 +126,7 @@ void testRead( const char * filename )
     for( i = 1; i <= count; i++ )
     {
         oHandle = Fieldml_GetObject( handle, FHT_PARAMETER_EVALUATOR, i );
-        if( !Fieldml_IsObjectLocal( handle, oHandle ) )
+        if( !Fieldml_IsObjectLocal( handle, oHandle, 1 ) )
         {
             continue;
         }
@@ -150,7 +151,7 @@ void testRead( const char * filename )
     for( i = 1; i <= count; i++ )
     {
         oHandle = Fieldml_GetObject( handle, FHT_REFERENCE_EVALUATOR, i );
-        if( !Fieldml_IsObjectLocal( handle, oHandle ) )
+        if( !Fieldml_IsObjectLocal( handle, oHandle, 1 ) )
         {
             continue;
         }
@@ -173,7 +174,7 @@ void testRead( const char * filename )
     for( i = 1; i <= count; i++ )
     {
         oHandle = Fieldml_GetObject( handle, FHT_PIECEWISE_EVALUATOR, i );
-        if( !Fieldml_IsObjectLocal( handle, oHandle ) )
+        if( !Fieldml_IsObjectLocal( handle, oHandle, 1 ) )
         {
             continue;
         }
@@ -204,7 +205,7 @@ void testRead( const char * filename )
     for( i = 1; i <= count; i++ )
     {
         oHandle = Fieldml_GetObject( handle, FHT_AGGREGATE_EVALUATOR, i );
-        if( !Fieldml_IsObjectLocal( handle, oHandle ) )
+        if( !Fieldml_IsObjectLocal( handle, oHandle, 1 ) )
         {
             continue;
         }
@@ -233,7 +234,7 @@ void testRead( const char * filename )
     for( i = 1; i <= count; i++ )
     {
         oHandle = Fieldml_GetObject( handle, FHT_ARGUMENT_EVALUATOR, i );
-        if( !Fieldml_IsObjectLocal( handle, oHandle ) )
+        if( !Fieldml_IsObjectLocal( handle, oHandle, 1 ) )
         {
             continue;
         }
@@ -247,7 +248,7 @@ void testRead( const char * filename )
     for( i = 1; i <= count; i++ )
     {
         oHandle = Fieldml_GetObject( handle, FHT_EXTERNAL_EVALUATOR, i );
-        if( !Fieldml_IsObjectLocal( handle, oHandle ) )
+        if( !Fieldml_IsObjectLocal( handle, oHandle, 1 ) )
         {
             continue;
         }
@@ -350,12 +351,12 @@ void testMisc()
     sizes[0] = 3;
     offsets[0] = 0;
     writer = Fieldml_OpenArrayWriter( handle, parametersData, realType, 0, sizes, 1 );
-    Fieldml_WriteDoubleSlab( handle, writer, offsets, sizes, values );
-    Fieldml_CloseWriter( handle, writer );
+    Fieldml_WriteDoubleSlab( writer, offsets, sizes, values );
+    Fieldml_CloseWriter( writer );
     
     reader = Fieldml_OpenReader( handle, parametersData );
-    Fieldml_ReadDoubleSlab( handle, reader, offsets, sizes, readValues );
-    Fieldml_CloseReader( handle, reader );
+    Fieldml_ReadDoubleSlab( reader, offsets, sizes, readValues );
+    Fieldml_CloseReader( reader );
 
     for( int i = 0; i < 3; i++ )
     {
@@ -406,10 +407,10 @@ void testMisc()
     
     sizes[0] = 1;
     sizes[1] = 2;
-    Fieldml_WriteIntSlab( handle, writer, offsets, sizes, indexValues1 );
+    Fieldml_WriteIntSlab( writer, offsets, sizes, indexValues1 );
     offsets[0] = 1;
-    Fieldml_WriteIntSlab( handle, writer, offsets, sizes, indexValues2 );
-    Fieldml_CloseWriter( handle, writer );
+    Fieldml_WriteIntSlab( writer, offsets, sizes, indexValues2 );
+    Fieldml_CloseWriter( writer );
     
     sizes[0] = 2;
     sizes[1] = 3;
@@ -422,10 +423,10 @@ void testMisc()
     offsets[0] = 0;
     offsets[1] = 0;
     offsets[2] = 0;
-    Fieldml_WriteDoubleSlab( handle, writer, offsets, sizes, rawValues1 );
+    Fieldml_WriteDoubleSlab( writer, offsets, sizes, rawValues1 );
     offsets[0] = 1;
-    Fieldml_WriteDoubleSlab( handle, writer, offsets, sizes, rawValues2 );
-    Fieldml_CloseWriter( handle, writer );
+    Fieldml_WriteDoubleSlab( writer, offsets, sizes, rawValues2 );
+    Fieldml_CloseWriter( writer );
     
     reader = Fieldml_OpenReader( handle, parameters2KeyData );
 
@@ -433,7 +434,7 @@ void testMisc()
     offsets[1] = 0;
     sizes[0] = 1;
     sizes[1] = 2;
-    Fieldml_ReadIntSlab( handle, reader, offsets, sizes, readIndexes );
+    Fieldml_ReadIntSlab( reader, offsets, sizes, readIndexes );
     for( int i = 0; i < 2; i++ )
     {
         if( indexValues1[i] != readIndexes[i] )
@@ -444,7 +445,7 @@ void testMisc()
     }
     
     offsets[0] = 1;
-    Fieldml_ReadIntSlab( handle, reader, offsets, sizes, readIndexes );
+    Fieldml_ReadIntSlab( reader, offsets, sizes, readIndexes );
     for( int i = 0; i < 2; i++ )
     {
         if( indexValues2[i] != readIndexes[i] )
@@ -454,7 +455,7 @@ void testMisc()
         }
     }
     
-    Fieldml_CloseReader( handle, reader );
+    Fieldml_CloseReader( reader );
     
     reader = Fieldml_OpenReader( handle, parameters2ValueData );
     
@@ -464,7 +465,7 @@ void testMisc()
     sizes[0] = 1;
     sizes[1] = 3;
     sizes[2] = 3;
-    Fieldml_ReadDoubleSlab( handle, reader, offsets, sizes, readValues );
+    Fieldml_ReadDoubleSlab( reader, offsets, sizes, readValues );
 
     for( int i = 0; i < 9; i++ )
     {
@@ -476,7 +477,7 @@ void testMisc()
     }
     
     offsets[0] = 1;
-    Fieldml_ReadDoubleSlab( handle, reader, offsets, sizes, readValues );
+    Fieldml_ReadDoubleSlab( reader, offsets, sizes, readValues );
 
     for( int i = 0; i < 9; i++ )
     {
@@ -487,7 +488,7 @@ void testMisc()
         }
     }
     
-    Fieldml_CloseReader( handle, reader );
+    Fieldml_CloseReader( reader );
 
     Fieldml_Destroy( handle );
     if( testOk ) 
@@ -607,9 +608,9 @@ int testHdf5Read()
         dataI[i] = INT_FILL;
     }
 
-    Fieldml_ReadIntSlab( session, reader, offsets, sizes, dataI );
+    Fieldml_ReadIntSlab( reader, offsets, sizes, dataI );
         
-    Fieldml_CloseReader( session, reader );
+    Fieldml_CloseReader( reader );
 
     for( int i = 0; i < sizes[0]; i++ )
     {
@@ -643,11 +644,9 @@ int testHdf5Read()
         dataD[i] = DOUBLE_FILL;
     }
     
-    Fieldml_ReadDoubleSlab( session, reader, offsets, sizes, dataD );
+    Fieldml_ReadDoubleSlab( reader, offsets, sizes, dataD );
     
-    reader = Fieldml_OpenReader( session, sourceD );
-    
-    Fieldml_CloseReader( session, reader );
+    Fieldml_CloseReader( reader );
 
     for( int i = 0; i < sizes[0]; i++ )
     {
@@ -719,13 +718,13 @@ int testHdf5Write()
 
     offsets[0] = 0;
     sizes[0] = 6;
-    Fieldml_WriteDoubleSlab( session, writer, offsets, sizes, dataD );
+    Fieldml_WriteDoubleSlab( writer, offsets, sizes, dataD );
     
     offsets[0] = 6;
     sizes[0] = 6;
-    Fieldml_WriteDoubleSlab( session, writer, offsets, sizes, dataD );
+    Fieldml_WriteDoubleSlab( writer, offsets, sizes, dataD );
     
-    Fieldml_CloseWriter( session, writer );
+    Fieldml_CloseWriter( writer );
     
     Fieldml_Destroy( session );
     

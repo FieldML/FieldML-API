@@ -52,9 +52,6 @@
 #include "string_const.h"
 #include "Util.h"
 
-#include "ArrayDataReader.h"
-
-#include "ArrayDataWriter.h"
 #include "FieldmlRegion.h"
 
 using namespace std;
@@ -128,12 +125,12 @@ static FmlObjectHandle addObject( FieldmlSession *session, FieldmlObject *object
     
     if( handle == FML_INVALID_HANDLE )
     {
-        FmlObjectHandle handle = session->objects->addObject( object );
+        FmlObjectHandle handle = session->objects.addObject( object );
         session->region->addLocalObject( handle );
         return handle;
     }
     
-    FieldmlObject *oldObject = session->objects->getObject( handle );
+    FieldmlObject *oldObject = session->objects.getObject( handle );
     
     session->logError( "Handle collision. Cannot replace", object->name.c_str(), oldObject->name.c_str() );
     delete object;
@@ -279,12 +276,6 @@ static bool checkCyclicDependency( FieldmlSession *session, FmlObjectHandle obje
 
 static char* cstrCopy( const string &s )
 {
-    if( s.length() == 0 )
-    {
-        //TODO Change the API so that 'no value' is indicated by an empty string.
-        return NULL;
-    }
-
     return strdupS( s.c_str() );
 }
 
@@ -510,7 +501,7 @@ FmlSessionHandle Fieldml_CreateFromFile( const char * filename )
         session->region = session->addResourceRegion( filename, "" );
         if( session->region == NULL )
         {
-            session->setError( FML_ERR_IO_READ_ERR );
+            session->setError( FML_ERR_READ_ERR );
         }
         else
         {
@@ -598,13 +589,7 @@ FmlErrorNumber Fieldml_WriteFile( FmlSessionHandle handle, const char * filename
 
 void Fieldml_Destroy( FmlSessionHandle handle )
 {
-    FieldmlSession *session = getSession( handle );
-    if( session == NULL )
-    {
-        return;
-    }
-        
-    delete session;
+    FieldmlSession::removeSession( handle );    
 }
 
 
@@ -640,6 +625,31 @@ FmlErrorNumber Fieldml_FreeString( char * string )
 int Fieldml_CopyRegionName( FmlSessionHandle handle, char * buffer, int bufferLength )
 {
     return cappedCopyAndFree( Fieldml_GetRegionName( handle ), buffer, bufferLength );
+}
+
+
+char * Fieldml_GetRegionRoot( FmlSessionHandle handle )
+{
+    FieldmlSession *session = getSession( handle );
+    if( session == NULL )
+    {
+        return NULL;
+    }
+    
+    if( session->region == NULL )
+    {
+        session->setError( FML_ERR_INVALID_REGION );
+        return NULL;
+    }
+        
+    session->setError( FML_ERR_NO_ERROR );
+    return cstrCopy( session->region->getRoot() );
+}
+
+
+int Fieldml_CopyRegionRoot( FmlSessionHandle handle, char * buffer, int bufferLength )
+{
+    return cappedCopyAndFree( Fieldml_GetRegionRoot( handle ), buffer, bufferLength );
 }
 
 
@@ -697,7 +707,7 @@ int Fieldml_GetTotalObjectCount( FmlSessionHandle handle )
     }
         
     session->setError( FML_ERR_NO_ERROR );
-    return session->objects->getCount();
+    return session->objects.getCount();
 }
 
 
@@ -710,7 +720,7 @@ FmlObjectHandle Fieldml_GetObjectByIndex( FmlSessionHandle handle, const int obj
     }
         
     session->setError( FML_ERR_NO_ERROR );
-    return session->objects->getObjectByIndex( objectIndex );
+    return session->objects.getObjectByIndex( objectIndex );
 }
 
 
@@ -728,7 +738,7 @@ int Fieldml_GetObjectCount( FmlSessionHandle handle, FieldmlHandleType type )
         return -1;
     }
 
-    return session->objects->getCount( type );
+    return session->objects.getCount( type );
 }
 
 
@@ -742,7 +752,7 @@ FmlObjectHandle Fieldml_GetObject( FmlSessionHandle handle, FieldmlHandleType ob
         
     session->setError( FML_ERR_NO_ERROR );
 
-    FmlObjectHandle object = session->objects->getObjectByIndex( objectIndex, objectType );
+    FmlObjectHandle object = session->objects.getObjectByIndex( objectIndex, objectType );
     if( object == FML_INVALID_HANDLE )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_3 );  
@@ -789,7 +799,7 @@ FmlObjectHandle Fieldml_GetObjectByDeclaredName( FmlSessionHandle handle, const 
         return FML_INVALID_HANDLE;
     }
     
-    FmlObjectHandle object = session->objects->getObjectByName( name );
+    FmlObjectHandle object = session->objects.getObjectByName( name );
     
     return object;
 }
@@ -1192,7 +1202,7 @@ FmlObjectHandle Fieldml_GetMeshChartComponentType( FmlSessionHandle handle, FmlO
 }
 
 
-FmlBoolean Fieldml_IsObjectLocal( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+FmlBoolean Fieldml_IsObjectLocal( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlBoolean isDeclaredOnly )
 {
     FieldmlSession *session = getSession( handle );
     if( session == NULL )
@@ -1205,7 +1215,9 @@ FmlBoolean Fieldml_IsObjectLocal( FmlSessionHandle handle, FmlObjectHandle objec
         return 0;
     }
 
-    if( session->region->hasLocalObject( objectHandle, false, false ) )
+    bool allowVirtual = ( isDeclaredOnly != 1 );
+    bool allowImport = ( isDeclaredOnly != 1 );
+    if( session->region->hasLocalObject( objectHandle, allowVirtual, allowImport ) )
     {
         return 1;
     }
@@ -1253,7 +1265,7 @@ char * Fieldml_GetObjectDeclaredName( FmlSessionHandle handle, FmlObjectHandle o
         return NULL;
     }
     
-    FieldmlObject *object = session->objects->getObject( objectHandle );
+    FieldmlObject *object = session->objects.getObject( objectHandle );
     if( object == NULL )
     {
         return NULL;
@@ -2906,268 +2918,6 @@ FmlErrorNumber Fieldml_SetMeshShapes( FmlSessionHandle handle, FmlObjectHandle m
 }
 
 
-FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle objectHandle )
-{
-    FieldmlSession *session = getSession( handle );
-    if( session == NULL )
-    {
-        return FML_INVALID_HANDLE;
-    }
-    if( session->region == NULL )
-    {
-        session->setError( FML_ERR_INVALID_REGION );
-        return FML_INVALID_HANDLE;
-    }
-    
-    if( !checkLocal( session, objectHandle ) )
-    {
-        return FML_INVALID_HANDLE;
-    }
-
-    ArrayDataReader *reader = NULL;
-    DataSource *dataSource = objectAsDataSource( session, objectHandle );
-    if( dataSource->type == DATA_SOURCE_ARRAY )
-    {
-        ArrayDataSource *arraySource = (ArrayDataSource*)dataSource;
-        reader = ArrayDataReader::create( session, session->region->getRoot().c_str(), arraySource );
-    }
-    else
-    {
-        session->setError( FML_ERR_INVALID_OBJECT );
-        return FML_INVALID_HANDLE;
-    }
-    
-    if( reader == NULL )
-    {
-        return FML_INVALID_HANDLE;
-    }
-    
-    return session->addReader( reader );
-}
-
-
-FmlErrorNumber Fieldml_ReadIntSlab( FmlSessionHandle handle, FmlReaderHandle readerHandle, int *offsets, int *sizes, int *valueBuffer )
-{
-    FieldmlSession *session = getSession( handle );
-    if( session == NULL )
-    {
-        return FML_ERR_UNKNOWN_HANDLE;
-    }
-
-    ArrayDataReader *reader = session->handleToReader( readerHandle );
-    if( reader == NULL )
-    {
-        return session->setError( FML_ERR_INVALID_OBJECT );
-    }
-
-    return reader->readIntSlab( offsets, sizes, valueBuffer );
-}
-
-
-FmlErrorNumber Fieldml_ReadDoubleSlab( FmlSessionHandle handle, FmlReaderHandle readerHandle, int *offsets, int *sizes, double *valueBuffer )
-{
-    FieldmlSession *session = getSession( handle );
-    if( session == NULL )
-    {
-        return FML_ERR_UNKNOWN_HANDLE;
-    }
-
-    ArrayDataReader *reader = session->handleToReader( readerHandle );
-    if( reader == NULL )
-    {
-        return session->setError( FML_ERR_INVALID_OBJECT );
-    }
-
-    return reader->readDoubleSlab( offsets, sizes, valueBuffer );
-}
-
-
-FmlErrorNumber Fieldml_ReadBooleanSlab( FmlSessionHandle handle, FmlReaderHandle readerHandle, int *offsets, int *sizes, bool *valueBuffer )
-{
-    FieldmlSession *session = getSession( handle );
-    if( session == NULL )
-    {
-        return FML_ERR_UNKNOWN_HANDLE;
-    }
-
-    ArrayDataReader *reader = session->handleToReader( readerHandle );
-    if( reader == NULL )
-    {
-        return session->setError( FML_ERR_INVALID_OBJECT );
-    }
-
-    return reader->readBooleanSlab( offsets, sizes, valueBuffer );
-}
-
-
-FmlErrorNumber Fieldml_CloseReader( FmlSessionHandle handle, FmlReaderHandle readerHandle )
-{
-    FieldmlSession *session = getSession( handle );
-    if( session == NULL )
-    {
-        return FML_ERR_UNKNOWN_HANDLE;
-    }
-
-    ArrayDataReader *reader = session->handleToReader( readerHandle );
-    if( reader == NULL )
-    {
-        return session->setError( FML_ERR_INVALID_OBJECT );
-    }
-
-    session->removeReader( readerHandle );
-    
-    delete reader;
-    
-    return session->setError( FML_ERR_NO_ERROR );
-}
-
-
-FmlWriterHandle Fieldml_OpenArrayWriter( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle typeHandle, FmlBoolean append, int *sizes, int rank )
-{
-    FieldmlSession *session = getSession( handle );
-    if( session == NULL )
-    {
-        return FML_INVALID_HANDLE;
-    }
-    if( session->region == NULL )
-    {
-        session->setError( FML_ERR_INVALID_REGION );
-        return FML_INVALID_HANDLE;
-    }
-    
-    if( !checkLocal( session, objectHandle ) )
-    {
-        return FML_INVALID_HANDLE;
-    }
-    if( !checkLocal( session, objectHandle ) )
-    {
-        return FML_INVALID_HANDLE;
-    }
-    
-    FieldmlObject *typeObject = getObject( session, typeHandle );
-    if( typeObject == NULL )
-    {
-        session->setError( FML_ERR_INVALID_OBJECT );
-        return FML_INVALID_HANDLE;
-    }
-    if( typeObject->type == FHT_ENSEMBLE_TYPE )
-    {
-        //Ensemble types can always be serialized.
-    }
-    else if( typeObject->type == FHT_CONTINUOUS_TYPE )
-    {
-        ContinuousType *continuousType = (ContinuousType*)typeObject;
-        if( continuousType->componentType != FML_INVALID_HANDLE )
-        {
-            //Only scalars are supported for now.
-            session->setError( FML_ERR_INVALID_PARAMETER_3 );
-            return FML_INVALID_HANDLE;
-        }
-    }
-    else if( typeObject->type == FHT_BOOLEAN_TYPE )
-    {
-        //Boolean values can always scalar, and can always be serialized.
-    }
-    else
-    {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
-        return FML_INVALID_HANDLE;
-    }
-
-    ArrayDataWriter *writer = NULL;
-    DataSource *dataSource = objectAsDataSource( session, objectHandle );
-    if( dataSource->type == DATA_SOURCE_ARRAY )
-    {
-        ArrayDataSource *arraySource = (ArrayDataSource*)dataSource;
-        writer = ArrayDataWriter::create( session, session->region->getRoot().c_str(), arraySource, typeObject->type, ( append == 1 ), sizes, rank );
-    }
-    
-
-    if( writer == NULL )
-    {
-        return FML_INVALID_HANDLE;
-    }
-    
-    return session->addWriter( writer );
-}
-
-
-FmlErrorNumber Fieldml_WriteIntSlab( FmlSessionHandle handle, FmlWriterHandle writerHandle, int *offsets, int *sizes, int *valueBuffer )
-{
-    FieldmlSession *session = getSession( handle );
-    if( session == NULL )
-    {
-        return FML_ERR_UNKNOWN_HANDLE;
-    }
-
-    ArrayDataWriter *writer = session->handleToWriter( writerHandle );
-    if( writer == NULL )
-    {
-        return session->setError( FML_ERR_INVALID_OBJECT );
-    }
-
-    return writer->writeIntSlab( offsets, sizes, valueBuffer );
-}
-
-
-FmlErrorNumber Fieldml_WriteDoubleSlab( FmlSessionHandle handle, FmlWriterHandle writerHandle, int *offsets, int *sizes, double *valueBuffer )
-{
-    FieldmlSession *session = getSession( handle );
-    if( session == NULL )
-    {
-        return FML_ERR_UNKNOWN_HANDLE;
-    }
-
-    ArrayDataWriter *writer = session->handleToWriter( writerHandle );
-    if( writer == NULL )
-    {
-        return session->setError( FML_ERR_INVALID_OBJECT );
-    }
-
-    return writer->writeDoubleSlab( offsets, sizes, valueBuffer );
-}
-
-
-FmlErrorNumber Fieldml_WriteBooleanSlab( FmlSessionHandle handle, FmlWriterHandle writerHandle, int *offsets, int *sizes, bool *valueBuffer )
-{
-    FieldmlSession *session = getSession( handle );
-    if( session == NULL )
-    {
-        return FML_ERR_UNKNOWN_HANDLE;
-    }
-
-    ArrayDataWriter *writer = session->handleToWriter( writerHandle );
-    if( writer == NULL )
-    {
-        return session->setError( FML_ERR_INVALID_OBJECT );
-    }
-
-    return writer->writeBooleanSlab( offsets, sizes, valueBuffer );
-}
-
-
-FmlErrorNumber Fieldml_CloseWriter( FmlSessionHandle handle, FmlWriterHandle writerHandle )
-{
-    FieldmlSession *session = getSession( handle );
-    if( session == NULL )
-    {
-        return FML_ERR_UNKNOWN_HANDLE;
-    }
-
-    ArrayDataWriter *writer = session->handleToWriter( writerHandle );
-    if( writer == NULL )
-    {
-        return session->setError( FML_ERR_INVALID_OBJECT );
-    }
-
-    session->removeWriter( writerHandle );
-    
-    delete writer;
-    
-    return session->setError( FML_ERR_NO_ERROR );
-}
-
-
 FmlErrorNumber Fieldml_SetEnsembleMembersRange( FmlSessionHandle handle, FmlObjectHandle objectHandle, const FmlEnsembleValue minElement, const FmlEnsembleValue maxElement, const int stride )
 {
     FieldmlSession *session = getSession( handle );
@@ -3250,7 +3000,7 @@ int Fieldml_AddImportSource( FmlSessionHandle handle, const char * href, const c
         importedRegion = session->addResourceRegion( href, regionName );
         if( importedRegion == NULL )
         {
-            session->setError( FML_ERR_IO_READ_ERR );
+            session->setError( FML_ERR_READ_ERR );
             return -1;
         }
     }
@@ -3564,6 +3314,39 @@ FmlErrorNumber Fieldml_AddInlineData( FmlSessionHandle handle, FmlObjectHandle o
     }
     
     resource->description = resource->description + string( data, length );
+    
+    return session->getLastError();
+}
+
+
+FmlErrorNumber Fieldml_SetInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandle, const char * data, const int length )
+{
+    FieldmlSession *session = getSession( handle );
+    if( session == NULL )
+    {
+        return FML_ERR_UNKNOWN_HANDLE;
+    }
+    if( data == NULL )
+    {
+        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+    }
+
+    if( !checkLocal( session, objectHandle ) )
+    {
+        return session->getLastError();
+    }
+
+    DataResource *resource = getDataResource( session, objectHandle );
+    if( resource == NULL )
+    {
+        return session->getLastError();
+    }
+    if( resource->type != DATA_RESOURCE_INLINE )
+    {
+        return session->setError( FML_ERR_INVALID_OBJECT );
+    }
+    
+    resource->description = string( data, length );
     
     return session->getLastError();
 }

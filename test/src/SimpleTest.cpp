@@ -44,9 +44,18 @@
 using namespace std;
 
 
-SimpleTestException::SimpleTestException( string _message ) :
-    message( _message )
+SimpleTestException::SimpleTestException( string _message, const char *_file, const int _line )
 {
+    stringstream messageBuffer;
+    messageBuffer << "At " <<  _file << ":" << _line << ": " << _message;
+    
+    message = messageBuffer.str();
+}
+
+
+const std::string SimpleTestException::getMessage()
+{
+    return message;
 }
 
 
@@ -63,12 +72,12 @@ void SimpleTestRecorder::reset()
 }
 
 
-void SimpleTestRecorder::checkAndThrow( int expr, const string &message )
+void SimpleTestRecorder::checkAndThrow( int expr, const string &message, const char *_file, const int _line )
 {
     if( !expr )
     {
         excepted++;
-        throw SimpleTestException( message );
+        throw SimpleTestException( message, _file, _line );
     }
     else
     {
@@ -77,46 +86,46 @@ void SimpleTestRecorder::checkAndThrow( int expr, const string &message )
 }
 
 
-void SimpleTestRecorder::assert( int expr, const string &exprString )
+void SimpleTestRecorder::assert( int expr, const string &exprString, const char *_file, const int _line )
 {
     stringstream message;
 
     message << "Assert failed on " << exprString << ".";
-    checkAndThrow( expr, message.str() );
+    checkAndThrow( expr, message.str(), _file, _line );
 }
 
 
-void SimpleTestRecorder::assertEquals( const char * const &expected, char * const &actual, const string &actualName )
+void SimpleTestRecorder::assertEquals( const char * const &expected, char * const &actual, const string &actualName, const char *_file, const int _line )
 {
-    assertEquals( string( expected ), string( actual ), actualName );
+    assertEquals( string( expected ), string( actual ), actualName, _file, _line );
 }
 
 
-void SimpleTestRecorder::assertEquals( const int &expected, const unsigned int &actual, const string &actualName )
+void SimpleTestRecorder::assertEquals( const int &expected, const unsigned int &actual, const string &actualName, const char *_file, const int _line )
 {
     if( expected < 0 )
     {
         stringstream message;
         
         message << "Assert failed on " << actualName << ". Expected " << expected << ", got " << actual << ".";
-        checkAndThrow( false, message.str() );
+        checkAndThrow( false, message.str(), _file, _line );
     }
     
-    assertEquals( (const unsigned int)expected, actual, actualName );
+    assertEquals( (const unsigned int)expected, actual, actualName, _file, _line );
 }
 
 
-void SimpleTestRecorder::assertEquals( const unsigned int &expected, const int &actual, const string &actualName )
+void SimpleTestRecorder::assertEquals( const unsigned int &expected, const int &actual, const string &actualName, const char *_file, const int _line )
 {
     if( actual < 0 )
     {
         stringstream message;
         
         message << "Assert failed on " << actualName << ". Expected " << expected << ", got " << actual << ".";
-        checkAndThrow( false, message.str() );
+        checkAndThrow( false, message.str(), _file, _line );
     }
 
-    assertEquals( expected, (const unsigned int)actual, actualName );
+    assertEquals( expected, (const unsigned int)actual, actualName, _file, _line );
 }
 
 
@@ -155,7 +164,7 @@ int main( int argc, char **argv )
         }
         catch( SimpleTestException &e )
         {
-            cout << e.message << endl;
+            cout << e.getMessage() << endl;
         }
     }
 

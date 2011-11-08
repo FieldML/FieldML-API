@@ -47,8 +47,6 @@
 
 #include "FieldmlErrorHandler.h"
 #include "FieldmlRegion.h"
-#include "ArrayDataReader.h"
-#include "ArrayDataWriter.h"
 
 class FieldmlSession :
     public FieldmlErrorHandler
@@ -64,10 +62,6 @@ private:
     
     std::vector<std::string> errors;
     
-    std::vector<ArrayDataReader *> readers;
-    
-    std::vector<ArrayDataWriter *> writers;
-
     std::vector<FieldmlRegion*> regions;
     
     std::vector<std::string> importHrefStack;
@@ -86,9 +80,10 @@ private:
 
     void addError( const std::string string );
     
+    virtual ~FieldmlSession();
+
 public:
     FieldmlSession();
-    virtual ~FieldmlSession();
     
     void setErrorContext( const char *file, const int line );
     
@@ -104,7 +99,7 @@ public:
     
     void clearErrors();
 
-    const FmlObjectHandle getLastError();
+    const FmlErrorNumber getLastError();
 
     void logError( const char *error, const char *name1 = NULL, const char *name2 = NULL );
     
@@ -126,25 +121,15 @@ public:
     
     FieldmlRegion *region;
 
-    ObjectStore * const objects;
+    ObjectStore objects;
 
-    FmlReaderHandle addReader( ArrayDataReader *reader );
-    
-    void removeReader( FmlReaderHandle handle );
-    
-    ArrayDataReader *handleToReader( FmlReaderHandle handle );
-    
-    FmlWriterHandle addWriter( ArrayDataWriter *writer );
-    
-    void removeWriter( FmlWriterHandle handle );
-    
-    ArrayDataWriter *handleToWriter( FmlWriterHandle handle );
-    
     bool getDelegateEvaluators( FmlObjectHandle handle, std::set<FmlObjectHandle> &set );
     
     void getArguments( FmlObjectHandle handle, std::set<FmlObjectHandle> &unbound, std::set<FmlObjectHandle> &used, bool addSelf );
 
     static FieldmlSession *handleToSession( FmlSessionHandle handle );
+    
+    static void removeSession( FmlSessionHandle handle );
 };
 
 #endif //H_FIELDML_SESSION

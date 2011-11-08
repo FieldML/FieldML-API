@@ -70,8 +70,19 @@ FmlSessionHandle FieldmlSession::addSession( FieldmlSession *session )
 }
 
 
-FieldmlSession::FieldmlSession() :
-    objects( new ObjectStore() )
+void FieldmlSession::removeSession( FmlSessionHandle handle )
+{
+    if( ( handle < 0 ) || ( handle >= sessions.size() ) )
+    {
+        return;
+    }
+    
+    delete sessions[handle];
+    sessions[handle] = NULL;
+}
+
+
+FieldmlSession::FieldmlSession()
 {
     handle = addSession( this );
     lastError = FML_ERR_NO_ERROR;
@@ -83,8 +94,6 @@ FieldmlSession::FieldmlSession() :
 FieldmlSession::~FieldmlSession()
 {
     for_each( regions.begin(), regions.end(), FmlUtil::delete_object() );
-    
-    delete objects;
     
     sessions[handle] = NULL;
 }
@@ -200,11 +209,18 @@ FmlErrorNumber FieldmlSession::setError( const FmlErrorNumber error )
 {
     lastError = error;
 
-    if( ( error != FML_ERR_NO_ERROR ) && ( error != FML_ERR_IO_NO_DATA ) )
+    if( error != FML_ERR_NO_ERROR )
     {
         if( debug )
         {
-            fprintf( stderr, "FIELDML %s (%s): Error %d at %s:%d\n", FML_VERSION_STRING, __DATE__, error, contextFile, contextLine );
+            if( contextFile == NULL )
+            {
+                fprintf( stderr, "FIELDML %s (%s): Error %d\n", FML_VERSION_STRING, __DATE__, error );
+            }
+            else
+            {
+                fprintf( stderr, "FIELDML %s (%s): Error %d at %s:%d\n", FML_VERSION_STRING, __DATE__, error, contextFile, contextLine );
+            }
         }
     }
     
@@ -304,55 +320,7 @@ void FieldmlSession::logError( const char *error, FmlObjectHandle objectHandle )
 
 FieldmlObject *FieldmlSession::getObject( const FmlObjectHandle handle )
 {
-    return objects->getObject( handle );
-}
-
-
-ArrayDataReader *FieldmlSession::handleToReader( FmlReaderHandle handle )
-{
-    if( ( handle < 0 ) || ( handle >= readers.size() ) )
-    {
-        return NULL;
-    }
-    
-    return readers.at( handle );
-}
-
-
-FmlReaderHandle FieldmlSession::addReader( ArrayDataReader *reader )
-{
-    readers.push_back( reader );
-    return readers.size() - 1;
-}
-
-
-void FieldmlSession::removeReader( FmlReaderHandle handle )
-{
-    readers[handle] = NULL;
-}
-
-
-ArrayDataWriter *FieldmlSession::handleToWriter( FmlWriterHandle handle )
-{
-    if( ( handle < 0 ) || ( handle >= writers.size() ) )
-    {
-        return NULL;
-    }
-    
-    return writers.at( handle );
-}
-
-
-FmlWriterHandle FieldmlSession::addWriter( ArrayDataWriter *writer )
-{
-    writers.push_back( writer );
-    return writers.size() - 1;
-}
-
-
-void FieldmlSession::removeWriter( FmlWriterHandle handle )
-{
-    writers[handle] = NULL;
+    return objects.getObject( handle );
 }
 
 

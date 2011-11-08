@@ -46,7 +46,7 @@
  * \file
  * API notes:
  * 
- * If a function returns a FmlSessionHandle, FmlReaderHandle, FmlWriterHandle or
+ * If a function returns a FmlSessionHandle or
  * FmlObjectHandle, it will return FML_INVALID_HANDLE on error.
  * 
  * All FieldML objects are referred to only by their handle.
@@ -73,10 +73,6 @@
 #include <stdint.h>
 
 typedef int32_t FmlSessionHandle;               ///< A handle to a FieldML session. Almost all FieldML API calls require a session handle.
-
-typedef int32_t FmlReaderHandle;                ///< A handle to a data reader.
-
-typedef int32_t FmlWriterHandle;                ///< A handle to a data writer.
 
 typedef int32_t FmlObjectHandle;                ///< A handle to a FieldML object.
 
@@ -109,6 +105,7 @@ typedef int32_t FmlEnsembleValue;               ///< An integer-valued ensemble 
 #define FML_ERR_NONLOCAL_OBJECT         1007    ///< An attempt was made to reference a non-local object (i.e. one that has not been imported).
 #define FML_ERR_CYCLIC_DEPENDENCY       1008    ///< An attempt was made to create a cyclic dependency.
 #define FML_ERR_INVALID_INDEX           1009    ///< An attempt was made to use an out-of-bounds index.
+#define FML_ERR_READ_ERR                1010    ///< A read error was encountered during IO.
 
 //Used for giving the user precise feedback on bad parameters passed to the API
 //Only used for parameters other than the FieldML handle and object handle parameters.
@@ -121,12 +118,6 @@ typedef int32_t FmlEnsembleValue;               ///< An integer-valued ensemble 
 #define FML_ERR_INVALID_PARAMETER_6     1106    ///< A general-purpose error code indicating that the sixth parameter to the API call was invalid.
 #define FML_ERR_INVALID_PARAMETER_7     1107    ///< A general-purpose error code indicating that the seventh parameter to the API call was invalid.
 #define FML_ERR_INVALID_PARAMETER_8     1108    ///< A general-purpose error code indicating that the eigth parameter to the API call was invalid.
-
-#define FML_ERR_IO_READ_ERR             1201    ///< A read error was encountered during IO.
-#define FML_ERR_IO_WRITE_ERR            1202    ///< A write error was encountered during IO.
-#define FML_ERR_IO_UNEXPECTED_EOF       1203    ///< An EOF was encountered when more data was expected.
-#define FML_ERR_IO_NO_DATA              1204    ///< There is no data remaining.
-#define FML_ERR_IO_UNSUPPORTED          1205    ///< Operation not supported for the given IO object.
 
 #define FML_ERR_UNSUPPORTED             2000    ///< Used for operations that are valid, but not yet implemented.
 
@@ -252,6 +243,7 @@ enum FieldmlHandleType
 
 #ifdef __cplusplus
 extern "C" {
+#endif //__cplusplus
 
 
 /**
@@ -349,10 +341,30 @@ char * Fieldml_GetRegionName( FmlSessionHandle handle );
  * 
  * \note The bufferLength includes the terminating null character.
  * 
- * \note It is recommended that FieldML object names be less than 128 characters. Preferably much less.
+ * \note It is recommended that FieldML object names be less than 128 characters.
  */
 int Fieldml_CopyRegionName( FmlSessionHandle handle, char * buffer, int bufferLength );
 
+
+/**
+ * \return The root path of the current region.
+ * 
+ * NOTE: Currently, only file paths are supported. URL support will be added.
+ */
+char * Fieldml_GetRegionRoot( FmlSessionHandle handle );
+
+
+/**
+ * Copies the region root into the provided buffer. If the buffer is too short, as much data as
+ * possible will be copied.
+ * 
+ * \return The length of the resulting string, or -1 on error.
+ * 
+ * \note The bufferLength includes the terminating null character.
+ * 
+ * \see Fieldml_GetRegionRoot
+ */
+int Fieldml_CopyRegionRoot( FmlSessionHandle handle, char * buffer, int bufferLength );
 
 /**
  * \return The number of parsing errors encountered by the given handle during FieldML file parsing.
@@ -447,11 +459,11 @@ FmlObjectHandle Fieldml_GetObjectByName( FmlSessionHandle handle, const char * n
 FmlObjectHandle Fieldml_GetObjectByDeclaredName( FmlSessionHandle handle, const char * name );
 
 /**
- * \return 1 if the given object is local, 0 if not, or -1 on error.
+ * \return 1 if the given object is local, 0 if not, or -1 on error. isDeclaredOnly is true, only objects that have been declared locally will return true.
  * 
  * \note Imported objects are not considered local by this function.
  */
-FmlBoolean Fieldml_IsObjectLocal( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+FmlBoolean Fieldml_IsObjectLocal( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlBoolean isDeclaredOnly );
 
 
 /**
@@ -729,8 +741,6 @@ FmlErrorNumber Fieldml_SetParameterDataDescription( FmlSessionHandle handle, Fml
 /**
  * \return The data source used by the given object.
  * 
- * \see Fieldml_OpenReader
- * \see Fieldml_OpenArrayWriter
  * \see Fieldml_SetDataSource
  * \see Fieldml_SetEnsembleMembersDataSource
  */
@@ -1131,99 +1141,6 @@ int Fieldml_GetEnsembleMembersStride( FmlSessionHandle handle, FmlObjectHandle o
 
 
 /**
- * Creates a new reader for the given data source's raw data. Fieldml_CloseReader() should be called
- * when the caller no longer needs to use it.
- * 
- * \see Fieldml_ReadIntSlab
- * \see Fieldml_ReadDoubleSlab
- * \see Fieldml_CloseReader
- */
-FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle objectHandle );
-
-
-/**
- * Reads data from the multi-dimensional array specified by the given offsets and sizes into the given buffer. The first
- * size/offset is applied to the outermost index, and so on.
- */
-FmlErrorNumber Fieldml_ReadIntSlab( FmlSessionHandle handle, FmlReaderHandle readerHandle, int *offsets, int *sizes, int *valueBuffer );
-
-
-/**
- * Reads data from the multi-dimensional array specified by the given offsets and sizes into the given buffer. The first
- * size/offset is applied to the outermost index, and so on.
- */
-FmlErrorNumber Fieldml_ReadDoubleSlab( FmlSessionHandle handle, FmlReaderHandle readerHandle, int *offsets, int *sizes, double *valueBuffer );
-
-
-/**
- * Reads data from the multi-dimensional array specified by the given offsets and sizes into the given buffer. The first
- * size/offset is applied to the outermost index, and so on.
- */
-FmlErrorNumber Fieldml_ReadBooleanSlab( FmlSessionHandle handle, FmlReaderHandle readerHandle, int *offsets, int *sizes, bool *valueBuffer );
-
-
-/**
- * Closes the given data reader. The reader's handle should not be used after this call.
- * 
- * \see Fieldml_OpenReader
- */
-FmlErrorNumber Fieldml_CloseReader( FmlSessionHandle handle, FmlReaderHandle readerHandle );
-
-
-/**
- * Creates a new writer for the given data source's raw data. No post-processing will be done on the
- * provided values. It is up to the application to ensure that the data source's description is consistent with the data
- * actually being written, and with any other data sources that use the same data resource.
- * Fieldml_CloseWriter() should be called when the caller no longer needs to use the writer. 
- * 
- * \see Fieldml_CloseWriter
- */
-FmlWriterHandle Fieldml_OpenArrayWriter( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle typeHandle, FmlBoolean append, int *sizes, int rank );
-
-/**
- * Write out some integer values to the given data writer. The data will be interpreted as an n-dimensional array of
- * the given size, and written out at the given offset. The first
- * size/offset is applied to the outermost index, and so on.
- * 
- * \note For text-based arrays, there are limitations on the permissible offsets and sizes. 
- * 
- * \see Fieldml_OpenArrayWriter
- */
-FmlErrorNumber Fieldml_WriteIntSlab( FmlSessionHandle handle, FmlWriterHandle writerHandle, int *offsets, int *sizes, int *valueBuffer );
-
-/**
- * Write out some double-precision values to the given data writer. The data will be interpreted as an n-dimensional array of
- * the given size, and written out at the given offset. The first
- * size/offset is applied to the outermost index, and so on.
- * 
- * \note For text-based arrays, there are limitations on the permissible offsets and sizes. 
- * 
- * \see Fieldml_OpenArrayWriter
- */
-FmlErrorNumber Fieldml_WriteDoubleSlab( FmlSessionHandle handle, FmlWriterHandle writerHandle, int *offsets, int *sizes, double *valueBuffer );
-
-
-/**
- * Write out some boolean values to the given data writer. The data will be interpreted as an n-dimensional array of
- * the given size, and written out at the given offset. The first
- * size/offset is applied to the outermost index, and so on.
- * 
- * \note For text-based arrays, there are limitations on the permissible offsets and sizes. 
- * 
- * \see Fieldml_OpenArrayWriter
- */
-FmlErrorNumber Fieldml_WriteBooleanSlab( FmlSessionHandle handle, FmlWriterHandle writerHandle, int *offsets, int *sizes, bool *valueBuffer );
-
-
-/**
- * Closes the given data writer. The writer's handle cannot be used after this call.
- * 
- * \see Fieldml_OpenArrayWriter
- */
-FmlErrorNumber Fieldml_CloseWriter( FmlSessionHandle handle, FmlWriterHandle writerHandle );
-
-
-/**
  * Add an import source for the current region. The href will typically be the location of
  * another FieldML resource. The API will attempt to parse the given FieldML resource. If the
  * parsing process fails for any reason (e.g. non-existant file, invalid FieldML), -1 will be
@@ -1323,7 +1240,7 @@ FmlObjectHandle Fieldml_GetImportObject( FmlSessionHandle handle, int importSour
 
 /**
  * Creates a new href-based inline data resource. Currently, the resource must be a local file. The contents
- * of the file can be access via FieldML reader and writer calls. The format can be an aribitrary string.
+ * of the file can be access via FieldML IO reader and writer calls. The format can be an aribitrary string.
  * The resulting data resource object can then have one or more data sources associated with it.
  * 
  * \see Fieldml_CreateInlineDataResource
@@ -1364,8 +1281,6 @@ DataResourceType Fieldml_GetDataResourceType( FmlSessionHandle handle, FmlObject
  * 
  * \warn For text-based arrays, the raw size must be set.
  * 
- * \see Fieldml_OpenReader
- * \see Fieldml_OpenArrayWriter
  * \see Fieldml_GetDataSourceResource
  * \see Fieldml_SetArrayDataSourceRawSizes
  * \see Fieldml_SetArrayDataSourceSizes
@@ -1504,6 +1419,15 @@ FmlErrorNumber Fieldml_AddInlineData( FmlSessionHandle handle, FmlObjectHandle o
 
 
 /**
+ * Copies the given string to the given data resource's inline data. The data resource's type must be
+ * DataResourceType::DATA_RESOURCE_INLINE.
+ * 
+ * \see Fieldml_CreateInlineDataResource
+ */
+FmlErrorNumber Fieldml_SetInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandle, const char * data, const int length );
+
+
+/**
  * \return The number of characters in the data resource's inline data.
  * 
  * \see Fieldml_CreateInlineDataResource
@@ -1590,8 +1514,9 @@ char * Fieldml_GetConstantEvaluatorValueString( FmlSessionHandle handle, FmlObje
  * \see Fieldml_GetConstantEvaluatorValueString
  */
 int Fieldml_CopyConstantEvaluatorValueString( FmlSessionHandle handle, FmlObjectHandle objectHandle, char * buffer, int bufferLength );
-}
 
+#ifdef __cplusplus
+}
 #endif // __cplusplus
 
 #endif // H_FIELDML_API

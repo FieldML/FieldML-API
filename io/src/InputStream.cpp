@@ -44,7 +44,7 @@
 #include <cstring>
 #include <string>
 
-#include "fieldml_api.h"
+#include "FieldmlIoApi.h"
 #include "InputStream.h"
 
 using namespace std;
@@ -249,7 +249,7 @@ int FieldmlInputStream::skipLine()
         {
             if( !loadBuffer() )
             {
-                return FML_ERR_IO_READ_ERR;
+                return FML_IOERR_READ_ERROR;
             }
         }
         
@@ -257,7 +257,7 @@ int FieldmlInputStream::skipLine()
         {
             if( buffer[bufferPos++] == '\n' )
             {
-                return FML_ERR_NO_ERROR;
+                return FML_IOERR_NO_ERROR;
             }
         }
     }

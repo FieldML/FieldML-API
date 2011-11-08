@@ -39,53 +39,41 @@
  *
  */
 
-#include "fieldml_api.h"
-#include "fieldml_structs.h"
-#include "string_const.h"
+#ifndef H_FIELDML_OUTPUT_STREAM
+#define H_FIELDML_OUTPUT_STREAM
 
-#include "FieldmlErrorHandler.h"
-#include "ArrayDataReader.h"
-#include "Hdf5ArrayDataReader.h"
-#include "TextArrayDataReader.h"
+#include <cstring>
 
-using namespace std;
-
-
-ArrayDataReader * ArrayDataReader::create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source )
+class StreamCloseTask
 {
-    ArrayDataReader *reader = NULL;
-
-    if( source->resource->format == HDF5_NAME )
-    {
-#ifdef FIELDML_HDF5_ARRAY
-        reader = Hdf5ArrayDataReader::create( eHandler, root, source );
-#endif //FIELDML_HDF5_ARRAY
-    }
-    else if( source->resource->format == PHDF5_NAME )
-    {
-#ifdef FIELDML_PHDF5_ARRAY
-        reader = Hdf5ArrayDataReader::create( eHandler, root, source );
-#endif //FIELDML_PHDF5_ARRAY
-    }
-    else if( source->resource->format == PLAIN_TEXT_NAME )
-    {
-        reader = TextArrayDataReader::create( eHandler, root, source );
-    }
-    else
-    {
-        eHandler->setError( FML_ERR_UNSUPPORTED );
-    }
+public:
+    virtual FmlIoErrorNumber onStreamClose( const std::string &info ) = 0;
     
-    return reader;
-}
+    virtual ~StreamCloseTask() {}
+};
 
 
-ArrayDataReader::ArrayDataReader( FieldmlErrorHandler *_eHandler ) :
-    eHandler( _eHandler )
+class FieldmlOutputStream
 {
-}
+protected:
+    FieldmlOutputStream();
 
+public:
+    virtual FmlIoErrorNumber writeInt( int value ) = 0;
 
-ArrayDataReader::~ArrayDataReader()
-{
-}
+    virtual FmlIoErrorNumber writeDouble( double value ) = 0;
+    
+    virtual FmlIoErrorNumber writeBoolean( bool value ) = 0;
+    
+    virtual FmlIoErrorNumber writeNewline() = 0;
+    
+    virtual FmlIoErrorNumber close() = 0;
+    
+    virtual ~FieldmlOutputStream();
+    
+    static FieldmlOutputStream *createTextFileStream( const std::string filename, bool append );
+
+    static FieldmlOutputStream *createStringStream( StreamCloseTask *closeTask = NULL );
+};
+
+#endif //H_FIELDML_OUTPUT_STREAM

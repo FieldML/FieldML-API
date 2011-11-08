@@ -54,7 +54,7 @@ using namespace std;
 //
 //========================================================================
 
-FieldmlRegion::FieldmlRegion( const string _href, const string _name, const string _root, ObjectStore *_store ) :
+FieldmlRegion::FieldmlRegion( const string _href, const string _name, const string _root, ObjectStore &_store ) :
     href( _href ),
     name( _name ),
     store( _store )
@@ -125,7 +125,7 @@ const bool FieldmlRegion::hasLocalObject( FmlObjectHandle handle, bool allowVirt
 {
     if( !allowVirtual )
     {
-        FieldmlObject *object = store->getObject( handle );
+        FieldmlObject *object = store.getObject( handle );
         if( ( object != NULL ) && ( object->isVirtual ) )
         {
             return false;
@@ -163,7 +163,7 @@ const FmlObjectHandle FieldmlRegion::getNamedObject( const string name )
 {
     for( vector<FmlObjectHandle>::iterator i = localObjects.begin(); i != localObjects.end(); i++ )
     {
-        FieldmlObject *object = store->getObject( *i );
+        FieldmlObject *object = store.getObject( *i );
         if( object->name == name )
         {
             return *i;
@@ -194,7 +194,7 @@ const string FieldmlRegion::getObjectName( FmlObjectHandle handle )
 {
     if( FmlUtil::contains( localObjects, handle ) )
     {
-        FieldmlObject *object = store->getObject( handle );
+        FieldmlObject *object = store.getObject( handle );
         return object->name;
     }
 

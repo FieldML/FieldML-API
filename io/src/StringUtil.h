@@ -39,50 +39,23 @@
  *
  */
 
-#ifndef H_HDF5_ARRAY_DATA_READER
-#define H_HDF5_ARRAY_DATA_READER
+#ifndef H_STRING_UTIL
+#define H_STRING_UTIL
 
-#include "FieldmlErrorHandler.h"
-#include "ArrayDataReader.h"
+#include <string>
+#include <cstring>
 
-#include "fieldml_structs.h"
-
-#if defined FIELDML_HDF5_ARRAY || FIELDML_PHDF5_ARRAY
-#include <hdf5.h>
-
-class Hdf5ArrayDataReader :
-    public ArrayDataReader
+namespace StringUtil
 {
-private:
-    hid_t file;
-    hid_t dataset;
-    hid_t dataspace;
-    
-    //Note: In the future, support will be added for non-scalar types that correspond to structured FieldML types.
-    //The datatype will need to be checked against the FieldML type to ensure commensurability.
-    hid_t datatype;
-    int rank;
-    hsize_t *hStrides;
-    hsize_t *hSizes;
-    hsize_t *hOffsets;
+    extern const std::string FMLIO_VERSION_STRING;
 
-    Hdf5ArrayDataReader( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, hid_t fileAccessProperties );
+    extern const std::string PLAIN_TEXT_NAME;
+    extern const std::string HDF5_NAME;
+    extern const std::string PHDF5_NAME;
 
-    FmlErrorNumber readSlab( int *offsets, int *sizes, hid_t requiredDatatype, void *valueBuffer );
+    const std::string makeFilename( const std::string dir, const std::string file );
     
-public:
-    bool ok;
+    const bool safeString( const char *charString, std::string &target );
+}
 
-    virtual FmlErrorNumber readIntSlab( int *offsets, int *sizes, int *valueBuffer );
-    
-    virtual FmlErrorNumber readDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
-    
-    virtual FmlErrorNumber readBooleanSlab( int *offsets, int *sizes, bool *valueBuffer );
-    
-    virtual ~Hdf5ArrayDataReader();
-
-    static Hdf5ArrayDataReader *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source );
-};
-#endif //defined FIELDML_HDF5_ARRAY || FIELDML_PHDF5_ARRAY
-    
-#endif //H_HDF5_ARRAY_DATA_READER
+#endif // H_STRING_UTIL

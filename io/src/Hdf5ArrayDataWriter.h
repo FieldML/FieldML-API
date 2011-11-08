@@ -42,9 +42,7 @@
 #ifndef H_HDF5_ARRAY_DATA_WRITER
 #define H_HDF5_ARRAY_DATA_WRITER
 
-#include "FieldmlErrorHandler.h"
-
-#include "fieldml_structs.h"
+#include "FieldmlIoContext.h"
 #include "ArrayDataWriter.h"
 
 #if defined FIELDML_HDF5_ARRAY || defined FIELDML_PHDF5_ARRAY
@@ -54,6 +52,7 @@ class Hdf5ArrayDataWriter :
     public ArrayDataWriter
 {
 private:
+    bool closed;
     hid_t file;
     hid_t dataset;
     hid_t dataspace;
@@ -70,22 +69,24 @@ private:
     
     bool initializeWithNewDataset( const std::string sourceName, int *sizes, FieldmlHandleType handleType );
 
-    FmlErrorNumber writeSlab( int *offsets, int *sizes, hid_t requiredDatatype, void *valueBuffer );
+    FmlIoErrorNumber writeSlab( int *offsets, int *sizes, hid_t requiredDatatype, void *valueBuffer );
 
 public:
     bool ok;
 
-    Hdf5ArrayDataWriter( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, FieldmlHandleType handleType, bool append, int *sizes, int rank, hid_t fileAccessProperties );
+    Hdf5ArrayDataWriter( FieldmlIoContext *_context, const std::string root, FmlObjectHandle source, FieldmlHandleType handleType, bool append, int *sizes, int rank, hid_t fileAccessProperties );
     
-    virtual FmlErrorNumber writeIntSlab( int *offsets, int *sizes, int *valueBuffer );
+    virtual FmlIoErrorNumber writeIntSlab( int *offsets, int *sizes, int *valueBuffer );
     
-    virtual FmlErrorNumber writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
+    virtual FmlIoErrorNumber writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
     
-    virtual FmlErrorNumber writeBooleanSlab( int *offsets, int *sizes, bool *valueBuffer );
+    virtual FmlIoErrorNumber writeBooleanSlab( int *offsets, int *sizes, bool *valueBuffer );
+    
+    virtual FmlIoErrorNumber close();
     
     virtual ~Hdf5ArrayDataWriter();
     
-    static Hdf5ArrayDataWriter *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, FieldmlHandleType handleType, bool append, int *sizes, int rank );
+    static Hdf5ArrayDataWriter *create( FieldmlIoContext *context, const std::string root, FmlObjectHandle source, FieldmlHandleType handleType, bool append, int *sizes, int rank );
 };
 #endif //FIELDML_HDF5_ARRAY || FIELDML_PHDF5_ARRAY
 

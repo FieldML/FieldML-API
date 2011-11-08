@@ -39,35 +39,61 @@
  *
  */
 
-#ifndef H_FIELDML_INPUT_STREAM
-#define H_FIELDML_INPUT_STREAM
+#ifndef H_FIELDML_IO_SESSION
+#define H_FIELDML_IO_SESSION
 
-#include <string>
+#include <vector>
+#include <set>
 
-class FieldmlInputStream
+#include "FieldmlIoContext.h"
+#include "ArrayDataReader.h"
+#include "ArrayDataWriter.h"
+
+class FieldmlIoSession
 {
-protected:
-    char *buffer;
-    int bufferCount;
-    int bufferPos;
-    bool isEof;
-
-    virtual int loadBuffer() = 0;
+private:
+    FmlIoErrorNumber lastError;
     
-    FieldmlInputStream();
+    int contextLine;
+    
+    const char *contextFile;
+    
+    int debug;
+    
+    std::vector<ArrayDataReader *> readers;
+    
+    std::vector<ArrayDataWriter *> writers;
+    
+    static FieldmlIoSession singleton;
+    
 public:
-    int readInt();
-    double readDouble();
-    bool readBoolean();
-    int skipLine();
-    bool eof();
-    virtual ~FieldmlInputStream();
+    FieldmlIoSession();
+
+    virtual ~FieldmlIoSession();
     
-    virtual long tell() = 0;
-    virtual bool seek( long pos ) = 0;
+    void setErrorContext( const char *file, const int line );
     
-    static FieldmlInputStream *createTextFileStream( const std::string filename );
-    static FieldmlInputStream *createStringStream( const std::string string );
+    FmlIoErrorNumber setError( FmlIoErrorNumber error );
+
+    void setDebug( const int debugValue );
+
+    const FmlObjectHandle getLastError();
+
+    ArrayDataReader *handleToReader( FmlReaderHandle handle );
+    
+    FmlReaderHandle addReader( ArrayDataReader *reader );
+    
+    void removeReader( FmlReaderHandle handle );
+
+    ArrayDataWriter *handleToWriter( FmlWriterHandle handle );
+    
+    FmlWriterHandle addWriter( ArrayDataWriter *writer );
+    
+    void removeWriter( FmlWriterHandle handle );
+
+    FieldmlIoContext *createContext( FmlSessionHandle session );
+
+    static FieldmlIoSession &getSession(); 
 };
 
-#endif //H_FIELDML_INPUT_STREAM
+#endif //H_FIELDML_IO_SESSION

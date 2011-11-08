@@ -39,51 +39,50 @@
  *
  */
 
-#include "fieldml_api.h"
-#include "string_const.h"
+#ifndef H_TEXT_ARRAY_DATA_WRITER
+#define H_TEXT_ARRAY_DATA_WRITER
 
-#include "FieldmlErrorHandler.h"
 #include "ArrayDataWriter.h"
-#include "Hdf5ArrayDataWriter.h"
-#include "TextArrayDataWriter.h"
+#include "OutputStream.h"
 
-using namespace std;
+class BufferWriter;
 
-ArrayDataWriter *ArrayDataWriter::create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, FieldmlHandleType handleType, bool append, int *sizes, int rank )
+class TextArrayDataWriter :
+    public ArrayDataWriter
 {
-    ArrayDataWriter *writer = NULL;
+private:
+    bool closed;
     
-    if( source->resource->format == HDF5_NAME )
-    {
-#ifdef FIELDML_HDF5_ARRAY
-        writer = Hdf5ArrayDataWriter::create( eHandler, root, source, handleType, append, sizes, rank );
-#endif //FIELDML_HDF5_ARRAY
-    }
-    else if( source->resource->format == PHDF5_NAME )
-    {
-#ifdef FIELDML_PHDF5_ARRAY
-        writer = Hdf5ArrayDataWriter::create( eHandler, root, source, handleType, append, sizes, rank );
-#endif //FIELDML_PHDF5_ARRAY
-    }
-    else if( source->resource->format == PLAIN_TEXT_NAME )
-    {
-        writer = TextArrayDataWriter::create( eHandler, root, source, handleType, append, sizes, rank );
-    }
-    else
-    {
-        eHandler->setError( FML_ERR_UNSUPPORTED );
-    }
+    FieldmlOutputStream * stream;
     
-    return writer;
-}
+    const FmlObjectHandle source;
+    
+    int sourceRank;
+    
+    int *sourceSizes;
+    
+    int offset;
 
+    FmlIoErrorNumber writeSlice( int *sizes, int depth, BufferWriter &writer );
 
-ArrayDataWriter::ArrayDataWriter( FieldmlErrorHandler *_eHandler ) :
-    eHandler( _eHandler )
-{
-}
+    FmlIoErrorNumber writeSlab( int *offsets, int *sizes, BufferWriter &writer );
 
+public:
+    bool ok;
 
-ArrayDataWriter::~ArrayDataWriter()
-{
-}
+    TextArrayDataWriter( FieldmlIoContext *_context, const std::string root, FmlObjectHandle _source, FieldmlHandleType handleType, bool append, int *sizes, int rank );
+    
+    virtual FmlIoErrorNumber writeIntSlab( int *offsets, int *sizes, int *valueBuffer );
+    
+    virtual FmlIoErrorNumber writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
+    
+    virtual FmlIoErrorNumber writeBooleanSlab( int *offsets, int *sizes, bool *valueBuffer );
+    
+    virtual FmlIoErrorNumber close();
+    
+    virtual ~TextArrayDataWriter();
+    
+    static TextArrayDataWriter *create( FieldmlIoContext *context, const std::string root, FmlObjectHandle source, FieldmlHandleType handleType, bool append, int *sizes, int rank );
+};
+
+#endif //H_TEXT_ARRAY_DATA_WRITER

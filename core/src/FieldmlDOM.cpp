@@ -42,6 +42,7 @@
 #include <cstring>
 #include <cstdio>
 #include <vector>
+#include <sstream>
 
 #include <libxml/globals.h>
 #include <libxml/xmlerror.h>
@@ -53,7 +54,6 @@
 #include "String_InternalLibrary.h"
 #include "String_InternalXSD.h"
 #include "string_const.h"
-#include "InputStream.h"
 
 #include "FieldmlDOM.h"
 
@@ -358,14 +358,17 @@ public:
             return 1;
         }
         
-        FieldmlInputStream *input = FieldmlInputStream::createStringStream( content );
+        
+        std::istringstream sstr( content );
         
         for( int i = 0; i < rank; i++ )
         {
-            values[i] = input->readInt();
+            if( ! ( sstr >> values[i] ) )
+            {
+                state.errorHandler->logError( "Error reading integer" );
+                return 1;
+            }
         }
-        
-        delete input;
         
         return 0;
     }

@@ -39,34 +39,32 @@
  *
  */
 
-#ifndef H_ARRAY_DATA_WRITER
-#define H_ARRAY_DATA_WRITER
+#ifndef H_ARRAY_DATA_READER
+#define H_ARRAY_DATA_READER
 
-#include "FieldmlErrorHandler.h"
+#include "FieldmlIoContext.h"
 
-#include "fieldml_structs.h"
-
-class ArrayDataWriter
+class ArrayDataReader
 {
-private:
-
 protected:
-    FieldmlErrorHandler *eHandler;
+    FieldmlIoContext * const context;
 
-    ArrayDataWriter( FieldmlErrorHandler *_eHandler );
+    ArrayDataReader( FieldmlIoContext *_context );
     
 public:
-    virtual int writeIntSlab( int *offsets, int *sizes, int *valueBuffer ) = 0;
+    virtual FmlIoErrorNumber readIntSlab( int *offsets, int *sizes, int *valueBuffer ) = 0;
     
-    virtual int writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer ) = 0;
+    virtual FmlIoErrorNumber readDoubleSlab( int *offsets, int *sizes, double *valueBuffer ) = 0;
     
-    //TODO Provide options for writing from 32/64 bit packed boolean arrays?
-    virtual int writeBooleanSlab( int *offsets, int *sizes, bool *valueBuffer ) = 0;
+    //TODO Provide options for reading into 32/64 bit packed boolean arrays?
+    virtual FmlIoErrorNumber readBooleanSlab( int *offsets, int *sizes, bool *valueBuffer ) = 0;
     
-    virtual ~ArrayDataWriter();
+    virtual FmlIoErrorNumber close() = 0;
     
-    static ArrayDataWriter *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, FieldmlHandleType handleType, bool append, int *sizes, int rank );
+    virtual ~ArrayDataReader();
+
+    static ArrayDataReader *create( FieldmlIoContext *context, const std::string root, FmlObjectHandle source );
 };
 
 
-#endif //H_ARRAY_DATA_WRITER
+#endif //H_ARRAY_DATA_READER

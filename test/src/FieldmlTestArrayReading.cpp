@@ -43,6 +43,7 @@
 #include <sstream>
 
 #include "fieldml_api.h"
+#include "FieldmlIoApi.h"
 
 #include "SimpleTest.h"
 
@@ -113,7 +114,7 @@ SIMPLE_TEST( FieldmlDataArrayReadTest )
     int sizes[rank] = { 2, 3, 4 };
     Fieldml_SetArrayDataSourceRawSizes( session, source, sizes );
     const string rawData = "1 2 3 4\n5 6 7 8\n9 10 11 12\n\n13 14 15 16\n17 18 19 20\n21 22 23 24\n";
-    int err = Fieldml_AddInlineData( session, resource, rawData.c_str(), rawData.length() );
+    int err = Fieldml_SetInlineData( session, resource, rawData.c_str(), rawData.length() );
     SIMPLE_ASSERT_EQUALS( FML_ERR_NO_ERROR, err );
 
     int readOffsets[rank] = { 0, 0, 0 };
@@ -124,7 +125,7 @@ SIMPLE_TEST( FieldmlDataArrayReadTest )
     SIMPLE_ASSERT( FML_INVALID_HANDLE != reader );
     
     for( int i = 0; i < totalSize; i++ ) buffer[i] = -1;
-    err = Fieldml_ReadIntSlab( session, reader, readOffsets, readSizes, buffer );
+    err = Fieldml_ReadIntSlab( reader, readOffsets, readSizes, buffer );
     SIMPLE_ASSERT_EQUALS( FML_ERR_NO_ERROR, err );
     
     stringstream rawStream( rawData );
@@ -139,7 +140,7 @@ SIMPLE_TEST( FieldmlDataArrayReadTest )
     readSizes[0] = 1;
     
     for( int i = 0; i < totalSize; i++ ) buffer[i] = -1;
-    err = Fieldml_ReadIntSlab( session, reader, readOffsets, readSizes, buffer );
+    err = Fieldml_ReadIntSlab( reader, readOffsets, readSizes, buffer );
     SIMPLE_ASSERT_EQUALS( FML_ERR_NO_ERROR, err );
     
     rawStream.seekg( 0 );
@@ -160,7 +161,7 @@ SIMPLE_TEST( FieldmlDataArrayReadTest )
     readSizes[2] = 1;
 
     for( int i = 0; i < totalSize; i++ ) buffer[i] = -1;
-    err = Fieldml_ReadIntSlab( session, reader, readOffsets, readSizes, buffer );
+    err = Fieldml_ReadIntSlab( reader, readOffsets, readSizes, buffer );
     SIMPLE_ASSERT_EQUALS( FML_ERR_NO_ERROR, err );
 
     SIMPLE_ASSERT_EQUALS( 7, buffer[0] );
@@ -168,7 +169,7 @@ SIMPLE_TEST( FieldmlDataArrayReadTest )
     SIMPLE_ASSERT_EQUALS( 19, buffer[2] );
     SIMPLE_ASSERT_EQUALS( 23, buffer[3] );
     
-    Fieldml_CloseReader( session, reader );
+    Fieldml_CloseReader( reader );
     
     Fieldml_Destroy( session );
 }
@@ -235,11 +236,11 @@ SIMPLE_TEST( FieldmlDataHdf5ArrayReadTest )
     FmlObjectHandle reader = Fieldml_OpenReader( session, source );
     SIMPLE_ASSERT( FML_INVALID_HANDLE != reader );
     
-    FmlErrorNumber err = Fieldml_ReadIntSlab( session, reader, readOffsets, readSizes, fakeBuffer );
+    FmlErrorNumber err = Fieldml_ReadIntSlab( reader, readOffsets, readSizes, fakeBuffer );
     SIMPLE_ASSERT( FML_ERR_NO_ERROR != err );
     
     for( int i = 0; i < totalSize; i++ ) buffer[i] = -1;
-    err = Fieldml_ReadDoubleSlab( session, reader, readOffsets, readSizes, buffer );
+    err = Fieldml_ReadDoubleSlab( reader, readOffsets, readSizes, buffer );
     SIMPLE_ASSERT_EQUALS( FML_ERR_NO_ERROR, err );
     
     double expected;
@@ -258,7 +259,7 @@ SIMPLE_TEST( FieldmlDataHdf5ArrayReadTest )
     readSizes[0] = 1;
     
     for( int i = 0; i < totalSize; i++ ) buffer[i] = -1;
-    err = Fieldml_ReadDoubleSlab( session, reader, readOffsets, readSizes, buffer );
+    err = Fieldml_ReadDoubleSlab( reader, readOffsets, readSizes, buffer );
     SIMPLE_ASSERT_EQUALS( FML_ERR_NO_ERROR, err );
     
     for( int i = 0; i < 20; i++ )
@@ -279,7 +280,7 @@ SIMPLE_TEST( FieldmlDataHdf5ArrayReadTest )
     readOffsets[2] = 2;
     readSizes[2] = 1;
     for( int i = 0; i < totalSize; i++ ) buffer[i] = -1;
-    err = Fieldml_ReadDoubleSlab( session, reader, readOffsets, readSizes, buffer );
+    err = Fieldml_ReadDoubleSlab( reader, readOffsets, readSizes, buffer );
     SIMPLE_ASSERT_EQUALS( FML_ERR_NO_ERROR, err );
 
     for( int i = 0; i < 4; i++ )
@@ -293,7 +294,7 @@ SIMPLE_TEST( FieldmlDataHdf5ArrayReadTest )
         SIMPLE_ASSERT_EQUALS( expected, (buffer[i]) );
     }
     
-    Fieldml_CloseReader( session, reader );
+    Fieldml_CloseReader( reader );
 
     Fieldml_Destroy( session );
 }

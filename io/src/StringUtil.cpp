@@ -38,26 +38,53 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  */
-
-#ifndef H_FIELDML_OUTPUT_STREAM
-#define H_FIELDML_OUTPUT_STREAM
-
 #include <cstring>
 
-class FieldmlOutputStream
+#include "StringUtil.h"
+
+using namespace std;
+
+const char WIN_PATH_SEP = '\\';
+const char NIX_PATH_SEP = '/';
+
+#ifdef WIN32
+#define DEFAULT_SEP WIN_PATH_SEP
+#else
+#define DEFAULT_SEP NIX_PATH_SEP
+#endif
+
+namespace StringUtil
 {
-protected:
-    FieldmlOutputStream();
-public:
-    virtual int writeInt( int value ) = 0;
-    virtual int writeDouble( double value ) = 0;
-    virtual int writeBoolean( bool value ) = 0;
-    virtual int writeNewline() = 0;
-    virtual ~FieldmlOutputStream();
+    const std::string FMLIO_VERSION_STRING                  = "0.4.1";
     
-    static FieldmlOutputStream *createTextFileStream( const std::string filename, bool append );
+    const std::string PLAIN_TEXT_NAME                     = "PLAIN_TEXT";
+    const std::string HDF5_NAME                           = "HDF5";
+    const std::string PHDF5_NAME                          = "PHDF5";
+    
+    const string makeFilename( const string dir, const string file )
+    {
+        if( file.length() == 0 )
+        {
+            return file;
+        }
+    
+        if( dir.length() > 0 )
+        {
+            return dir + DEFAULT_SEP + file;
+        }
+        
+        return file;
+    }
 
-    static FieldmlOutputStream *createStringStream( std::string &destination, bool append );
-};
 
-#endif //H_FIELDML_OUTPUT_STREAM
+    const bool safeString( const char *charString, std::string &target )
+    {
+        if( charString == NULL )
+        {
+            return false;
+        }
+        
+        target = charString;
+        return true;
+    }
+}

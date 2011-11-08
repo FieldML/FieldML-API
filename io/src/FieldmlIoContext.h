@@ -39,55 +39,23 @@
  *
  */
 
-#ifndef H_TEXT_ARRAY_DATA_READER
-#define H_TEXT_ARRAY_DATA_READER
+#ifndef H_FIELDML_IO_CONTEXT
+#define H_FIELDML_IO_CONTEXT
 
-#include "FieldmlErrorHandler.h"
-#include "ArrayDataReader.h"
-#include "InputStream.h"
+#include <string>
 
-#include "fieldml_structs.h"
+#include "FieldmlIoApi.h"
 
-class BufferReader;
-
-class TextArrayDataReader :
-    public ArrayDataReader
+class FieldmlIoContext
 {
-private:
-    FieldmlInputStream *stream;
-    
-    ArrayDataSource *source;
-    
-    int nextOutermostOffset;
-    
-    //The seek position of the start of the array data. This is a minor optimization to save us from having to line-skip for each read.
-    long startPos;
-
-    TextArrayDataReader( FieldmlInputStream *_stream, ArrayDataSource *_source, FieldmlErrorHandler *_eHandler );
-    
-    bool checkDimensions( int *offsets, int *sizes );
-    
-    bool applyOffsets( int *offsets, int *sizes, int depth, bool isHead );
-    
-    FmlErrorNumber readPreSlab( int *offsets, int *sizes );
-    
-    FmlErrorNumber readSlice( int *offsets, int *sizes, int depth, BufferReader &reader );
-    
-    FmlErrorNumber readSlab( int *offsets, int *sizes, BufferReader &reader );
-    
-    FmlErrorNumber skipPreamble();
-
 public:
-    virtual FmlErrorNumber readIntSlab( int *offsets, int *sizes, int *valueBuffer );
+    virtual FmlSessionHandle getSession() = 0;
     
-    virtual FmlErrorNumber readDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
+    virtual void setErrorContext( const char *file, const int line ) = 0;
     
-    virtual FmlErrorNumber readBooleanSlab( int *offsets, int *sizes, bool *valueBuffer );
-    
-    virtual ~TextArrayDataReader();
-    
-    static TextArrayDataReader *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source );
+    virtual FmlIoErrorNumber setError( FmlIoErrorNumber error ) = 0;
+
+    virtual ~FieldmlIoContext() {}
 };
 
-
-#endif //H_TEXT_ARRAY_DATA_READER
+#endif //H_FIELDML_IO_CONTEXT

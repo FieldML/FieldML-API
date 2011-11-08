@@ -148,6 +148,4 @@ const std::string getDirectory( const std::string filename );
 
 const std::string makeFilename( const std::string dir, const std::string file );
 
-int getInt( const std::string str, bool &ok );
-
 #endif // H_STRING_CONST

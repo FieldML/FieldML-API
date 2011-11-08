@@ -39,34 +39,50 @@
  *
  */
 
-#ifndef H_ARRAY_DATA_READER
-#define H_ARRAY_DATA_READER
+#ifndef H_HDF5_ARRAY_DATA_READER
+#define H_HDF5_ARRAY_DATA_READER
 
-#include "FieldmlErrorHandler.h"
+#include "ArrayDataReader.h"
 
-#include "fieldml_structs.h"
+#if defined FIELDML_HDF5_ARRAY || FIELDML_PHDF5_ARRAY
+#include <hdf5.h>
 
-class ArrayDataReader
+class Hdf5ArrayDataReader :
+    public ArrayDataReader
 {
 private:
+    bool closed;
+    hid_t file;
+    hid_t dataset;
+    hid_t dataspace;
+    
+    //Note: In the future, support will be added for non-scalar types that correspond to structured FieldML types.
+    //The datatype will need to be checked against the FieldML type to ensure commensurability.
+    hid_t datatype;
+    int rank;
+    hsize_t *hStrides;
+    hsize_t *hSizes;
+    hsize_t *hOffsets;
+    
+    Hdf5ArrayDataReader( FieldmlIoContext *_context, const std::string root, FmlObjectHandle source, hid_t fileAccessProperties );
 
-protected:
-    FieldmlErrorHandler *eHandler;
-
-    ArrayDataReader( FieldmlErrorHandler *_eHandler );
+    FmlIoErrorNumber readSlab( int *offsets, int *sizes, hid_t requiredDatatype, void *valueBuffer );
     
 public:
-    virtual int readIntSlab( int *offsets, int *sizes, int *valueBuffer ) = 0;
-    
-    virtual int readDoubleSlab( int *offsets, int *sizes, double *valueBuffer ) = 0;
-    
-    //TODO Provide options for reading into 32/64 bit packed boolean arrays?
-    virtual int readBooleanSlab( int *offsets, int *sizes, bool *valueBuffer ) = 0;
-    
-    virtual ~ArrayDataReader();
+    bool ok;
 
-    static ArrayDataReader *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source );
+    virtual FmlIoErrorNumber readIntSlab( int *offsets, int *sizes, int *valueBuffer );
+    
+    virtual FmlIoErrorNumber readDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
+    
+    virtual FmlIoErrorNumber readBooleanSlab( int *offsets, int *sizes, bool *valueBuffer );
+    
+    virtual FmlIoErrorNumber close();
+    
+    virtual ~Hdf5ArrayDataReader();
+
+    static Hdf5ArrayDataReader *create( FieldmlIoContext *context, const std::string root, FmlObjectHandle source );
 };
-
-
-#endif //H_ARRAY_DATA_READER
+#endif //defined FIELDML_HDF5_ARRAY || FIELDML_PHDF5_ARRAY
+    
+#endif //H_HDF5_ARRAY_DATA_READER

@@ -39,45 +39,58 @@
  *
  */
 
-#ifndef H_TEXT_ARRAY_DATA_WRITER
-#define H_TEXT_ARRAY_DATA_WRITER
+#include "StringUtil.h"
+#include "FieldmlIoApi.h"
 
-#include "FieldmlErrorHandler.h"
-#include "ArrayDataWriter.h"
-#include "OutputStream.h"
+#include "ArrayDataReader.h"
+#include "Hdf5ArrayDataReader.h"
+#include "TextArrayDataReader.h"
 
-#include "fieldml_structs.h"
+using namespace std;
 
-class BufferWriter;
-
-class TextArrayDataWriter :
-    public ArrayDataWriter
+ArrayDataReader * ArrayDataReader::create( FieldmlIoContext *context, const string root, FmlObjectHandle source )
 {
-private:
-    FieldmlOutputStream * stream;
-    
-    ArrayDataSource * const source;
-    
-    int offset;
+    ArrayDataReader *reader = NULL;
 
-    int writeSlice( int *sizes, int depth, BufferWriter &writer );
+    FmlObjectHandle resource = Fieldml_GetDataSourceResource( context->getSession(), source );
+    string format;
+    
+    if( !StringUtil::safeString( Fieldml_GetDataResourceFormat( context->getSession(), resource ), format ) )
+    {
+        context->setError( FML_IOERR_CORE_ERROR );
+    }
+    else if( format == StringUtil::HDF5_NAME )
+    {
+#ifdef FIELDML_HDF5_ARRAY
+        reader = Hdf5ArrayDataReader::create( context, root, source );
+#endif //FIELDML_HDF5_ARRAY
+    }
+    else if( format == StringUtil::PHDF5_NAME )
+    {
+#ifdef FIELDML_PHDF5_ARRAY
+        reader = Hdf5ArrayDataReader::create( context, root, source );
+#endif //FIELDML_PHDF5_ARRAY
+    }
+    else if( format == StringUtil::PLAIN_TEXT_NAME )
+    {
+        reader = TextArrayDataReader::create( context, root, source );
+    }
+    else
+    {
+        context->setError( FML_IOERR_UNSUPPORTED );
+    }
+    
+    return reader;
+}
 
-    int writeSlab( int *offsets, int *sizes, BufferWriter &writer );
 
-public:
-    bool ok;
+ArrayDataReader::ArrayDataReader( FieldmlIoContext *_context ) :
+    context( _context )
+{
+}
 
-    TextArrayDataWriter( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, FieldmlHandleType handleType, bool append, int *sizes, int rank );
-    
-    virtual int writeIntSlab( int *offsets, int *sizes, int *valueBuffer );
-    
-    virtual int writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
-    
-    virtual int writeBooleanSlab( int *offsets, int *sizes, bool *valueBuffer );
-    
-    virtual ~TextArrayDataWriter();
-    
-    static TextArrayDataWriter *create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, FieldmlHandleType handleType, bool append, int *sizes, int rank );
-};
 
-#endif //H_TEXT_ARRAY_DATA_WRITER
+ArrayDataReader::~ArrayDataReader()
+{
+    delete context;
+}

@@ -1,4 +1,4 @@
-%module FieldmlApi
+%module FieldmlIo
 %include enums.swg
 %include arrays_java.i
 
@@ -88,10 +88,8 @@
 
 %{
 typedef int int32_t;
-#include "Fieldml_api.h"
 #include "FieldmlIoApi.h"
 %}
 
-%include "Fieldml_api.h"
 %include "FieldmlIoApi.h"
 

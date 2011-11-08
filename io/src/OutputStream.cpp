@@ -44,7 +44,7 @@
 #include <cstring> 
 #include <sstream>
 
-#include "fieldml_api.h"
+#include "FieldmlIoApi.h"
 #include "OutputStream.h"
 
 //Using a #define because the relevant buffer is allocated on stack.
@@ -58,12 +58,21 @@ class FileOutputStream :
 private:
     FILE *file;
     
+    bool closed;
+    
 public:
     FileOutputStream( FILE *_file );
-    int writeInt( int value );
-    int writeDouble( double value );
-    int writeBoolean( bool value );
-    int writeNewline();
+
+    FmlIoErrorNumber writeInt( int value );
+
+    FmlIoErrorNumber writeDouble( double value );
+
+    FmlIoErrorNumber writeBoolean( bool value );
+
+    FmlIoErrorNumber writeNewline();
+    
+    FmlIoErrorNumber close();
+
     virtual ~FileOutputStream();
 };
 
@@ -72,16 +81,25 @@ class StringOutputStream :
     public FieldmlOutputStream
 {
 private:
-    string &destination;
-    const bool append;
+    bool closed;
+    
     stringstream buffer;
     
+    StreamCloseTask * closeTask;
+    
 public:
-    StringOutputStream( string &_destination, bool _append );
-    int writeInt( int value );
-    int writeDouble( double value );
-    int writeBoolean( bool value );
-    int writeNewline();
+    StringOutputStream( StreamCloseTask *_closeTask = NULL );
+
+    FmlIoErrorNumber writeInt( int value );
+    
+    FmlIoErrorNumber writeDouble( double value );
+    
+    FmlIoErrorNumber writeBoolean( bool value );
+    
+    FmlIoErrorNumber writeNewline();
+    
+    FmlIoErrorNumber close();
+    
     virtual ~StringOutputStream();
 };
 
@@ -97,7 +115,8 @@ FieldmlOutputStream::~FieldmlOutputStream()
 
     
 FileOutputStream::FileOutputStream( FILE *_file ) :
-    file( _file )
+    file( _file ),
+    closed( false )
 {
 }
 
@@ -124,120 +143,205 @@ FieldmlOutputStream *FieldmlOutputStream::createTextFileStream( const string fil
 }
 
 
-FieldmlOutputStream *FieldmlOutputStream::createStringStream( string &destination, bool append )
+FieldmlOutputStream *FieldmlOutputStream::createStringStream( StreamCloseTask *closeTask )
 {
-    return new StringOutputStream( destination, append );
+    return new StringOutputStream( closeTask );
 }
 
 
-int FileOutputStream::writeBoolean( bool value )
+FmlIoErrorNumber FileOutputStream::writeBoolean( bool value )
 {
+    if( closed )
+    {
+        return FML_IOERR_RESOURCE_CLOSED;
+    }
+    
     int err = fprintf( file, "%d ", value ? 1 : 0 );
 
     if( err < 0 )
     {
-        return FML_ERR_IO_WRITE_ERR;
+        return FML_IOERR_WRITE_ERROR;
     }
     
-    return FML_ERR_NO_ERROR;
+    return FML_IOERR_NO_ERROR;
 }
 
 
-int FileOutputStream::writeDouble( double value )
+FmlIoErrorNumber FileOutputStream::writeDouble( double value )
 {
+    if( closed )
+    {
+        return FML_IOERR_RESOURCE_CLOSED;
+    }
+
     int err = fprintf( file, "%.8g ", value );
 
     if( err < 0 )
     {
-        return FML_ERR_IO_WRITE_ERR;
+        return FML_IOERR_WRITE_ERROR;
     }
     
-    return FML_ERR_NO_ERROR;
+    return FML_IOERR_NO_ERROR;
 }
 
 
-int FileOutputStream::writeInt( int value )
+FmlIoErrorNumber FileOutputStream::writeInt( int value )
 {
+    if( closed )
+    {
+        return FML_IOERR_RESOURCE_CLOSED;
+    }
+
     int err = fprintf( file, "%d ", value );
     
     if( err < 0 )
     {
-        return FML_ERR_IO_WRITE_ERR;
+        return FML_IOERR_WRITE_ERROR;
     }
     
-    return FML_ERR_NO_ERROR;
+    return FML_IOERR_NO_ERROR;
 }
 
 
-int FileOutputStream::writeNewline()
+FmlIoErrorNumber FileOutputStream::writeNewline()
 {
+    if( closed )
+    {
+        return FML_IOERR_RESOURCE_CLOSED;
+    }
+
     int err = fprintf( file, "\n" );
     
     if( err < 0 )
     {
-        return FML_ERR_IO_WRITE_ERR;
+        return FML_IOERR_WRITE_ERROR;
     }
     
-    return FML_ERR_NO_ERROR;
+    return FML_IOERR_NO_ERROR;
+}
+
+
+FmlIoErrorNumber FileOutputStream::close()
+{
+    if( closed )
+    {
+        return FML_IOERR_NO_ERROR;
+    }
+    
+    closed = true;
+    if( file == NULL )
+    {
+        return FML_IOERR_NO_ERROR;
+    }
+    
+    int err = fclose( file );
+    file = NULL;
+    
+    if( err != 0 )
+    {
+        return FML_IOERR_CLOSE_FAILED;
+    }
+    
+    return FML_IOERR_NO_ERROR;
 }
 
 
 FileOutputStream::~FileOutputStream()
 {
-    if( file != NULL )
+    if( !closed )
     {
-        fclose( file );
+        close();
     }
 }
 
 
-StringOutputStream::StringOutputStream( string &_destination, bool _append ) :
-    destination( _destination ),
-    append( _append )
+StringOutputStream::StringOutputStream( StreamCloseTask *_closeTask ) :
+    closeTask( _closeTask ),
+    closed( false )
 {
 }
 
 
-int StringOutputStream::writeDouble( double value )
+FmlIoErrorNumber StringOutputStream::writeDouble( double value )
 {
+    if( closed )
+    {
+        return FML_IOERR_RESOURCE_CLOSED;
+    }
+
     buffer << value << " ";
     
-    return FML_ERR_NO_ERROR;
+    return FML_IOERR_NO_ERROR;
 }
 
 
-int StringOutputStream::writeBoolean( bool value )
+FmlIoErrorNumber StringOutputStream::writeBoolean( bool value )
 {
+    if( closed )
+    {
+        return FML_IOERR_RESOURCE_CLOSED;
+    }
+
     buffer << (value?1:0) << " ";
     
-    return FML_ERR_NO_ERROR;
+    return FML_IOERR_NO_ERROR;
 }
 
 
-int StringOutputStream::writeInt( int value )
+FmlIoErrorNumber StringOutputStream::writeInt( int value )
 {
+    if( closed )
+    {
+        return FML_IOERR_RESOURCE_CLOSED;
+    }
+
     buffer << value << " ";
     
-    return FML_ERR_NO_ERROR;
+    return FML_IOERR_NO_ERROR;
 }
 
 
-int StringOutputStream::writeNewline()
+FmlIoErrorNumber StringOutputStream::writeNewline()
 {
+    if( closed )
+    {
+        return FML_IOERR_RESOURCE_CLOSED;
+    }
+
     buffer << "\n";
     
-    return FML_ERR_NO_ERROR;
+    return FML_IOERR_NO_ERROR;
+}
+
+
+FmlIoErrorNumber StringOutputStream::close()
+{
+    if( closed )
+    {
+        return FML_IOERR_NO_ERROR;
+    }
+    
+    closed = true;
+    
+    if( closeTask == NULL )
+    {
+        return FML_IOERR_NO_ERROR;
+    }
+    else
+    {
+        return closeTask->onStreamClose( buffer.str() );
+    }
 }
 
 
 StringOutputStream::~StringOutputStream()
 {
-    if( append )
+    //NOTE: CPL2011/11/7 This seems reasonable. I think.
+    delete closeTask;
+    closeTask = NULL;
+    
+    if( !closed )
     {
-        destination += buffer.str();
-    }
-    else
-    {
-        destination = buffer.str();
+        close();
     }
 }

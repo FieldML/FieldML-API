@@ -39,24 +39,30 @@
  *
  */
 
-#include "fieldml_api.h"
-#include "string_const.h"
+#include "StringUtil.h"
+#include "FieldmlIoApi.h"
 
-#include "FieldmlErrorHandler.h"
 #include "Hdf5ArrayDataReader.h"
 
 using namespace std;
 
 #if defined FIELDML_HDF5_ARRAY || FIELDML_PHDF5_ARRAY
 
-Hdf5ArrayDataReader *Hdf5ArrayDataReader::create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source )
+Hdf5ArrayDataReader *Hdf5ArrayDataReader::create( FieldmlIoContext *context, const string root, FmlObjectHandle source )
 {
     Hdf5ArrayDataReader *reader = NULL;
 
-    if( source->resource->format == HDF5_NAME )
+    FmlObjectHandle resource = Fieldml_GetDataSourceResource( context->getSession(), source );
+    string format;
+
+    if( !StringUtil::safeString( Fieldml_GetDataResourceFormat( context->getSession(), resource ), format ) )
+    {
+        context->setError( FML_IOERR_CORE_ERROR );
+    }
+    else if( format == StringUtil::HDF5_NAME )
     {
 #ifdef FIELDML_HDF5_ARRAY
-        Hdf5ArrayDataReader *hdf5reader = new Hdf5ArrayDataReader( eHandler, root, source, H5P_DEFAULT );
+        Hdf5ArrayDataReader *hdf5reader = new Hdf5ArrayDataReader( context, root, source, H5P_DEFAULT );
         if( !hdf5reader->ok )
         {
             delete hdf5reader;
@@ -67,13 +73,13 @@ Hdf5ArrayDataReader *Hdf5ArrayDataReader::create( FieldmlErrorHandler *eHandler,
         }
 #endif //FIELDML_HDF5_ARRAY
     }
-    else if( source->resource->format == PHDF5_NAME )
+    else if( format == StringUtil::PHDF5_NAME )
     {
 #ifdef FIELDML_PHDF5_ARRAY
         hid_t accessProperties = H5Pcreate( H5P_FILE_ACCESS );
         if( H5Pset_fapl_mpio( accessProperties, MPI_COMM_WORLD, MPI_INFO_NULL ) >= 0 )
         {
-            Hdf5ArrayDataReader *hdf5reader = new Hdf5ArrayDataReader( eHandler, root, source, accessProperties );
+            Hdf5ArrayDataReader *hdf5reader = new Hdf5ArrayDataReader( _session, root, source, accessProperties );
             if( !hdf5reader->ok )
             {
                 delete hdf5reader;
@@ -92,25 +98,42 @@ Hdf5ArrayDataReader *Hdf5ArrayDataReader::create( FieldmlErrorHandler *eHandler,
 
 
 #if defined FIELDML_HDF5_ARRAY || FIELDML_PHDF5_ARRAY
-Hdf5ArrayDataReader::Hdf5ArrayDataReader( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, hid_t accessProperties ) :
-    ArrayDataReader( eHandler )
+Hdf5ArrayDataReader::Hdf5ArrayDataReader( FieldmlIoContext *_context, const string root, FmlObjectHandle source, hid_t accessProperties ) :
+    ArrayDataReader( _context ),
+    closed( false )
 {
     hStrides = NULL;
     hSizes = NULL;
     hOffsets = NULL;
     
     ok = false;
-    
-    const string filename = makeFilename( root, source->resource->description );
+    closed = true;
+
     while( true )
     {
+        FmlObjectHandle resource = Fieldml_GetDataSourceResource( context->getSession(), source );
+
+        string description;
+        if( !StringUtil::safeString( Fieldml_GetDataResourceHref( context->getSession(), resource ), description ) )
+        {
+            break;
+        }
+            
+        string location;
+        if( !StringUtil::safeString( Fieldml_GetArrayDataSourceLocation( context->getSession(), source ), location ) )
+        {
+            break;
+        }
+
+        const string filename = StringUtil::makeFilename( root, description );
+
         file = H5Fopen( filename.c_str(), H5F_ACC_RDONLY, accessProperties );
         if( file < 0 )
         {
             break;
         }
         
-        dataset = H5Dopen( file, source->location.c_str(), H5P_DEFAULT );
+        dataset = H5Dopen( file, location.c_str(), H5P_DEFAULT );
         if( dataset < 0 )
         {
             break;
@@ -157,16 +180,17 @@ Hdf5ArrayDataReader::Hdf5ArrayDataReader( FieldmlErrorHandler *eHandler, const c
         }
         
         ok = true;
+        closed = false;
         break;
     }
 }
 
 
-FmlErrorNumber Hdf5ArrayDataReader::readSlab( int *offsets, int *sizes, hid_t requiredDatatype, void *valueBuffer )
+FmlIoErrorNumber Hdf5ArrayDataReader::readSlab( int *offsets, int *sizes, hid_t requiredDatatype, void *valueBuffer )
 {
     if( datatype != requiredDatatype )
     {
-        return eHandler->setError( FML_ERR_IO_UNSUPPORTED );
+        return context->setError( FML_IOERR_UNSUPPORTED );
     }
 
     for( int i = 0; i < rank; i++ )
@@ -196,36 +220,68 @@ FmlErrorNumber Hdf5ArrayDataReader::readSlab( int *offsets, int *sizes, hid_t re
     
     if( status >= 0 )
     {
-        return FML_ERR_NO_ERROR;
+        return FML_IOERR_NO_ERROR;
     }
     
-    return eHandler->setError( FML_ERR_IO_READ_ERR );
+    return context->setError( FML_IOERR_READ_ERROR );
 }
 
 
-FmlErrorNumber Hdf5ArrayDataReader::readIntSlab( int *offsets, int *sizes, int *valueBuffer )
+FmlIoErrorNumber Hdf5ArrayDataReader::readIntSlab( int *offsets, int *sizes, int *valueBuffer )
 {
+    if( closed )
+    {
+        return FML_IOERR_RESOURCE_CLOSED;
+    }
+    
     return readSlab( offsets, sizes, H5T_NATIVE_INT, valueBuffer );
 }
 
 
-FmlErrorNumber Hdf5ArrayDataReader::readDoubleSlab( int *offsets, int *sizes, double *valueBuffer )
+FmlIoErrorNumber Hdf5ArrayDataReader::readDoubleSlab( int *offsets, int *sizes, double *valueBuffer )
 {
+    if( closed )
+    {
+        return FML_IOERR_RESOURCE_CLOSED;
+    }
+    
     return readSlab( offsets, sizes, H5T_NATIVE_DOUBLE, valueBuffer );
 }
 
 
-FmlErrorNumber Hdf5ArrayDataReader::readBooleanSlab( int *offsets, int *sizes, bool *valueBuffer )
+FmlIoErrorNumber Hdf5ArrayDataReader::readBooleanSlab( int *offsets, int *sizes, bool *valueBuffer )
 {
+    if( closed )
+    {
+        return FML_IOERR_RESOURCE_CLOSED;
+    }
+    
     return readSlab( offsets, sizes, H5T_NATIVE_INT8, valueBuffer );
+}
+
+
+FmlIoErrorNumber Hdf5ArrayDataReader::close()
+{
+    if( closed )
+    {
+        return FML_IOERR_NO_ERROR;
+    }
+    
+    H5Sclose( dataspace );
+    H5Dclose( dataset );
+    H5Fclose( file );
+    
+    closed = true;
+    return FML_IOERR_NO_ERROR;
 }
 
 
 Hdf5ArrayDataReader::~Hdf5ArrayDataReader()
 {
-    H5Sclose( dataspace );
-    H5Dclose( dataset );
-    H5Fclose( file );
+    if( !closed )
+    {
+        close();
+    }
     
     delete[] hStrides;
     delete[] hSizes;

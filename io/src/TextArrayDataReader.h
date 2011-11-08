@@ -39,76 +39,67 @@
  *
  */
 
-#ifndef H_FIELDML_REGION
-#define H_FIELDML_REGION
+#ifndef H_TEXT_ARRAY_DATA_READER
+#define H_TEXT_ARRAY_DATA_READER
 
-#include <vector>
+#include "FieldmlIoContext.h"
+#include "ArrayDataReader.h"
+#include "InputStream.h"
 
-#include "ObjectStore.h"
-#include "ImportInfo.h"
-#include "fieldml_structs.h"
+class BufferReader;
 
-class FieldmlRegion
+class TextArrayDataReader :
+    public ArrayDataReader
 {
 private:
-    const std::string href;
+    bool closed;
     
-    std::string name;
+    FieldmlInputStream * const stream;
     
-    std::string root;
+    const FmlObjectHandle source;
+
+    int sourceRank;
     
-    std::vector<FmlObjectHandle> localObjects;
+    int *sourceSizes;
     
-    std::vector<ImportInfo*> imports;
+    int *sourceRawSizes;
     
-    ObjectStore &store;
+    int *sourceOffsets;
     
-    ImportInfo *getImportInfo( int importSourceIndex );
+    std::string sourceLocation;
     
+    int nextOutermostOffset;
+    
+    //The seek position of the start of the array data. This is a minor optimization to save us from having to line-skip for each read.
+    long startPos;
+
+    TextArrayDataReader( FieldmlIoContext *_context, FieldmlInputStream *_stream, FmlObjectHandle source, int _sourceRank );
+    
+    bool checkDimensions( int *offsets, int *sizes );
+    
+    bool applyOffsets( int *offsets, int *sizes, int depth, bool isHead );
+    
+    FmlIoErrorNumber readPreSlab( int *offsets, int *sizes );
+    
+    FmlIoErrorNumber readSlice( int *offsets, int *sizes, int depth, BufferReader &reader );
+    
+    FmlIoErrorNumber readSlab( int *offsets, int *sizes, BufferReader &reader );
+    
+    FmlIoErrorNumber skipPreamble();
+
 public:
-    FieldmlRegion( const std::string href, const std::string name, const std::string root, ObjectStore &_store );
-
-    virtual ~FieldmlRegion();
+    virtual FmlIoErrorNumber readIntSlab( int *offsets, int *sizes, int *valueBuffer );
     
-    void addLocalObject( FmlObjectHandle handle );
-
-    const bool hasLocalObject( FmlObjectHandle handle, bool allowVirtual, bool allowImport );
-
-    const FmlObjectHandle getNamedObject( const std::string name );
+    virtual FmlIoErrorNumber readDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
     
-    const std::string getObjectName( FmlObjectHandle handle );
+    virtual FmlIoErrorNumber readBooleanSlab( int *offsets, int *sizes, bool *valueBuffer );
     
-    void setName( const std::string newName );
-
-    void setRoot( const std::string newRoot );
-
-    const std::string getRoot();
+    virtual FmlIoErrorNumber close();
     
-    const std::string getHref();
-
-    const std::string getName();
+    virtual ~TextArrayDataReader();
     
-    const std::string getLibraryName();
-
-    void finalize();
-
-    void addImportSource( int importSourceIndex, std::string href, std::string name );
-
-    void addImport( int importSourceIndex, std::string localName, std::string remoteName, FmlObjectHandle object );
-    
-    int getImportSourceCount();
-    
-    int getImportCount( int importSourceIndex );
-    
-    const std::string getImportSourceHref( int importSourceIndex );
-    
-    const std::string getImportSourceRegionName( int importSourceIndex );
-    
-    const std::string getImportLocalName( int importSourceIndex, int importIndex );
-    
-    const std::string getImportRemoteName( int importSourceIndex, int importIndex );
-    
-    FmlObjectHandle getImportObject( int importSourceIndex, int importIndex );
+    static TextArrayDataReader *create( FieldmlIoContext *_context, const std::string root, FmlObjectHandle source );
 };
 
-#endif //H_FIELDML_REGION
+
+#endif //H_TEXT_ARRAY_DATA_READER

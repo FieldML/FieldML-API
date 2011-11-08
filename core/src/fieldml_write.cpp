@@ -822,7 +822,7 @@ int writeFieldmlFile( FieldmlErrorHandler *errorHandler, FmlSessionHandle handle
     for( i = 1; i <= count; i++ )
     {
         object = Fieldml_GetObjectByIndex( handle, i );
-        if( Fieldml_IsObjectLocal( handle, object ) )
+        if( Fieldml_IsObjectLocal( handle, object, true ) )
         {
             writeFieldmlObject( writer, handle, object );
         }

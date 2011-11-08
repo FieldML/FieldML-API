@@ -39,10 +39,11 @@
  *
  */
 
-#include "fieldml_api.h"
-#include "string_const.h"
+#include <sstream>
 
-#include "FieldmlErrorHandler.h"
+#include "StringUtil.h"
+#include "FieldmlIoApi.h"
+
 #include "TextArrayDataReader.h"
 #include "InputStream.h"
 
@@ -129,24 +130,52 @@ public:
 };
 
     
-TextArrayDataReader *TextArrayDataReader::create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source )
+TextArrayDataReader *TextArrayDataReader::create( FieldmlIoContext *context, const string root, FmlObjectHandle source )
 {
     FieldmlInputStream *stream = NULL;
     
-    if( source->resource->format != PLAIN_TEXT_NAME )
+    FmlObjectHandle resource = Fieldml_GetDataSourceResource( context->getSession(), source );
+    string format;
+    if( !StringUtil::safeString( Fieldml_GetDataResourceFormat( context->getSession(), resource ), format ) )
     {
-        eHandler->setError( FML_ERR_INVALID_OBJECT );
+        context->setError( FML_IOERR_CORE_ERROR );
         return NULL;
     }
 
-    if( source->resource->type == DATA_RESOURCE_HREF )
+    DataResourceType type = Fieldml_GetDataResourceType( context->getSession(), resource );
+    
+    int rank = Fieldml_GetArrayDataSourceRank( context->getSession(), source );
+    if( rank <= 0 )
     {
-        stream = FieldmlInputStream::createTextFileStream( makeFilename( root, source->resource->description ) );
+        context->setError( FML_IOERR_CORE_ERROR );
+        return NULL;
     }
-    else if( source->resource->type == DATA_RESOURCE_INLINE )
+
+    if( format != StringUtil::PLAIN_TEXT_NAME )
+    {
+        context->setError( FML_IOERR_UNSUPPORTED );
+        return NULL;
+    }
+
+    if( type == DATA_RESOURCE_HREF )
+    {
+        string href;
+        if( !StringUtil::safeString( Fieldml_GetDataResourceHref( context->getSession(), resource ), href ) )
+        {
+            context->setError( FML_IOERR_CORE_ERROR );
+            return NULL;
+        }
+        stream = FieldmlInputStream::createTextFileStream( StringUtil::makeFilename( root, href ) );
+    }
+    else if( type == DATA_RESOURCE_INLINE )
     {
         //TODO This is unsafe, as the user can modify the string while the reader is still active.
-        stream = FieldmlInputStream::createStringStream( source->resource->description );
+        string data;
+        if( !StringUtil::safeString( Fieldml_GetInlineData( context->getSession(), resource ), data ) )
+        {
+            return NULL;
+        }
+        stream = FieldmlInputStream::createStringStream( data );
     }
     
     if( stream == NULL )
@@ -154,24 +183,39 @@ TextArrayDataReader *TextArrayDataReader::create( FieldmlErrorHandler *eHandler,
         return NULL;
     }
     
-    return new TextArrayDataReader( stream, source, eHandler );
+    return new TextArrayDataReader( context, stream, source, rank );
 }
 
 
-TextArrayDataReader::TextArrayDataReader( FieldmlInputStream *_stream, ArrayDataSource *_source, FieldmlErrorHandler *_eHandler ) :
-    ArrayDataReader( _eHandler ),
+TextArrayDataReader::TextArrayDataReader( FieldmlIoContext *_context, FieldmlInputStream *_stream, FmlObjectHandle _source, int rank ) :
+    ArrayDataReader( _context ),
     stream( _stream ),
-    source( _source )
+    source( _source ),
+    sourceRank( rank ),
+    sourceSizes( NULL ),
+    sourceOffsets( NULL ),
+    sourceRawSizes( NULL ),
+    closed( false )
 {
     startPos = -1;
     
     nextOutermostOffset = -1;
+    
+    sourceSizes = new int[sourceRank];
+    sourceRawSizes = new int[sourceRank];
+    sourceOffsets = new int[sourceRank];
+    
+    Fieldml_GetArrayDataSourceSizes( context->getSession(), source, sourceSizes );
+    Fieldml_GetArrayDataSourceRawSizes( context->getSession(), source, sourceRawSizes );
+    Fieldml_GetArrayDataSourceOffsets( context->getSession(), source, sourceOffsets );
+    
+    StringUtil::safeString( Fieldml_GetArrayDataSourceLocation( context->getSession(), source ), sourceLocation );
 }
 
 
 bool TextArrayDataReader::checkDimensions( int *offsets, int *sizes )
 {
-    for( int i = 0; i < source->rank; i++ )
+    for( int i = 0; i < sourceRank; i++ )
     {
         if( offsets[i] < 0 )
         {
@@ -182,11 +226,11 @@ bool TextArrayDataReader::checkDimensions( int *offsets, int *sizes )
             return false;
         }
         
-        int rawSize = source->sizes[i];
+        int rawSize = sourceSizes[i];
         if( rawSize == 0 )
         {
             //NOTE: Intentional. If the array-source size has not been set, use the underlying size.
-            rawSize = source->rawSizes[i] - source->offsets[i];
+            rawSize = sourceRawSizes[i] - sourceOffsets[i];
         }
         if( offsets[i] + sizes[i] > rawSize )
         {
@@ -198,15 +242,16 @@ bool TextArrayDataReader::checkDimensions( int *offsets, int *sizes )
 }
 
 
-FmlErrorNumber TextArrayDataReader::skipPreamble()
+FmlIoErrorNumber TextArrayDataReader::skipPreamble()
 {
-    bool ok;
-    int lineNumber = getInt( source->location, ok );
-    if( !ok )
+    std::istringstream sstr( sourceLocation );
+    int lineNumber;
+
+    if( ! ( sstr >> lineNumber ) )
     {
-        return FML_ERR_INVALID_PARAMETERS;
+        return FML_IOERR_INVALID_LOCATION;
     }
-    
+
     for( int i = 1; i < lineNumber; i++ )
     {
         stream->skipLine();
@@ -214,12 +259,12 @@ FmlErrorNumber TextArrayDataReader::skipPreamble()
     
     if( stream->eof() )
     {
-        return eHandler->setError( FML_ERR_IO_UNEXPECTED_EOF );
+        return context->setError( FML_IOERR_UNEXPECTED_EOF );
     }
 
     startPos = stream->tell();
     
-    return FML_ERR_NO_ERROR;
+    return FML_IOERR_NO_ERROR;
 }
 
 
@@ -227,24 +272,24 @@ bool TextArrayDataReader::applyOffsets( int *offsets, int *sizes, int depth, boo
 {
     long count = 1;
     
-    for( int i = depth+1; i < source->rank; i++ )
+    for( int i = depth+1; i < sourceRank; i++ )
     {
         //NOTE This could overflow in the event that someone puts that much data into a text file. Probability: Lilliputian.
-        count *= source->rawSizes[i];
+        count *= sourceRawSizes[i];
     }
     
     int sliceCount;
     if( isHead )
     {
-        sliceCount = source->offsets[depth] + offsets[depth];
-        if( ( nextOutermostOffset >= 0 ) && ( sliceCount >= nextOutermostOffset ) )
+        sliceCount = sourceOffsets[depth] + offsets[depth];
+        if( ( depth == 0 ) && ( nextOutermostOffset >= 0 ) && ( sliceCount >= nextOutermostOffset ) )
         {
             sliceCount -= nextOutermostOffset;
         }
     }
     else
     {
-        sliceCount = source->rawSizes[depth] - ( source->offsets[depth] + offsets[depth] + sizes[depth] );
+        sliceCount = sourceRawSizes[depth] - ( sourceOffsets[depth] + offsets[depth] + sizes[depth] );
     }
     
     if( sliceCount == 0 )
@@ -256,7 +301,7 @@ bool TextArrayDataReader::applyOffsets( int *offsets, int *sizes, int depth, boo
     {
         for( int i = 0; i < count; i++ )
         {
-            stream->readDouble(); 
+            stream->readDouble();
         }
     }
     
@@ -264,22 +309,22 @@ bool TextArrayDataReader::applyOffsets( int *offsets, int *sizes, int depth, boo
 }
 
 
-FmlErrorNumber TextArrayDataReader::readPreSlab( int *offsets, int *sizes )
+FmlIoErrorNumber TextArrayDataReader::readPreSlab( int *offsets, int *sizes )
 {
     if( !checkDimensions( offsets, sizes ) )
     {
-        return eHandler->setError( FML_ERR_INVALID_PARAMETERS );
+        return context->setError( FML_IOERR_INVALID_PARAMETER );
     }
     
-    if( ( nextOutermostOffset >= 0 ) && ( source->offsets[0] + offsets[0] >= nextOutermostOffset ) )
+    if( ( nextOutermostOffset >= 0 ) && ( sourceOffsets[0] + offsets[0] >= nextOutermostOffset ) )
     {
-        return FML_ERR_NO_ERROR;
+        return FML_IOERR_NO_ERROR;
     }
     
     if( startPos == -1 )
     {
         int err = skipPreamble();
-        if( err != FML_ERR_NO_ERROR )
+        if( err != FML_IOERR_NO_ERROR )
         {
             return err;
         }
@@ -289,23 +334,23 @@ FmlErrorNumber TextArrayDataReader::readPreSlab( int *offsets, int *sizes )
         stream->seek( startPos );
     }
     
-    return FML_ERR_NO_ERROR;
+    return FML_IOERR_NO_ERROR;
 }
 
 
-FmlErrorNumber TextArrayDataReader::readSlice( int *offsets, int *sizes, int depth, BufferReader &reader )
+FmlIoErrorNumber TextArrayDataReader::readSlice( int *offsets, int *sizes, int depth, BufferReader &reader )
 {
     if( !applyOffsets( offsets, sizes, depth, true ) )
     {
-        return eHandler->setError( FML_ERR_IO_UNEXPECTED_EOF );
+        return context->setError( FML_IOERR_UNEXPECTED_EOF );
     }
     
-    if( depth == source->rank - 1 )
+    if( depth == sourceRank - 1 )
     {
         reader.read( sizes[depth] );
         if( stream->eof() )
         {
-            return eHandler->setError( FML_ERR_IO_UNEXPECTED_EOF );
+            return context->setError( FML_IOERR_UNEXPECTED_EOF );
         }
     }
     else
@@ -314,7 +359,7 @@ FmlErrorNumber TextArrayDataReader::readSlice( int *offsets, int *sizes, int dep
         for( int i = 0; i < sizes[depth]; i++ )
         {
             err = readSlice( offsets, sizes, depth + 1, reader );
-            if( err != FML_ERR_NO_ERROR )
+            if( err != FML_IOERR_NO_ERROR )
             {
                 return err;
             }
@@ -323,22 +368,22 @@ FmlErrorNumber TextArrayDataReader::readSlice( int *offsets, int *sizes, int dep
     
     if( depth == 0 )
     {
-        nextOutermostOffset = source->offsets[0] + offsets[0] + sizes[0];
+        nextOutermostOffset = sourceOffsets[0] + offsets[0] + sizes[0];
     }
     else if( !applyOffsets( offsets, sizes, depth, false ) )
     {
-        return eHandler->setError( FML_ERR_IO_UNEXPECTED_EOF );
+        return context->setError( FML_IOERR_UNEXPECTED_EOF );
     }
     
     
-    return FML_ERR_NO_ERROR;
+    return FML_IOERR_NO_ERROR;
 }
 
 
-FmlErrorNumber TextArrayDataReader::readSlab( int *offsets, int *sizes, BufferReader &reader )
+FmlIoErrorNumber TextArrayDataReader::readSlab( int *offsets, int *sizes, BufferReader &reader )
 {
     int err = readPreSlab( offsets, sizes );
-    if( err != FML_ERR_NO_ERROR )
+    if( err != FML_IOERR_NO_ERROR )
     {
         return err;
     }
@@ -347,31 +392,63 @@ FmlErrorNumber TextArrayDataReader::readSlab( int *offsets, int *sizes, BufferRe
 }
 
 
-FmlErrorNumber TextArrayDataReader::readIntSlab( int *offsets, int *sizes, int *valueBuffer )
+FmlIoErrorNumber TextArrayDataReader::readIntSlab( int *offsets, int *sizes, int *valueBuffer )
 {
+    if( closed )
+    {
+        return FML_IOERR_RESOURCE_CLOSED;
+    }
+    
     IntBufferReader reader( stream, valueBuffer );
     
     return readSlab( offsets, sizes, reader );
 }
 
 
-FmlErrorNumber TextArrayDataReader::readDoubleSlab( int *offsets, int *sizes, double *valueBuffer )
+FmlIoErrorNumber TextArrayDataReader::readDoubleSlab( int *offsets, int *sizes, double *valueBuffer )
 {
+    if( closed )
+    {
+        return FML_IOERR_RESOURCE_CLOSED;
+    }
+
     DoubleBufferReader reader( stream, valueBuffer );
     
     return readSlab( offsets, sizes, reader );
 }
 
 
-FmlErrorNumber TextArrayDataReader::readBooleanSlab( int *offsets, int *sizes, bool *valueBuffer )
+FmlIoErrorNumber TextArrayDataReader::readBooleanSlab( int *offsets, int *sizes, bool *valueBuffer )
 {
+    if( closed )
+    {
+        return FML_IOERR_RESOURCE_CLOSED;
+    }
+
     BooleanBufferReader reader( stream, valueBuffer );
     
     return readSlab( offsets, sizes, reader );
 }
 
 
+FmlIoErrorNumber TextArrayDataReader::close()
+{
+    if( closed )
+    {
+        return FML_IOERR_NO_ERROR;
+    }
+    
+    closed = true;
+
+    return FML_IOERR_NO_ERROR;
+}
+
+
 TextArrayDataReader::~TextArrayDataReader()
 {
     delete stream;
+    
+    delete sourceRawSizes;
+    delete sourceSizes;
+    delete sourceOffsets;
 }

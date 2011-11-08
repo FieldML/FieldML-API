@@ -39,15 +39,55 @@
  *
  */
 
-#include "fieldml_api.h"
-#include "string_const.h"
+#include "StringUtil.h"
+#include "FieldmlIoApi.h"
 
-#include "FieldmlErrorHandler.h"
 #include "ArrayDataWriter.h"
 #include "TextArrayDataWriter.h"
 
 using namespace std;
 
+
+/**
+ * A pseudo-lambda class that sets/appends the result of a text-array writing operation to a string-based FieldML
+ * data resource 
+ */
+class SetStringResourceTask :
+    public StreamCloseTask
+{
+private:
+    const FmlSessionHandle sessionHandle;
+    const FmlObjectHandle dataResource;
+    const bool append;
+    
+public:
+    SetStringResourceTask( FmlSessionHandle _sessionHandle, FmlObjectHandle _dataResource, bool _append ) :
+        sessionHandle( _sessionHandle ),
+        dataResource( _dataResource ),
+        append( _append )
+    {
+    }
+    
+
+    FmlIoErrorNumber onStreamClose( const std::string &info )
+    {
+        FmlIoErrorNumber err;
+        
+        if( append )
+        {
+            err = Fieldml_AddInlineData( sessionHandle, dataResource, info.c_str(), info.size() );
+        }
+        else
+        {
+            err = Fieldml_SetInlineData( sessionHandle, dataResource, info.c_str(), info.size() );
+        }
+        
+        return err;
+    }
+    
+    
+    virtual ~SetStringResourceTask() {}
+};
 
 /**
  * A pseudo-lambda class that removes the need to duplicate the slab and slice writing implementations.
@@ -130,17 +170,26 @@ public:
 };
 
 
-TextArrayDataWriter *TextArrayDataWriter::create( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *source, FieldmlHandleType handleType, bool append, int *sizes, int rank )
+TextArrayDataWriter *TextArrayDataWriter::create( FieldmlIoContext *context, string root, FmlObjectHandle source, FieldmlHandleType handleType, bool append, int *sizes, int rank )
 {
     TextArrayDataWriter *writer = NULL;
     
-    if( source->resource->format != PLAIN_TEXT_NAME )
+    FmlObjectHandle resource = Fieldml_GetDataSourceResource( context->getSession(), source );
+    string format;
+    
+    if( !StringUtil::safeString( Fieldml_GetDataResourceFormat( context->getSession(), resource ), format ) )
     {
-        eHandler->setError( FML_ERR_INVALID_OBJECT );
+        context->setError( FML_IOERR_CORE_ERROR );
+        return NULL;
+    }
+    
+    if( format != StringUtil::PLAIN_TEXT_NAME )
+    {
+        context->setError( FML_IOERR_UNSUPPORTED );
         return writer;
     }
     
-    writer = new TextArrayDataWriter( eHandler, root, source, handleType, append, sizes, rank );
+    writer = new TextArrayDataWriter( context, root, source, handleType, append, sizes, rank );
     if( !writer->ok )
     {
         delete writer;
@@ -151,22 +200,47 @@ TextArrayDataWriter *TextArrayDataWriter::create( FieldmlErrorHandler *eHandler,
 }
 
 
-TextArrayDataWriter::TextArrayDataWriter( FieldmlErrorHandler *eHandler, const char *root, ArrayDataSource *_source, FieldmlHandleType handleType, bool append, int *sizes, int _rank ) :
-    ArrayDataWriter( eHandler ),
-    source( _source )
+TextArrayDataWriter::TextArrayDataWriter( FieldmlIoContext *_context, const string root, FmlObjectHandle _source, FieldmlHandleType handleType, bool append, int *sizes, int _rank ) :
+    ArrayDataWriter( _context ),
+    source( _source ),
+    sourceSizes( NULL ),
+    closed( false )
 {
     offset = 0;
     
     ok = false;
     
-    if( source->resource->type == DATA_RESOURCE_HREF )
+    sourceRank = Fieldml_GetArrayDataSourceRank( context->getSession(), source );
+    if( sourceRank <= 0 )
     {
-        string path = makeFilename( root, source->resource->description );
-        stream = FieldmlOutputStream::createTextFileStream( path, append );
+        return;
     }
-    else if( source->resource->type == DATA_RESOURCE_INLINE )
+
+    sourceSizes = new int[sourceRank];
+    Fieldml_GetArrayDataSourceSizes( context->getSession(), source, sourceSizes );
+    
+    FmlObjectHandle resource = Fieldml_GetDataSourceResource( context->getSession(), source );
+    DataResourceType type = Fieldml_GetDataResourceType( context->getSession(), resource );
+    
+    if( type == DATA_RESOURCE_HREF )
     {
-        stream = FieldmlOutputStream::createStringStream( source->resource->description, append );
+        string href;
+        string path;
+        
+        if( !StringUtil::safeString( Fieldml_GetDataResourceHref( context->getSession(), resource ), href ) )
+        {
+            context->setError( FML_IOERR_CORE_ERROR );
+        }
+        else
+        {
+            string path = StringUtil::makeFilename( root, href );
+            stream = FieldmlOutputStream::createTextFileStream( path, append );
+        }
+    }
+    else if( type == DATA_RESOURCE_INLINE )
+    {
+        StreamCloseTask *task = new SetStringResourceTask( context->getSession(), resource, append );
+        stream = FieldmlOutputStream::createStringStream( task );
     }
     
     if( stream != NULL )
@@ -176,51 +250,51 @@ TextArrayDataWriter::TextArrayDataWriter( FieldmlErrorHandler *eHandler, const c
 }
 
 
-int TextArrayDataWriter::writeSlice( int *sizes, int depth, BufferWriter &writer )
+FmlIoErrorNumber TextArrayDataWriter::writeSlice( int *sizes, int depth, BufferWriter &writer )
 {
-    if( depth == source->rank - 1 )
+    if( depth == sourceRank - 1 )
     {
         writer.write( sizes[depth] );
-        return FML_ERR_NO_ERROR;
+        return FML_IOERR_NO_ERROR;
     }
     
     int err;
     for( int i = 0; i < sizes[depth]; i++ )
     {
         err = writeSlice( sizes, depth + 1, writer );
-        if( err != FML_ERR_NO_ERROR )
+        if( err != FML_IOERR_NO_ERROR )
         {
             return err;
         }
     }
     
-    return FML_ERR_NO_ERROR;
+    return FML_IOERR_NO_ERROR;
 }
     
 
-int TextArrayDataWriter::writeSlab( int *offsets, int *sizes, BufferWriter &writer )
+FmlIoErrorNumber TextArrayDataWriter::writeSlab( int *offsets, int *sizes, BufferWriter &writer )
 {
     if( offsets[0] != offset )
     {
-        return eHandler->setError( FML_ERR_IO_UNSUPPORTED );
+        return context->setError( FML_IOERR_UNSUPPORTED );
     }
     
-    for( int i = 1; i < source->rank; i++ )
+    for( int i = 1; i < sourceRank; i++ )
     {
         if( offsets[i] != 0 )
         {
-            return eHandler->setError( FML_ERR_IO_UNSUPPORTED );
+            return context->setError( FML_IOERR_UNSUPPORTED );
         }
         
-        if( sizes[i] != source->sizes[i] )
+        if( sizes[i] != sourceSizes[i] )
         {
-            return eHandler->setError( FML_ERR_IO_UNSUPPORTED );
+            return context->setError( FML_IOERR_UNSUPPORTED );
         }
     }
     
     int err = writeSlice( sizes, 0, writer );
 
-    if( err == FML_ERR_NO_ERROR )
+    if( err == FML_IOERR_NO_ERROR )
     {
         offset += sizes[0];
     }
@@ -229,36 +303,67 @@ int TextArrayDataWriter::writeSlab( int *offsets, int *sizes, BufferWriter &writ
 }
 
 
-int TextArrayDataWriter::writeIntSlab( int *offsets, int *sizes, int *valueBuffer )
+FmlIoErrorNumber TextArrayDataWriter::writeIntSlab( int *offsets, int *sizes, int *valueBuffer )
 {
+    if( closed )
+    {
+        return FML_IOERR_RESOURCE_CLOSED;
+    }
+    
     IntBufferWriter writer( stream, valueBuffer );
     
     return writeSlab( offsets, sizes, writer );
 }
 
 
-FmlErrorNumber TextArrayDataWriter::writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer )
+FmlIoErrorNumber TextArrayDataWriter::writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer )
 {
+    if( closed )
+    {
+        return FML_IOERR_RESOURCE_CLOSED;
+    }
+    
     DoubleBufferWriter writer( stream, valueBuffer );
     
     return writeSlab( offsets, sizes, writer );
 }
 
 
-FmlErrorNumber TextArrayDataWriter::writeBooleanSlab( int *offsets, int *sizes, bool *valueBuffer )
+FmlIoErrorNumber TextArrayDataWriter::writeBooleanSlab( int *offsets, int *sizes, bool *valueBuffer )
 {
+    if( closed )
+    {
+        return FML_IOERR_RESOURCE_CLOSED;
+    }
+    
     BooleanBufferWriter writer( stream, valueBuffer );
     
     return writeSlab( offsets, sizes, writer );
 }
 
 
+FmlIoErrorNumber TextArrayDataWriter::close()
+{
+    if( closed )
+    {
+        return FML_IOERR_NO_ERROR;
+    }
+    
+    closed = true;
+
+    //TODO: This behaviour should be controllable from elsewhere.
+    stream->writeNewline();
+    
+    return stream->close();
+}
+
+
 TextArrayDataWriter::~TextArrayDataWriter()
 {
-    //TODO: This behaviour should be controllable from elsewhere.
     if( stream != NULL )
     {
-        stream->writeNewline();
         delete stream;
     }
+    
+    delete sourceSizes;
 }
