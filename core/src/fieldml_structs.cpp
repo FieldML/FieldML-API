@@ -52,7 +52,7 @@ using namespace std;
 
 FieldmlObject::FieldmlObject( const string _name, FieldmlHandleType _type, bool _isVirtual ) :
     name( _name ),
-    type( _type ),
+    objectType( _type ),
     isVirtual( _isVirtual )
 {
     intValue = 0;
@@ -75,7 +75,7 @@ EnsembleType::EnsembleType( const string _name, bool _isComponentEnsemble, bool 
     FieldmlObject( _name, FHT_ENSEMBLE_TYPE, _isVirtual ),
     isComponentEnsemble( _isComponentEnsemble )
 {
-    type = MEMBER_UNKNOWN;
+    membersType = MEMBER_UNKNOWN;
     count = 0;
     min = 0;
     max = 0;
@@ -105,128 +105,9 @@ MeshType::MeshType( const string _name, bool _isVirtual ) :
 }
 
 
-Evaluator::Evaluator( const string _name, FieldmlHandleType _type, FmlObjectHandle _valueType, bool _isVirtual ) :
-    FieldmlObject( _name, _type, _isVirtual ),
-    valueType( _valueType )
-{
-}
-
-
-ConstantEvaluator::ConstantEvaluator( const string _name, const string _valueString, FmlObjectHandle _valueType ) :
-    Evaluator( _name, FHT_CONSTANT_EVALUATOR, _valueType, false ),
-    valueString( _valueString )
-{
-}
-
-
-void ConstantEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
-{
-}
-
-
-ReferenceEvaluator::ReferenceEvaluator( const string _name, FmlObjectHandle _evaluator, FmlObjectHandle _valueType, bool _isVirtual ) :
-    Evaluator( _name, FHT_REFERENCE_EVALUATOR, _valueType, _isVirtual ),
-    sourceEvaluator( _evaluator ),
-    binds( FML_INVALID_HANDLE )
-{
-}
-
-
-void ReferenceEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
-{
-    delegates.insert( sourceEvaluator );
-    
-    const set<FmlObjectHandle> &values = binds.getValues();
-    delegates.insert( values.begin(), values.end() );
-}
-
-
-ArgumentEvaluator::ArgumentEvaluator( const string _name, FmlObjectHandle _valueType, bool _isVirtual ) :
-    Evaluator( _name, FHT_ARGUMENT_EVALUATOR, _valueType, _isVirtual )
-{
-}
-
-
-void ArgumentEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
-{
-}
-
-
-ExternalEvaluator::ExternalEvaluator( const string _name, FmlObjectHandle _valueType, bool _isVirtual ) :
-    Evaluator( _name, FHT_EXTERNAL_EVALUATOR, _valueType, _isVirtual )
-{
-}
-
-
-void ExternalEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
-{
-}
-
-
-ParameterEvaluator::ParameterEvaluator( const string _name, FmlObjectHandle _valueType, bool _isVirtual ) :
-    Evaluator( _name, FHT_PARAMETER_EVALUATOR, _valueType, _isVirtual )
-{
-    dataDescription = new UnknownDataDescription();
-}
-
-
-void ParameterEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
-{
-    dataDescription->addDelegates( delegates );
-}
-
-
-ParameterEvaluator::~ParameterEvaluator()
-{
-    delete dataDescription;
-}
-
-
-PiecewiseEvaluator::PiecewiseEvaluator( const string _name, FmlObjectHandle _valueType, bool _isVirtual ) :
-    Evaluator( _name, FHT_PIECEWISE_EVALUATOR, _valueType, _isVirtual ),
-    binds( FML_INVALID_HANDLE ),
-    evaluators( FML_INVALID_HANDLE ),
-    indexEvaluator( FML_INVALID_HANDLE )
-{
-}
-
-
-void PiecewiseEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
-{
-    const set<FmlObjectHandle> &evaluatorValues = evaluators.getValues();
-    delegates.insert( evaluatorValues.begin(), evaluatorValues.end() );
-
-    delegates.insert( indexEvaluator );
-    
-    const set<FmlObjectHandle> &bindValues = binds.getValues();
-    delegates.insert( bindValues.begin(), bindValues.end() );
-}
-
-
-AggregateEvaluator::AggregateEvaluator( const string _name, FmlObjectHandle _valueType, bool _isVirtual ) :
-    Evaluator( _name, FHT_AGGREGATE_EVALUATOR, _valueType, _isVirtual ),
-    binds( FML_INVALID_HANDLE ),
-    evaluators( FML_INVALID_HANDLE ),
-    indexEvaluator( FML_INVALID_HANDLE )
-{
-}
-
-
-void AggregateEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
-{
-    const set<FmlObjectHandle> &evaluatorValues = evaluators.getValues();
-    delegates.insert( evaluatorValues.begin(), evaluatorValues.end() );
-
-    delegates.insert( indexEvaluator );
-    
-    const set<FmlObjectHandle> &bindValues = binds.getValues();
-    delegates.insert( bindValues.begin(), bindValues.end() );
-}
-
-
 DataResource::DataResource( const string _name, DataResourceType _resourceType, const string _format, const string _description ) : 
     FieldmlObject( _name, FHT_DATA_RESOURCE, false ),
-    type( _resourceType ),
+    resourceType( _resourceType ),
     format( _format ),
     description( _description )
 {
@@ -577,7 +458,7 @@ DokArrayDataDescription::~DokArrayDataDescription()
 DataSource::DataSource( const std::string _name, DataResource *_resource, DataSourceType _type ) :
     FieldmlObject( _name, FHT_DATA_SOURCE, false ),
     resource( _resource ),
-    type( _type )
+    sourceType( _type )
 {
 }
 

@@ -48,6 +48,7 @@
 #include "fieldml_api.h"
 #include "FieldmlSession.h"
 #include "fieldml_structs.h"
+#include "Evaluators.h"
 #include "fieldml_write.h"
 #include "string_const.h"
 #include "Util.h"
@@ -143,87 +144,58 @@ static FmlObjectHandle addObject( FieldmlSession *session, FieldmlObject *object
 
 static SimpleMap<FmlEnsembleValue, FmlObjectHandle> *getEvaluatorMap( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
-    FieldmlObject *object = getObject( session, objectHandle );
-
-    if( object == NULL )
+    AggregateEvaluator *aggregate = AggregateEvaluator::checkedCast( session, objectHandle );
+    if( aggregate != NULL )
     {
-        return NULL;
-    }
-
-    if( object->type == FHT_AGGREGATE_EVALUATOR )
-    {
-        AggregateEvaluator *aggregate = (AggregateEvaluator *)object;
         return &aggregate->evaluators;
     }
-    else if( object->type == FHT_PIECEWISE_EVALUATOR )
+    
+    PiecewiseEvaluator *piecewise = PiecewiseEvaluator::checkedCast( session, objectHandle );
+    if( piecewise != NULL )
     {
-        PiecewiseEvaluator *piecewise = (PiecewiseEvaluator *)object;
         return &piecewise->evaluators;
     }
-    else
-    {
-        session->setError( FML_ERR_INVALID_OBJECT );
-        return NULL;
-    }
+
+    session->setError( FML_ERR_INVALID_OBJECT );
+    return NULL;
 }
 
 
 static SimpleMap<FmlObjectHandle, FmlObjectHandle> *getBindMap( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
-    FieldmlObject *object = getObject( session, objectHandle );
-
-    if( object == NULL )
+    AggregateEvaluator *aggregate = AggregateEvaluator::checkedCast( session, objectHandle );
+    if( aggregate != NULL )
     {
-        return NULL;
-    }
-
-    if( object->type == FHT_AGGREGATE_EVALUATOR )
-    {
-        AggregateEvaluator *aggregate = (AggregateEvaluator *)object;
         return &aggregate->binds;
     }
-    else if( object->type == FHT_PIECEWISE_EVALUATOR )
+
+    PiecewiseEvaluator *piecewise = PiecewiseEvaluator::checkedCast( session, objectHandle );
+    if( piecewise != NULL )
     {
-        PiecewiseEvaluator *piecewise = (PiecewiseEvaluator *)object;
         return &piecewise->binds;
     }
-    else if( object->type == FHT_REFERENCE_EVALUATOR )
+
+    ReferenceEvaluator *reference = ReferenceEvaluator::checkedCast( session, objectHandle );
+    if( reference != NULL )
     {
-        ReferenceEvaluator *reference = (ReferenceEvaluator *)object;
         return &reference->binds;
     }
-    else
-    {
-        session->setError( FML_ERR_INVALID_OBJECT );
-        return NULL;
-    }
+
+    session->setError( FML_ERR_INVALID_OBJECT );
+    return NULL;
 }
 
 
 static vector<FmlObjectHandle> getArgumentList( FieldmlSession *session, FmlObjectHandle objectHandle, bool isUnbound, bool isUsed )
 {
-    FieldmlObject *object = getObject( session, objectHandle );
-
     vector<FmlObjectHandle> args;
-
-    if( object == NULL )
-    {
-        session->setError( FML_ERR_UNKNOWN_OBJECT );
-        return args;
-    }
+    Evaluator *evaluator = Evaluator::checkedCast( session, objectHandle );
     
-    if( ( object->type != FHT_AGGREGATE_EVALUATOR ) &&
-        ( object->type != FHT_ARGUMENT_EVALUATOR ) &&
-        ( object->type != FHT_EXTERNAL_EVALUATOR ) &&
-        ( object->type != FHT_PARAMETER_EVALUATOR ) &&
-        ( object->type != FHT_PIECEWISE_EVALUATOR ) &&
-        ( object->type != FHT_REFERENCE_EVALUATOR ) &&
-        ( object->type != FHT_CONSTANT_EVALUATOR ) )
+    if( evaluator == NULL )
     {
         session->setError( FML_ERR_INVALID_OBJECT );
         return args;
     }
-        
 
     if ( !isUnbound && !isUsed )
     {
@@ -317,7 +289,7 @@ static DataSource *objectAsDataSource( FieldmlSession *session, FmlObjectHandle 
         return NULL;
     }
 
-    if( object->type != FHT_DATA_SOURCE )
+    if( object->objectType != FHT_DATA_SOURCE )
     {
         session->setError( FML_ERR_INVALID_OBJECT );
         return NULL;
@@ -336,7 +308,7 @@ static ArrayDataSource *getArrayDataSource( FieldmlSession *session, FmlObjectHa
         return NULL;
     }
 
-    if( dataSource->type != DATA_SOURCE_ARRAY )
+    if( dataSource->sourceType != DATA_SOURCE_ARRAY )
     {
         session->setError( FML_ERR_INVALID_OBJECT );
         return NULL;
@@ -356,7 +328,7 @@ static DataResource *getDataResource( FieldmlSession *session, FmlObjectHandle o
         return NULL;
     }
 
-    if( object->type != FHT_DATA_RESOURCE )
+    if( object->objectType != FHT_DATA_RESOURCE )
     {
         session->setError( FML_ERR_INVALID_OBJECT );
         return NULL;
@@ -374,7 +346,7 @@ static bool checkIsValueType( FieldmlSession *session, FmlObjectHandle objectHan
         return false;
     }
 
-    switch( object->type )
+    switch( object->objectType )
     {
     case FHT_CONTINUOUS_TYPE:
         return allowContinuous;
@@ -392,24 +364,14 @@ static bool checkIsValueType( FieldmlSession *session, FmlObjectHandle objectHan
 
 static bool checkIsEvaluatorType( FieldmlSession *session, FmlObjectHandle objectHandle, bool allowContinuous, bool allowEnsemble, bool allowBoolean )
 {
-    FieldmlObject *object = getObject( session, objectHandle );
-    if( object == NULL )
+    Evaluator *evaluator = Evaluator::checkedCast( session, objectHandle );
+    if( evaluator == NULL )
     {
+        session->setError( FML_ERR_INVALID_OBJECT );
         return false;
     }
     
-    if( ( object->type != FHT_PARAMETER_EVALUATOR ) &&
-        ( object->type != FHT_AGGREGATE_EVALUATOR ) &&
-        ( object->type != FHT_REFERENCE_EVALUATOR ) &&
-        ( object->type != FHT_PIECEWISE_EVALUATOR ) &&
-        ( object->type != FHT_ARGUMENT_EVALUATOR ) &&
-        ( object->type != FHT_EXTERNAL_EVALUATOR ) &&
-        ( object->type != FHT_CONSTANT_EVALUATOR ) )
-    {
-        return false;
-    }
-    
-    return checkIsValueType( session, Fieldml_GetValueType( session->getSessionHandle(), objectHandle ), allowContinuous, allowEnsemble, false, allowBoolean );
+    return checkIsValueType( session, evaluator->valueType, allowContinuous, allowEnsemble, false, allowBoolean );
 }
 
 
@@ -427,19 +389,19 @@ static bool checkIsTypeCompatible( FieldmlSession *session, FmlObjectHandle obje
     FieldmlObject *object1 = getObject( session, objectHandle1 );
     FieldmlObject *object2 = getObject( session, objectHandle2 );
 
-    if( object1->type != object2->type )
+    if( object1->objectType != object2->objectType )
     {
         return false;
     }
-    else if( object1->type == FHT_BOOLEAN_TYPE )
+    else if( object1->objectType == FHT_BOOLEAN_TYPE )
     {
         return true;
     }
-    else if( object1->type == FHT_ENSEMBLE_TYPE )
+    else if( object1->objectType == FHT_ENSEMBLE_TYPE )
     {
         return objectHandle1 == objectHandle2;
     }
-    else if( object1->type == FHT_CONTINUOUS_TYPE )
+    else if( object1->objectType == FHT_CONTINUOUS_TYPE )
     {
         FmlObjectHandle component1 = Fieldml_GetTypeComponentEnsemble( session->getSessionHandle(), objectHandle1 );
         FmlObjectHandle component2 = Fieldml_GetTypeComponentEnsemble( session->getSessionHandle(), objectHandle2 );
@@ -820,7 +782,7 @@ FieldmlHandleType Fieldml_GetObjectType( FmlSessionHandle handle, FmlObjectHandl
         return FHT_UNKNOWN;
     }
     
-    return object->type;
+    return object->objectType;
 }
 
 
@@ -839,7 +801,7 @@ FmlObjectHandle Fieldml_GetTypeComponentEnsemble( FmlSessionHandle handle, FmlOb
         return FML_INVALID_HANDLE;
     }
 
-    if( object->type == FHT_CONTINUOUS_TYPE )
+    if( object->objectType == FHT_CONTINUOUS_TYPE )
     {
         ContinuousType *continuousType = (ContinuousType*)object;
         return continuousType->componentType;
@@ -888,12 +850,12 @@ int Fieldml_GetMemberCount( FmlSessionHandle handle, FmlObjectHandle objectHandl
         return -1;
     }
 
-    if( object->type == FHT_ENSEMBLE_TYPE )
+    if( object->objectType == FHT_ENSEMBLE_TYPE )
     {
         EnsembleType *ensembleType = (EnsembleType*)object;
         return ensembleType->count;
     }
-    else if( object->type == FHT_MESH_TYPE )
+    else if( object->objectType == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType*)object;
         return Fieldml_GetMemberCount( handle, meshType->elementsType );
@@ -920,12 +882,12 @@ FmlEnsembleValue Fieldml_GetEnsembleMembersMin( FmlSessionHandle handle, FmlObje
         return -1;
     }
 
-    if( object->type == FHT_ENSEMBLE_TYPE )
+    if( object->objectType == FHT_ENSEMBLE_TYPE )
     {
         EnsembleType *ensembleType = (EnsembleType*)object;
         return ensembleType->min;
     }
-    else if( object->type == FHT_MESH_TYPE )
+    else if( object->objectType == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType*)object;
         return Fieldml_GetEnsembleMembersMin( handle, meshType->elementsType );
@@ -951,12 +913,12 @@ FmlEnsembleValue Fieldml_GetEnsembleMembersMax( FmlSessionHandle handle, FmlObje
         return -1;
     }
 
-    if( object->type == FHT_ENSEMBLE_TYPE )
+    if( object->objectType == FHT_ENSEMBLE_TYPE )
     {
         EnsembleType *ensembleType = (EnsembleType*)object;
         return ensembleType->max;
     }
-    else if( object->type == FHT_MESH_TYPE )
+    else if( object->objectType == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType*)object;
         return Fieldml_GetEnsembleMembersMax( handle, meshType->elementsType );
@@ -982,12 +944,12 @@ int Fieldml_GetEnsembleMembersStride( FmlSessionHandle handle, FmlObjectHandle o
         return -1;
     }
 
-    if( object->type == FHT_ENSEMBLE_TYPE )
+    if( object->objectType == FHT_ENSEMBLE_TYPE )
     {
         EnsembleType *ensembleType = (EnsembleType*)object;
         return ensembleType->stride;
     }
-    else if( object->type == FHT_MESH_TYPE )
+    else if( object->objectType == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType*)object;
         return Fieldml_GetEnsembleMembersStride( handle, meshType->elementsType );
@@ -1013,12 +975,12 @@ EnsembleMembersType Fieldml_GetEnsembleMembersType( FmlSessionHandle handle, Fml
         return MEMBER_UNKNOWN;
     }
     
-    if( object->type == FHT_ENSEMBLE_TYPE )
+    if( object->objectType == FHT_ENSEMBLE_TYPE )
     {
         EnsembleType *ensembleType = (EnsembleType*)object;
-        return ensembleType->type;
+        return ensembleType->membersType;
     }
-    else if( object->type == FHT_MESH_TYPE )
+    else if( object->objectType == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType *)object;
         return Fieldml_GetEnsembleMembersType( handle, meshType->elementsType );
@@ -1053,7 +1015,7 @@ FmlErrorNumber Fieldml_SetEnsembleMembersDataSource( FmlSessionHandle handle, Fm
     {
         return session->getLastError();
     }
-    else if( object->type == FHT_ENSEMBLE_TYPE )
+    else if( object->objectType == FHT_ENSEMBLE_TYPE )
     {
         EnsembleType *ensembleType = (EnsembleType*)object;
 
@@ -1062,12 +1024,12 @@ FmlErrorNumber Fieldml_SetEnsembleMembersDataSource( FmlSessionHandle handle, Fm
             return session->setError( FML_ERR_INVALID_PARAMETER_3 );
         }
         
-        ensembleType->type = type;
+        ensembleType->membersType = type;
         ensembleType->count = count;
         ensembleType->dataSource = dataSourceHandle;
         return session->getLastError();
     }
-    else if( object->type == FHT_MESH_TYPE )
+    else if( object->objectType == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType *)object;
         return Fieldml_SetEnsembleMembersDataSource( handle, meshType->elementsType, type, count, dataSourceHandle );
@@ -1092,7 +1054,7 @@ FmlBoolean Fieldml_IsEnsembleComponentType( FmlSessionHandle handle, FmlObjectHa
         return -1;
     }
     
-    if( object->type == FHT_ENSEMBLE_TYPE )
+    if( object->objectType == FHT_ENSEMBLE_TYPE )
     {
         EnsembleType *ensembleType = (EnsembleType*)object;
         return ensembleType->isComponentEnsemble;
@@ -1117,7 +1079,7 @@ FmlObjectHandle Fieldml_GetMeshElementsType( FmlSessionHandle handle, FmlObjectH
     {
         return FML_INVALID_HANDLE;
     }
-    if( object->type == FHT_MESH_TYPE ) 
+    if( object->objectType == FHT_MESH_TYPE ) 
     {
         MeshType *meshType = (MeshType *)object;
         return meshType->elementsType;
@@ -1141,7 +1103,7 @@ FmlObjectHandle Fieldml_GetMeshShapes( FmlSessionHandle handle, FmlObjectHandle 
     {
         return FML_INVALID_HANDLE;
     }
-    if( object->type == FHT_MESH_TYPE ) 
+    if( object->objectType == FHT_MESH_TYPE ) 
     {
         MeshType *meshType = (MeshType *)object;
         return meshType->shapes;
@@ -1166,7 +1128,7 @@ FmlObjectHandle Fieldml_GetMeshChartType( FmlSessionHandle handle, FmlObjectHand
     {
         return FML_INVALID_HANDLE;
     }
-    if( object->type == FHT_MESH_TYPE ) 
+    if( object->objectType == FHT_MESH_TYPE ) 
     {
         MeshType *meshType = (MeshType *)object;
         return meshType->chartType;
@@ -1191,7 +1153,7 @@ FmlObjectHandle Fieldml_GetMeshChartComponentType( FmlSessionHandle handle, FmlO
     {
         return FML_INVALID_HANDLE;
     }
-    if( object->type == FHT_MESH_TYPE ) 
+    if( object->objectType == FHT_MESH_TYPE ) 
     {
         MeshType *meshType = (MeshType *)object;
         return Fieldml_GetTypeComponentEnsemble( handle, meshType->chartType );
@@ -1327,52 +1289,13 @@ FmlObjectHandle Fieldml_GetValueType( FmlSessionHandle handle, FmlObjectHandle o
     {
         return FML_INVALID_HANDLE;
     }
-
-    FieldmlObject *object = getObject( session, objectHandle );
-
-    if( object == NULL )
-    {
-        return FML_INVALID_HANDLE;
-    }
-
-    session->setError( FML_ERR_NO_ERROR );
     
-    if( object->type == FHT_PARAMETER_EVALUATOR ) 
+    Evaluator *evaluator = Evaluator::checkedCast( session, objectHandle );
+    if( evaluator != NULL )
     {
-        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        return parameterEvaluator->valueType;
+        return evaluator->valueType;
     }
-    else if( object->type == FHT_REFERENCE_EVALUATOR )
-    {
-        ReferenceEvaluator *referenceEvaluator = (ReferenceEvaluator *)object;
-        return referenceEvaluator->valueType;
-    }
-    else if( object->type == FHT_AGGREGATE_EVALUATOR )
-    {
-        AggregateEvaluator *aggregate = (AggregateEvaluator *)object;
-        return aggregate->valueType;
-    }
-    else if( object->type == FHT_PIECEWISE_EVALUATOR )
-    {
-        PiecewiseEvaluator *piecewise = (PiecewiseEvaluator *)object;
-        return piecewise->valueType;
-    }
-    else if( object->type == FHT_ARGUMENT_EVALUATOR )
-    {
-        ArgumentEvaluator *argumentEvaluator = (ArgumentEvaluator *)object;
-        return argumentEvaluator->valueType;
-    }
-    else if( object->type == FHT_EXTERNAL_EVALUATOR )
-    {
-        ExternalEvaluator *externalEvaluator = (ExternalEvaluator *)object;
-        return externalEvaluator->valueType;
-    }
-    else if( object->type == FHT_CONSTANT_EVALUATOR )
-    {
-        ConstantEvaluator *constantEvaluator = (ConstantEvaluator *)object;
-        return constantEvaluator->valueType;
-    }
-
+    
     session->setError( FML_ERR_INVALID_OBJECT );
     return FML_INVALID_HANDLE;
 }
@@ -1537,30 +1460,24 @@ FmlErrorNumber Fieldml_SetParameterDataDescription( FmlSessionHandle handle, Fml
         return session->getLastError();
     }
 
-    FieldmlObject *object = getObject( session, objectHandle );
-    if( object == NULL )
+    ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
+    if( parameter != NULL )
     {
-        return session->getLastError();
-    }
-
-    if( object->type == FHT_PARAMETER_EVALUATOR )
-    {
-        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        if( parameterEvaluator->dataDescription->descriptionType != DESCRIPTION_UNKNOWN )
+        if( parameter->dataDescription->descriptionType != DESCRIPTION_UNKNOWN )
         {
             return session->setError( FML_ERR_ACCESS_VIOLATION );
         }
 
         if( description == DESCRIPTION_DOK_ARRAY )
         {
-            delete parameterEvaluator->dataDescription;
-            parameterEvaluator->dataDescription = new DokArrayDataDescription();
+            delete parameter->dataDescription;
+            parameter->dataDescription = new DokArrayDataDescription();
             return session->getLastError();
         }
         else if( description == DESCRIPTION_DENSE_ARRAY )
         {
-            delete parameterEvaluator->dataDescription;
-            parameterEvaluator->dataDescription = new DenseArrayDataDescription();
+            delete parameter->dataDescription;
+            parameter->dataDescription = new DenseArrayDataDescription();
             return session->getLastError();
         }
         else
@@ -1581,17 +1498,10 @@ DataDescriptionType Fieldml_GetParameterDataDescription( FmlSessionHandle handle
         return DESCRIPTION_UNKNOWN;
     }
 
-    FieldmlObject *object = getObject( session, objectHandle );
-
-    if( object == NULL )
+    ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
+    if( parameter != NULL )
     {
-        return DESCRIPTION_UNKNOWN;
-    }
-
-    if( object->type == FHT_PARAMETER_EVALUATOR )
-    {
-        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        return parameterEvaluator->dataDescription->descriptionType;
+        return parameter->dataDescription->descriptionType;
     }
 
     session->setError( FML_ERR_INVALID_OBJECT );
@@ -1621,33 +1531,36 @@ FmlErrorNumber Fieldml_SetDataSource( FmlSessionHandle handle, FmlObjectHandle o
         return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
 
-    FieldmlObject *object = getObject( session, objectHandle );
-    if( object == NULL )
+    ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
+    if( parameter != NULL )
     {
-        session->setError( FML_ERR_INVALID_OBJECT );
-    }
-    else if( object->type == FHT_PARAMETER_EVALUATOR )
-    {
-        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DENSE_ARRAY )
+        if( parameter->dataDescription->descriptionType == DESCRIPTION_DENSE_ARRAY )
         {
-            DenseArrayDataDescription *denseArray = (DenseArrayDataDescription*)parameterEvaluator->dataDescription;
+            DenseArrayDataDescription *denseArray = (DenseArrayDataDescription*)parameter->dataDescription;
             denseArray->dataSource = dataSource;
         }
-        else if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DOK_ARRAY )
+        else if( parameter->dataDescription->descriptionType == DESCRIPTION_DOK_ARRAY )
         {
-            DokArrayDataDescription *dokArray = (DokArrayDataDescription*)parameterEvaluator->dataDescription;
+            DokArrayDataDescription *dokArray = (DokArrayDataDescription*)parameter->dataDescription;
             dokArray->valueSource = dataSource;
         }
         else
         {
-            return session->setError( FML_ERR_INVALID_OBJECT );
+            session->setError( FML_ERR_INVALID_OBJECT );
         }
+        return session->getLastError();
     }
-    else if( object->type == FHT_ENSEMBLE_TYPE )
+
+    FieldmlObject *object = getObject( session, objectHandle );
+
+    if( object == NULL )
+    {
+        //Error has already been set
+    }
+    else if( object->objectType == FHT_ENSEMBLE_TYPE )
     {
         EnsembleType *ensembleType = (EnsembleType*)object;
-        EnsembleMembersType type = ensembleType->type;
+        EnsembleMembersType type = ensembleType->membersType;
         
         if( ( type != MEMBER_LIST_DATA ) && ( type != MEMBER_RANGE_DATA ) && ( type != MEMBER_STRIDE_RANGE_DATA ) )
         {
@@ -1656,7 +1569,7 @@ FmlErrorNumber Fieldml_SetDataSource( FmlSessionHandle handle, FmlObjectHandle o
         
         ensembleType->dataSource = dataSource;
     }
-    else if( object->type == FHT_MESH_TYPE )
+    else if( object->objectType == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType *)object;
         return Fieldml_SetDataSource( handle, meshType->elementsType, dataSource );
@@ -1702,30 +1615,22 @@ FmlErrorNumber Fieldml_SetKeyDataSource( FmlSessionHandle handle, FmlObjectHandl
         return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
 
-    FieldmlObject *object = getObject( session, objectHandle );
-    if( object == NULL )
+    ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
+    if( parameter != NULL )
     {
-        session->setError( FML_ERR_INVALID_OBJECT );
-    }
-    else if( object->type == FHT_PARAMETER_EVALUATOR )
-    {
-        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DOK_ARRAY )
+        if( parameter->dataDescription->descriptionType == DESCRIPTION_DOK_ARRAY )
         {
-            DokArrayDataDescription *dokArray = (DokArrayDataDescription*)parameterEvaluator->dataDescription;
+            DokArrayDataDescription *dokArray = (DokArrayDataDescription*)parameter->dataDescription;
             dokArray->keySource = dataSource;
         }
         else
         {
-            return session->setError( FML_ERR_INVALID_OBJECT );
+            session->setError( FML_ERR_INVALID_OBJECT );
         }
+        return session->getLastError();
     }
-    else
-    {
-        session->setError( FML_ERR_INVALID_OBJECT );
-    }
-    
-    return session->getLastError();
+
+    return session->setError( FML_ERR_INVALID_OBJECT );
 }
 
 
@@ -1784,17 +1689,13 @@ FmlErrorNumber Fieldml_AddDenseIndexEvaluator( FmlSessionHandle handle, FmlObjec
         return session->getLastError();
     }
 
-    if( object->type == FHT_PARAMETER_EVALUATOR )
+    ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
+    if( parameter != NULL )
     {
-        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        session->setError( parameterEvaluator->dataDescription->addIndexEvaluator( false, indexHandle, orderHandle ) );
-    }
-    else
-    {
-        return session->setError( FML_ERR_INVALID_OBJECT );
+        return session->setError( parameter->dataDescription->addIndexEvaluator( false, indexHandle, orderHandle ) );
     }
     
-    return session->getLastError();
+    return session->setError( FML_ERR_INVALID_OBJECT );
 }
 
 
@@ -1804,12 +1705,6 @@ FmlErrorNumber Fieldml_AddSparseIndexEvaluator( FmlSessionHandle handle, FmlObje
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
-    }
-
-    FieldmlObject *object = getObject( session, objectHandle );
-    if( object == NULL )
-    {
-        return session->getLastError();
     }
 
     if( !checkLocal( session, objectHandle ) )
@@ -1831,17 +1726,13 @@ FmlErrorNumber Fieldml_AddSparseIndexEvaluator( FmlSessionHandle handle, FmlObje
         return session->getLastError();
     }
 
-    if( object->type == FHT_PARAMETER_EVALUATOR )
+    ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
+    if( parameter != NULL )
     {
-        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        session->setError( parameterEvaluator->dataDescription->addIndexEvaluator( true, indexHandle, FML_INVALID_HANDLE ) );
-    }
-    else
-    {
-        return session->setError( FML_ERR_INVALID_OBJECT );
+        return session->setError( parameter->dataDescription->addIndexEvaluator( true, indexHandle, FML_INVALID_HANDLE ) );
     }
     
-    return session->getLastError();
+    return session->setError( FML_ERR_INVALID_OBJECT );
 }
 
 
@@ -1853,16 +1744,10 @@ int Fieldml_GetParameterIndexCount( FmlSessionHandle handle, FmlObjectHandle obj
         return -1;
     }
 
-    FieldmlObject *object = getObject( session, objectHandle );
-    if( object == NULL )
+    ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
+    if( parameter != NULL )
     {
-        return -1;
-    }
-    
-    if( object->type == FHT_PARAMETER_EVALUATOR )
-    {
-        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        int count = parameterEvaluator->dataDescription->getIndexCount( isSparse != 0 );
+        int count = parameter->dataDescription->getIndexCount( isSparse != 0 );
         if( count == -1 )
         {
             session->setError( FML_ERR_INVALID_OBJECT );
@@ -1870,11 +1755,9 @@ int Fieldml_GetParameterIndexCount( FmlSessionHandle handle, FmlObjectHandle obj
         
         return count;
     }
-    else
-    {
-        session->setError( FML_ERR_INVALID_OBJECT );
-        return -1;
-    }
+
+    session->setError( FML_ERR_INVALID_OBJECT );
+    return -1;
 }
 
 
@@ -1886,25 +1769,17 @@ FmlObjectHandle Fieldml_GetParameterIndexEvaluator( FmlSessionHandle handle, Fml
         return FML_INVALID_HANDLE;
     }
 
-    FieldmlObject *object = getObject( session, objectHandle );
-    if( object == NULL )
-    {
-        return FML_INVALID_HANDLE;
-    }
-    
-    if( object->type == FHT_PARAMETER_EVALUATOR )
+    ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
+    if( parameter != NULL )
     {
         FmlObjectHandle evaluator;
-        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        session->setError( parameterEvaluator->dataDescription->getIndexEvaluator( index-1, isSparse != 0, evaluator ) );
+        session->setError( parameter->dataDescription->getIndexEvaluator( index-1, isSparse != 0, evaluator ) );
         
         return evaluator;
     }
-    else
-    {
-        session->setError( FML_ERR_INVALID_OBJECT );
-        return FML_INVALID_HANDLE;
-    }
+
+    session->setError( FML_ERR_INVALID_OBJECT );
+    return FML_INVALID_HANDLE;
 }
 
 
@@ -1999,7 +1874,6 @@ FmlErrorNumber Fieldml_SetDefaultEvaluator( FmlSessionHandle handle, FmlObjectHa
         return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
 
-    FieldmlObject *object = getObject( session, objectHandle );
     SimpleMap<FmlEnsembleValue, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
  
     if( map == NULL )
@@ -2012,15 +1886,8 @@ FmlErrorNumber Fieldml_SetDefaultEvaluator( FmlSessionHandle handle, FmlObjectHa
         return session->getLastError();
     }
 
-    if( ( object->type == FHT_PIECEWISE_EVALUATOR ) || ( object->type == FHT_AGGREGATE_EVALUATOR ) )
-    {
-        map->setDefault( evaluator );
-        return session->getLastError();
-    }
-    else
-    {
-        return session->setError( FML_ERR_INVALID_OBJECT );
-    }
+    map->setDefault( evaluator );
+    return session->getLastError();
 }
 
 
@@ -2032,7 +1899,6 @@ FmlObjectHandle Fieldml_GetDefaultEvaluator( FmlSessionHandle handle, FmlObjectH
         return FML_INVALID_HANDLE;
     }
 
-    FieldmlObject *object = getObject( session, objectHandle );
     SimpleMap<FmlEnsembleValue, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
  
     if( map == NULL )
@@ -2040,15 +1906,7 @@ FmlObjectHandle Fieldml_GetDefaultEvaluator( FmlSessionHandle handle, FmlObjectH
         return FML_INVALID_HANDLE;
     }
 
-    if( ( object->type == FHT_PIECEWISE_EVALUATOR ) || ( object->type == FHT_AGGREGATE_EVALUATOR ) )
-    {
-        return map->getDefault();
-    }
-    else
-    {
-        session->setError( FML_ERR_INVALID_OBJECT );
-        return FML_INVALID_HANDLE;
-    }
+    return map->getDefault();
 }
 
 
@@ -2209,17 +2067,10 @@ FmlObjectHandle Fieldml_GetReferenceSourceEvaluator( FmlSessionHandle handle, Fm
         return FML_INVALID_HANDLE;
     }
 
-    FieldmlObject *object = getObject( session, objectHandle );
-
-    if( object == NULL )
+    ReferenceEvaluator *reference = ReferenceEvaluator::checkedCast( session, objectHandle );
+    if( reference != NULL )
     {
-        return FML_INVALID_HANDLE;
-    }
-
-    if( object->type == FHT_REFERENCE_EVALUATOR )
-    {
-        ReferenceEvaluator *referenceEvaluator = (ReferenceEvaluator *)object;
-        return referenceEvaluator->sourceEvaluator;
+        return reference->sourceEvaluator;
     }
     
     session->setError( FML_ERR_INVALID_OBJECT );
@@ -2276,12 +2127,6 @@ FmlErrorNumber Fieldml_AddArgument( FmlSessionHandle handle, FmlObjectHandle obj
         return FML_ERR_UNKNOWN_HANDLE;
     }
 
-    FieldmlObject *object = getObject( session, objectHandle );
-    if( object == NULL )
-    {
-        return session->getLastError();
-    }
-
     if( !checkLocal( session, objectHandle ) )
     {
         return session->getLastError();
@@ -2296,22 +2141,21 @@ FmlErrorNumber Fieldml_AddArgument( FmlSessionHandle handle, FmlObjectHandle obj
         return session->setError( FML_ERR_INVALID_PARAMETER_3 );
     }
     
-    if( object->type == FHT_ARGUMENT_EVALUATOR )
+    ArgumentEvaluator *argumentEvaluator = ArgumentEvaluator::checkedCast( session, objectHandle );
+    if( argumentEvaluator != NULL )
     {
-        ArgumentEvaluator *evaluator = (ArgumentEvaluator*)object;
-        evaluator->arguments.insert( evaluatorHandle );
+        argumentEvaluator->arguments.insert( evaluatorHandle );
+        return session->getLastError();
     }
-    else if( object->type == FHT_EXTERNAL_EVALUATOR )
+    
+    ExternalEvaluator *externalEvaluator = ExternalEvaluator::checkedCast( session, objectHandle );
+    if( externalEvaluator != NULL )
     {
-        ExternalEvaluator *evaluator = (ExternalEvaluator*)object;
-        evaluator->arguments.insert( evaluatorHandle );
-    }
-    else
-    {
-        return session->setError( FML_ERR_INVALID_OBJECT );
+        externalEvaluator->arguments.insert( evaluatorHandle );
+        return session->getLastError();
     }
 
-    return session->getLastError();
+    return session->setError( FML_ERR_INVALID_OBJECT );
 }
 
 
@@ -2438,22 +2282,23 @@ int Fieldml_GetIndexEvaluatorCount( FmlSessionHandle handle, FmlObjectHandle obj
         return -1;
     }
 
-    FieldmlObject *object = getObject( session, objectHandle );
-
-    if( object == NULL )
-    {
-        return -1;
-    }
-    
-    if( ( object->type == FHT_PIECEWISE_EVALUATOR ) || ( object->type == FHT_AGGREGATE_EVALUATOR ) )
+    PiecewiseEvaluator *piecewise = PiecewiseEvaluator::checkedCast( session, objectHandle );
+    if( piecewise != NULL )
     {
         return 1;
     }
-    else if( object->type == FHT_PARAMETER_EVALUATOR )
+    
+    AggregateEvaluator *aggregate = AggregateEvaluator::checkedCast( session, objectHandle );
+    if( aggregate != NULL )
     {
-        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        int denseCount = parameterEvaluator->dataDescription->getIndexCount( false );
-        int sparseCount = parameterEvaluator->dataDescription->getIndexCount( true );
+        return 1;
+    }
+
+    ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
+    if( parameter != NULL )
+    {
+        int denseCount = parameter->dataDescription->getIndexCount( false );
+        int sparseCount = parameter->dataDescription->getIndexCount( true );
         
         if( ( denseCount > -1 ) && ( sparseCount > -1 ) )
         {
@@ -2505,18 +2350,10 @@ FmlErrorNumber Fieldml_SetIndexEvaluator( FmlSessionHandle handle, FmlObjectHand
     {
         return session->getLastError();
     }
-    
-    FieldmlObject *object = getObject( session, objectHandle );
 
-    if( object == NULL )
+    PiecewiseEvaluator *piecewise = PiecewiseEvaluator::checkedCast( session, objectHandle );
+    if( piecewise != NULL )
     {
-        return session->getLastError();
-    }
-    
-    if( object->type == FHT_PIECEWISE_EVALUATOR )
-    {
-        PiecewiseEvaluator *piecewise = (PiecewiseEvaluator*)object;
-
         if( index == 1 )
         {
             piecewise->indexEvaluator = evaluatorHandle;
@@ -2527,10 +2364,10 @@ FmlErrorNumber Fieldml_SetIndexEvaluator( FmlSessionHandle handle, FmlObjectHand
             return session->setError( FML_ERR_INVALID_PARAMETER_3 );
         }
     }
-    else if( object->type == FHT_AGGREGATE_EVALUATOR )
+    
+    AggregateEvaluator *aggregate = AggregateEvaluator::checkedCast( session, objectHandle );
+    if( aggregate != NULL )
     {
-        AggregateEvaluator *aggregate = (AggregateEvaluator*)object;
-
         if( index == 1 )
         {
             aggregate->indexEvaluator = evaluatorHandle;
@@ -2541,17 +2378,14 @@ FmlErrorNumber Fieldml_SetIndexEvaluator( FmlSessionHandle handle, FmlObjectHand
             return session->setError( FML_ERR_INVALID_PARAMETER_3 );
         }
     }
-    else if( object->type == FHT_PARAMETER_EVALUATOR )
+    
+    ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
+    if( parameter != NULL )
     {
-        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        session->setError( parameterEvaluator->dataDescription->setIndexEvaluator( index-1, evaluatorHandle, FML_INVALID_HANDLE ) );
+        return session->setError( parameter->dataDescription->setIndexEvaluator( index-1, evaluatorHandle, FML_INVALID_HANDLE ) );
     }
-    else
-    {
-        session->setError( FML_ERR_INVALID_OBJECT );
-    }
-
-    return session->getLastError();
+    
+    return session->setError( FML_ERR_INVALID_OBJECT );
 }
 
 
@@ -2563,23 +2397,15 @@ FmlObjectHandle Fieldml_GetIndexEvaluator( FmlSessionHandle handle, FmlObjectHan
         return FML_INVALID_HANDLE;
     }
 
-    FieldmlObject *object = getObject( session, objectHandle );
-
-    if( object == NULL )
-    {
-        return FML_INVALID_HANDLE;
-    }
-    
     if( indexNumber <= 0 )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
     }
-    
-    if( object->type == FHT_PIECEWISE_EVALUATOR )
-    {
-        PiecewiseEvaluator *piecewise = (PiecewiseEvaluator*)object;
 
+    PiecewiseEvaluator *piecewise = PiecewiseEvaluator::checkedCast( session, objectHandle );
+    if( piecewise != NULL )
+    {
         if( indexNumber == 1 )
         {
             return piecewise->indexEvaluator;
@@ -2588,10 +2414,10 @@ FmlObjectHandle Fieldml_GetIndexEvaluator( FmlSessionHandle handle, FmlObjectHan
         session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
     }
-    else if( object->type == FHT_AGGREGATE_EVALUATOR )
-    {
-        AggregateEvaluator *aggregate = (AggregateEvaluator*)object;
 
+    AggregateEvaluator *aggregate = AggregateEvaluator::checkedCast( session, objectHandle );
+    if( aggregate != NULL )
+    {
         if( indexNumber == 1 )
         {
             return aggregate->indexEvaluator;
@@ -2600,19 +2426,17 @@ FmlObjectHandle Fieldml_GetIndexEvaluator( FmlSessionHandle handle, FmlObjectHan
         session->setError( FML_ERR_INVALID_PARAMETER_3 );
         return FML_INVALID_HANDLE;
     }
-    else if( object->type == FHT_PARAMETER_EVALUATOR )
+    
+    ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
+    if( parameter != NULL )
     {
         FmlObjectHandle evaluator;
-        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        session->setError( parameterEvaluator->dataDescription->getIndexEvaluator( indexNumber-1, evaluator ) );
+        session->setError( parameter->dataDescription->getIndexEvaluator( indexNumber-1, evaluator ) );
         
         return evaluator;
     }
-    else
-    {
-        session->setError( FML_ERR_INVALID_OBJECT );
-    }
 
+    session->setError( FML_ERR_INVALID_OBJECT );
     return FML_INVALID_HANDLE;
 }
 
@@ -2625,26 +2449,17 @@ FmlObjectHandle Fieldml_GetParameterIndexOrder( FmlSessionHandle handle, FmlObje
         return FML_INVALID_HANDLE;
     }
 
-    FieldmlObject *object = getObject( session, objectHandle );
-
-    if( object == NULL )
+    ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
+    if( parameter != NULL )
     {
-        return FML_INVALID_HANDLE;
+        FmlObjectHandle order;
+        session->setError( parameter->dataDescription->getIndexOrder( index-1, order ) );
+     
+        return order;
     }
     
-    if( object->type != FHT_PARAMETER_EVALUATOR )
-    {
-        session->setError( FML_ERR_INVALID_OBJECT );
-        return FML_INVALID_HANDLE;
-    }
-    
-    ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-
-    FmlObjectHandle order;
-    FmlErrorNumber err = parameterEvaluator->dataDescription->getIndexOrder( index-1, order );
-    session->setError( err );
-    
-    return order;
+    session->setError( FML_ERR_INVALID_OBJECT );
+    return FML_INVALID_HANDLE;
 }
 
 
@@ -2713,7 +2528,7 @@ FmlObjectHandle Fieldml_CreateContinuousTypeComponents( FmlSessionHandle handle,
         return FML_INVALID_HANDLE;
     }
     
-    if( object->type != FHT_CONTINUOUS_TYPE )
+    if( object->objectType != FHT_CONTINUOUS_TYPE )
     {
         session->setError( FML_ERR_INVALID_OBJECT );
         return FML_INVALID_HANDLE;
@@ -2819,7 +2634,7 @@ FmlObjectHandle Fieldml_CreateMeshElementsType( FmlSessionHandle handle, FmlObje
         return FML_INVALID_HANDLE;
     }
 
-    if( object->type != FHT_MESH_TYPE )
+    if( object->objectType != FHT_MESH_TYPE )
     {
         session->setError( FML_ERR_INVALID_OBJECT );
         return FML_INVALID_HANDLE;
@@ -2860,7 +2675,7 @@ FmlObjectHandle Fieldml_CreateMeshChartType( FmlSessionHandle handle, FmlObjectH
         return FML_INVALID_HANDLE;
     }
 
-    if( object->type != FHT_MESH_TYPE )
+    if( object->objectType != FHT_MESH_TYPE )
     {
         session->setError( FML_ERR_INVALID_OBJECT );
         return FML_INVALID_HANDLE;
@@ -2904,7 +2719,7 @@ FmlErrorNumber Fieldml_SetMeshShapes( FmlSessionHandle handle, FmlObjectHandle m
     if( object == NULL )
     {
     }
-    else if( object->type == FHT_MESH_TYPE ) 
+    else if( object->objectType == FHT_MESH_TYPE ) 
     {
         MeshType *meshType = (MeshType *)object;
         meshType->shapes = shapesHandle;
@@ -2948,11 +2763,11 @@ FmlErrorNumber Fieldml_SetEnsembleMembersRange( FmlSessionHandle handle, FmlObje
         return session->setError( FML_ERR_INVALID_PARAMETER_5 );
     }
     
-    if( object->type == FHT_ENSEMBLE_TYPE )
+    if( object->objectType == FHT_ENSEMBLE_TYPE )
     {
         EnsembleType *ensemble = (EnsembleType*)object;
 
-        ensemble->type = MEMBER_RANGE;
+        ensemble->membersType = MEMBER_RANGE;
         ensemble->min = minElement;
         ensemble->max = maxElement;
         ensemble->stride = stride;
@@ -2960,7 +2775,7 @@ FmlErrorNumber Fieldml_SetEnsembleMembersRange( FmlSessionHandle handle, FmlObje
 
         return session->getLastError();
     }
-    else if( object->type == FHT_MESH_TYPE )
+    else if( object->objectType == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType*)object;
         return Fieldml_SetEnsembleMembersRange( handle, meshType->elementsType, minElement, maxElement, stride );
@@ -3275,14 +3090,14 @@ DataResourceType Fieldml_GetDataResourceType( FmlSessionHandle handle, FmlObject
     }
     
     FieldmlObject *object = getObject( session, objectHandle );
-    if( object->type != FHT_DATA_RESOURCE )
+    if( object->objectType != FHT_DATA_RESOURCE )
     {
         session->setError( FML_ERR_INVALID_OBJECT );
         return DATA_RESOURCE_UNKNOWN;
     }
     
     DataResource *resource = (DataResource*)object;
-    return resource->type;
+    return resource->resourceType;
 }
 
 
@@ -3308,7 +3123,7 @@ FmlErrorNumber Fieldml_AddInlineData( FmlSessionHandle handle, FmlObjectHandle o
     {
         return session->getLastError();
     }
-    if( resource->type != DATA_RESOURCE_INLINE )
+    if( resource->resourceType != DATA_RESOURCE_INLINE )
     {
         return session->setError( FML_ERR_INVALID_OBJECT );
     }
@@ -3341,7 +3156,7 @@ FmlErrorNumber Fieldml_SetInlineData( FmlSessionHandle handle, FmlObjectHandle o
     {
         return session->getLastError();
     }
-    if( resource->type != DATA_RESOURCE_INLINE )
+    if( resource->resourceType != DATA_RESOURCE_INLINE )
     {
         return session->setError( FML_ERR_INVALID_OBJECT );
     }
@@ -3365,7 +3180,7 @@ int Fieldml_GetInlineDataLength( FmlSessionHandle handle, FmlObjectHandle object
     {
         return -1;
     }
-    if( resource->type != DATA_RESOURCE_INLINE )
+    if( resource->resourceType != DATA_RESOURCE_INLINE )
     {
         session->setError( FML_ERR_INVALID_OBJECT );
         return -1;
@@ -3388,7 +3203,7 @@ char * Fieldml_GetInlineData( FmlSessionHandle handle, FmlObjectHandle objectHan
     {
         return NULL;
     }
-    if( resource->type != DATA_RESOURCE_INLINE )
+    if( resource->resourceType != DATA_RESOURCE_INLINE )
     {
         session->setError( FML_ERR_INVALID_OBJECT );
         return NULL;
@@ -3411,7 +3226,7 @@ int Fieldml_CopyInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandl
     {
         return -1;
     }
-    if( resource->type != DATA_RESOURCE_INLINE )
+    if( resource->resourceType != DATA_RESOURCE_INLINE )
     {
         session->setError( FML_ERR_INVALID_OBJECT );
         return -1;
@@ -3441,7 +3256,7 @@ DataSourceType Fieldml_GetDataSourceType( FmlSessionHandle handle, FmlObjectHand
         return DATA_SOURCE_UNKNOWN;
     }
     
-    return dataSource->type;
+    return dataSource->sourceType;
 }
 
 
@@ -3459,7 +3274,7 @@ char * Fieldml_GetDataResourceHref( FmlSessionHandle handle, FmlObjectHandle obj
         return NULL;
     }
     
-    if( dataResource->type == DATA_RESOURCE_HREF )
+    if( dataResource->resourceType == DATA_RESOURCE_HREF )
     {
         return cstrCopy( dataResource->description );
     }
@@ -3509,25 +3324,17 @@ FmlObjectHandle Fieldml_GetDataSource( FmlSessionHandle handle, FmlObjectHandle 
         return FML_INVALID_HANDLE;
     }
 
-    FieldmlObject *object = getObject( session, objectHandle );
-    
-    FmlObjectHandle dataSourceHandle;
-
-    if( object == NULL )
+    ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
+    if( parameter != NULL )
     {
-        dataSourceHandle = FML_INVALID_HANDLE;
-    }
-    else if( object->type == FHT_PARAMETER_EVALUATOR )
-    {
-        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DENSE_ARRAY )
+        if( parameter->dataDescription->descriptionType == DESCRIPTION_DENSE_ARRAY )
         {
-            DenseArrayDataDescription *denseArray = (DenseArrayDataDescription*)parameterEvaluator->dataDescription;
+            DenseArrayDataDescription *denseArray = (DenseArrayDataDescription*)parameter->dataDescription;
             return denseArray->dataSource;
         }
-        else if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DOK_ARRAY )
+        else if( parameter->dataDescription->descriptionType == DESCRIPTION_DOK_ARRAY )
         {
-            DokArrayDataDescription *dokArray = (DokArrayDataDescription*)parameterEvaluator->dataDescription;
+            DokArrayDataDescription *dokArray = (DokArrayDataDescription*)parameter->dataDescription;
             return dokArray->valueSource;
         }
         else
@@ -3535,10 +3342,17 @@ FmlObjectHandle Fieldml_GetDataSource( FmlSessionHandle handle, FmlObjectHandle 
             return session->setError( FML_ERR_INVALID_OBJECT );
         }
     }
-    else if( object->type == FHT_ENSEMBLE_TYPE )
+
+    FieldmlObject *object = getObject( session, objectHandle );
+
+    if( object == NULL )
+    {
+        //Error has already been set.
+    }
+    else if( object->objectType == FHT_ENSEMBLE_TYPE )
     {
         EnsembleType *ensembleType = (EnsembleType*)object;
-        EnsembleMembersType type = ensembleType->type;
+        EnsembleMembersType type = ensembleType->membersType;
         
         if( ( type != MEMBER_LIST_DATA ) && ( type != MEMBER_RANGE_DATA ) && ( type != MEMBER_STRIDE_RANGE_DATA ) )
         {
@@ -3547,7 +3361,7 @@ FmlObjectHandle Fieldml_GetDataSource( FmlSessionHandle handle, FmlObjectHandle 
         
         return ensembleType->dataSource;
     }
-    else if( object->type == FHT_MESH_TYPE )
+    else if( object->objectType == FHT_MESH_TYPE )
     {
         MeshType *meshType = (MeshType *)object;
         return Fieldml_GetDataSource( handle, meshType->elementsType );
@@ -3555,10 +3369,10 @@ FmlObjectHandle Fieldml_GetDataSource( FmlSessionHandle handle, FmlObjectHandle 
     else
     {
         session->setError( FML_ERR_INVALID_OBJECT );
-        dataSourceHandle = FML_INVALID_HANDLE;
+        return FML_INVALID_HANDLE;
     }
     
-    return dataSourceHandle;
+    return FML_INVALID_HANDLE;
 }
 
 
@@ -3570,20 +3384,12 @@ FmlObjectHandle Fieldml_GetKeyDataSource( FmlSessionHandle handle, FmlObjectHand
         return -1;
     }
 
-    FieldmlObject *object = getObject( session, objectHandle );
-    
-    FmlObjectHandle dataSourceHandle;
-
-    if( object == NULL )
+    ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
+    if( parameter != NULL )
     {
-        dataSourceHandle = FML_INVALID_HANDLE;
-    }
-    else if( object->type == FHT_PARAMETER_EVALUATOR )
-    {
-        ParameterEvaluator *parameterEvaluator = (ParameterEvaluator *)object;
-        if( parameterEvaluator->dataDescription->descriptionType == DESCRIPTION_DOK_ARRAY )
+        if( parameter->dataDescription->descriptionType == DESCRIPTION_DOK_ARRAY )
         {
-            DokArrayDataDescription *dokArray = (DokArrayDataDescription*)parameterEvaluator->dataDescription;
+            DokArrayDataDescription *dokArray = (DokArrayDataDescription*)parameter->dataDescription;
             return dokArray->keySource;
         }
         else
@@ -3591,13 +3397,9 @@ FmlObjectHandle Fieldml_GetKeyDataSource( FmlSessionHandle handle, FmlObjectHand
             return session->setError( FML_ERR_INVALID_OBJECT );
         }
     }
-    else
-    {
-        session->setError( FML_ERR_INVALID_OBJECT );
-        dataSourceHandle = FML_INVALID_HANDLE;
-    }
-    
-    return dataSourceHandle;
+
+    session->setError( FML_ERR_INVALID_OBJECT );
+    return FML_INVALID_HANDLE;
 }
 
 
@@ -3708,14 +3510,14 @@ int Fieldml_GetArrayDataSourceRank( FmlSessionHandle handle, FmlObjectHandle obj
     {
         return -1;
     }
-    if( object->type != FHT_DATA_SOURCE )
+    if( object->objectType != FHT_DATA_SOURCE )
     {
         session->setError( FML_ERR_INVALID_OBJECT );
         return -1;
     }
     
     DataSource *source = (DataSource*)object;
-    if( source->type == DATA_SOURCE_ARRAY )
+    if( source->sourceType == DATA_SOURCE_ARRAY )
     {
         ArrayDataSource *arraySource = (ArrayDataSource*)source;
         return arraySource->rank;
@@ -3924,7 +3726,7 @@ FmlObjectHandle Fieldml_CreateArrayDataSource( FmlSessionHandle handle, const ch
     {
         return session->getLastError();
     }
-    if( object->type != FHT_DATA_RESOURCE )
+    if( object->objectType != FHT_DATA_RESOURCE )
     {
         return session->setError( FML_ERR_INVALID_OBJECT );
     }
@@ -3985,23 +3787,15 @@ char * Fieldml_GetConstantEvaluatorValueString( FmlSessionHandle handle, FmlObje
     {
         return NULL;
     }
-
-    FieldmlObject *object = getObject( session, objectHandle );
-    if( object == NULL )
-    {
-        session->setError( FML_ERR_INVALID_OBJECT );
-        return NULL;
-    }
-
-    if( object->type != FHT_CONSTANT_EVALUATOR )
-    {
-        session->setError( FML_ERR_INVALID_OBJECT );
-        return NULL;
-    }
     
-    ConstantEvaluator *evaluator = (ConstantEvaluator*)object;
+    ConstantEvaluator *evaluator = ConstantEvaluator::checkedCast( session, objectHandle );
+    if( evaluator != NULL )
+    {
+        return cstrCopy( evaluator->valueString );
+    }
 
-    return cstrCopy( evaluator->valueString );
+    session->setError( FML_ERR_INVALID_OBJECT );
+    return NULL;
 }
 
 

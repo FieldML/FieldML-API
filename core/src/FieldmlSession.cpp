@@ -44,6 +44,7 @@
 #include "string_const.h"
 #include "Util.h"
 #include "fieldml_structs.h"
+#include "Evaluators.h"
 #include "FieldmlDOM.h"
 #include "FieldmlSession.h"
 #include "String_InternalLibrary.h"
@@ -208,7 +209,7 @@ void FieldmlSession::setErrorContext( const char *file, const int line )
 FmlErrorNumber FieldmlSession::setError( const FmlErrorNumber error )
 {
     lastError = error;
-
+    
     if( error != FML_ERR_NO_ERROR )
     {
         if( debug )
@@ -356,7 +357,7 @@ bool FieldmlSession::getDelegateEvaluators( FmlObjectHandle handle, vector<FmlOb
     }
     
     stack.push_back( handle );
-    if( object->type == FHT_REFERENCE_EVALUATOR )
+    if( object->objectType == FHT_REFERENCE_EVALUATOR )
     {
         ReferenceEvaluator *evaluator = (ReferenceEvaluator*)object;
         evaluator->addDelegates( evaluators );
@@ -365,7 +366,7 @@ bool FieldmlSession::getDelegateEvaluators( FmlObjectHandle handle, vector<FmlOb
             return false;
         }
     }
-    else if( object->type == FHT_AGGREGATE_EVALUATOR )
+    else if( object->objectType == FHT_AGGREGATE_EVALUATOR )
     {
         AggregateEvaluator *evaluator = (AggregateEvaluator*)object;
         evaluator->addDelegates( evaluators );
@@ -374,7 +375,7 @@ bool FieldmlSession::getDelegateEvaluators( FmlObjectHandle handle, vector<FmlOb
             return false;
         }
     }
-    else if( object->type == FHT_PIECEWISE_EVALUATOR )
+    else if( object->objectType == FHT_PIECEWISE_EVALUATOR )
     {
         PiecewiseEvaluator *evaluator = (PiecewiseEvaluator*)object;
         evaluator->addDelegates( evaluators );
@@ -383,7 +384,7 @@ bool FieldmlSession::getDelegateEvaluators( FmlObjectHandle handle, vector<FmlOb
             return false;
         }
     }
-    else if( object->type == FHT_PARAMETER_EVALUATOR )
+    else if( object->objectType == FHT_PARAMETER_EVALUATOR )
     {
         ParameterEvaluator *evaluator = (ParameterEvaluator*)object;
         evaluator->addDelegates( evaluators );
@@ -457,7 +458,7 @@ void FieldmlSession::getArguments( FmlObjectHandle handle, set<FmlObjectHandle> 
         return;
     }
     
-    if( object->type == FHT_ARGUMENT_EVALUATOR )
+    if( object->objectType == FHT_ARGUMENT_EVALUATOR )
     {
         if( addSelf )
         {
@@ -468,19 +469,19 @@ void FieldmlSession::getArguments( FmlObjectHandle handle, set<FmlObjectHandle> 
         used.insert( evaluator->arguments.begin(), evaluator->arguments.end() );
         unbound.insert( evaluator->arguments.begin(), evaluator->arguments.end() );
     }
-    else if( object->type == FHT_EXTERNAL_EVALUATOR )
+    else if( object->objectType == FHT_EXTERNAL_EVALUATOR )
     {
         ExternalEvaluator *evaluator = (ExternalEvaluator*)object;
         used.insert( evaluator->arguments.begin(), evaluator->arguments.end() );
         unbound.insert( evaluator->arguments.begin(), evaluator->arguments.end() );
     }
-    else if( object->type == FHT_REFERENCE_EVALUATOR )
+    else if( object->objectType == FHT_REFERENCE_EVALUATOR )
     {
         ReferenceEvaluator *evaluator = (ReferenceEvaluator*)object;
         getArguments( evaluator->sourceEvaluator, tmpUnbound, tmpUsed, true );
         mergeArguments( evaluator->binds, tmpUnbound, tmpUsed, unbound, used );
     }
-    else if( object->type == FHT_AGGREGATE_EVALUATOR )
+    else if( object->objectType == FHT_AGGREGATE_EVALUATOR )
     {
         AggregateEvaluator *evaluator = (AggregateEvaluator*)object;
         getArguments( evaluator->evaluators.getValues(), tmpUnbound, tmpUsed );
@@ -489,14 +490,14 @@ void FieldmlSession::getArguments( FmlObjectHandle handle, set<FmlObjectHandle> 
         unbound.erase( evaluator->indexEvaluator );
         used.insert( evaluator->indexEvaluator );
     }
-    else if( object->type == FHT_PIECEWISE_EVALUATOR )
+    else if( object->objectType == FHT_PIECEWISE_EVALUATOR )
     {
         PiecewiseEvaluator *evaluator = (PiecewiseEvaluator*)object;
         getArguments( evaluator->evaluators.getValues(), tmpUnbound, tmpUsed );
         getArguments( evaluator->indexEvaluator, tmpUnbound, tmpUsed, true );
         mergeArguments( evaluator->binds, tmpUnbound, tmpUsed, unbound, used );
     }
-    else if( object->type == FHT_PARAMETER_EVALUATOR )
+    else if( object->objectType == FHT_PARAMETER_EVALUATOR )
     {
         ParameterEvaluator *evaluator = (ParameterEvaluator*)object;
         set<FmlObjectHandle> indexEvaluators;

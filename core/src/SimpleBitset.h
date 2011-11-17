@@ -39,6 +39,9 @@
  *
  */
 
+#ifndef H_SIMPLE_BITSET
+#define H_SIMPLE_BITSET
+
 #include <list>
 
 class BitChunk;
@@ -69,3 +72,5 @@ public:
     
     virtual int getTrueBit( int bitCount );
 };
+
+#endif //H_SIMPLE_BITSET

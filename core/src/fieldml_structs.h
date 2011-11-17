@@ -53,7 +53,7 @@
 class FieldmlObject
 {
 public:
-    const FieldmlHandleType type;
+    const FieldmlHandleType objectType;
     const std::string name;
     
     //Virtual objects are either imports, or objects which are strict sub-objects (e.g. component ensembles, mesh element/chart arguments)/
@@ -73,7 +73,7 @@ class EnsembleType :
 public:
     const bool isComponentEnsemble;
 
-    EnsembleMembersType type;
+    EnsembleMembersType membersType;
     
     FmlEnsembleValue min;
     
@@ -131,98 +131,6 @@ public:
 };
 
 
-class Evaluator :
-    public FieldmlObject
-{
-public:
-    const FmlObjectHandle valueType;
-
-    Evaluator( const std::string _name, FieldmlHandleType _type, FmlObjectHandle _valueType, bool _isVirtual );
-    
-    virtual void addDelegates( std::set<FmlObjectHandle> &delegates ) = 0;
-};
-    
-    
-class ConstantEvaluator :
-    public Evaluator
-{
-public:
-    const std::string valueString;
-    
-    ConstantEvaluator( const std::string _name, const std::string _literal, FmlObjectHandle _valueType );
-    
-    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
-};
-
-
-class ReferenceEvaluator :
-    public Evaluator
-{
-public:
-    const FmlObjectHandle sourceEvaluator;
-
-    SimpleMap<FmlObjectHandle, FmlObjectHandle> binds;
-
-    ReferenceEvaluator( const std::string _name, FmlObjectHandle _evaluator, FmlObjectHandle _valueType, bool _isVirtual );
-    
-    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
-};
-
-
-class PiecewiseEvaluator :
-    public Evaluator
-{
-public:
-    FmlObjectHandle indexEvaluator;
-    
-    SimpleMap<FmlObjectHandle, FmlObjectHandle> binds;
-    SimpleMap<FmlEnsembleValue, FmlObjectHandle> evaluators;
-    
-    PiecewiseEvaluator( const std::string name, FmlObjectHandle valueType, bool _isVirtual );
-    
-    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
-};
-
-
-class AggregateEvaluator :
-    public Evaluator
-{
-public:
-    SimpleMap<FmlObjectHandle, FmlObjectHandle> binds;
-    SimpleMap<FmlEnsembleValue, FmlObjectHandle> evaluators;
-    
-    FmlObjectHandle indexEvaluator;
-    
-    AggregateEvaluator( const std::string _name, FmlObjectHandle _valueType, bool _isVirtual );
-    
-    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
-};
-
-
-class ArgumentEvaluator :
-    public Evaluator
-{
-public:
-    std::set<FmlObjectHandle> arguments;
-    
-    ArgumentEvaluator( const std::string name, FmlObjectHandle _valueType, bool _isVirtual );
-    
-    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
-};
-
-
-class ExternalEvaluator :
-    public Evaluator
-{
-public:
-    std::set<FmlObjectHandle> arguments;
-    
-    ExternalEvaluator( const std::string name, FmlObjectHandle _valueType, bool _isVirtual );
-    
-    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
-};
-
-
 class DataResource :
     public FieldmlObject
 {
@@ -233,7 +141,7 @@ public:
     //NOTE: At the moment, inline resources may only be TEXT_PLAIN. 
     const std::string format;
     
-    const DataResourceType type;
+    const DataResourceType resourceType;
 
     std::vector<FmlObjectHandle> dataSources;
     
@@ -250,7 +158,7 @@ protected:
     DataSource( const std::string _name, DataResource *_resource, DataSourceType _type );
     
 public:
-    const DataSourceType type;
+    const DataSourceType sourceType;
     
     DataResource * const resource;
     
@@ -402,20 +310,6 @@ public:
     virtual int getIndexCount( bool isSparse );
     
     virtual ~DokArrayDataDescription();
-};
-
-
-class ParameterEvaluator :
-    public Evaluator
-{
-public:
-    BaseDataDescription *dataDescription;
-    
-    ParameterEvaluator( const std::string _name, FmlObjectHandle _valueType, bool _isVirtual );
-    
-    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
-    
-    virtual ~ParameterEvaluator();
 };
 
 

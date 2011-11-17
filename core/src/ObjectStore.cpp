@@ -89,7 +89,7 @@ int ObjectStore::getCount( FieldmlHandleType type )
     for( vector<FieldmlObject*>::iterator i = objects.begin(); i != objects.end(); i++ )
     {
         FieldmlObject *object = *i;
-        if( object->type == type )
+        if( object->objectType == type )
         {
             count++;
         }
@@ -122,7 +122,7 @@ FmlObjectHandle ObjectStore::getObjectByIndex( int index, FieldmlHandleType type
     for( int i = 0; i < objects.size(); i++ )
     {
         FieldmlObject *object = objects[i];
-        if( object->type == type )
+        if( object->objectType == type )
         {
             count++;
             if( count == index )
