@@ -70,7 +70,17 @@
  Typedefs
 
 */
+#ifdef _MSC_VER
+
+typedef __int32 int32_t;
+typedef unsigned __int32 uint32_t;
+typedef __int64 int64_t;
+typedef unsigned __int64 uint64_t;
+
+#else
 #include <stdint.h>
+#endif
+
 
 typedef int32_t FmlSessionHandle;               ///< A handle to a FieldML session. Almost all FieldML API calls require a session handle.
 
