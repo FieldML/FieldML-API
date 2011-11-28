@@ -76,6 +76,8 @@ OPTION_WITH_DEFAULT( ${UPPERCASE_LIBRARY_TARGET_NAME}_BUILD_STATIC_LIB "Build st
 
 OPTION_WITH_DEFAULT( FIELDML_USE_HDF5 "Do you want to use netgen?" FALSE )
 
+OPTION_WITH_DEFAULT( FIELDML_BUILD_JAVA "Do you want to build the Java bindings" FALSE )
+
 
 # Specific library options
 OPTION_WITH_DEFAULT( ${UPPERCASE_LIBRARY_TARGET_NAME}_BUILD_TEST "Build ${LIBRARY_TARGET_NAME} test application" FALSE )
@@ -84,8 +86,6 @@ OPTION_WITH_DEFAULT( ${UPPERCASE_LIBRARY_TARGET_NAME}_BUILD_TEST "Build ${LIBRAR
 IF( NOT ${UPPERCASE_LIBRARY_TARGET_NAME}_BUILD_TEST )
         SET( EXCLUDE_TEST EXCLUDE_FROM_ALL )
 ENDIF( NOT ${UPPERCASE_LIBRARY_TARGET_NAME}_BUILD_TEST )
-
-
 
 # Run ADD_SUBDIRECTORY command
 SET( LIBRARY_TARGET_NAME fieldml_api )
@@ -100,8 +100,8 @@ ADD_SUBDIRECTORY( test )
 IF( ${FIELDML_NAMESPACE_NAME}_INSTALL_CONFIG )
 	SET( LIBRARY_CONFIG_FILE ${CMAKE_CURRENT_BINARY_DIR}/${FIELDML_API_LIBRARY_TARGET_NAME}-config.cmake )
 	SET( CONFIG_FILE_CONTENTS 
-		"\nIF( NOT DEFINED _${FIELDML_NAMESPACE_NAME}_CONFIG_CMAKE TRUE )" 
-		"\nSET( _${FIELDML_NAMESPACE_NAME}_CONFIG_CMAKE TRUE )" 
+		"\nIF( NOT DEFINED _${FIELDML_NAMESPACE_NAME}_CONFIG_CMAKE TRUE )"
+		"\nSET( _${FIELDML_NAMESPACE_NAME}_CONFIG_CMAKE TRUE )"
 	        "\nGET_FILENAME_COMPONENT( SELF_DIR \"\${CMAKE_CURRENT_LIST_FILE}\" PATH )"
 	        "\nINCLUDE( \${SELF_DIR}/${FIELDML_API_LIBRARY_TARGET_NAME}-targets.cmake )"
 	        "\nGET_FILENAME_COMPONENT( ${FIELDML_NAMESPACE_NAME}_INCLUDE_DIRS \"\${SELF_DIR}/../../include\" ABSOLUTE )"
@@ -116,3 +116,42 @@ IF( ${FIELDML_NAMESPACE_NAME}_INSTALL_CONFIG )
 		DESTINATION lib/cmake )
 ENDIF( ${FIELDML_NAMESPACE_NAME}_INSTALL_CONFIG )
 
+IF ( FIELDML_BUILD_JAVA )
+  FIND_PACKAGE(SWIG REQUIRED)
+  FIND_PACKAGE(JNI)
+  FIND_PACKAGE(Java)
+  INCLUDE_DIRECTORIES(${JNI_INCLUDE_DIRS})
+  INCLUDE_DIRECTORIES(io/src)
+  INCLUDE_DIRECTORIES(core/src)
+  INCLUDE(${SWIG_USE_FILE})
+
+  INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
+  INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+
+  SET(CMAKE_SWIG_FLAGS "-Iio/src;-Icore/src;-package;fieldml.jni")
+  SET(CMAKE_SWIG_OUTDIR "fieldml/jni")
+
+  SET_SOURCE_FILES_PROPERTIES(jni/fieldml_api.i PROPERTIES CPLUSPLUS ON)
+  SET_SOURCE_FILES_PROPERTIES(jni/fieldml_io.i PROPERTIES CPLUSPLUS ON)
+
+  # If you change these version, also change the .i files.
+  SWIG_ADD_MODULE(fieldml_jni_0.4 java jni/fieldml_api.i)
+  SWIG_LINK_LIBRARIES(fieldml_jni_0.4 fieldml_api)
+
+  SWIG_ADD_MODULE(fieldml_io_jni_0.4 java jni/fieldml_io.i)
+  SWIG_LINK_LIBRARIES(fieldml_io_jni_0.4 fieldml_api fieldml_io_api)
+
+  # Also make the jar file...
+  SET(javafiles "fieldml/jni/FieldmlIoJNI.java;fieldml/jni/FieldmlIo.java;fieldml/jni/FieldmlIoConstants.java;fieldml/jni/SWIGTYPE_p_FmlSessionHandle.java;fieldml/jni/SWIGTYPE_p_FmlObjectHandle.java;fieldml/jni/SWIGTYPE_p_FmlBoolean.java;fieldml/jni/SWIGTYPE_p_bool.java;fieldml/jni/EnsembleMembersType.java;fieldml/jni/DataDescriptionType.java;fieldml/jni/DataResourceType.java;fieldml/jni/DataSourceType.java;fieldml/jni/FieldmlHandleType.java;fieldml/jni/FieldmlApiJNI.java;fieldml/jni/FieldmlApi.java;fieldml/jni/FieldmlApiConstants.java")
+  STRING(REPLACE ".java" ".class" classfiles "${javafiles}")
+  MESSAGE(STATUS "${javafiles}")
+
+  ADD_CUSTOM_COMMAND(OUTPUT ${classfiles}
+                     COMMAND ${Java_JAVAC_EXECUTABLE} ARGS ${javafiles}
+                     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/jni/fieldml_ioJAVA_wrap.cxx  ${CMAKE_CURRENT_BINARY_DIR}/jni/fieldml_apiJAVA_wrap.cxx)
+  ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/jni/fieldml.jar
+                     COMMAND ${Java_JAR_EXECUTABLE} ARGS cf ${CMAKE_CURRENT_BINARY_DIR}/jni/fieldml.jar ${classfiles}
+                     DEPENDS ${classfiles})
+  ADD_CUSTOM_TARGET(jnijar ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/jni/fieldml.jar)
+
+ENDIF ( FIELDML_BUILD_JAVA )

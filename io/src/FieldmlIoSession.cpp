@@ -39,6 +39,7 @@
  *
  */
 
+#include <cstdio>
 #include "StringUtil.h"
 #include "FieldmlIoSession.h"
 

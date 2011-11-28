@@ -81,17 +81,17 @@
 %pragma(java) jniclasscode=%{
     static
     {
-        System.loadLibrary("fieldml_jni_0.3");
+        System.loadLibrary("fieldml_jni_0.4");
     }
 %}
 
 
 %{
 typedef int int32_t;
-#include "Fieldml_api.h"
+#include "fieldml_api.h"
 #include "FieldmlIoApi.h"
 %}
 
-%include "Fieldml_api.h"
+%include "fieldml_api.h"
 %include "FieldmlIoApi.h"
 
