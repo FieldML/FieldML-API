@@ -5,5 +5,12 @@
 .*\.mod
 .*\.so
 .*\.dll
-jni/fieldml
+.*\.o
+.*\.a
+CMakeFiles
+fieldml/jni
 TAGS
+Makefile
+CMakeCache.txt
+.*\.cmake
+.*JAVA_wrap.*

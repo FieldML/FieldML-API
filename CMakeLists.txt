@@ -138,17 +138,16 @@ IF ( FIELDML_BUILD_JAVA )
   SWIG_ADD_MODULE(fieldml_jni_0.4 java jni/fieldml_api.i)
   SWIG_LINK_LIBRARIES(fieldml_jni_0.4 fieldml_api)
 
-  SWIG_ADD_MODULE(fieldml_io_jni_0.4 java jni/fieldml_io.i)
-  SWIG_LINK_LIBRARIES(fieldml_io_jni_0.4 fieldml_api fieldml_io_api)
+  #SWIG_ADD_MODULE(fieldml_io_jni_0.4 java jni/fieldml_io.i)
+  #SWIG_LINK_LIBRARIES(fieldml_io_jni_0.4 fieldml_api fieldml_io_api)
 
   # Also make the jar file...
-  SET(javafiles "fieldml/jni/FieldmlIoJNI.java;fieldml/jni/FieldmlIo.java;fieldml/jni/FieldmlIoConstants.java;fieldml/jni/SWIGTYPE_p_FmlSessionHandle.java;fieldml/jni/SWIGTYPE_p_FmlObjectHandle.java;fieldml/jni/SWIGTYPE_p_FmlBoolean.java;fieldml/jni/SWIGTYPE_p_bool.java;fieldml/jni/EnsembleMembersType.java;fieldml/jni/DataDescriptionType.java;fieldml/jni/DataResourceType.java;fieldml/jni/DataSourceType.java;fieldml/jni/FieldmlHandleType.java;fieldml/jni/FieldmlApiJNI.java;fieldml/jni/FieldmlApi.java;fieldml/jni/FieldmlApiConstants.java")
-  STRING(REPLACE ".java" ".class" classfiles "${javafiles}")
-  MESSAGE(STATUS "${javafiles}")
+  SET(javafiles "fieldml/jni/FieldmlIo.java;fieldml/jni/FieldmlIoConstants.java;fieldml/jni/SWIGTYPE_p_FmlSessionHandle.java;fieldml/jni/SWIGTYPE_p_FmlObjectHandle.java;fieldml/jni/SWIGTYPE_p_FmlBoolean.java;fieldml/jni/SWIGTYPE_p_bool.java;fieldml/jni/EnsembleMembersType.java;fieldml/jni/DataDescriptionType.java;fieldml/jni/DataResourceType.java;fieldml/jni/DataSourceType.java;fieldml/jni/FieldmlHandleType.java;fieldml/jni/FieldmlApiJNI.java;fieldml/jni/FieldmlApi.java;fieldml/jni/FieldmlApiConstants.java")
+  SET(classfiles "fieldml/jni/FieldmlIo.class;fieldml/jni/FieldmlIoConstants.class;fieldml/jni/SWIGTYPE_p_FmlSessionHandle.class;fieldml/jni/SWIGTYPE_p_FmlObjectHandle.class;fieldml/jni/SWIGTYPE_p_bool.class;fieldml/jni/SWIGTYPE_p_FmlBoolean.class;fieldml/jni/EnsembleMembersType\\$$SwigNext.class;fieldml/jni/EnsembleMembersType.class;fieldml/jni/DataDescriptionType\\$$SwigNext.class;fieldml/jni/DataDescriptionType.class;fieldml/jni/DataResourceType\\$$SwigNext.class;fieldml/jni/DataResourceType.class;fieldml/jni/DataSourceType\\$$SwigNext.class;fieldml/jni/DataSourceType.class;fieldml/jni/FieldmlHandleType\\$$SwigNext.class;fieldml/jni/FieldmlHandleType.class;fieldml/jni/FieldmlApiJNI.class;fieldml/jni/FieldmlApi.class;fieldml/jni/FieldmlApiConstants.class")
 
   ADD_CUSTOM_COMMAND(OUTPUT ${classfiles}
                      COMMAND ${Java_JAVAC_EXECUTABLE} ARGS ${javafiles}
-                     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/jni/fieldml_ioJAVA_wrap.cxx  ${CMAKE_CURRENT_BINARY_DIR}/jni/fieldml_apiJAVA_wrap.cxx)
+                     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/jni/fieldml_apiJAVA_wrap.cxx)
   ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/jni/fieldml.jar
                      COMMAND ${Java_JAR_EXECUTABLE} ARGS cf ${CMAKE_CURRENT_BINARY_DIR}/jni/fieldml.jar ${classfiles}
                      DEPENDS ${classfiles})

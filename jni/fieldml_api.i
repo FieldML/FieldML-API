@@ -89,7 +89,9 @@
 %{
 typedef int int32_t;
 #include "fieldml_api.h"
+#include "FieldmlIoApi.h"
 %}
 
+%include "FieldmlIoApi.h"
 %include "fieldml_api.h"
 
