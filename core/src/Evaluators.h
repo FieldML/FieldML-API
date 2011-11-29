@@ -59,8 +59,8 @@ public:
 
     Evaluator( const std::string _name, FieldmlHandleType _type, FmlObjectHandle _valueType, bool _isVirtual );
     
-    virtual void addDelegates( std::set<FmlObjectHandle> &delegates ) = 0;
-
+    virtual bool addDelegates( std::set<FmlObjectHandle> &delegates ) = 0;
+    
     static Evaluator *checkedCast( FieldmlSession *session, FmlObjectHandle objectHandle );
 };
     
@@ -73,7 +73,7 @@ public:
     
     ConstantEvaluator( const std::string _name, const std::string _literal, FmlObjectHandle _valueType );
     
-    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
+    virtual bool addDelegates( std::set<FmlObjectHandle> &delegates );
     
     static ConstantEvaluator *checkedCast( FieldmlSession *session, FmlObjectHandle objectHandle );
 };
@@ -89,7 +89,7 @@ public:
 
     ReferenceEvaluator( const std::string _name, FmlObjectHandle _evaluator, FmlObjectHandle _valueType, bool _isVirtual );
     
-    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
+    virtual bool addDelegates( std::set<FmlObjectHandle> &delegates );
     
     static ReferenceEvaluator *checkedCast( FieldmlSession *session, FmlObjectHandle objectHandle );
 };
@@ -106,7 +106,7 @@ public:
     
     PiecewiseEvaluator( const std::string name, FmlObjectHandle valueType, bool _isVirtual );
     
-    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
+    virtual bool addDelegates( std::set<FmlObjectHandle> &delegates );
     
     static PiecewiseEvaluator *checkedCast( FieldmlSession *session, FmlObjectHandle objectHandle );
 };
@@ -123,7 +123,7 @@ public:
     
     AggregateEvaluator( const std::string _name, FmlObjectHandle _valueType, bool _isVirtual );
     
-    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
+    virtual bool addDelegates( std::set<FmlObjectHandle> &delegates );
     
     static AggregateEvaluator *checkedCast( FieldmlSession *session, FmlObjectHandle objectHandle );
 };
@@ -137,7 +137,7 @@ public:
     
     ArgumentEvaluator( const std::string name, FmlObjectHandle _valueType, bool _isVirtual );
     
-    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
+    virtual bool addDelegates( std::set<FmlObjectHandle> &delegates );
     
     static ArgumentEvaluator *checkedCast( FieldmlSession *session, FmlObjectHandle objectHandle );
 };
@@ -151,7 +151,7 @@ public:
     
     ExternalEvaluator( const std::string name, FmlObjectHandle _valueType, bool _isVirtual );
     
-    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
+    virtual bool addDelegates( std::set<FmlObjectHandle> &delegates );
     
     static ExternalEvaluator *checkedCast( FieldmlSession *session, FmlObjectHandle objectHandle );
 };
@@ -165,7 +165,7 @@ public:
     
     ParameterEvaluator( const std::string _name, FmlObjectHandle _valueType, bool _isVirtual );
     
-    virtual void addDelegates( std::set<FmlObjectHandle> &delegates );
+    virtual bool addDelegates( std::set<FmlObjectHandle> &delegates );
     
     virtual ~ParameterEvaluator();
     

@@ -341,7 +341,6 @@ bool FieldmlSession::getDelegateEvaluators( const set<FmlObjectHandle> &evaluato
     
 bool FieldmlSession::getDelegateEvaluators( FmlObjectHandle handle, vector<FmlObjectHandle> &stack, set<FmlObjectHandle> &delegates )
 {
-    FieldmlObject *object = getObject( handle );
     set<FmlObjectHandle> evaluators;
     
     if( handle == FML_INVALID_HANDLE )
@@ -356,41 +355,19 @@ bool FieldmlSession::getDelegateEvaluators( FmlObjectHandle handle, vector<FmlOb
         return false;
     }
     
+    //TODO: Figure out why this works even though there's no popping happening.
     stack.push_back( handle );
-    if( object->objectType == FHT_REFERENCE_EVALUATOR )
+    
+    Evaluator *evaluator = Evaluator::checkedCast( this, handle );
+    
+    if( evaluator != NULL )
     {
-        ReferenceEvaluator *evaluator = (ReferenceEvaluator*)object;
-        evaluator->addDelegates( evaluators );
-        if( !getDelegateEvaluators( evaluators, stack, delegates ) )
+        if( evaluator->addDelegates( evaluators ) )
         {
-            return false;
-        }
-    }
-    else if( object->objectType == FHT_AGGREGATE_EVALUATOR )
-    {
-        AggregateEvaluator *evaluator = (AggregateEvaluator*)object;
-        evaluator->addDelegates( evaluators );
-        if( !getDelegateEvaluators( evaluators, stack, delegates ) )
-        {
-            return false;
-        }
-    }
-    else if( object->objectType == FHT_PIECEWISE_EVALUATOR )
-    {
-        PiecewiseEvaluator *evaluator = (PiecewiseEvaluator*)object;
-        evaluator->addDelegates( evaluators );
-        if( !getDelegateEvaluators( evaluators, stack, delegates ) )
-        {
-            return false;
-        }
-    }
-    else if( object->objectType == FHT_PARAMETER_EVALUATOR )
-    {
-        ParameterEvaluator *evaluator = (ParameterEvaluator*)object;
-        evaluator->addDelegates( evaluators );
-        if( !getDelegateEvaluators( evaluators, stack, delegates ) )
-        {
-            return false;
+            if( !getDelegateEvaluators( evaluators, stack, delegates ) )
+            {
+                return false;
+            }
         }
     }
     

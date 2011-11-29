@@ -103,8 +103,9 @@ ConstantEvaluator::ConstantEvaluator( const string _name, const string _valueStr
 }
 
 
-void ConstantEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
+bool ConstantEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
 {
+    return false;
 }
 
 
@@ -122,12 +123,14 @@ ReferenceEvaluator::ReferenceEvaluator( const string _name, FmlObjectHandle _eva
 }
 
 
-void ReferenceEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
+bool ReferenceEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
 {
     delegates.insert( sourceEvaluator );
     
     const set<FmlObjectHandle> &values = binds.getValues();
     delegates.insert( values.begin(), values.end() );
+    
+    return true;
 }
 
 
@@ -143,8 +146,9 @@ ArgumentEvaluator::ArgumentEvaluator( const string _name, FmlObjectHandle _value
 }
 
 
-void ArgumentEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
+bool ArgumentEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
 {
+    return false;
 }
 
 
@@ -160,8 +164,9 @@ ExternalEvaluator::ExternalEvaluator( const string _name, FmlObjectHandle _value
 }
 
 
-void ExternalEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
+bool ExternalEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
 {
+    return false;
 }
 
 
@@ -178,9 +183,11 @@ ParameterEvaluator::ParameterEvaluator( const string _name, FmlObjectHandle _val
 }
 
 
-void ParameterEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
+bool ParameterEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
 {
     dataDescription->addDelegates( delegates );
+    
+    return true;
 }
 
 
@@ -205,7 +212,7 @@ PiecewiseEvaluator::PiecewiseEvaluator( const string _name, FmlObjectHandle _val
 }
 
 
-void PiecewiseEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
+bool PiecewiseEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
 {
     const set<FmlObjectHandle> &evaluatorValues = evaluators.getValues();
     delegates.insert( evaluatorValues.begin(), evaluatorValues.end() );
@@ -214,6 +221,8 @@ void PiecewiseEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
     
     const set<FmlObjectHandle> &bindValues = binds.getValues();
     delegates.insert( bindValues.begin(), bindValues.end() );
+    
+    return true;
 }
 
 
@@ -232,7 +241,7 @@ AggregateEvaluator::AggregateEvaluator( const string _name, FmlObjectHandle _val
 }
 
 
-void AggregateEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
+bool AggregateEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
 {
     const set<FmlObjectHandle> &evaluatorValues = evaluators.getValues();
     delegates.insert( evaluatorValues.begin(), evaluatorValues.end() );
@@ -241,6 +250,8 @@ void AggregateEvaluator::addDelegates( set<FmlObjectHandle> &delegates )
     
     const set<FmlObjectHandle> &bindValues = binds.getValues();
     delegates.insert( bindValues.begin(), bindValues.end() );
+    
+    return true;
 }
 
 
