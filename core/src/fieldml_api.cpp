@@ -47,6 +47,7 @@
 
 #include "fieldml_api.h"
 #include "FieldmlSession.h"
+#include "ErrorContextAutostack.h"
 #include "fieldml_structs.h"
 #include "Evaluators.h"
 #include "fieldml_write.h"
@@ -61,27 +62,34 @@ using namespace std;
 //
 // Utility
 //
+// NOTE: A number of these methods are just wrappers around FieldmlSession
+// methods, but which also set error codes. Methods such as FieldmlSession::getObject
+// should not set error codes themselves, as failure is not necessarily an error.
+//
 //========================================================================
 
-#define getSession( handle ) getSessionAndSetContext( handle, __FILE__, __LINE__ )
-
-static FieldmlSession *getSessionAndSetContext( FmlSessionHandle handle, const char * file, int line )
+static FieldmlObject *getObject( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = FieldmlSession::handleToSession( handle );
-    if( session != NULL )
+    ERROR_AUTOSTACK( session );
+
+    FieldmlObject *object = session->getObject( objectHandle );
+    
+    if( object == NULL )
     {
-        session->setErrorContext( file, line );
-        session->setError( FML_ERR_NO_ERROR );
+        session->setError( FML_ERR_UNKNOWN_OBJECT, "Invalid object handle." );
     }
-    return session;
+    
+    return object;
 }
 
 
 static bool checkLocal( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
+    ERROR_AUTOSTACK( session );
+
     if( session->region == NULL )
     {
-        session->setError( FML_ERR_INVALID_REGION );
+        session->setError( FML_ERR_INVALID_REGION, "FieldML session has no region." );
         return false;
     }
     
@@ -93,7 +101,7 @@ static bool checkLocal( FieldmlSession *session, FmlObjectHandle objectHandle )
     
     if( !session->region->hasLocalObject( objectHandle, true, true ) )
     {
-        session->setError( FML_ERR_NONLOCAL_OBJECT );
+        session->setError( FML_ERR_NONLOCAL_OBJECT, objectHandle, "Not a local object." );
         return false;
     }
     
@@ -101,24 +109,13 @@ static bool checkLocal( FieldmlSession *session, FmlObjectHandle objectHandle )
 }
 
 
-static FieldmlObject *getObject( FieldmlSession *session, FmlObjectHandle objectHandle )
-{
-    FieldmlObject *object = session->getObject( objectHandle );
-    
-    if( object == NULL )
-    {
-        session->setError( FML_ERR_UNKNOWN_OBJECT );
-    }
-    
-    return object;
-}
-
-
 static FmlObjectHandle addObject( FieldmlSession *session, FieldmlObject *object )
 {
+    ERROR_AUTOSTACK( session );
+
     if( session->region == NULL )
     {
-        session->setError( FML_ERR_INVALID_REGION );
+        session->setError( FML_ERR_INVALID_REGION, "FieldML session has no region" );
         return FML_INVALID_HANDLE;
     }
 
@@ -136,7 +133,7 @@ static FmlObjectHandle addObject( FieldmlSession *session, FieldmlObject *object
     session->logError( "Handle collision. Cannot replace", object->name.c_str(), oldObject->name.c_str() );
     delete object;
     
-    session->setError( FML_ERR_NAME_COLLISION );
+    session->setError( FML_ERR_NAME_COLLISION, "There is already an object named " + object->name + " in this scope." );
     
     return FML_INVALID_HANDLE;
 }
@@ -144,6 +141,14 @@ static FmlObjectHandle addObject( FieldmlSession *session, FieldmlObject *object
 
 static SimpleMap<FmlEnsembleValue, FmlObjectHandle> *getEvaluatorMap( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
+    ERROR_AUTOSTACK( session );
+
+    FieldmlObject *object = getObject( session, objectHandle );
+    if( object == NULL )
+    {
+        return NULL;
+    }
+
     AggregateEvaluator *aggregate = AggregateEvaluator::checkedCast( session, objectHandle );
     if( aggregate != NULL )
     {
@@ -156,13 +161,21 @@ static SimpleMap<FmlEnsembleValue, FmlObjectHandle> *getEvaluatorMap( FieldmlSes
         return &piecewise->evaluators;
     }
 
-    session->setError( FML_ERR_INVALID_OBJECT );
+    session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must either be a Piecewise or Aggregate evaluator." );
     return NULL;
 }
 
 
 static SimpleMap<FmlObjectHandle, FmlObjectHandle> *getBindMap( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
+    ERROR_AUTOSTACK( session );
+
+    FieldmlObject *object = getObject( session, objectHandle );
+    if( object == NULL )
+    {
+        return NULL;
+    }
+    
     AggregateEvaluator *aggregate = AggregateEvaluator::checkedCast( session, objectHandle );
     if( aggregate != NULL )
     {
@@ -181,7 +194,7 @@ static SimpleMap<FmlObjectHandle, FmlObjectHandle> *getBindMap( FieldmlSession *
         return &reference->binds;
     }
 
-    session->setError( FML_ERR_INVALID_OBJECT );
+    session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be an Aggregate, Piecewise or Reference evaluator." );
     return NULL;
 }
 
@@ -189,11 +202,20 @@ static SimpleMap<FmlObjectHandle, FmlObjectHandle> *getBindMap( FieldmlSession *
 static vector<FmlObjectHandle> getArgumentList( FieldmlSession *session, FmlObjectHandle objectHandle, bool isUnbound, bool isUsed )
 {
     vector<FmlObjectHandle> args;
+
+    ERROR_AUTOSTACK( session );
+
+    FieldmlObject *object = getObject( session, objectHandle );
+    if( object == NULL )
+    {
+        return args;
+    }
+
     Evaluator *evaluator = Evaluator::checkedCast( session, objectHandle );
     
     if( evaluator == NULL )
     {
-        session->setError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot get arguments. Must be an evalator." );
         return args;
     }
 
@@ -234,11 +256,13 @@ static vector<FmlObjectHandle> getArgumentList( FieldmlSession *session, FmlObje
 
 static bool checkCyclicDependency( FieldmlSession *session, FmlObjectHandle objectHandle, FmlObjectHandle objectDependancy )
 {
+    ERROR_AUTOSTACK( session );
+
     set<FmlObjectHandle> delegates;
     session->getDelegateEvaluators( objectDependancy, delegates );
     if( FmlUtil::contains( delegates, objectHandle ) )
     {
-        session->setError( FML_ERR_CYCLIC_DEPENDENCY );
+        session->setError( FML_ERR_CYCLIC_DEPENDENCY, objectHandle, "Cyclic dependancy." );
         return false;
     }
     
@@ -282,6 +306,8 @@ static int cappedCopyAndFree( const char * source, char * buffer, int bufferLeng
 
 static DataSource *objectAsDataSource( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
+    ERROR_AUTOSTACK( session );
+
     FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
@@ -291,7 +317,7 @@ static DataSource *objectAsDataSource( FieldmlSession *session, FmlObjectHandle 
 
     if( object->objectType != FHT_DATA_SOURCE )
     {
-        session->setError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT, "Must be a data source." );
         return NULL;
     }
     
@@ -301,6 +327,8 @@ static DataSource *objectAsDataSource( FieldmlSession *session, FmlObjectHandle 
 
 static ArrayDataSource *getArrayDataSource( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
+    ERROR_AUTOSTACK( session );
+
     DataSource *dataSource = objectAsDataSource( session, objectHandle );
     
     if( dataSource == NULL )
@@ -310,7 +338,7 @@ static ArrayDataSource *getArrayDataSource( FieldmlSession *session, FmlObjectHa
 
     if( dataSource->sourceType != DATA_SOURCE_ARRAY )
     {
-        session->setError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be an array data source." );
         return NULL;
     }
 
@@ -321,6 +349,8 @@ static ArrayDataSource *getArrayDataSource( FieldmlSession *session, FmlObjectHa
 
 static DataResource *getDataResource( FieldmlSession *session, FmlObjectHandle objectHandle )
 {
+    ERROR_AUTOSTACK( session );
+
     FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL )
@@ -330,7 +360,7 @@ static DataResource *getDataResource( FieldmlSession *session, FmlObjectHandle o
 
     if( object->objectType != FHT_DATA_RESOURCE )
     {
-        session->setError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be a data resource." );
         return NULL;
     }
     
@@ -340,6 +370,8 @@ static DataResource *getDataResource( FieldmlSession *session, FmlObjectHandle o
 
 static bool checkIsValueType( FieldmlSession *session, FmlObjectHandle objectHandle, bool allowContinuous, bool allowEnsemble, bool allowMesh, bool allowBoolean )
 {
+    ERROR_AUTOSTACK( session );
+
     FieldmlObject *object = getObject( session, objectHandle );
     if( object == NULL )
     {
@@ -364,10 +396,12 @@ static bool checkIsValueType( FieldmlSession *session, FmlObjectHandle objectHan
 
 static bool checkIsEvaluatorType( FieldmlSession *session, FmlObjectHandle objectHandle, bool allowContinuous, bool allowEnsemble, bool allowBoolean )
 {
+    ERROR_AUTOSTACK( session );
+
     Evaluator *evaluator = Evaluator::checkedCast( session, objectHandle );
     if( evaluator == NULL )
     {
-        session->setError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Is not an evaluator." );
         return false;
     }
     
@@ -377,6 +411,8 @@ static bool checkIsEvaluatorType( FieldmlSession *session, FmlObjectHandle objec
 
 static bool checkIsTypeCompatible( FieldmlSession *session, FmlObjectHandle objectHandle1, FmlObjectHandle objectHandle2 )
 {
+    ERROR_AUTOSTACK( session );
+
     if( !checkIsValueType( session, objectHandle1, true, true, false, true ) )
     {
         return false;
@@ -426,6 +462,8 @@ static bool checkIsTypeCompatible( FieldmlSession *session, FmlObjectHandle obje
 
 static bool checkIsEvaluatorTypeCompatible( FieldmlSession *session, FmlObjectHandle objectHandle1, FmlObjectHandle objectHandle2 )
 {
+    ERROR_AUTOSTACK( session );
+
     if( !checkIsEvaluatorType( session, objectHandle1, true, true, true ) )
     {
         return false;
@@ -451,19 +489,18 @@ static bool checkIsEvaluatorTypeCompatible( FieldmlSession *session, FmlObjectHa
 FmlSessionHandle Fieldml_CreateFromFile( const char * filename )
 {
     FieldmlSession *session = new FieldmlSession();
-    session->setErrorContext( __FILE__, __LINE__ );
-    session->setError( FML_ERR_NO_ERROR );
+    ErrorContextAutostack bob( session, __FILE__, __LINE__, __ECA_FUNC__ );
     
     if( filename == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_1 );
+        session->setError( FML_ERR_INVALID_PARAMETER_1, "Cannot create FieldML session. Invalid filename." );
     }
     else
     {
         session->region = session->addResourceRegion( filename, "" );
         if( session->region == NULL )
         {
-            session->setError( FML_ERR_READ_ERR );
+            session->setError( FML_ERR_READ_ERR, "Cannot create FieldML session. Invalid document or read error." );
         }
         else
         {
@@ -479,16 +516,15 @@ FmlSessionHandle Fieldml_CreateFromFile( const char * filename )
 FmlSessionHandle Fieldml_Create( const char * location, const char * name )
 {
     FieldmlSession *session = new FieldmlSession();
-    session->setErrorContext( __FILE__, __LINE__ );
-    session->setError( FML_ERR_NO_ERROR );
+    ERROR_AUTOSTACK( session );
     
     if( location == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_1 );
+        session->setError( FML_ERR_INVALID_PARAMETER_1, "Cannot create FieldML session. Invalid location." );
     }
     else if( name == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        session->setError( FML_ERR_INVALID_PARAMETER_2, "Cannot create FieldML session. Invalid name." );
     }
     else
     {
@@ -501,7 +537,9 @@ FmlSessionHandle Fieldml_Create( const char * location, const char * name )
 
 FmlErrorNumber Fieldml_SetDebug( FmlSessionHandle handle, int debug )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+    
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
@@ -509,13 +547,12 @@ FmlErrorNumber Fieldml_SetDebug( FmlSessionHandle handle, int debug )
         
     session->setDebug( debug );
     
-    return session->setError( FML_ERR_NO_ERROR );
+    return session->setError( FML_ERR_NO_ERROR, "" );
 }
 
 
 FmlErrorNumber Fieldml_GetLastError( FmlSessionHandle handle )
 {
-    //Bypass the error state reset in getSession.
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     if( session == NULL )
     {
@@ -528,21 +565,23 @@ FmlErrorNumber Fieldml_GetLastError( FmlSessionHandle handle )
 
 FmlErrorNumber Fieldml_WriteFile( FmlSessionHandle handle, const char * filename )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+    
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
     if( session->region == NULL )
     {
-        return session->setError( FML_ERR_INVALID_REGION );
+        return session->setError( FML_ERR_INVALID_REGION, "Cannot write FieldML file. FieldML session has no region." );
     }
     if( filename == NULL )
     {
-        return session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_2, "Cannot write FieldML file. Invalid filename." );
     }
         
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
     session->region->setRoot( getDirectory( filename ) );
 
     return writeFieldmlFile( session, handle, filename );
@@ -557,18 +596,20 @@ void Fieldml_Destroy( FmlSessionHandle handle )
 
 char * Fieldml_GetRegionName( FmlSessionHandle handle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+    
     if( session == NULL )
     {
         return NULL;
     }
     if( session->region == NULL )
     {
-        session->setError( FML_ERR_INVALID_REGION );
+        session->setError( FML_ERR_INVALID_REGION, "Cannot get region name. FieldML session has no region." );
         return NULL;
     }
         
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
     return cstrCopy( session->region->getName() );
 }
 
@@ -592,7 +633,9 @@ int Fieldml_CopyRegionName( FmlSessionHandle handle, char * buffer, int bufferLe
 
 char * Fieldml_GetRegionRoot( FmlSessionHandle handle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+    
     if( session == NULL )
     {
         return NULL;
@@ -600,11 +643,11 @@ char * Fieldml_GetRegionRoot( FmlSessionHandle handle )
     
     if( session->region == NULL )
     {
-        session->setError( FML_ERR_INVALID_REGION );
+        session->setError( FML_ERR_INVALID_REGION, "Cannot get region root. FieldML session has no region." );
         return NULL;
     }
         
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
     return cstrCopy( session->region->getRoot() );
 }
 
@@ -617,26 +660,30 @@ int Fieldml_CopyRegionRoot( FmlSessionHandle handle, char * buffer, int bufferLe
 
 int Fieldml_GetErrorCount( FmlSessionHandle handle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
     }
         
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
     return session->getErrorCount();
 }
 
 
 char * Fieldml_GetError( FmlSessionHandle handle, int index )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return NULL;
     }
         
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
     return cstrCopy( session->getError( index - 1 ) );
 }
 
@@ -649,52 +696,60 @@ int Fieldml_CopyError( FmlSessionHandle handle, int errorIndex, char * buffer, i
 
 FmlErrorNumber Fieldml_ClearErrors( FmlSessionHandle handle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
         
     session->clearErrors();
-    return session->setError( FML_ERR_NO_ERROR );
+    return session->setError( FML_ERR_NO_ERROR, "" );
 }
 
 
 int Fieldml_GetTotalObjectCount( FmlSessionHandle handle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
     }
         
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
     return session->objects.getCount();
 }
 
 
 FmlObjectHandle Fieldml_GetObjectByIndex( FmlSessionHandle handle, const int objectIndex )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
         
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
     return session->objects.getObjectByIndex( objectIndex );
 }
 
 
 int Fieldml_GetObjectCount( FmlSessionHandle handle, FieldmlHandleType type )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
     }
         
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
     if( type == FHT_UNKNOWN )
     {
         return -1;
@@ -706,18 +761,20 @@ int Fieldml_GetObjectCount( FmlSessionHandle handle, FieldmlHandleType type )
 
 FmlObjectHandle Fieldml_GetObject( FmlSessionHandle handle, FieldmlHandleType objectType, int objectIndex )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
         
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
 
     FmlObjectHandle object = session->objects.getObjectByIndex( objectIndex, objectType );
     if( object == FML_INVALID_HANDLE )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );  
+        session->setError( FML_ERR_INVALID_PARAMETER_3, "Cannot get object by type. Invalid index." );  
     }
     
     return object;
@@ -726,19 +783,21 @@ FmlObjectHandle Fieldml_GetObject( FmlSessionHandle handle, FieldmlHandleType ob
 
 FmlObjectHandle Fieldml_GetObjectByName( FmlSessionHandle handle, const char * name )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     if( session->region == NULL )
     {
-        session->setError( FML_ERR_INVALID_REGION );
+        session->setError( FML_ERR_INVALID_REGION, "Cannot get object by local name. FieldML session has no region." );
         return FML_INVALID_HANDLE;
     }
     if( name == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );  
+        session->setError( FML_ERR_INVALID_PARAMETER_2, "Cannot get object by local name. Invalid name." );  
         return FML_INVALID_HANDLE;
     }
         
@@ -750,14 +809,16 @@ FmlObjectHandle Fieldml_GetObjectByName( FmlSessionHandle handle, const char * n
 
 FmlObjectHandle Fieldml_GetObjectByDeclaredName( FmlSessionHandle handle, const char * name )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     if( name == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );  
+        session->setError( FML_ERR_INVALID_PARAMETER_2, "Cannot get object by declared name. Invalid name." );  
         return FML_INVALID_HANDLE;
     }
     
@@ -769,7 +830,9 @@ FmlObjectHandle Fieldml_GetObjectByDeclaredName( FmlSessionHandle handle, const 
 
 FieldmlHandleType Fieldml_GetObjectType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FHT_UNKNOWN;
@@ -788,7 +851,9 @@ FieldmlHandleType Fieldml_GetObjectType( FmlSessionHandle handle, FmlObjectHandl
 
 FmlObjectHandle Fieldml_GetTypeComponentEnsemble( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -807,14 +872,16 @@ FmlObjectHandle Fieldml_GetTypeComponentEnsemble( FmlSessionHandle handle, FmlOb
         return continuousType->componentType;
     }
 
-    session->setError( FML_ERR_INVALID_OBJECT );  
+    session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot get component ensemble. Must be a type with components." );  
     return FML_INVALID_HANDLE;
 }
 
 
 int Fieldml_GetTypeComponentCount( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
@@ -837,7 +904,9 @@ int Fieldml_GetTypeComponentCount( FmlSessionHandle handle, FmlObjectHandle obje
 
 int Fieldml_GetMemberCount( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
@@ -862,14 +931,16 @@ int Fieldml_GetMemberCount( FmlSessionHandle handle, FmlObjectHandle objectHandl
     }
         
 
-    session->setError( FML_ERR_INVALID_OBJECT );  
+    session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot get member count. Must be a type with members/elements." );  
     return -1;
 }
 
 
 FmlEnsembleValue Fieldml_GetEnsembleMembersMin( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
@@ -893,14 +964,16 @@ FmlEnsembleValue Fieldml_GetEnsembleMembersMin( FmlSessionHandle handle, FmlObje
         return Fieldml_GetEnsembleMembersMin( handle, meshType->elementsType );
     }
         
-    session->setError( FML_ERR_INVALID_OBJECT );  
+    session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be an ensemble or mesh type." );  
     return -1;
 }
 
 
 FmlEnsembleValue Fieldml_GetEnsembleMembersMax( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
@@ -924,14 +997,16 @@ FmlEnsembleValue Fieldml_GetEnsembleMembersMax( FmlSessionHandle handle, FmlObje
         return Fieldml_GetEnsembleMembersMax( handle, meshType->elementsType );
     }
         
-    session->setError( FML_ERR_INVALID_OBJECT );  
+    session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be an ensemble or mesh type." );  
     return -1;
 }
 
 
 int Fieldml_GetEnsembleMembersStride( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
@@ -955,14 +1030,16 @@ int Fieldml_GetEnsembleMembersStride( FmlSessionHandle handle, FmlObjectHandle o
         return Fieldml_GetEnsembleMembersStride( handle, meshType->elementsType );
     }
         
-    session->setError( FML_ERR_INVALID_OBJECT );  
+    session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be an ensemble or mesh type." );  
     return -1;
 }
 
 
 EnsembleMembersType Fieldml_GetEnsembleMembersType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return MEMBER_UNKNOWN;
@@ -986,14 +1063,16 @@ EnsembleMembersType Fieldml_GetEnsembleMembersType( FmlSessionHandle handle, Fml
         return Fieldml_GetEnsembleMembersType( handle, meshType->elementsType );
     }
     
-    session->setError( FML_ERR_INVALID_OBJECT );  
+    session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be an ensemble or mesh type." );  
     return MEMBER_UNKNOWN;
 }
 
 
 FmlErrorNumber Fieldml_SetEnsembleMembersDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle, EnsembleMembersType type, int count, FmlObjectHandle dataSourceHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
@@ -1006,7 +1085,7 @@ FmlErrorNumber Fieldml_SetEnsembleMembersDataSource( FmlSessionHandle handle, Fm
     
     if( Fieldml_GetObjectType( handle, dataSourceHandle ) != FHT_DATA_SOURCE )
     {
-        return session->setError( FML_ERR_INVALID_PARAMETER_5 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_5, dataSourceHandle, "Must be a data source to be used for member labels." );
     }
         
     FieldmlObject *object = getObject( session, objectHandle );
@@ -1021,7 +1100,7 @@ FmlErrorNumber Fieldml_SetEnsembleMembersDataSource( FmlSessionHandle handle, Fm
 
         if( ( type != MEMBER_LIST_DATA ) && ( type != MEMBER_RANGE_DATA ) && ( type != MEMBER_STRIDE_RANGE_DATA ) )
         {
-            return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+            return session->setError( FML_ERR_INVALID_PARAMETER_3, objectHandle, "Has a member type which cannot be used with a data source." );
         }
         
         ensembleType->membersType = type;
@@ -1035,13 +1114,15 @@ FmlErrorNumber Fieldml_SetEnsembleMembersDataSource( FmlSessionHandle handle, Fm
         return Fieldml_SetEnsembleMembersDataSource( handle, meshType->elementsType, type, count, dataSourceHandle );
     }
     
-    return session->setError( FML_ERR_INVALID_OBJECT );  
+    return session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be an ensemble or mesh type." );  
 }
 
 
 FmlBoolean Fieldml_IsEnsembleComponentType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
@@ -1060,14 +1141,16 @@ FmlBoolean Fieldml_IsEnsembleComponentType( FmlSessionHandle handle, FmlObjectHa
         return ensembleType->isComponentEnsemble;
     }
     
-    session->setError( FML_ERR_INVALID_OBJECT );  
+    session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be an ensemble type." );  
     return -1;
 }
 
 
 FmlObjectHandle Fieldml_GetMeshElementsType( FmlSessionHandle handle, FmlObjectHandle meshHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -1085,14 +1168,16 @@ FmlObjectHandle Fieldml_GetMeshElementsType( FmlSessionHandle handle, FmlObjectH
         return meshType->elementsType;
     }
     
-    session->setError( FML_ERR_INVALID_OBJECT );  
+    session->setError( FML_ERR_INVALID_OBJECT, meshHandle, "Must be a mesh type." );  
     return FML_INVALID_HANDLE;
 }
 
 
 FmlObjectHandle Fieldml_GetMeshShapes( FmlSessionHandle handle, FmlObjectHandle meshHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return NULL;
@@ -1109,14 +1194,16 @@ FmlObjectHandle Fieldml_GetMeshShapes( FmlSessionHandle handle, FmlObjectHandle 
         return meshType->shapes;
     }
     
-    session->setError( FML_ERR_INVALID_OBJECT );  
+    session->setError( FML_ERR_INVALID_OBJECT, meshHandle, "Must be a mesh type." );  
     return FML_INVALID_HANDLE;
 }
 
 
 FmlObjectHandle Fieldml_GetMeshChartType( FmlSessionHandle handle, FmlObjectHandle meshHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -1134,14 +1221,16 @@ FmlObjectHandle Fieldml_GetMeshChartType( FmlSessionHandle handle, FmlObjectHand
         return meshType->chartType;
     }
     
-    session->setError( FML_ERR_INVALID_OBJECT );  
+    session->setError( FML_ERR_INVALID_OBJECT, meshHandle, "Must be a mesh type." );  
     return FML_INVALID_HANDLE;
 }
 
 
 FmlObjectHandle Fieldml_GetMeshChartComponentType( FmlSessionHandle handle, FmlObjectHandle meshHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -1159,21 +1248,23 @@ FmlObjectHandle Fieldml_GetMeshChartComponentType( FmlSessionHandle handle, FmlO
         return Fieldml_GetTypeComponentEnsemble( handle, meshType->chartType );
     }
     
-    session->setError( FML_ERR_INVALID_OBJECT );  
+    session->setError( FML_ERR_INVALID_OBJECT, meshHandle, "Must be a mesh type." );  
     return FML_INVALID_HANDLE;
 }
 
 
 FmlBoolean Fieldml_IsObjectLocal( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlBoolean isDeclaredOnly )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
     }
     if( session->region == NULL )
     {
-        session->setError( FML_ERR_INVALID_REGION );
+        session->setError( FML_ERR_INVALID_REGION, "FieldML session has no region" );
         return 0;
     }
 
@@ -1192,14 +1283,16 @@ FmlBoolean Fieldml_IsObjectLocal( FmlSessionHandle handle, FmlObjectHandle objec
 
 char * Fieldml_GetObjectName( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return NULL;
     }
     if( session->region == NULL )
     {
-        session->setError( FML_ERR_INVALID_REGION );
+        session->setError( FML_ERR_INVALID_REGION, "FieldML session has no region" );
         return NULL;
     }
     
@@ -1221,7 +1314,9 @@ int Fieldml_CopyObjectName( FmlSessionHandle handle, FmlObjectHandle objectHandl
 
 char * Fieldml_GetObjectDeclaredName( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return NULL;
@@ -1245,7 +1340,9 @@ int Fieldml_CopyObjectDeclaredName( FmlSessionHandle handle, FmlObjectHandle obj
 
 FmlErrorNumber Fieldml_SetObjectInt( FmlSessionHandle handle, FmlObjectHandle objectHandle, int value )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
@@ -1265,7 +1362,9 @@ FmlErrorNumber Fieldml_SetObjectInt( FmlSessionHandle handle, FmlObjectHandle ob
 
 int Fieldml_GetObjectInt( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return 0;
@@ -1284,7 +1383,9 @@ int Fieldml_GetObjectInt( FmlSessionHandle handle, FmlObjectHandle objectHandle 
 
 FmlObjectHandle Fieldml_GetValueType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -1296,26 +1397,28 @@ FmlObjectHandle Fieldml_GetValueType( FmlSessionHandle handle, FmlObjectHandle o
         return evaluator->valueType;
     }
     
-    session->setError( FML_ERR_INVALID_OBJECT );
+    session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be an evaluator." );
     return FML_INVALID_HANDLE;
 }
 
 
 FmlObjectHandle Fieldml_CreateArgumentEvaluator( FmlSessionHandle handle, const char * name, FmlObjectHandle valueType )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     if( session->region == NULL )
     {
-        session->setError( FML_ERR_INVALID_REGION );
+        session->setError( FML_ERR_INVALID_REGION, "FieldML session has no region" );
         return FML_INVALID_HANDLE;
     }
     if( name == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        session->setError( FML_ERR_INVALID_PARAMETER_2, "Invalid argument evaluator name." );
         return FML_INVALID_HANDLE;
     }
 
@@ -1326,7 +1429,7 @@ FmlObjectHandle Fieldml_CreateArgumentEvaluator( FmlSessionHandle handle, const 
 
     if( !checkIsValueType( session, valueType, true, true, true, true ) )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3, valueType, "Invalid value type for argument evaluator " + string( name ) );
         return FML_INVALID_HANDLE;
     }
 
@@ -1353,7 +1456,7 @@ FmlObjectHandle Fieldml_CreateArgumentEvaluator( FmlSessionHandle handle, const 
         
         if( Fieldml_GetObjectByName( handle, chartName.c_str() ) != FML_INVALID_HANDLE )
         {
-            session->setError( FML_ERR_INVALID_PARAMETER_2 );
+            session->setError( FML_ERR_INVALID_PARAMETER_2, valueType, "Cannot create mesh argument evaluator. " + chartName + " already exists."  );
             return FML_INVALID_HANDLE;
         }
 
@@ -1366,7 +1469,7 @@ FmlObjectHandle Fieldml_CreateArgumentEvaluator( FmlSessionHandle handle, const 
         
         if( Fieldml_GetObjectByName( handle, elementsName.c_str() ) != FML_INVALID_HANDLE )
         {
-            session->setError( FML_ERR_INVALID_PARAMETER_2 );
+            session->setError( FML_ERR_INVALID_PARAMETER_2, valueType, "Cannot create mesh argument evaluator. " + elementsName + " already exists."  );
             return FML_INVALID_HANDLE;
         }
         
@@ -1380,21 +1483,23 @@ FmlObjectHandle Fieldml_CreateArgumentEvaluator( FmlSessionHandle handle, const 
     
     ArgumentEvaluator *argumentEvaluator = new ArgumentEvaluator( name, valueType, false );
     
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
     return addObject( session, argumentEvaluator );
 }
 
 
 FmlObjectHandle Fieldml_CreateExternalEvaluator( FmlSessionHandle handle, const char * name, FmlObjectHandle valueType )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     if( name == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        session->setError( FML_ERR_INVALID_PARAMETER_2, "Cannot create external evaluator. Invalid name." );
         return FML_INVALID_HANDLE;
     }
 
@@ -1405,27 +1510,29 @@ FmlObjectHandle Fieldml_CreateExternalEvaluator( FmlSessionHandle handle, const 
 
     if( !checkIsValueType( session, valueType, true, true, false, true ) )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3, valueType, "Cannot create external evaluator of this type." );
         return FML_INVALID_HANDLE;
     }
         
     ExternalEvaluator *externalEvaluator = new ExternalEvaluator( name, valueType, false );
     
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
     return addObject( session, externalEvaluator );
 }
 
 
 FmlObjectHandle Fieldml_CreateParameterEvaluator( FmlSessionHandle handle, const char * name, FmlObjectHandle valueType )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     if( name == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        session->setError( FML_ERR_INVALID_PARAMETER_2, "Cannot create parameter evaluator. Invalid name." );
         return FML_INVALID_HANDLE;
     }
 
@@ -1436,20 +1543,22 @@ FmlObjectHandle Fieldml_CreateParameterEvaluator( FmlSessionHandle handle, const
 
     if( !checkIsValueType( session, valueType, true, true, false, true ) )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3, valueType, "Cannot create parameter evaluator of this type." );
         return FML_INVALID_HANDLE;
     }
         
     ParameterEvaluator *parameterEvaluator = new ParameterEvaluator( name, valueType, false );
     
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
     return addObject( session, parameterEvaluator );
 }
 
 
 FmlErrorNumber Fieldml_SetParameterDataDescription( FmlSessionHandle handle, FmlObjectHandle objectHandle, DataDescriptionType description )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
@@ -1465,7 +1574,7 @@ FmlErrorNumber Fieldml_SetParameterDataDescription( FmlSessionHandle handle, Fml
     {
         if( parameter->dataDescription->descriptionType != DESCRIPTION_UNKNOWN )
         {
-            return session->setError( FML_ERR_ACCESS_VIOLATION );
+            return session->setError( FML_ERR_ACCESS_VIOLATION, objectHandle, "Parameter evaluator already has a data description." );
         }
 
         if( description == DESCRIPTION_DOK_ARRAY )
@@ -1482,17 +1591,19 @@ FmlErrorNumber Fieldml_SetParameterDataDescription( FmlSessionHandle handle, Fml
         }
         else
         {
-            return session->setError( FML_ERR_UNSUPPORTED );  
+            return session->setError( FML_ERR_UNSUPPORTED, objectHandle, "Unsupported/invalid data description." );  
         }
     }
 
-    return session->setError( FML_ERR_INVALID_OBJECT );
+    return session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be a parameter evaluator." );
 }
 
 
 DataDescriptionType Fieldml_GetParameterDataDescription( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return DESCRIPTION_UNKNOWN;
@@ -1504,17 +1615,25 @@ DataDescriptionType Fieldml_GetParameterDataDescription( FmlSessionHandle handle
         return parameter->dataDescription->descriptionType;
     }
 
-    session->setError( FML_ERR_INVALID_OBJECT );
+    session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be a parameter evaluator." );
     return DESCRIPTION_UNKNOWN;
 }
 
 
 FmlErrorNumber Fieldml_SetDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle dataSource )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
-        return session->setError( FML_ERR_UNKNOWN_HANDLE );
+        return FML_ERR_UNKNOWN_HANDLE;
+    }
+
+    FieldmlObject *object = getObject( session, objectHandle );
+    if( object == NULL )
+    {
+        return session->getLastError();
     }
 
     if( !checkLocal( session, objectHandle ) )
@@ -1525,10 +1644,9 @@ FmlErrorNumber Fieldml_SetDataSource( FmlSessionHandle handle, FmlObjectHandle o
     {
         return session->getLastError();
     }
-
     if( Fieldml_GetObjectType( handle, dataSource ) != FHT_DATA_SOURCE )
     {
-        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_3, dataSource, "Must be a data source." );
     }
 
     ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
@@ -1546,25 +1664,19 @@ FmlErrorNumber Fieldml_SetDataSource( FmlSessionHandle handle, FmlObjectHandle o
         }
         else
         {
-            session->setError( FML_ERR_INVALID_OBJECT );
+            session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must have a data description that uses a data source." );
         }
         return session->getLastError();
     }
 
-    FieldmlObject *object = getObject( session, objectHandle );
-
-    if( object == NULL )
-    {
-        //Error has already been set
-    }
-    else if( object->objectType == FHT_ENSEMBLE_TYPE )
+    if( object->objectType == FHT_ENSEMBLE_TYPE )
     {
         EnsembleType *ensembleType = (EnsembleType*)object;
         EnsembleMembersType type = ensembleType->membersType;
         
         if( ( type != MEMBER_LIST_DATA ) && ( type != MEMBER_RANGE_DATA ) && ( type != MEMBER_STRIDE_RANGE_DATA ) )
         {
-            return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+            return session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Ensemble type does not require a data source." );
         }
         
         ensembleType->dataSource = dataSource;
@@ -1576,7 +1688,7 @@ FmlErrorNumber Fieldml_SetDataSource( FmlSessionHandle handle, FmlObjectHandle o
     }
     else
     {
-        session->setError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be a parameter evaluator, mesh type or ensemble type." );
     }
     
     return session->getLastError();
@@ -1585,10 +1697,12 @@ FmlErrorNumber Fieldml_SetDataSource( FmlSessionHandle handle, FmlObjectHandle o
 
 FmlErrorNumber Fieldml_SetKeyDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle dataSource )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
-        return session->setError( FML_ERR_UNKNOWN_HANDLE );
+        return FML_ERR_UNKNOWN_HANDLE;
     }
 
     if( !checkLocal( session, objectHandle ) )
@@ -1602,17 +1716,17 @@ FmlErrorNumber Fieldml_SetKeyDataSource( FmlSessionHandle handle, FmlObjectHandl
 
     if( Fieldml_GetObjectType( handle, dataSource ) != FHT_DATA_SOURCE )
     {
-        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_3, dataSource, "Must be a data source." );
     }
     
     ArrayDataSource *source = getArrayDataSource( session, dataSource );
     if( source == NULL )
     {
-        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_3, dataSource, "Must be an array data source." );
     }
     else if( source->rank != 2 )
     {
-        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_3, dataSource, "Key data source must be rank 2." );
     }
 
     ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
@@ -1625,18 +1739,20 @@ FmlErrorNumber Fieldml_SetKeyDataSource( FmlSessionHandle handle, FmlObjectHandl
         }
         else
         {
-            session->setError( FML_ERR_INVALID_OBJECT );
+            session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must have dictionary-of-keys data description." );
         }
         return session->getLastError();
     }
 
-    return session->setError( FML_ERR_INVALID_OBJECT );
+    return session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be a parameter evaluator." );
 }
 
 
 FmlErrorNumber Fieldml_AddDenseIndexEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle, FmlObjectHandle orderHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
@@ -1663,24 +1779,24 @@ FmlErrorNumber Fieldml_AddDenseIndexEvaluator( FmlSessionHandle handle, FmlObjec
 
     if( !checkIsEvaluatorType( session, indexHandle, false, true, false ) )
     {
-        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_3, indexHandle, "Must be an ensemble-valued evaluator to be used for ordering." );
     }
     
     if( orderHandle != FML_INVALID_HANDLE )
     {
         if( Fieldml_GetObjectType( handle, orderHandle ) != FHT_DATA_SOURCE )
         {
-            return session->setError( FML_ERR_INVALID_PARAMETER_4 );
+            return session->setError( FML_ERR_INVALID_PARAMETER_4, orderHandle, "Must be a data source to be used for ordering." );
         }
             
         ArrayDataSource *orderSource = getArrayDataSource( session, orderHandle );
         if( orderSource == NULL )
         {
-            return session->setError( FML_ERR_INVALID_PARAMETER_4 );
+            return session->setError( FML_ERR_INVALID_PARAMETER_4, orderHandle, "Must be an array data source to be used for ordering." );
         }
         else if( orderSource->rank != 1 )
         {
-            return session->setError( FML_ERR_INVALID_PARAMETER_4 );
+            return session->setError( FML_ERR_INVALID_PARAMETER_4, orderHandle, "Must be a rank 1 array data source to be used for ordering." );
         }
     }
     
@@ -1692,16 +1808,19 @@ FmlErrorNumber Fieldml_AddDenseIndexEvaluator( FmlSessionHandle handle, FmlObjec
     ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
     if( parameter != NULL )
     {
-        return session->setError( parameter->dataDescription->addIndexEvaluator( false, indexHandle, orderHandle ) );
+        FmlErrorNumber error = parameter->dataDescription->addIndexEvaluator( false, indexHandle, orderHandle );
+        return session->setError( error, objectHandle, "Cannot set dense index evaluator." );
     }
     
-    return session->setError( FML_ERR_INVALID_OBJECT );
+    return session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot add dense index evaluator. Must be a parameter evaluator." );
 }
 
 
 FmlErrorNumber Fieldml_AddSparseIndexEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle indexHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
@@ -1718,7 +1837,7 @@ FmlErrorNumber Fieldml_AddSparseIndexEvaluator( FmlSessionHandle handle, FmlObje
 
     if( !checkIsEvaluatorType( session, indexHandle, false, true, false ) )
     {
-        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_3, indexHandle, "Must be an ensemble-valued evaluator to be used for an index evaluator." );
     }
         
     if( !checkCyclicDependency( session, objectHandle, indexHandle ) )
@@ -1729,16 +1848,19 @@ FmlErrorNumber Fieldml_AddSparseIndexEvaluator( FmlSessionHandle handle, FmlObje
     ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
     if( parameter != NULL )
     {
-        return session->setError( parameter->dataDescription->addIndexEvaluator( true, indexHandle, FML_INVALID_HANDLE ) );
+        FmlErrorNumber error = parameter->dataDescription->addIndexEvaluator( true, indexHandle, FML_INVALID_HANDLE );
+        return session->setError( error, objectHandle, "Cannot set sparse index evaluator." );
     }
     
-    return session->setError( FML_ERR_INVALID_OBJECT );
+    return session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot add sparse index evaluator. Must be a parameter evaluator." );
 }
 
 
 int Fieldml_GetParameterIndexCount( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlBoolean isSparse )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
@@ -1750,20 +1872,22 @@ int Fieldml_GetParameterIndexCount( FmlSessionHandle handle, FmlObjectHandle obj
         int count = parameter->dataDescription->getIndexCount( isSparse != 0 );
         if( count == -1 )
         {
-            session->setError( FML_ERR_INVALID_OBJECT );
+            session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot get parameter index count." );
         }
         
         return count;
     }
 
-    session->setError( FML_ERR_INVALID_OBJECT );
+    session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be a parameter evaluator." );
     return -1;
 }
 
 
 FmlObjectHandle Fieldml_GetParameterIndexEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index, FmlBoolean isSparse )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -1773,26 +1897,29 @@ FmlObjectHandle Fieldml_GetParameterIndexEvaluator( FmlSessionHandle handle, Fml
     if( parameter != NULL )
     {
         FmlObjectHandle evaluator;
-        session->setError( parameter->dataDescription->getIndexEvaluator( index-1, isSparse != 0, evaluator ) );
+        FmlErrorNumber error = parameter->dataDescription->getIndexEvaluator( index-1, isSparse != 0, evaluator );
+        session->setError( error, objectHandle, "Cannot get parameter index evaluator." );
         
         return evaluator;
     }
 
-    session->setError( FML_ERR_INVALID_OBJECT );
+    session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be a parameter evaluator." );
     return FML_INVALID_HANDLE;
 }
 
 
 FmlObjectHandle Fieldml_CreatePiecewiseEvaluator( FmlSessionHandle handle, const char * name, FmlObjectHandle valueType )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     if( name == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        session->setError( FML_ERR_INVALID_PARAMETER_2, "Cannot create piecewise evaluator. Invalid name." );
         return FML_INVALID_HANDLE;
     }
 
@@ -1803,27 +1930,29 @@ FmlObjectHandle Fieldml_CreatePiecewiseEvaluator( FmlSessionHandle handle, const
 
     if( !checkIsValueType( session, valueType, true, true, false, true ) )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3, valueType, "Invalid type for piecewise evaluator." );
         return FML_INVALID_HANDLE;
     }
         
     PiecewiseEvaluator *piecewiseEvaluator = new PiecewiseEvaluator( name, valueType, false );
     
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
     return addObject( session, piecewiseEvaluator );
 }
 
 
 FmlObjectHandle Fieldml_CreateAggregateEvaluator( FmlSessionHandle handle, const char * name, FmlObjectHandle valueType )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     if( name == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        session->setError( FML_ERR_INVALID_PARAMETER_2, "Cannot create aggregate evaluator. Invalid name." );
         return FML_INVALID_HANDLE;
     }
 
@@ -1834,20 +1963,22 @@ FmlObjectHandle Fieldml_CreateAggregateEvaluator( FmlSessionHandle handle, const
 
     if( !checkIsValueType( session, valueType, true, false, false, false ) )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3, valueType, "Invalid type for aggregate evaluator." );
         return FML_INVALID_HANDLE;
     }
         
     AggregateEvaluator *aggregateEvaluator = new AggregateEvaluator( name, valueType, false );
     
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
     return addObject( session, aggregateEvaluator );
 }
 
 
 FmlErrorNumber Fieldml_SetDefaultEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle evaluator )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
@@ -1866,12 +1997,12 @@ FmlErrorNumber Fieldml_SetDefaultEvaluator( FmlSessionHandle handle, FmlObjectHa
     {
         if( !checkIsEvaluatorType( session, evaluator, true, false, false ) )
         {
-            return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+            return session->setError( FML_ERR_INVALID_PARAMETER_3, evaluator, "Invalid type for aggregator delegate." );
         }
     }
     else if( !checkIsEvaluatorTypeCompatible( session, objectHandle, evaluator ) )
     {
-        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_3, objectHandle, "Incompatible type for delegate evaluator." );
     }
 
     SimpleMap<FmlEnsembleValue, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
@@ -1893,7 +2024,9 @@ FmlErrorNumber Fieldml_SetDefaultEvaluator( FmlSessionHandle handle, FmlObjectHa
 
 FmlObjectHandle Fieldml_GetDefaultEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -1912,7 +2045,9 @@ FmlObjectHandle Fieldml_GetDefaultEvaluator( FmlSessionHandle handle, FmlObjectH
 
 FmlErrorNumber Fieldml_SetEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlEnsembleValue element, FmlObjectHandle evaluator )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
@@ -1931,12 +2066,12 @@ FmlErrorNumber Fieldml_SetEvaluator( FmlSessionHandle handle, FmlObjectHandle ob
     {
         if( !checkIsEvaluatorType( session, evaluator, true, false, false ) )
         {
-            return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+            return session->setError( FML_ERR_INVALID_PARAMETER_3, evaluator, "Invalid type for aggregator delegate." );
         }
     }
     else if( !checkIsEvaluatorTypeCompatible( session, objectHandle, evaluator ) )
     {
-        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_3, objectHandle, "Incompatible type for delegate evaluator." );
     }
 
     SimpleMap<FmlEnsembleValue, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
@@ -1958,7 +2093,9 @@ FmlErrorNumber Fieldml_SetEvaluator( FmlSessionHandle handle, FmlObjectHandle ob
 
 int Fieldml_GetEvaluatorCount( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
@@ -1977,7 +2114,9 @@ int Fieldml_GetEvaluatorCount( FmlSessionHandle handle, FmlObjectHandle objectHa
 
 FmlEnsembleValue Fieldml_GetEvaluatorElement( FmlSessionHandle handle, FmlObjectHandle objectHandle, int evaluatorIndex )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
@@ -1996,7 +2135,9 @@ FmlEnsembleValue Fieldml_GetEvaluatorElement( FmlSessionHandle handle, FmlObject
 
 FmlObjectHandle Fieldml_GetEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, int evaluatorIndex )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -2015,7 +2156,9 @@ FmlObjectHandle Fieldml_GetEvaluator( FmlSessionHandle handle, FmlObjectHandle o
 
 FmlObjectHandle Fieldml_GetElementEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlEnsembleValue elementNumber, FmlBoolean allowDefault )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -2034,14 +2177,16 @@ FmlObjectHandle Fieldml_GetElementEvaluator( FmlSessionHandle handle, FmlObjectH
 
 FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlSessionHandle handle, const char * name, FmlObjectHandle sourceEvaluator )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     if( name == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        session->setError( FML_ERR_INVALID_PARAMETER_2, "Cannot create reference evaluator. Invalid name." );
         return FML_INVALID_HANDLE;
     }
 
@@ -2054,14 +2199,16 @@ FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlSessionHandle handle, const
 
     ReferenceEvaluator *referenceEvaluator = new ReferenceEvaluator( name, sourceEvaluator, valueType, false );
     
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
     return addObject( session, referenceEvaluator );
 }
 
 
 FmlObjectHandle Fieldml_GetReferenceSourceEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -2073,14 +2220,16 @@ FmlObjectHandle Fieldml_GetReferenceSourceEvaluator( FmlSessionHandle handle, Fm
         return reference->sourceEvaluator;
     }
     
-    session->setError( FML_ERR_INVALID_OBJECT );
+    session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be a reference evaluator." );
     return FML_INVALID_HANDLE;
 }
 
 
 int Fieldml_GetArgumentCount( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlBoolean isUnbound, FmlBoolean isUsed )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
@@ -2097,7 +2246,9 @@ int Fieldml_GetArgumentCount( FmlSessionHandle handle, FmlObjectHandle objectHan
 
 FmlObjectHandle Fieldml_GetArgument( FmlSessionHandle handle, FmlObjectHandle objectHandle, int argumentIndex, FmlBoolean isUnbound, FmlBoolean isUsed )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -2111,7 +2262,7 @@ FmlObjectHandle Fieldml_GetArgument( FmlSessionHandle handle, FmlObjectHandle ob
     
     if( ( argumentIndex < 1 ) || ( argumentIndex > args.size() ) )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3, objectHandle, "Invalid index number." );
         return FML_INVALID_HANDLE;
     }
     
@@ -2121,7 +2272,9 @@ FmlObjectHandle Fieldml_GetArgument( FmlSessionHandle handle, FmlObjectHandle ob
 
 FmlErrorNumber Fieldml_AddArgument( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle evaluatorHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
@@ -2138,7 +2291,7 @@ FmlErrorNumber Fieldml_AddArgument( FmlSessionHandle handle, FmlObjectHandle obj
     
     if( Fieldml_GetObjectType( handle, evaluatorHandle ) != FHT_ARGUMENT_EVALUATOR )
     {
-        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_3, objectHandle, "Wrong type evaluator for argument evaluator." );
     }
     
     ArgumentEvaluator *argumentEvaluator = ArgumentEvaluator::checkedCast( session, objectHandle );
@@ -2155,13 +2308,15 @@ FmlErrorNumber Fieldml_AddArgument( FmlSessionHandle handle, FmlObjectHandle obj
         return session->getLastError();
     }
 
-    return session->setError( FML_ERR_INVALID_OBJECT );
+    return session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be an argument evaluator or external evaluator." );
 }
 
 
 int Fieldml_GetBindCount( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
@@ -2179,7 +2334,9 @@ int Fieldml_GetBindCount( FmlSessionHandle handle, FmlObjectHandle objectHandle 
 
 FmlObjectHandle Fieldml_GetBindArgument( FmlSessionHandle handle, FmlObjectHandle objectHandle, int bindIndex )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -2197,7 +2354,9 @@ FmlObjectHandle Fieldml_GetBindArgument( FmlSessionHandle handle, FmlObjectHandl
 
 FmlObjectHandle Fieldml_GetBindEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, int bindIndex )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -2215,7 +2374,9 @@ FmlObjectHandle Fieldml_GetBindEvaluator( FmlSessionHandle handle, FmlObjectHand
 
 FmlObjectHandle Fieldml_GetBindByArgument( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle argumentHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -2233,7 +2394,9 @@ FmlObjectHandle Fieldml_GetBindByArgument( FmlSessionHandle handle, FmlObjectHan
 
 FmlErrorNumber Fieldml_SetBind( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlObjectHandle argumentHandle, FmlObjectHandle sourceHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
@@ -2254,7 +2417,7 @@ FmlErrorNumber Fieldml_SetBind( FmlSessionHandle handle, FmlObjectHandle objectH
 
     if( !checkIsEvaluatorTypeCompatible( session, argumentHandle, sourceHandle ) )
     {
-        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_3, objectHandle, "Incompatible bind for " + string( Fieldml_GetObjectName( handle, argumentHandle ) ) );
     }
 
     SimpleMap<FmlObjectHandle, FmlObjectHandle> *map = getBindMap( session, objectHandle );
@@ -2276,7 +2439,9 @@ FmlErrorNumber Fieldml_SetBind( FmlSessionHandle handle, FmlObjectHandle objectH
 
 int Fieldml_GetIndexEvaluatorCount( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
@@ -2314,19 +2479,21 @@ int Fieldml_GetIndexEvaluatorCount( FmlSessionHandle handle, FmlObjectHandle obj
         }
         else
         {
-            session->setError( FML_ERR_INVALID_OBJECT );
+            session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot get index evaluator count." );
             return -1;
         }
     }
     
-    session->setError( FML_ERR_INVALID_OBJECT );
+    session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be a parameter evaluator." );
     return -1;
 }
 
 
 FmlErrorNumber Fieldml_SetIndexEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index, FmlObjectHandle evaluatorHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
@@ -2343,7 +2510,7 @@ FmlErrorNumber Fieldml_SetIndexEvaluator( FmlSessionHandle handle, FmlObjectHand
 
     if( !checkIsEvaluatorType( session, evaluatorHandle, false, true, false ) )
     {
-        return session->setError( FML_ERR_INVALID_PARAMETER_4 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_4, evaluatorHandle, "Must be ensemble-valued to be used as an index evaluator." );
     }
 
     if( !checkCyclicDependency( session, objectHandle, evaluatorHandle ) )
@@ -2361,7 +2528,7 @@ FmlErrorNumber Fieldml_SetIndexEvaluator( FmlSessionHandle handle, FmlObjectHand
         }
         else
         {
-            return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+            return session->setError( FML_ERR_INVALID_PARAMETER_3, objectHandle, "Invalid index for piecewise index evaluator." );
         }
     }
     
@@ -2375,23 +2542,26 @@ FmlErrorNumber Fieldml_SetIndexEvaluator( FmlSessionHandle handle, FmlObjectHand
         }
         else
         {
-            return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+            return session->setError( FML_ERR_INVALID_PARAMETER_3, objectHandle, "Invalid index for aggregate index evaluator." );
         }
     }
     
     ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
     if( parameter != NULL )
     {
-        return session->setError( parameter->dataDescription->setIndexEvaluator( index-1, evaluatorHandle, FML_INVALID_HANDLE ) );
+        FmlErrorNumber error = parameter->dataDescription->setIndexEvaluator( index-1, evaluatorHandle, FML_INVALID_HANDLE );
+        return session->setError( error, objectHandle, "Cannot set index evaluator." );
     }
     
-    return session->setError( FML_ERR_INVALID_OBJECT );
+    return session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be piecewise or aggregate to set an index evaluator." );
 }
 
 
 FmlObjectHandle Fieldml_GetIndexEvaluator( FmlSessionHandle handle, FmlObjectHandle objectHandle, int indexNumber )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -2399,7 +2569,7 @@ FmlObjectHandle Fieldml_GetIndexEvaluator( FmlSessionHandle handle, FmlObjectHan
 
     if( indexNumber <= 0 )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3, objectHandle, "Invalid index number." );
         return FML_INVALID_HANDLE;
     }
 
@@ -2411,7 +2581,7 @@ FmlObjectHandle Fieldml_GetIndexEvaluator( FmlSessionHandle handle, FmlObjectHan
             return piecewise->indexEvaluator;
         }
         
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3, objectHandle, "Invalid index number." );
         return FML_INVALID_HANDLE;
     }
 
@@ -2423,7 +2593,7 @@ FmlObjectHandle Fieldml_GetIndexEvaluator( FmlSessionHandle handle, FmlObjectHan
             return aggregate->indexEvaluator;
         }
         
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3, objectHandle, "Invalid index number." );
         return FML_INVALID_HANDLE;
     }
     
@@ -2431,19 +2601,22 @@ FmlObjectHandle Fieldml_GetIndexEvaluator( FmlSessionHandle handle, FmlObjectHan
     if( parameter != NULL )
     {
         FmlObjectHandle evaluator;
-        session->setError( parameter->dataDescription->getIndexEvaluator( indexNumber-1, evaluator ) );
+        FmlErrorNumber error = parameter->dataDescription->getIndexEvaluator( indexNumber-1, evaluator );
+        session->setError( error, objectHandle, "Cannot get index evaluator." );
         
         return evaluator;
     }
 
-    session->setError( FML_ERR_INVALID_OBJECT );
+    session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Much be an aggregate, piecewise or parameter evaluator." );
     return FML_INVALID_HANDLE;
 }
 
 
 FmlObjectHandle Fieldml_GetParameterIndexOrder( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -2453,66 +2626,73 @@ FmlObjectHandle Fieldml_GetParameterIndexOrder( FmlSessionHandle handle, FmlObje
     if( parameter != NULL )
     {
         FmlObjectHandle order;
-        session->setError( parameter->dataDescription->getIndexOrder( index-1, order ) );
+        FmlErrorNumber error = parameter->dataDescription->getIndexOrder( index-1, order );
+        session->setError( error, objectHandle, "Cannot get index order." );
      
         return order;
     }
     
-    session->setError( FML_ERR_INVALID_OBJECT );
+    session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be a parameter evaluator." );
     return FML_INVALID_HANDLE;
 }
 
 
 FmlObjectHandle Fieldml_CreateBooleanType( FmlSessionHandle handle, const char * name )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     if( name == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        session->setError( FML_ERR_INVALID_PARAMETER_2, "Cannot create boolean type. Invalid name." );
         return FML_INVALID_HANDLE;
     }
 
     BooleanType *booleanType = new BooleanType( name, false );
     
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
     return addObject( session, booleanType );
 }
 
 
 FmlObjectHandle Fieldml_CreateContinuousType( FmlSessionHandle handle, const char * name )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     if( name == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        session->setError( FML_ERR_INVALID_PARAMETER_2, "Cannot create continuous type. Invalid name." );
         return FML_INVALID_HANDLE;
     }
 
     ContinuousType *continuousType = new ContinuousType( name, false );
     
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
     return addObject( session, continuousType );
 }
 
 
 FmlObjectHandle Fieldml_CreateContinuousTypeComponents( FmlSessionHandle handle, FmlObjectHandle typeHandle, const char * name, const int count )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     if( name == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3, typeHandle, "Cannot create components. Invalid name." );
         return FML_INVALID_HANDLE;
     }
     
@@ -2524,31 +2704,30 @@ FmlObjectHandle Fieldml_CreateContinuousTypeComponents( FmlSessionHandle handle,
     FieldmlObject *object = getObject( session, typeHandle );
     if( object == NULL )
     {
-        session->setError( FML_ERR_UNKNOWN_OBJECT );
         return FML_INVALID_HANDLE;
     }
     
     if( object->objectType != FHT_CONTINUOUS_TYPE )
     {
-        session->setError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT, typeHandle, "Cannot create components. Must be a continuous type." );
         return FML_INVALID_HANDLE;
     }
     
     ContinuousType *type = (ContinuousType*)object;
     if( type->componentType != FML_INVALID_HANDLE )
     {
-        session->setError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT, typeHandle, "Cannot create new components. Components have already been created." );
         return FML_INVALID_HANDLE;
     }
     
     if( count < 1 )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_4 );
+        session->setError( FML_ERR_INVALID_PARAMETER_4, typeHandle, "Cannot create components. Invalid count." );
         return FML_INVALID_HANDLE;
     }
     if( name == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3, typeHandle, "Cannot create components. Invalid name." );
         return FML_INVALID_HANDLE;
     }
     
@@ -2571,40 +2750,44 @@ FmlObjectHandle Fieldml_CreateContinuousTypeComponents( FmlSessionHandle handle,
 
 FmlObjectHandle Fieldml_CreateEnsembleType( FmlSessionHandle handle, const char * name )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     if( name == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        session->setError( FML_ERR_INVALID_PARAMETER_2, "Cannot create ensemble type. Invalid name." );
         return FML_INVALID_HANDLE;
     }
 
     EnsembleType *ensembleType = new EnsembleType( name, false, false );
     
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
     return addObject( session, ensembleType );
 }
 
 
 FmlObjectHandle Fieldml_CreateMeshType( FmlSessionHandle handle, const char * name )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     if( name == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        session->setError( FML_ERR_INVALID_PARAMETER_2, "Cannot create mesh type. Invalid name." );
         return FML_INVALID_HANDLE;
     }
 
     MeshType *meshType = new MeshType( name, false );
 
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
 
     return addObject( session, meshType );
 }
@@ -2612,14 +2795,16 @@ FmlObjectHandle Fieldml_CreateMeshType( FmlSessionHandle handle, const char * na
 
 FmlObjectHandle Fieldml_CreateMeshElementsType( FmlSessionHandle handle, FmlObjectHandle meshHandle, const char * name )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     if( name == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3, meshHandle, "Cannot create mesh elements. Invalid name." );
         return FML_INVALID_HANDLE;
     }
 
@@ -2636,7 +2821,7 @@ FmlObjectHandle Fieldml_CreateMeshElementsType( FmlSessionHandle handle, FmlObje
 
     if( object->objectType != FHT_MESH_TYPE )
     {
-        session->setError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT, meshHandle, "Cannot create mesh elements. Must be a mesh type." );
         return FML_INVALID_HANDLE;
     }
     
@@ -2653,14 +2838,16 @@ FmlObjectHandle Fieldml_CreateMeshElementsType( FmlSessionHandle handle, FmlObje
 
 FmlObjectHandle Fieldml_CreateMeshChartType( FmlSessionHandle handle, FmlObjectHandle meshHandle, const char * name )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     if( name == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3, meshHandle, "Cannot create mesh chart. Invalid name." );
         return FML_INVALID_HANDLE;
     }
 
@@ -2677,7 +2864,7 @@ FmlObjectHandle Fieldml_CreateMeshChartType( FmlSessionHandle handle, FmlObjectH
 
     if( object->objectType != FHT_MESH_TYPE )
     {
-        session->setError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT, meshHandle, "Cannot create mesh chart. Must be a mesh type." );
         return FML_INVALID_HANDLE;
     }
     
@@ -2694,7 +2881,9 @@ FmlObjectHandle Fieldml_CreateMeshChartType( FmlSessionHandle handle, FmlObjectH
 
 FmlErrorNumber Fieldml_SetMeshShapes( FmlSessionHandle handle, FmlObjectHandle meshHandle, FmlObjectHandle shapesHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
@@ -2711,7 +2900,7 @@ FmlErrorNumber Fieldml_SetMeshShapes( FmlSessionHandle handle, FmlObjectHandle m
 
     if( !checkIsEvaluatorType( session, shapesHandle, false, false, true ) )
     {
-        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_3, shapesHandle, "Cannot set mesh shapes. Must be a boolean-valued evaluator." );
     }
 
     FieldmlObject *object = getObject( session, meshHandle );
@@ -2726,7 +2915,7 @@ FmlErrorNumber Fieldml_SetMeshShapes( FmlSessionHandle handle, FmlObjectHandle m
     }
     else
     {
-        session->setError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT, meshHandle, "Cannot set mesh shapes. Must be a mesh type." );
     }
     
     return session->getLastError();
@@ -2735,7 +2924,9 @@ FmlErrorNumber Fieldml_SetMeshShapes( FmlSessionHandle handle, FmlObjectHandle m
 
 FmlErrorNumber Fieldml_SetEnsembleMembersRange( FmlSessionHandle handle, FmlObjectHandle objectHandle, const FmlEnsembleValue minElement, const FmlEnsembleValue maxElement, const int stride )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
@@ -2755,12 +2946,12 @@ FmlErrorNumber Fieldml_SetEnsembleMembersRange( FmlSessionHandle handle, FmlObje
 
     if( ( minElement < 0 ) || ( minElement > maxElement ) )
     {
-        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_3, objectHandle, "Cannot set ensemble members range. Invalid range." );
     }
 
     if( stride < 1 )
     {
-        return session->setError( FML_ERR_INVALID_PARAMETER_5 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_5, objectHandle, "Cannot set ensemble members range. Invalid stride." );
     }
     
     if( object->objectType == FHT_ENSEMBLE_TYPE )
@@ -2781,31 +2972,33 @@ FmlErrorNumber Fieldml_SetEnsembleMembersRange( FmlSessionHandle handle, FmlObje
         return Fieldml_SetEnsembleMembersRange( handle, meshType->elementsType, minElement, maxElement, stride );
     }
 
-    return session->setError( FML_ERR_INVALID_OBJECT );
+    return session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot set ensemble members range. Must be a mesh type or ensemble type." );
 }
 
 
 int Fieldml_AddImportSource( FmlSessionHandle handle, const char * href, const char * regionName )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
     }
     if( session->region == NULL )
     {
-        session->setError( FML_ERR_INVALID_REGION );
+        session->setError( FML_ERR_INVALID_REGION, "FieldML session has no region" );
         return -1;
     }
     
     if( href == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );  
+        session->setError( FML_ERR_INVALID_PARAMETER_2, "Cannot add import. Invalid href." );  
         return -1;
     }
     if( regionName == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );  
+        session->setError( FML_ERR_INVALID_PARAMETER_3, "Cannot add import. Invalid region name." );  
         return -1;
     }
 
@@ -2815,7 +3008,8 @@ int Fieldml_AddImportSource( FmlSessionHandle handle, const char * href, const c
         importedRegion = session->addResourceRegion( href, regionName );
         if( importedRegion == NULL )
         {
-            session->setError( FML_ERR_READ_ERR );
+            //TODO Get a more descriptive reason.
+            session->setError( FML_ERR_READ_ERR, "Cannot add import." );
             return -1;
         }
     }
@@ -2823,7 +3017,7 @@ int Fieldml_AddImportSource( FmlSessionHandle handle, const char * href, const c
     int index = session->getRegionIndex( href, regionName );
     if( index < 0 )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );  
+        session->setError( FML_ERR_INVALID_PARAMETER_3, string( "Cannot get index for import " ) + string( href ) + "." );  
         return -1;
     }
     
@@ -2835,32 +3029,34 @@ int Fieldml_AddImportSource( FmlSessionHandle handle, const char * href, const c
 
 FmlObjectHandle Fieldml_AddImport( FmlSessionHandle handle, int importSourceIndex, const char * localName, const char * remoteName )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     if( session->region == NULL )
     {
-        session->setError( FML_ERR_INVALID_REGION );
+        session->setError( FML_ERR_INVALID_REGION, "FieldML session has no region" );
         return FML_INVALID_HANDLE;
     }
 
     if( localName == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );  
+        session->setError( FML_ERR_INVALID_PARAMETER_3, "Import has invalid local name." );  
         return FML_INVALID_HANDLE;
     }
     if( remoteName == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_4 );
+        session->setError( FML_ERR_INVALID_PARAMETER_4, "Import has invalid remote name." );
         return FML_INVALID_HANDLE;
     }
     
     FieldmlRegion *region = session->getRegion( importSourceIndex - 1 );
     if( region == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );  
+        session->setError( FML_ERR_INVALID_PARAMETER_2, "Invalid import source index." );  
         return FML_INVALID_HANDLE;
     }
     
@@ -2869,12 +3065,12 @@ FmlObjectHandle Fieldml_AddImport( FmlSessionHandle handle, int importSourceInde
     
     if( remoteObject == FML_INVALID_HANDLE )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_4 );  
+        session->setError( FML_ERR_INVALID_PARAMETER_4, string( "Invalid import. Unknown remote object " ) + remoteName + "." );  
     }
     else if( localObject != FML_INVALID_HANDLE )
     {
         remoteObject = FML_INVALID_HANDLE;
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );  
+        session->setError( FML_ERR_INVALID_PARAMETER_3, string( "Invalid import. Local name " ) + string( localName ) + " already used." );  
     }
     else
     {
@@ -2887,14 +3083,16 @@ FmlObjectHandle Fieldml_AddImport( FmlSessionHandle handle, int importSourceInde
 
 int Fieldml_GetImportSourceCount( FmlSessionHandle handle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
     }
     if( session->region == NULL )
     {
-        session->setError( FML_ERR_INVALID_REGION );
+        session->setError( FML_ERR_INVALID_REGION, "FieldML session has no region" );
         return -1;
     }
     
@@ -2904,14 +3102,16 @@ int Fieldml_GetImportSourceCount( FmlSessionHandle handle )
 
 int Fieldml_GetImportCount( FmlSessionHandle handle, int importSourceIndex )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
     }
     if( session->region == NULL )
     {
-        session->setError( FML_ERR_INVALID_REGION );
+        session->setError( FML_ERR_INVALID_REGION, "FieldML session has no region" );
         return -1;
     }
     
@@ -2921,21 +3121,23 @@ int Fieldml_GetImportCount( FmlSessionHandle handle, int importSourceIndex )
 
 int Fieldml_CopyImportSourceHref( FmlSessionHandle handle, int importSourceIndex, char * buffer, int bufferLength )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
     }
     if( session->region == NULL )
     {
-        session->setError( FML_ERR_INVALID_REGION );
+        session->setError( FML_ERR_INVALID_REGION, "FieldML session has no region" );
         return -1;
     }
     
     string href = session->region->getImportSourceHref( importSourceIndex - 1 );
     if( href == "" )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        session->setError( FML_ERR_INVALID_PARAMETER_2, "Invalid import source index." );
         return -1;
     }
     
@@ -2945,21 +3147,23 @@ int Fieldml_CopyImportSourceHref( FmlSessionHandle handle, int importSourceIndex
 
 int Fieldml_CopyImportSourceRegionName( FmlSessionHandle handle, int importSourceIndex, char * buffer, int bufferLength )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
     }
     if( session->region == NULL )
     {
-        session->setError( FML_ERR_INVALID_REGION );
+        session->setError( FML_ERR_INVALID_REGION, "FieldML session has no region" );
         return -1;
     }
     
     string regionName = session->region->getImportSourceRegionName( importSourceIndex - 1 );
     if( regionName == "" )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        session->setError( FML_ERR_INVALID_PARAMETER_2, "Invalid import source index." );
         return -1;
     }
     
@@ -2969,21 +3173,24 @@ int Fieldml_CopyImportSourceRegionName( FmlSessionHandle handle, int importSourc
 
 int Fieldml_CopyImportLocalName( FmlSessionHandle handle, int importSourceIndex, int importIndex, char * buffer, int bufferLength )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
     }
     if( session->region == NULL )
     {
-        session->setError( FML_ERR_INVALID_REGION );
+        session->setError( FML_ERR_INVALID_REGION, "FieldML session has no region" );
         return -1;
     }
     
     string localName = session->region->getImportLocalName( importSourceIndex - 1, importIndex );
     if( localName == "" )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        //TODO Report exactly which parameter was bad
+        session->setError( FML_ERR_INVALID_PARAMETER_3, "Invalid import index or source index." );
         return -1;
     }
     
@@ -2993,21 +3200,23 @@ int Fieldml_CopyImportLocalName( FmlSessionHandle handle, int importSourceIndex,
 
 int Fieldml_CopyImportRemoteName( FmlSessionHandle handle, int importSourceIndex, int importIndex, char * buffer, int bufferLength )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
     }
     if( session->region == NULL )
     {
-        session->setError( FML_ERR_INVALID_REGION );
+        session->setError( FML_ERR_INVALID_REGION, "FieldML session has no region" );
         return -1;
     }
     
     string remoteName = session->region->getImportRemoteName( importSourceIndex - 1, importIndex );
     if( remoteName == "" )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3, "Invalid import or import source index." );
         return -1;
     }
     
@@ -3017,14 +3226,16 @@ int Fieldml_CopyImportRemoteName( FmlSessionHandle handle, int importSourceIndex
 
 FmlObjectHandle Fieldml_GetImportObject( FmlSessionHandle handle, int importSourceIndex, int importIndex )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     if( session->region == NULL )
     {
-        session->setError( FML_ERR_INVALID_REGION );
+        session->setError( FML_ERR_INVALID_REGION, "FieldML session has no region" );
         return FML_INVALID_HANDLE;
     }
 
@@ -3034,56 +3245,62 @@ FmlObjectHandle Fieldml_GetImportObject( FmlSessionHandle handle, int importSour
 
 FmlObjectHandle Fieldml_CreateHrefDataResource( FmlSessionHandle handle, const char * name, const char * format, const char * href )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     if( name == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        session->setError( FML_ERR_INVALID_PARAMETER_2, "Cannot create href data resource. Invalid name." );
         return FML_INVALID_HANDLE;
     }
     if( href == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3, "Cannot create href data resource. Invalid href." );
         return FML_INVALID_HANDLE;
     }
     if( format == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_4 );
+        session->setError( FML_ERR_INVALID_PARAMETER_4, "Cannot create href data resource. Invalid format." );
         return FML_INVALID_HANDLE;
     }
 
     DataResource *dataResource = new DataResource( name, DATA_RESOURCE_HREF, format, href );
     
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
     return addObject( session, dataResource );
 }
 
 
 FmlObjectHandle Fieldml_CreateInlineDataResource( FmlSessionHandle handle, const char * name )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     if( name == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        session->setError( FML_ERR_INVALID_PARAMETER_2, "Cannot create inline data resource. Invalid name." );
         return FML_INVALID_HANDLE;
     }
 
     DataResource *dataResource = new DataResource( name, DATA_RESOURCE_INLINE, PLAIN_TEXT_NAME, "" );
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
     return addObject( session, dataResource );
 }
 
 
 DataResourceType Fieldml_GetDataResourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return DATA_RESOURCE_UNKNOWN;
@@ -3092,7 +3309,7 @@ DataResourceType Fieldml_GetDataResourceType( FmlSessionHandle handle, FmlObject
     FieldmlObject *object = getObject( session, objectHandle );
     if( object->objectType != FHT_DATA_RESOURCE )
     {
-        session->setError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot get data resource type. Must be a data resource." );
         return DATA_RESOURCE_UNKNOWN;
     }
     
@@ -3103,14 +3320,16 @@ DataResourceType Fieldml_GetDataResourceType( FmlSessionHandle handle, FmlObject
 
 FmlErrorNumber Fieldml_AddInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandle, const char * data, const int length )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
     if( data == NULL )
     {
-        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_3, objectHandle, "Cannot add inline data. Invalid data." );
     }
 
     if( !checkLocal( session, objectHandle ) )
@@ -3125,7 +3344,7 @@ FmlErrorNumber Fieldml_AddInlineData( FmlSessionHandle handle, FmlObjectHandle o
     }
     if( resource->resourceType != DATA_RESOURCE_INLINE )
     {
-        return session->setError( FML_ERR_INVALID_OBJECT );
+        return session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot add inline data. Must be inline data resource." );
     }
     
     resource->description = resource->description + string( data, length );
@@ -3136,14 +3355,16 @@ FmlErrorNumber Fieldml_AddInlineData( FmlSessionHandle handle, FmlObjectHandle o
 
 FmlErrorNumber Fieldml_SetInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandle, const char * data, const int length )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
     if( data == NULL )
     {
-        return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_3, "Cannot set inline data. Invalid data." );
     }
 
     if( !checkLocal( session, objectHandle ) )
@@ -3158,7 +3379,7 @@ FmlErrorNumber Fieldml_SetInlineData( FmlSessionHandle handle, FmlObjectHandle o
     }
     if( resource->resourceType != DATA_RESOURCE_INLINE )
     {
-        return session->setError( FML_ERR_INVALID_OBJECT );
+        return session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot set inline data. Must be inline data resource." );
     }
     
     resource->description = string( data, length );
@@ -3169,7 +3390,9 @@ FmlErrorNumber Fieldml_SetInlineData( FmlSessionHandle handle, FmlObjectHandle o
 
 int Fieldml_GetInlineDataLength( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
@@ -3182,7 +3405,7 @@ int Fieldml_GetInlineDataLength( FmlSessionHandle handle, FmlObjectHandle object
     }
     if( resource->resourceType != DATA_RESOURCE_INLINE )
     {
-        session->setError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot get inline data length. Must be inline data resource." );
         return -1;
     }
     
@@ -3192,7 +3415,9 @@ int Fieldml_GetInlineDataLength( FmlSessionHandle handle, FmlObjectHandle object
 
 char * Fieldml_GetInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return NULL;
@@ -3205,7 +3430,7 @@ char * Fieldml_GetInlineData( FmlSessionHandle handle, FmlObjectHandle objectHan
     }
     if( resource->resourceType != DATA_RESOURCE_INLINE )
     {
-        session->setError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot get inline data. Must be inline data resource." );
         return NULL;
     }
     
@@ -3215,7 +3440,9 @@ char * Fieldml_GetInlineData( FmlSessionHandle handle, FmlObjectHandle objectHan
 
 int Fieldml_CopyInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandle, char * buffer, int bufferLength, int offset )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
@@ -3228,7 +3455,7 @@ int Fieldml_CopyInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandl
     }
     if( resource->resourceType != DATA_RESOURCE_INLINE )
     {
-        session->setError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot copy inline data. Must be inline data resource." );
         return -1;
     }
     
@@ -3244,7 +3471,9 @@ int Fieldml_CopyInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandl
 
 DataSourceType Fieldml_GetDataSourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return DATA_SOURCE_UNKNOWN;
@@ -3262,7 +3491,9 @@ DataSourceType Fieldml_GetDataSourceType( FmlSessionHandle handle, FmlObjectHand
 
 char * Fieldml_GetDataResourceHref( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return NULL;
@@ -3280,7 +3511,7 @@ char * Fieldml_GetDataResourceHref( FmlSessionHandle handle, FmlObjectHandle obj
     }
     else
     {
-        session->setError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot get data resource href. Must be href data resource." );
         return NULL;
     }
 }
@@ -3294,7 +3525,9 @@ int Fieldml_CopyDataResourceHref( FmlSessionHandle handle, FmlObjectHandle objec
 
 char * Fieldml_GetDataResourceFormat( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return NULL;
@@ -3318,7 +3551,9 @@ int Fieldml_CopyDataResourceFormat( FmlSessionHandle handle, FmlObjectHandle obj
 
 FmlObjectHandle Fieldml_GetDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -3339,7 +3574,8 @@ FmlObjectHandle Fieldml_GetDataSource( FmlSessionHandle handle, FmlObjectHandle 
         }
         else
         {
-            return session->setError( FML_ERR_INVALID_OBJECT );
+            session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot get data source. Invalid data description." );
+            return FML_INVALID_HANDLE;
         }
     }
 
@@ -3356,7 +3592,8 @@ FmlObjectHandle Fieldml_GetDataSource( FmlSessionHandle handle, FmlObjectHandle 
         
         if( ( type != MEMBER_LIST_DATA ) && ( type != MEMBER_RANGE_DATA ) && ( type != MEMBER_STRIDE_RANGE_DATA ) )
         {
-            return session->setError( FML_ERR_INVALID_OBJECT );
+            session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot get data source. Invalid member description." );
+            return FML_INVALID_HANDLE;
         }
         
         return ensembleType->dataSource;
@@ -3368,7 +3605,7 @@ FmlObjectHandle Fieldml_GetDataSource( FmlSessionHandle handle, FmlObjectHandle 
     }
     else
     {
-        session->setError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot get data source. Invalid object." );
         return FML_INVALID_HANDLE;
     }
     
@@ -3378,7 +3615,9 @@ FmlObjectHandle Fieldml_GetDataSource( FmlSessionHandle handle, FmlObjectHandle 
 
 FmlObjectHandle Fieldml_GetKeyDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
@@ -3394,18 +3633,20 @@ FmlObjectHandle Fieldml_GetKeyDataSource( FmlSessionHandle handle, FmlObjectHand
         }
         else
         {
-            return session->setError( FML_ERR_INVALID_OBJECT );
+            session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot get key data source. Invalid data description." );
         }
     }
 
-    session->setError( FML_ERR_INVALID_OBJECT );
+    session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot get key data source. Invalid object." );
     return FML_INVALID_HANDLE;
 }
 
 
 int Fieldml_GetDataSourceCount( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
@@ -3423,7 +3664,9 @@ int Fieldml_GetDataSourceCount( FmlSessionHandle handle, FmlObjectHandle objectH
 
 FmlObjectHandle Fieldml_GetDataSourceByIndex( FmlSessionHandle handle, FmlObjectHandle objectHandle, int index )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -3437,7 +3680,7 @@ FmlObjectHandle Fieldml_GetDataSourceByIndex( FmlSessionHandle handle, FmlObject
     
     if( ( index < 0 ) || ( index >= resource->dataSources.size() ) )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3, objectHandle, "Cannot get data source. Invalid index." );
         return FML_INVALID_HANDLE;
     }
     
@@ -3447,14 +3690,16 @@ FmlObjectHandle Fieldml_GetDataSourceByIndex( FmlSessionHandle handle, FmlObject
 
 FmlObjectHandle Fieldml_GetDataSourceResource( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     if( session->region == NULL )
     {
-        session->setError( FML_ERR_INVALID_REGION );
+        session->setError( FML_ERR_INVALID_REGION, "FieldML session has no region" );
         return FML_INVALID_HANDLE;
     }
     
@@ -3475,7 +3720,9 @@ FmlObjectHandle Fieldml_GetDataSourceResource( FmlSessionHandle handle, FmlObjec
 
 const char * Fieldml_GetArrayDataSourceLocation( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return NULL;
@@ -3499,7 +3746,9 @@ int Fieldml_CopyArrayDataSourceLocation( FmlSessionHandle handle, FmlObjectHandl
 
 int Fieldml_GetArrayDataSourceRank( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return -1;
@@ -3512,7 +3761,7 @@ int Fieldml_GetArrayDataSourceRank( FmlSessionHandle handle, FmlObjectHandle obj
     }
     if( object->objectType != FHT_DATA_SOURCE )
     {
-        session->setError( FML_ERR_INVALID_OBJECT );
+        session->setError( FML_ERR_INVALID_OBJECT, "Cannot get array data source rank. Must be a data source." );
         return -1;
     }
     
@@ -3523,14 +3772,16 @@ int Fieldml_GetArrayDataSourceRank( FmlSessionHandle handle, FmlObjectHandle obj
         return arraySource->rank;
     }
     
-    session->setError( FML_ERR_INVALID_OBJECT );
+    session->setError( FML_ERR_INVALID_OBJECT, "Cannot get array data source rank. Must be an array data source." );
     return -1;
 }
 
 
 FmlErrorNumber Fieldml_GetArrayDataSourceSizes( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *sizes )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return session->getLastError();
@@ -3553,7 +3804,9 @@ FmlErrorNumber Fieldml_GetArrayDataSourceSizes( FmlSessionHandle handle, FmlObje
 
 FmlErrorNumber Fieldml_SetArrayDataSourceSizes( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *sizes )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return session->getLastError();
@@ -3569,7 +3822,7 @@ FmlErrorNumber Fieldml_SetArrayDataSourceSizes( FmlSessionHandle handle, FmlObje
     {
         if( sizes[i] < 0 )
         {
-            return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+            return session->setError( FML_ERR_INVALID_PARAMETER_3, objectHandle, "Cannot set array data sizes. Invalid size." );
         }
     }
     
@@ -3585,7 +3838,9 @@ FmlErrorNumber Fieldml_SetArrayDataSourceSizes( FmlSessionHandle handle, FmlObje
 
 FmlErrorNumber Fieldml_GetArrayDataSourceRawSizes( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *sizes )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return session->getLastError();
@@ -3608,7 +3863,9 @@ FmlErrorNumber Fieldml_GetArrayDataSourceRawSizes( FmlSessionHandle handle, FmlO
 
 FmlErrorNumber Fieldml_SetArrayDataSourceRawSizes( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *sizes )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return session->getLastError();
@@ -3624,7 +3881,7 @@ FmlErrorNumber Fieldml_SetArrayDataSourceRawSizes( FmlSessionHandle handle, FmlO
     {
         if( sizes[i] <= 0 )
         {
-            return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+            return session->setError( FML_ERR_INVALID_PARAMETER_3, "Cannot set array data raw size. Invalid size." );
         }
     }
     
@@ -3640,7 +3897,9 @@ FmlErrorNumber Fieldml_SetArrayDataSourceRawSizes( FmlSessionHandle handle, FmlO
 
 FmlErrorNumber Fieldml_GetArrayDataSourceOffsets( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *offsets )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return session->getLastError();
@@ -3663,7 +3922,9 @@ FmlErrorNumber Fieldml_GetArrayDataSourceOffsets( FmlSessionHandle handle, FmlOb
 
 FmlErrorNumber Fieldml_SetArrayDataSourceOffsets( FmlSessionHandle handle, FmlObjectHandle objectHandle, int *offsets )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return session->getLastError();
@@ -3679,7 +3940,7 @@ FmlErrorNumber Fieldml_SetArrayDataSourceOffsets( FmlSessionHandle handle, FmlOb
     {
         if( offsets[i] < 0 )
         {
-            return session->setError( FML_ERR_INVALID_PARAMETER_3 );
+            return session->setError( FML_ERR_INVALID_PARAMETER_3, "Cannot set array data offset. Invalid offset." );
         }
     }
     
@@ -3695,19 +3956,21 @@ FmlErrorNumber Fieldml_SetArrayDataSourceOffsets( FmlSessionHandle handle, FmlOb
 
 FmlObjectHandle Fieldml_CreateArrayDataSource( FmlSessionHandle handle, const char * name, FmlObjectHandle resourceHandle, const char * location, int rank )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_ERR_UNKNOWN_HANDLE;
     }
     if( name == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        session->setError( FML_ERR_INVALID_PARAMETER_2, "Cannot create array data source. Invalid name." );
         return FML_INVALID_HANDLE;
     }
     if( location == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_4 );
+        session->setError( FML_ERR_INVALID_PARAMETER_4, "Cannot create array data source. Invalid location." );
         return FML_INVALID_HANDLE;
     }
     
@@ -3718,7 +3981,7 @@ FmlObjectHandle Fieldml_CreateArrayDataSource( FmlSessionHandle handle, const ch
 
     if( rank <= 0 )
     {
-        return session->setError( FML_ERR_INVALID_PARAMETER_5 );
+        return session->setError( FML_ERR_INVALID_PARAMETER_5, "Cannot create array data source. Invalid rank." );
     }
     
     FieldmlObject *object = getObject( session, resourceHandle );
@@ -3728,14 +3991,14 @@ FmlObjectHandle Fieldml_CreateArrayDataSource( FmlSessionHandle handle, const ch
     }
     if( object->objectType != FHT_DATA_RESOURCE )
     {
-        return session->setError( FML_ERR_INVALID_OBJECT );
+        return session->setError( FML_ERR_INVALID_OBJECT, resourceHandle, "Cannot create array data source. Must be a data resource." );
     }
     
     DataResource *dataResource = getDataResource( session, resourceHandle );
 
     ArrayDataSource *source = new ArrayDataSource( name, dataResource, location, rank );
 
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
     FmlObjectHandle sourceHandle = addObject( session, source );
     
     dataResource->dataSources.push_back( sourceHandle );
@@ -3746,19 +4009,21 @@ FmlObjectHandle Fieldml_CreateArrayDataSource( FmlSessionHandle handle, const ch
 
 int Fieldml_CreateConstantEvaluator( FmlSessionHandle handle, const char * name, const char * literal, FmlObjectHandle valueType )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return FML_INVALID_HANDLE;
     }
     if( name == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_2 );
+        session->setError( FML_ERR_INVALID_PARAMETER_2, "Cannot create constant evaluator. Invalid name." );
         return FML_INVALID_HANDLE;
     }
     if( literal == NULL )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_3 );
+        session->setError( FML_ERR_INVALID_PARAMETER_3, "Cannot create constant evaluator. Invalid value." );
         return FML_INVALID_HANDLE;
     }
 
@@ -3769,20 +4034,22 @@ int Fieldml_CreateConstantEvaluator( FmlSessionHandle handle, const char * name,
 
     if( !checkIsValueType( session, valueType, true, true, false, true ) )
     {
-        session->setError( FML_ERR_INVALID_PARAMETER_4 );
+        session->setError( FML_ERR_INVALID_PARAMETER_4, valueType, "Cannot create constant evaluator. Invalid type." );
         return FML_INVALID_HANDLE;
     }
 
     ConstantEvaluator *evaluator = new ConstantEvaluator( name, literal, valueType );
     
-    session->setError( FML_ERR_NO_ERROR );
+    session->setError( FML_ERR_NO_ERROR, "" );
     return addObject( session, evaluator );
 }
 
 
 char * Fieldml_GetConstantEvaluatorValueString( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
-    FieldmlSession *session = getSession( handle );
+    FieldmlSession *session = FieldmlSession::handleToSession( handle );
+    ERROR_AUTOSTACK( session );
+
     if( session == NULL )
     {
         return NULL;
@@ -3794,7 +4061,7 @@ char * Fieldml_GetConstantEvaluatorValueString( FmlSessionHandle handle, FmlObje
         return cstrCopy( evaluator->valueString );
     }
 
-    session->setError( FML_ERR_INVALID_OBJECT );
+    session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot get constant evaluator value. Invalid object." );
     return NULL;
 }
 
@@ -3803,4 +4070,3 @@ int Fieldml_CopyConstantEvaluatorValueString( FmlSessionHandle handle, FmlObject
 {
     return cappedCopyAndFree( Fieldml_GetConstantEvaluatorValueString( handle, objectHandle ), buffer, bufferLength );
 }
-

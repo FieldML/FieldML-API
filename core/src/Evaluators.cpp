@@ -41,6 +41,7 @@
 
 #include "string_const.h"
 #include "Evaluators.h"
+#include "ErrorContextAutostack.h"
 
 using namespace std;
 
@@ -77,7 +78,6 @@ Evaluator *Evaluator::checkedCast( FieldmlSession *session, FmlObjectHandle obje
     FieldmlObject *object = session->getObject( objectHandle );
     if( object == NULL )
     {
-        session->setError( FML_ERR_UNKNOWN_OBJECT );
         return NULL;
     }
 
@@ -89,7 +89,7 @@ Evaluator *Evaluator::checkedCast( FieldmlSession *session, FmlObjectHandle obje
         ( object->objectType != FHT_REFERENCE_EVALUATOR ) &&
         ( object->objectType != FHT_CONSTANT_EVALUATOR ) )
     {
-        session->setError( FML_ERR_INVALID_OBJECT );
+        return NULL;
     }
     
     return (Evaluator*)object;

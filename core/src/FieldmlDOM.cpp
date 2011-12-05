@@ -50,6 +50,7 @@
 #include <libxml/xmlmemory.h>
 #include <libxml/xmlschemas.h>
 
+#include "ErrorContextAutostack.h"
 #include "Util.h"
 #include "String_InternalLibrary.h"
 #include "String_InternalXSD.h"
@@ -94,7 +95,7 @@ static void addContextError( void *context, const char *msg, ... )
 
     char message[256];
 
-    va_list vargs;  
+    va_list vargs;
     va_start( vargs, msg );  
     int retval = vsnprintf( message, 255, msg, vargs );  
     va_end( vargs);

@@ -43,7 +43,9 @@
 #define H_FIELDML_SESSION
 
 #include <vector>
+#include <deque>
 #include <set>
+#include <utility>
 
 #include "FieldmlErrorHandler.h"
 #include "FieldmlRegion.h"
@@ -54,9 +56,9 @@ class FieldmlSession :
 private:
     FmlErrorNumber lastError;
     
-    int contextLine;
+    std::string lastDescription;
     
-    const char *contextFile;
+    std::deque<std::pair<const std::string, const int>> contextStack;
     
     int debug;
     
@@ -85,9 +87,13 @@ private:
 public:
     FieldmlSession();
     
-    void setErrorContext( const char *file, const int line );
+    void pushErrorContext( const char *file, const int line, const char *function );
+
+    void popErrorContext();
     
-    FmlErrorNumber setError( FmlErrorNumber error );
+    FmlErrorNumber setError( const FmlErrorNumber error, const std::string errorDescription );
+
+    FmlErrorNumber setError( const FmlErrorNumber error, const FmlObjectHandle handle, const std::string description );
 
     void logError( const std::string string );
 
@@ -103,7 +109,7 @@ public:
 
     void logError( const char *error, const char *name1 = NULL, const char *name2 = NULL );
     
-    void logError( const char *error, FmlObjectHandle object );
+    void logError( const char *error, const FmlObjectHandle object );
     
     FmlSessionHandle getSessionHandle();
     

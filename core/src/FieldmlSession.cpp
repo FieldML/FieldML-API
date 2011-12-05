@@ -87,6 +87,7 @@ FieldmlSession::FieldmlSession()
 {
     handle = addSession( this );
     lastError = FML_ERR_NO_ERROR;
+    lastDescription = "";
     
     region = NULL;
 }
@@ -171,6 +172,7 @@ FieldmlRegion *FieldmlSession::addResourceRegion( string href, string name )
     region = resourceRegion;
     
     int result = 0;
+    //TODO Go and fetch the actual document if possible.
     if( href == FML_INTERNAL_LIBRARY_NAME )
     {
         result = FieldmlDOM::parseFieldmlString( FML_STRING_INTERNAL_LIBRARY, "Internal library", FML_INTERNAL_LIBRARY_NAME, this, getSessionHandle() );
@@ -199,33 +201,49 @@ FieldmlRegion *FieldmlSession::addResourceRegion( string href, string name )
 }
 
 
-void FieldmlSession::setErrorContext( const char *file, const int line )
+void FieldmlSession::pushErrorContext( const char *file, const int line, const char *function )
 {
-    contextFile = file;
-    contextLine = line;
+    contextStack.push_back( pair<string, int>( string( function ) + string( ":" ) + string( file ), line ) );
 }
 
 
-FmlErrorNumber FieldmlSession::setError( const FmlErrorNumber error )
+void FieldmlSession::popErrorContext()
+{
+    contextStack.pop_back();
+}
+
+
+FmlErrorNumber FieldmlSession::setError( const FmlErrorNumber error, const string description )
 {
     lastError = error;
+    lastDescription = description;
     
     if( error != FML_ERR_NO_ERROR )
     {
         if( debug )
         {
-            if( contextFile == NULL )
+            fprintf( stderr, "FIELDML %s (%s): Error %d: %s\n", FML_VERSION_STRING, __DATE__, error, description.c_str() );
+            for( int i = 0; i < contextStack.size(); i++ )
             {
-                fprintf( stderr, "FIELDML %s (%s): Error %d\n", FML_VERSION_STRING, __DATE__, error );
-            }
-            else
-            {
-                fprintf( stderr, "FIELDML %s (%s): Error %d at %s:%d\n", FML_VERSION_STRING, __DATE__, error, contextFile, contextLine );
+                printf( "   at %s:%d\n", contextStack[i].first.c_str(), contextStack[i].second );
             }
         }
     }
     
     return error;
+}
+
+
+FmlErrorNumber FieldmlSession::setError( const FmlErrorNumber error, const FmlObjectHandle handle, const string description )
+{
+    lastError = error;
+    lastDescription = description;
+    
+    FieldmlObject *object = getObject( handle );
+    
+    const string objectName = ( object != NULL ) ? object->name : "UNKNOWN";
+    
+    return setError( error, objectName + ": " + description );
 }
 
 
@@ -281,7 +299,7 @@ void FieldmlSession::logError( const string error )
     addError( error );
     if( debug )
     {
-        fprintf( stderr, "FIELDML %s (%s): Error %s at %s:%d\n", FML_VERSION_STRING, __DATE__, error.c_str(), contextFile, contextLine );
+        fprintf( stderr, "FIELDML %s (%s): Error %s at %s:%d\n", FML_VERSION_STRING, __DATE__, error.c_str(), contextStack.back().first, contextStack.back().second );
     }
         
 }

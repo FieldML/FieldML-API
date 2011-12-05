@@ -49,13 +49,9 @@
 class FieldmlErrorHandler
 {
 public:
-    virtual void setErrorContext( const char *file, const int line ) = 0;
-    
-    virtual FmlErrorNumber setError( FmlErrorNumber error ) = 0;
-
     virtual void logError( const std::string string ) = 0;
 
-    virtual void logError( const char *error, FmlObjectHandle object ) = 0;
+    virtual void logError( const char *error, const FmlObjectHandle object ) = 0;
 
     virtual void logError( const char *error, const char *name1 = NULL, const char *name2 = NULL ) = 0;
     

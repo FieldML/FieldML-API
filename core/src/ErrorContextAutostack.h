@@ -39,26 +39,30 @@
  *
  */
 
-#ifndef H_UTIL
-#define H_UTIL
+#ifndef H_ERROR_CONTEXT_AUTOSTACK
+#define H_ERROR_CONTEXT_AUTOSTACK
 
-#include <vector>
-#include <algorithm>
+#include "FieldmlSession.h"
 
-namespace FmlUtil
+#if defined __FUNC__
+#define __ECA_FUNC__ __FUNC__ //Defined in the C99 spec. Used by gcc.
+#elif defined __FUNCTION__
+#define __ECA_FUNC__ __FUNCTION__ //Used by Microsoft.
+#else
+#define __ECA_FUNC__ ""
+#endif
+
+class ErrorContextAutostack
 {
-    struct delete_object
-    {
-        template <typename T>
-        void operator()(T *ptr){ delete ptr; }
-    };
+private:
+    FieldmlSession *errorSession;
     
+public:
+    ErrorContextAutostack( FieldmlSession *_errorSession, const char *file, const int line, const char *function );
     
-    template <typename T, typename S>
-    bool contains( const T &v, const S value )
-    {
-        return std::find( v.begin(), v.end(), value ) != v.end();
-    }
-}
+    ~ErrorContextAutostack();
+};
 
-#endif // H_UTIL
+#define ERROR_AUTOSTACK( errorHandler ) ErrorContextAutostack _tracer( errorHandler, __FILE__, __LINE__, __ECA_FUNC__ )
+
+#endif //H_ERROR_CONTEXT_AUTOSTACK

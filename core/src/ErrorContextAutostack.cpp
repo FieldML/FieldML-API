@@ -39,26 +39,24 @@
  *
  */
 
-#ifndef H_UTIL
-#define H_UTIL
+#include "ErrorContextAutostack.h"
 
-#include <vector>
-#include <algorithm>
+using namespace std;
 
-namespace FmlUtil
+ErrorContextAutostack::ErrorContextAutostack( FieldmlSession *_errorSession, const char *file, const int line, const char *function ) :
+    errorSession( _errorSession )
 {
-    struct delete_object
+    if( errorSession != NULL )
     {
-        template <typename T>
-        void operator()(T *ptr){ delete ptr; }
-    };
-    
-    
-    template <typename T, typename S>
-    bool contains( const T &v, const S value )
-    {
-        return std::find( v.begin(), v.end(), value ) != v.end();
+        errorSession->pushErrorContext( file, line, function );
     }
 }
 
-#endif // H_UTIL
+
+ErrorContextAutostack::~ErrorContextAutostack()
+{
+    if( errorSession != NULL )
+    {
+        errorSession->popErrorContext();
+    }
+}
