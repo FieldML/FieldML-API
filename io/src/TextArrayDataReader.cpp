@@ -169,7 +169,6 @@ TextArrayDataReader *TextArrayDataReader::create( FieldmlIoContext *context, con
     }
     else if( type == DATA_RESOURCE_INLINE )
     {
-        //TODO This is unsafe, as the user can modify the string while the reader is still active.
         string data;
         if( !StringUtil::safeString( Fieldml_GetInlineData( context->getSession(), resource ), data ) )
         {
