@@ -75,24 +75,24 @@ private:
 
     TextArrayDataReader( FieldmlIoContext *_context, FieldmlInputStream *_stream, FmlObjectHandle source, int _sourceRank );
     
-    bool checkDimensions( int *offsets, int *sizes );
+    bool checkDimensions( const int *offsets, const int *sizes );
     
-    bool applyOffsets( int *offsets, int *sizes, int depth, bool isHead );
+    bool applyOffsets( const int *offsets, const int *sizes, int depth, bool isHead );
     
-    FmlIoErrorNumber readPreSlab( int *offsets, int *sizes );
+    FmlIoErrorNumber readPreSlab( const int *offsets, const int *sizes );
     
-    FmlIoErrorNumber readSlice( int *offsets, int *sizes, int depth, BufferReader &reader );
+    FmlIoErrorNumber readSlice( const int *offsets, const int *sizes, int depth, BufferReader &reader );
     
-    FmlIoErrorNumber readSlab( int *offsets, int *sizes, BufferReader &reader );
+    FmlIoErrorNumber readSlab( const int *offsets, const int *sizes, BufferReader &reader );
     
     FmlIoErrorNumber skipPreamble();
 
 public:
-    virtual FmlIoErrorNumber readIntSlab( int *offsets, int *sizes, int *valueBuffer );
+    virtual FmlIoErrorNumber readIntSlab( const int *offsets, const int *sizes, int *valueBuffer );
     
-    virtual FmlIoErrorNumber readDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
+    virtual FmlIoErrorNumber readDoubleSlab( const int *offsets, const int *sizes, double *valueBuffer );
     
-    virtual FmlIoErrorNumber readBooleanSlab( int *offsets, int *sizes, bool *valueBuffer );
+    virtual FmlIoErrorNumber readBooleanSlab( const int *offsets, const int *sizes, FmlBoolean *valueBuffer );
     
     virtual FmlIoErrorNumber close();
     

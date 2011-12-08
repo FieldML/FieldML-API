@@ -129,21 +129,21 @@ FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle obj
  * Reads data from the multi-dimensional array specified by the given offsets and sizes into the given buffer. The first
  * size/offset is applied to the outermost index, and so on.
  */
-FmlIoErrorNumber Fieldml_ReadIntSlab( FmlReaderHandle readerHandle, int *offsets, int *sizes, int *valueBuffer );
+FmlIoErrorNumber Fieldml_ReadIntSlab( FmlReaderHandle readerHandle, const int *offsets, const int *sizes, int *valueBuffer );
 
 
 /**
  * Reads data from the multi-dimensional array specified by the given offsets and sizes into the given buffer. The first
  * size/offset is applied to the outermost index, and so on.
  */
-FmlIoErrorNumber Fieldml_ReadDoubleSlab( FmlReaderHandle readerHandle, int *offsets, int *sizes, double *valueBuffer );
+FmlIoErrorNumber Fieldml_ReadDoubleSlab( FmlReaderHandle readerHandle, const int *offsets, const int *sizes, double *valueBuffer );
 
 
 /**
  * Reads data from the multi-dimensional array specified by the given offsets and sizes into the given buffer. The first
  * size/offset is applied to the outermost index, and so on.
  */
-FmlIoErrorNumber Fieldml_ReadBooleanSlab( FmlReaderHandle readerHandle, int *offsets, int *sizes, bool *valueBuffer );
+FmlIoErrorNumber Fieldml_ReadBooleanSlab( FmlReaderHandle readerHandle, const int *offsets, const int *sizes, FmlBoolean *valueBuffer );
 
 
 /**
@@ -173,7 +173,7 @@ FmlWriterHandle Fieldml_OpenArrayWriter( FmlSessionHandle handle, FmlObjectHandl
  * 
  * \see Fieldml_OpenArrayWriter
  */
-FmlIoErrorNumber Fieldml_WriteIntSlab( FmlWriterHandle writerHandle, int *offsets, int *sizes, int *valueBuffer );
+FmlIoErrorNumber Fieldml_WriteIntSlab( FmlWriterHandle writerHandle, const int *offsets, const int *sizes, const int *valueBuffer );
 
 /**
  * Write out some double-precision values to the given data writer. The data will be interpreted as an n-dimensional array of
@@ -184,7 +184,7 @@ FmlIoErrorNumber Fieldml_WriteIntSlab( FmlWriterHandle writerHandle, int *offset
  * 
  * \see Fieldml_OpenArrayWriter
  */
-FmlIoErrorNumber Fieldml_WriteDoubleSlab( FmlWriterHandle writerHandle, int *offsets, int *sizes, double *valueBuffer );
+FmlIoErrorNumber Fieldml_WriteDoubleSlab( FmlWriterHandle writerHandle, const int *offsets, const int *sizes, const double *valueBuffer );
 
 
 /**
@@ -196,7 +196,7 @@ FmlIoErrorNumber Fieldml_WriteDoubleSlab( FmlWriterHandle writerHandle, int *off
  * 
  * \see Fieldml_OpenArrayWriter
  */
-FmlIoErrorNumber Fieldml_WriteBooleanSlab( FmlWriterHandle writerHandle, int *offsets, int *sizes, bool *valueBuffer );
+FmlIoErrorNumber Fieldml_WriteBooleanSlab( FmlWriterHandle writerHandle, const int *offsets, const int *sizes, const FmlBoolean *valueBuffer );
 
 
 /**

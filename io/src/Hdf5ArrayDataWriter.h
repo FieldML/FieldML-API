@@ -69,18 +69,18 @@ private:
     
     bool initializeWithNewDataset( const std::string sourceName, int *sizes, FieldmlHandleType handleType );
 
-    FmlIoErrorNumber writeSlab( int *offsets, int *sizes, hid_t requiredDatatype, void *valueBuffer );
+    FmlIoErrorNumber writeSlab( const int *offsets, const int *sizes, hid_t requiredDatatype, const void *valueBuffer );
 
 public:
     bool ok;
 
     Hdf5ArrayDataWriter( FieldmlIoContext *_context, const std::string root, FmlObjectHandle source, FieldmlHandleType handleType, bool append, int *sizes, int rank, hid_t fileAccessProperties );
     
-    virtual FmlIoErrorNumber writeIntSlab( int *offsets, int *sizes, int *valueBuffer );
+    virtual FmlIoErrorNumber writeIntSlab( const int *offsets, const int *sizes, const int *valueBuffer );
     
-    virtual FmlIoErrorNumber writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
+    virtual FmlIoErrorNumber writeDoubleSlab( const int *offsets, const int *sizes, const double *valueBuffer );
     
-    virtual FmlIoErrorNumber writeBooleanSlab( int *offsets, int *sizes, bool *valueBuffer );
+    virtual FmlIoErrorNumber writeBooleanSlab( const int *offsets, const int *sizes, const FmlBoolean *valueBuffer );
     
     virtual FmlIoErrorNumber close();
     

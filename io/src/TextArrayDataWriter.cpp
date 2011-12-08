@@ -114,10 +114,10 @@ class DoubleBufferWriter :
     public BufferWriter
 {
 private:
-    double * const buffer;
+    const double * const buffer;
     
 public:
-    DoubleBufferWriter( FieldmlOutputStream *_stream, double *_buffer ) :
+    DoubleBufferWriter( FieldmlOutputStream *_stream, const double *_buffer ) :
         BufferWriter( _stream ), buffer( _buffer ) {}
     
     void write( int count )
@@ -134,10 +134,10 @@ class IntBufferWriter :
     public BufferWriter
 {
 private:
-    int * const buffer;
+    const int * const buffer;
     
 public:
-    IntBufferWriter( FieldmlOutputStream *_stream, int *_buffer ) :
+    IntBufferWriter( FieldmlOutputStream *_stream, const int *_buffer ) :
         BufferWriter( _stream ), buffer( _buffer ) {}
     
     void write( int count )
@@ -154,10 +154,10 @@ class BooleanBufferWriter :
     public BufferWriter
 {
 private:
-    bool * const buffer;
+    const FmlBoolean * const buffer;
     
 public:
-    BooleanBufferWriter( FieldmlOutputStream *_stream, bool *_buffer ) :
+    BooleanBufferWriter( FieldmlOutputStream *_stream, const FmlBoolean *_buffer ) :
         BufferWriter( _stream ), buffer( _buffer ) {}
     
     void write( int count )
@@ -250,7 +250,7 @@ TextArrayDataWriter::TextArrayDataWriter( FieldmlIoContext *_context, const stri
 }
 
 
-FmlIoErrorNumber TextArrayDataWriter::writeSlice( int *sizes, int depth, BufferWriter &writer )
+FmlIoErrorNumber TextArrayDataWriter::writeSlice( const int *sizes, const int depth, BufferWriter &writer )
 {
     if( depth == sourceRank - 1 )
     {
@@ -272,7 +272,7 @@ FmlIoErrorNumber TextArrayDataWriter::writeSlice( int *sizes, int depth, BufferW
 }
     
 
-FmlIoErrorNumber TextArrayDataWriter::writeSlab( int *offsets, int *sizes, BufferWriter &writer )
+FmlIoErrorNumber TextArrayDataWriter::writeSlab( const int *offsets, const int *sizes, BufferWriter &writer )
 {
     if( offsets[0] != offset )
     {
@@ -303,7 +303,7 @@ FmlIoErrorNumber TextArrayDataWriter::writeSlab( int *offsets, int *sizes, Buffe
 }
 
 
-FmlIoErrorNumber TextArrayDataWriter::writeIntSlab( int *offsets, int *sizes, int *valueBuffer )
+FmlIoErrorNumber TextArrayDataWriter::writeIntSlab( const int *offsets, const int *sizes, const int *valueBuffer )
 {
     if( closed )
     {
@@ -316,7 +316,7 @@ FmlIoErrorNumber TextArrayDataWriter::writeIntSlab( int *offsets, int *sizes, in
 }
 
 
-FmlIoErrorNumber TextArrayDataWriter::writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer )
+FmlIoErrorNumber TextArrayDataWriter::writeDoubleSlab( const int *offsets, const int *sizes, const double *valueBuffer )
 {
     if( closed )
     {
@@ -329,7 +329,7 @@ FmlIoErrorNumber TextArrayDataWriter::writeDoubleSlab( int *offsets, int *sizes,
 }
 
 
-FmlIoErrorNumber TextArrayDataWriter::writeBooleanSlab( int *offsets, int *sizes, bool *valueBuffer )
+FmlIoErrorNumber TextArrayDataWriter::writeBooleanSlab( const int *offsets, const int *sizes, const FmlBoolean *valueBuffer )
 {
     if( closed )
     {

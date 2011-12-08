@@ -288,7 +288,7 @@ bool Hdf5ArrayDataWriter::initializeWithExistingDataset( int *sizes )
 }
 
 
-FmlIoErrorNumber Hdf5ArrayDataWriter::writeSlab( int *offsets, int *sizes, hid_t requiredDatatype, void *valueBuffer )
+FmlIoErrorNumber Hdf5ArrayDataWriter::writeSlab( const int *offsets, const int *sizes, hid_t requiredDatatype, const void *valueBuffer )
 {
     if( datatype != requiredDatatype )
     {
@@ -330,7 +330,7 @@ FmlIoErrorNumber Hdf5ArrayDataWriter::writeSlab( int *offsets, int *sizes, hid_t
 }
 
 
-FmlIoErrorNumber Hdf5ArrayDataWriter::writeIntSlab( int *offsets, int *sizes, int *valueBuffer )
+FmlIoErrorNumber Hdf5ArrayDataWriter::writeIntSlab( const int *offsets, const int *sizes, const int *valueBuffer )
 {
     if( closed )
     {
@@ -341,7 +341,7 @@ FmlIoErrorNumber Hdf5ArrayDataWriter::writeIntSlab( int *offsets, int *sizes, in
 }
 
 
-FmlIoErrorNumber Hdf5ArrayDataWriter::writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer )
+FmlIoErrorNumber Hdf5ArrayDataWriter::writeDoubleSlab( const int *offsets, const int *sizes, const double *valueBuffer )
 {
     if( closed )
     {
@@ -352,7 +352,7 @@ FmlIoErrorNumber Hdf5ArrayDataWriter::writeDoubleSlab( int *offsets, int *sizes,
 }
 
 
-FmlIoErrorNumber Hdf5ArrayDataWriter::writeBooleanSlab( int *offsets, int *sizes, bool *valueBuffer )
+FmlIoErrorNumber Hdf5ArrayDataWriter::writeBooleanSlab( const int *offsets, const int *sizes, const FmlBoolean *valueBuffer )
 {
     if( closed )
     {

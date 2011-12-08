@@ -186,7 +186,7 @@ Hdf5ArrayDataReader::Hdf5ArrayDataReader( FieldmlIoContext *_context, const stri
 }
 
 
-FmlIoErrorNumber Hdf5ArrayDataReader::readSlab( int *offsets, int *sizes, hid_t requiredDatatype, void *valueBuffer )
+FmlIoErrorNumber Hdf5ArrayDataReader::readSlab( const int *offsets, const int *sizes, hid_t requiredDatatype, void *valueBuffer )
 {
     if( datatype != requiredDatatype )
     {
@@ -227,7 +227,7 @@ FmlIoErrorNumber Hdf5ArrayDataReader::readSlab( int *offsets, int *sizes, hid_t 
 }
 
 
-FmlIoErrorNumber Hdf5ArrayDataReader::readIntSlab( int *offsets, int *sizes, int *valueBuffer )
+FmlIoErrorNumber Hdf5ArrayDataReader::readIntSlab( const int *offsets, const int *sizes, int *valueBuffer )
 {
     if( closed )
     {
@@ -238,7 +238,7 @@ FmlIoErrorNumber Hdf5ArrayDataReader::readIntSlab( int *offsets, int *sizes, int
 }
 
 
-FmlIoErrorNumber Hdf5ArrayDataReader::readDoubleSlab( int *offsets, int *sizes, double *valueBuffer )
+FmlIoErrorNumber Hdf5ArrayDataReader::readDoubleSlab( const int *offsets, const int *sizes, double *valueBuffer )
 {
     if( closed )
     {
@@ -249,7 +249,7 @@ FmlIoErrorNumber Hdf5ArrayDataReader::readDoubleSlab( int *offsets, int *sizes, 
 }
 
 
-FmlIoErrorNumber Hdf5ArrayDataReader::readBooleanSlab( int *offsets, int *sizes, bool *valueBuffer )
+FmlIoErrorNumber Hdf5ArrayDataReader::readBooleanSlab( const int *offsets, const int *sizes, FmlBoolean *valueBuffer )
 {
     if( closed )
     {

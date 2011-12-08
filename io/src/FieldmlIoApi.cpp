@@ -109,7 +109,7 @@ FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle obj
 }
 
 
-FmlIoErrorNumber Fieldml_ReadIntSlab( FmlReaderHandle readerHandle, int *offsets, int *sizes, int *valueBuffer )
+FmlIoErrorNumber Fieldml_ReadIntSlab( FmlReaderHandle readerHandle, const int *offsets, const int *sizes, int *valueBuffer )
 {
     ArrayDataReader *reader = FieldmlIoSession::getSession().handleToReader( readerHandle );
     if( reader == NULL )
@@ -121,7 +121,7 @@ FmlIoErrorNumber Fieldml_ReadIntSlab( FmlReaderHandle readerHandle, int *offsets
 }
 
 
-FmlIoErrorNumber Fieldml_ReadDoubleSlab( FmlReaderHandle readerHandle, int *offsets, int *sizes, double *valueBuffer )
+FmlIoErrorNumber Fieldml_ReadDoubleSlab( FmlReaderHandle readerHandle, const int *offsets, const int *sizes, double *valueBuffer )
 {
     ArrayDataReader *reader = FieldmlIoSession::getSession().handleToReader( readerHandle );
     if( reader == NULL )
@@ -133,7 +133,7 @@ FmlIoErrorNumber Fieldml_ReadDoubleSlab( FmlReaderHandle readerHandle, int *offs
 }
 
 
-FmlIoErrorNumber Fieldml_ReadBooleanSlab( FmlReaderHandle readerHandle, int *offsets, int *sizes, bool *valueBuffer )
+FmlIoErrorNumber Fieldml_ReadBooleanSlab( FmlReaderHandle readerHandle, const int *offsets, const int *sizes, FmlBoolean *valueBuffer )
 {
     ArrayDataReader *reader = FieldmlIoSession::getSession().handleToReader( readerHandle );
     if( reader == NULL )
@@ -227,7 +227,7 @@ FmlWriterHandle Fieldml_OpenArrayWriter( FmlSessionHandle handle, FmlObjectHandl
 }
 
 
-FmlIoErrorNumber Fieldml_WriteIntSlab( FmlWriterHandle writerHandle, int *offsets, int *sizes, int *valueBuffer )
+FmlIoErrorNumber Fieldml_WriteIntSlab( FmlWriterHandle writerHandle, const int *offsets, const int *sizes, const int *valueBuffer )
 {
     ArrayDataWriter *writer = FieldmlIoSession::getSession().handleToWriter( writerHandle );
     if( writer == NULL )
@@ -239,7 +239,7 @@ FmlIoErrorNumber Fieldml_WriteIntSlab( FmlWriterHandle writerHandle, int *offset
 }
 
 
-FmlIoErrorNumber Fieldml_WriteDoubleSlab( FmlWriterHandle writerHandle, int *offsets, int *sizes, double *valueBuffer )
+FmlIoErrorNumber Fieldml_WriteDoubleSlab( FmlWriterHandle writerHandle, const int *offsets, const int *sizes, const double *valueBuffer )
 {
     ArrayDataWriter *writer = FieldmlIoSession::getSession().handleToWriter( writerHandle );
     if( writer == NULL )
@@ -251,7 +251,7 @@ FmlIoErrorNumber Fieldml_WriteDoubleSlab( FmlWriterHandle writerHandle, int *off
 }
 
 
-FmlIoErrorNumber Fieldml_WriteBooleanSlab( FmlWriterHandle writerHandle, int *offsets, int *sizes, bool *valueBuffer )
+FmlIoErrorNumber Fieldml_WriteBooleanSlab( FmlWriterHandle writerHandle, const int *offsets, const int *sizes, const FmlBoolean *valueBuffer )
 {
     ArrayDataWriter *writer = FieldmlIoSession::getSession().handleToWriter( writerHandle );
     if( writer == NULL )

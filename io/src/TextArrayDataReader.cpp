@@ -114,10 +114,10 @@ class BooleanBufferReader :
     public BufferReader
 {
 private:
-    bool * const buffer;
+    	FmlBoolean * const buffer;
     
 public:
-    BooleanBufferReader( FieldmlInputStream *_stream, bool *_buffer ) :
+    BooleanBufferReader( FieldmlInputStream *_stream, FmlBoolean *_buffer ) :
         BufferReader( _stream ), buffer( _buffer ) {}
     
     void read( int count )
@@ -212,7 +212,7 @@ TextArrayDataReader::TextArrayDataReader( FieldmlIoContext *_context, FieldmlInp
 }
 
 
-bool TextArrayDataReader::checkDimensions( int *offsets, int *sizes )
+bool TextArrayDataReader::checkDimensions( const int *offsets, const int *sizes )
 {
     for( int i = 0; i < sourceRank; i++ )
     {
@@ -267,7 +267,7 @@ FmlIoErrorNumber TextArrayDataReader::skipPreamble()
 }
 
 
-bool TextArrayDataReader::applyOffsets( int *offsets, int *sizes, int depth, bool isHead )
+bool TextArrayDataReader::applyOffsets( const int *offsets, const int *sizes, int depth, bool isHead )
 {
     long count = 1;
     
@@ -308,7 +308,7 @@ bool TextArrayDataReader::applyOffsets( int *offsets, int *sizes, int depth, boo
 }
 
 
-FmlIoErrorNumber TextArrayDataReader::readPreSlab( int *offsets, int *sizes )
+FmlIoErrorNumber TextArrayDataReader::readPreSlab( const int *offsets, const int *sizes )
 {
     if( !checkDimensions( offsets, sizes ) )
     {
@@ -337,7 +337,7 @@ FmlIoErrorNumber TextArrayDataReader::readPreSlab( int *offsets, int *sizes )
 }
 
 
-FmlIoErrorNumber TextArrayDataReader::readSlice( int *offsets, int *sizes, int depth, BufferReader &reader )
+FmlIoErrorNumber TextArrayDataReader::readSlice( const int *offsets, const int *sizes, int depth, BufferReader &reader )
 {
     if( !applyOffsets( offsets, sizes, depth, true ) )
     {
@@ -379,7 +379,7 @@ FmlIoErrorNumber TextArrayDataReader::readSlice( int *offsets, int *sizes, int d
 }
 
 
-FmlIoErrorNumber TextArrayDataReader::readSlab( int *offsets, int *sizes, BufferReader &reader )
+FmlIoErrorNumber TextArrayDataReader::readSlab( const int *offsets, const int *sizes, BufferReader &reader )
 {
     int err = readPreSlab( offsets, sizes );
     if( err != FML_IOERR_NO_ERROR )
@@ -391,7 +391,7 @@ FmlIoErrorNumber TextArrayDataReader::readSlab( int *offsets, int *sizes, Buffer
 }
 
 
-FmlIoErrorNumber TextArrayDataReader::readIntSlab( int *offsets, int *sizes, int *valueBuffer )
+FmlIoErrorNumber TextArrayDataReader::readIntSlab( const int *offsets, const int *sizes, int *valueBuffer )
 {
     if( closed )
     {
@@ -404,7 +404,7 @@ FmlIoErrorNumber TextArrayDataReader::readIntSlab( int *offsets, int *sizes, int
 }
 
 
-FmlIoErrorNumber TextArrayDataReader::readDoubleSlab( int *offsets, int *sizes, double *valueBuffer )
+FmlIoErrorNumber TextArrayDataReader::readDoubleSlab( const int *offsets, const int *sizes, double *valueBuffer )
 {
     if( closed )
     {
@@ -417,7 +417,7 @@ FmlIoErrorNumber TextArrayDataReader::readDoubleSlab( int *offsets, int *sizes, 
 }
 
 
-FmlIoErrorNumber TextArrayDataReader::readBooleanSlab( int *offsets, int *sizes, bool *valueBuffer )
+FmlIoErrorNumber TextArrayDataReader::readBooleanSlab( const int *offsets, const int *sizes, FmlBoolean *valueBuffer )
 {
     if( closed )
     {

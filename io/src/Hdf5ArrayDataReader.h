@@ -66,16 +66,16 @@ private:
     
     Hdf5ArrayDataReader( FieldmlIoContext *_context, const std::string root, FmlObjectHandle source, hid_t fileAccessProperties );
 
-    FmlIoErrorNumber readSlab( int *offsets, int *sizes, hid_t requiredDatatype, void *valueBuffer );
+    FmlIoErrorNumber readSlab( const int *offsets, const int *sizes, hid_t requiredDatatype, void *valueBuffer );
     
 public:
     bool ok;
 
-    virtual FmlIoErrorNumber readIntSlab( int *offsets, int *sizes, int *valueBuffer );
+    virtual FmlIoErrorNumber readIntSlab( const int *offsets, const int *sizes, int *valueBuffer );
     
-    virtual FmlIoErrorNumber readDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
+    virtual FmlIoErrorNumber readDoubleSlab( const int *offsets, const int *sizes, double *valueBuffer );
     
-    virtual FmlIoErrorNumber readBooleanSlab( int *offsets, int *sizes, bool *valueBuffer );
+    virtual FmlIoErrorNumber readBooleanSlab( const int *offsets, const int *sizes, FmlBoolean *valueBuffer );
     
     virtual FmlIoErrorNumber close();
     

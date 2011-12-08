@@ -63,20 +63,20 @@ private:
     
     int offset;
 
-    FmlIoErrorNumber writeSlice( int *sizes, int depth, BufferWriter &writer );
+    FmlIoErrorNumber writeSlice( const int *sizes, const int depth, BufferWriter &writer );
 
-    FmlIoErrorNumber writeSlab( int *offsets, int *sizes, BufferWriter &writer );
+    FmlIoErrorNumber writeSlab( const int *offsets, const int *sizes, BufferWriter &writer );
 
 public:
     bool ok;
 
     TextArrayDataWriter( FieldmlIoContext *_context, const std::string root, FmlObjectHandle _source, FieldmlHandleType handleType, bool append, int *sizes, int rank );
     
-    virtual FmlIoErrorNumber writeIntSlab( int *offsets, int *sizes, int *valueBuffer );
+    virtual FmlIoErrorNumber writeIntSlab( const int *offsets, const int *sizes, const int *valueBuffer );
     
-    virtual FmlIoErrorNumber writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer );
+    virtual FmlIoErrorNumber writeDoubleSlab( const int *offsets, const int *sizes, const double *valueBuffer );
     
-    virtual FmlIoErrorNumber writeBooleanSlab( int *offsets, int *sizes, bool *valueBuffer );
+    virtual FmlIoErrorNumber writeBooleanSlab( const int *offsets, const int *sizes, const FmlBoolean *valueBuffer );
     
     virtual FmlIoErrorNumber close();
     

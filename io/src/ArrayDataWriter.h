@@ -53,12 +53,12 @@ protected:
 
     ArrayDataWriter( FieldmlIoContext *_context );
 public:
-    virtual FmlIoErrorNumber writeIntSlab( int *offsets, int *sizes, int *valueBuffer ) = 0;
+    virtual FmlIoErrorNumber writeIntSlab( const int *offsets, const int *sizes, const int *valueBuffer ) = 0;
     
-    virtual FmlIoErrorNumber writeDoubleSlab( int *offsets, int *sizes, double *valueBuffer ) = 0;
+    virtual FmlIoErrorNumber writeDoubleSlab( const int *offsets, const int *sizes, const double *valueBuffer ) = 0;
     
     //TODO Provide options for writing from 32/64 bit packed boolean arrays?
-    virtual FmlIoErrorNumber writeBooleanSlab( int *offsets, int *sizes, bool *valueBuffer ) = 0;
+    virtual FmlIoErrorNumber writeBooleanSlab( const int *offsets, const int *sizes, const FmlBoolean *valueBuffer ) = 0;
     
     virtual FmlIoErrorNumber close() = 0;
     

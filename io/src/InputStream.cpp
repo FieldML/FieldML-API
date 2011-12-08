@@ -199,7 +199,7 @@ double FieldmlInputStream::readDouble()
 }
 
 
-bool FieldmlInputStream::readBoolean()
+FmlBoolean FieldmlInputStream::readBoolean()
 {
     int value = 0;
     int gotDigit = 0;

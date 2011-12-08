@@ -60,7 +60,7 @@ public:
 
     double readDouble();
     
-    bool readBoolean();
+    FmlBoolean readBoolean();
     
     int skipLine();
     

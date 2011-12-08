@@ -52,12 +52,12 @@ protected:
     ArrayDataReader( FieldmlIoContext *_context );
     
 public:
-    virtual FmlIoErrorNumber readIntSlab( int *offsets, int *sizes, int *valueBuffer ) = 0;
+    virtual FmlIoErrorNumber readIntSlab( const int *offsets, const int *sizes, int *valueBuffer ) = 0;
     
-    virtual FmlIoErrorNumber readDoubleSlab( int *offsets, int *sizes, double *valueBuffer ) = 0;
+    virtual FmlIoErrorNumber readDoubleSlab( const int *offsets, const int *sizes, double *valueBuffer ) = 0;
     
     //TODO Provide options for reading into 32/64 bit packed boolean arrays?
-    virtual FmlIoErrorNumber readBooleanSlab( int *offsets, int *sizes, bool *valueBuffer ) = 0;
+    virtual FmlIoErrorNumber readBooleanSlab( const int *offsets, const int *sizes, FmlBoolean *valueBuffer ) = 0;
     
     virtual FmlIoErrorNumber close() = 0;
     
