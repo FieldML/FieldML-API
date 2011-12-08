@@ -412,7 +412,37 @@
     </Arguments>
   </ExternalEvaluator>
 
+  <ExternalEvaluator name="shape.unit.triangle" valueType="boolean">
+    <Arguments>
+      <Argument name="chart.2d.argument"/>
+    </Arguments>
+  </ExternalEvaluator>
+
   <ExternalEvaluator name="shape.unit.cube" valueType="boolean">
+    <Arguments>
+      <Argument name="chart.3d.argument"/>
+    </Arguments>
+  </ExternalEvaluator>
+
+  <ExternalEvaluator name="shape.unit.tetrahedron" valueType="boolean">
+    <Arguments>
+      <Argument name="chart.3d.argument"/>
+    </Arguments>
+  </ExternalEvaluator>
+
+  <ExternalEvaluator name="shape.unit.wedge12" valueType="boolean">
+    <Arguments>
+      <Argument name="chart.3d.argument"/>
+    </Arguments>
+  </ExternalEvaluator>
+
+  <ExternalEvaluator name="shape.unit.wedge23" valueType="boolean">
+    <Arguments>
+      <Argument name="chart.3d.argument"/>
+    </Arguments>
+  </ExternalEvaluator>
+
+  <ExternalEvaluator name="shape.unit.wedge13" valueType="boolean">
     <Arguments>
       <Argument name="chart.3d.argument"/>
     </Arguments>

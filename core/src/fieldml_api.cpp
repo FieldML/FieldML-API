@@ -1654,11 +1654,13 @@ FmlErrorNumber Fieldml_SetDataSource( FmlSessionHandle handle, FmlObjectHandle o
     {
         if( parameter->dataDescription->descriptionType == DESCRIPTION_DENSE_ARRAY )
         {
+            //TODO Check that the rank of the data source is equal to the number of dense indexes.
             DenseArrayDataDescription *denseArray = (DenseArrayDataDescription*)parameter->dataDescription;
             denseArray->dataSource = dataSource;
         }
         else if( parameter->dataDescription->descriptionType == DESCRIPTION_DOK_ARRAY )
         {
+            //TODO Check that the rank of the data source is equal to the number of dense indexes plus one.
             DokArrayDataDescription *dokArray = (DokArrayDataDescription*)parameter->dataDescription;
             dokArray->valueSource = dataSource;
         }

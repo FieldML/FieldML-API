@@ -184,8 +184,8 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     <MemberRange min=\"1\" max=\"9\"/> \
    </Members> \
   </EnsembleType> \
-  <ArgumentEvaluator name=\"localNodes.2d.square3x3.argument\" valueType=\"localNodes.2d.square3x3\"/> "
- " \
+  <ArgumentEvaluator name=\"localNodes.2d.square3x3.argument\" valueType=\"localNodes.2d.square3x3\"/> \
+ \
   <ContinuousType name=\"parameters.2d.unit.biquadraticLagrange\"> \
     <Components name=\"parameters.2d.unit.biquadraticLagrange.component\" count=\"9\"/> \
   </ContinuousType> \
@@ -457,7 +457,37 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     </Arguments> \
   </ExternalEvaluator> \
  \
+  <ExternalEvaluator name=\"shape.unit.triangle\" valueType=\"boolean\"> \
+    <Arguments> \
+      <Argument name=\"chart.2d.argument\"/> \
+    </Arguments> \
+  </ExternalEvaluator> \
+ \
   <ExternalEvaluator name=\"shape.unit.cube\" valueType=\"boolean\"> \
+    <Arguments> \
+      <Argument name=\"chart.3d.argument\"/> \
+    </Arguments> \
+  </ExternalEvaluator> \
+ \
+  <ExternalEvaluator name=\"shape.unit.tetrahedron\" valueType=\"boolean\"> \
+    <Arguments> \
+      <Argument name=\"chart.3d.argument\"/> \
+    </Arguments> \
+  </ExternalEvaluator> \
+ \
+  <ExternalEvaluator name=\"shape.unit.wedge12\" valueType=\"boolean\"> \
+    <Arguments> \
+      <Argument name=\"chart.3d.argument\"/> \
+    </Arguments> \
+  </ExternalEvaluator> \
+ \
+  <ExternalEvaluator name=\"shape.unit.wedge23\" valueType=\"boolean\"> \
+    <Arguments> \
+      <Argument name=\"chart.3d.argument\"/> \
+    </Arguments> \
+  </ExternalEvaluator> \
+ \
+  <ExternalEvaluator name=\"shape.unit.wedge13\" valueType=\"boolean\"> \
     <Arguments> \
       <Argument name=\"chart.3d.argument\"/> \
     </Arguments> \

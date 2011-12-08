@@ -105,6 +105,7 @@ typedef int32_t FmlEnsembleValue;               ///< An integer-valued ensemble 
 #define FML_DOT_VERSION                 0
 
 #define FML_ERR_NO_ERROR                0       ///< The API call was successful.
+#define FML_OK                          0       ///< The API call was successful.
 #define FML_ERR_UNKNOWN_HANDLE          1000    ///< An unknown session handle was used.
 #define FML_ERR_UNKNOWN_OBJECT          1001    ///< An unknown object handle was used.
 #define FML_ERR_INVALID_OBJECT          1002    ///< An object handle referred to an object of the wrong type.
