@@ -58,7 +58,7 @@ private:
     
     std::string lastDescription;
     
-    std::deque<std::pair<const std::string, const int>> contextStack;
+    std::deque<std::pair<const std::string, const int> > contextStack;
     
     int debug;
     
