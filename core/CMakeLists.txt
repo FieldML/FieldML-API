@@ -57,6 +57,8 @@ ELSE( ${FIELDML_NAMESPACE_NAME}_BUILD_STATIC_LIB )
 ENDIF( ${FIELDML_NAMESPACE_NAME}_BUILD_STATIC_LIB )
 
 SET( FIELDML_API_SRCS
+	src/ErrorContextAutostack.cpp
+	src/Evaluators.cpp
 	src/fieldml_api.cpp
 	src/FieldmlDOM.cpp
 	src/FieldmlRegion.cpp
@@ -70,6 +72,8 @@ SET( FIELDML_API_SRCS
 	src/String_InternalLibrary.cpp
 	src/String_InternalXSD.cpp )
 SET( FIELDML_API_PRIVATE_HDRS
+	src/ErrorContextAutostack.h
+	src/Evaluators.h
 	src/FieldmlDOM.h
 	src/FieldmlErrorHandler.h
 	src/FieldmlRegion.h
