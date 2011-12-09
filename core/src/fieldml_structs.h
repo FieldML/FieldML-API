@@ -73,7 +73,7 @@ class EnsembleType :
 public:
     const bool isComponentEnsemble;
 
-    EnsembleMembersType membersType;
+    FieldmlEnsembleMembersType membersType;
     
     FmlEnsembleValue min;
     
@@ -141,11 +141,11 @@ public:
     //NOTE: At the moment, inline resources may only be TEXT_PLAIN. 
     const std::string format;
     
-    const DataResourceType resourceType;
+    const FieldmlDataResourceType resourceType;
 
     std::vector<FmlObjectHandle> dataSources;
     
-    DataResource( const std::string _name, DataResourceType _type, const std::string _format, const std::string _description );
+    DataResource( const std::string _name, FieldmlDataResourceType _type, const std::string _format, const std::string _description );
         
     virtual ~DataResource();
 };
@@ -155,10 +155,10 @@ class DataSource :
     public FieldmlObject
 {
 protected:
-    DataSource( const std::string _name, DataResource *_resource, DataSourceType _type );
+    DataSource( const std::string _name, DataResource *_resource, FieldmlDataSourceType _type );
     
 public:
-    const DataSourceType sourceType;
+    const FieldmlDataSourceType sourceType;
     
     DataResource * const resource;
     
@@ -193,7 +193,7 @@ public:
 class BaseDataDescription
 {
 public:
-    const DataDescriptionType descriptionType;
+    const FieldmlDataDescriptionType descriptionType;
     
     virtual void addDelegates( std::set<FmlObjectHandle> &delegates ) = 0;
 
@@ -214,7 +214,7 @@ public:
     virtual ~BaseDataDescription() = 0;
     
 protected:
-    BaseDataDescription( DataDescriptionType _descriptionType );
+    BaseDataDescription( FieldmlDataDescriptionType _descriptionType );
 };
 
 
@@ -243,7 +243,7 @@ public:
     virtual ~UnknownDataDescription();
     
 protected:
-    UnknownDataDescription( DataDescriptionType _descriptionType );
+    UnknownDataDescription( FieldmlDataDescriptionType _descriptionType );
 };
 
 
