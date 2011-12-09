@@ -806,19 +806,19 @@ public:
             ( checkName( membersSpecNode, MEMBER_RANGE_DATA_TAG ) ) ||
             ( checkName( membersSpecNode, MEMBER_STRIDE_RANGE_DATA_TAG ) ) )
         {
-            EnsembleMembersType type;
+            FieldmlEnsembleMembersType type;
             
             if( checkName( membersSpecNode, MEMBER_LIST_DATA_TAG ) )
             {
-                type = MEMBER_LIST_DATA;
+                type = FML_ENSEMBLE_MEMBER_LIST_DATA;
             }
             else if( checkName( membersSpecNode, MEMBER_RANGE_DATA_TAG ) )
             {
-                type = MEMBER_RANGE_DATA;
+                type = FML_ENSEMBLE_MEMBER_RANGE_DATA;
             }
             else if( checkName( membersSpecNode, MEMBER_STRIDE_RANGE_DATA_TAG ) )
             {
-                type = MEMBER_STRIDE_RANGE_DATA;
+                type = FML_ENSEMBLE_MEMBER_STRIDE_RANGE_DATA;
             }
             else
             {
@@ -1220,7 +1220,7 @@ public:
         xmlNodePtr dokNode = getFirstChild( objectNode, DOK_ARRAY_DATA_TAG );
         if( denseNode != NULL )
         {
-            if( Fieldml_SetParameterDataDescription( state.session, evaluator, DESCRIPTION_DENSE_ARRAY ) != FML_ERR_NO_ERROR )
+            if( Fieldml_SetParameterDataDescription( state.session, evaluator, FML_DATA_DESCRIPTION_DENSE_ARRAY ) != FML_ERR_NO_ERROR )
             {
                 state.errorHandler->logError( "ParameterEvaluator must have a valid data description", name );
                 return 1;
@@ -1243,7 +1243,7 @@ public:
         }
         else if( dokNode != NULL )
         {
-            if( Fieldml_SetParameterDataDescription( state.session, evaluator, DESCRIPTION_DOK_ARRAY ) != FML_ERR_NO_ERROR )
+            if( Fieldml_SetParameterDataDescription( state.session, evaluator, FML_DATA_DESCRIPTION_DOK_ARRAY ) != FML_ERR_NO_ERROR )
             {
                 state.errorHandler->logError( "ParameterEvaluator must have a valid data description", name );
                 return 1;

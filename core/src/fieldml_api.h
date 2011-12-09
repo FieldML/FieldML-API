@@ -149,13 +149,13 @@ typedef int32_t FmlEnsembleValue;               ///< An integer-valued ensemble 
  * \see Fieldml_GetEnsembleMembersMax
  * \see Fieldml_GetEnsembleMembersStride
  */
-enum EnsembleMembersType
+enum FieldmlEnsembleMembersType
 {
-    MEMBER_UNKNOWN,           ///< Member definition is not yet known.
-    MEMBER_RANGE,             ///< Members are defined directly via a min/max/stride triple, without using a data source.
-    MEMBER_LIST_DATA,         ///< Members are defined by a data source containing a list of integers.
-    MEMBER_RANGE_DATA,        ///< Members are defined by a data source containing a list of min/max integer pairs, with an assumed stride of 1.
-    MEMBER_STRIDE_RANGE_DATA, ///< Members are defined by a data source containing a list of min/max/stride integer triples.
+    FML_ENSEMBLE_MEMBER_UNKNOWN,           ///< Member definition is not yet known.
+    FML_ENSEMBLE_MEMBER_RANGE,             ///< Members are defined directly via a min/max/stride triple, without using a data source.
+    FML_ENSEMBLE_MEMBER_LIST_DATA,         ///< Members are defined by a data source containing a list of integers.
+    FML_ENSEMBLE_MEMBER_RANGE_DATA,        ///< Members are defined by a data source containing a list of min/max integer pairs, with an assumed stride of 1.
+    FML_ENSEMBLE_MEMBER_STRIDE_RANGE_DATA, ///< Members are defined by a data source containing a list of min/max/stride integer triples.
 };
 
 
@@ -165,11 +165,11 @@ enum EnsembleMembersType
  * \see Fieldml_SetParameterDataDescription
  * \see Fieldml_GetParameterDataDescription
  */
-enum DataDescriptionType
+enum FieldmlDataDescriptionType
 {
-    DESCRIPTION_UNKNOWN,      ///< The data's format is unknown.
-    DESCRIPTION_DENSE_ARRAY,  ///< The data is a fully-populated array.
-    DESCRIPTION_DOK_ARRAY,    ///< The data is a (potentially) sparse array represented by an array of keys and a separate array of values.
+    FML_DATA_DESCRIPTION_UNKNOWN,      ///< The data's format is unknown.
+    FML_DATA_DESCRIPTION_DENSE_ARRAY,  ///< The data is a fully-populated array.
+    FML_DATA_DESCRIPTION_DOK_ARRAY,    ///< The data is a (potentially) sparse array represented by an array of keys and a separate array of values.
 };
 
 
@@ -183,11 +183,11 @@ enum DataDescriptionType
  * \see Fieldml_CreateHrefDataResource
  * \see Fieldml_CreateInlineDataResource
  */
-enum DataResourceType
+enum FieldmlDataResourceType
 {
-    DATA_RESOURCE_UNKNOWN,     ///< The data's type is unknown.
-    DATA_RESOURCE_HREF,        ///< The data is a resource specified by an href.
-    DATA_RESOURCE_INLINE,      ///< The data is inline text.
+    FML_DATA_RESOURCE_UNKNOWN,     ///< The data's type is unknown.
+    FML_DATA_RESOURCE_HREF,        ///< The data is a resource specified by an href.
+    FML_DATA_RESOURCE_INLINE,      ///< The data is inline text.
 };
 
 
@@ -198,10 +198,10 @@ enum DataResourceType
  * \see Fieldml_GetDataSourceType
  * \see Fieldml_CreateArrayDataSource
  */
-enum DataSourceType
+enum FieldmlDataSourceType
 {
-    DATA_SOURCE_UNKNOWN,      ///< The data source's type is unknown.
-    DATA_SOURCE_ARRAY,        ///< The data source is an array. The array dimensions are given by the associated raw source in the resource data itself.
+    FML_DATA_SOURCE_UNKNOWN,      ///< The data source's type is unknown.
+    FML_DATA_SOURCE_ARRAY,        ///< The data source is an array. The array dimensions are given by the associated raw source in the resource data itself.
 };
 
 
@@ -746,7 +746,7 @@ FmlObjectHandle Fieldml_CreateParameterEvaluator( FmlSessionHandle handle, const
  * 
  * \see Fieldml_GetParameterDataDescription
  */
-FmlErrorNumber Fieldml_SetParameterDataDescription( FmlSessionHandle handle, FmlObjectHandle objectHandle, DataDescriptionType description );
+FmlErrorNumber Fieldml_SetParameterDataDescription( FmlSessionHandle handle, FmlObjectHandle objectHandle, FieldmlDataDescriptionType description );
 
 /**
  * \return The data source used by the given object.
@@ -784,7 +784,7 @@ FmlErrorNumber Fieldml_SetKeyDataSource( FmlSessionHandle handle, FmlObjectHandl
 /**
  * \return The data description type of the given parameter evaluator.
  */
-DataDescriptionType Fieldml_GetParameterDataDescription( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+FieldmlDataDescriptionType Fieldml_GetParameterDataDescription( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
@@ -1020,7 +1020,7 @@ FmlErrorNumber Fieldml_AddArgument( FmlSessionHandle handle, FmlObjectHandle obj
  * \see Fieldml_AddArgument
  * \see Fieldml_GetArgument
  */
-int Fieldml_GetArgumentCount( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlBoolean isUnbound, FmlBoolean isUsed );
+int Fieldml_GetArgumentCount( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlBoolean isBound, FmlBoolean isUsed );
 
 
 /**
@@ -1029,7 +1029,7 @@ int Fieldml_GetArgumentCount( FmlSessionHandle handle, FmlObjectHandle objectHan
  * \see Fieldml_AddArgument
  * \see Fieldml_GetArgumentCount
  */
-FmlObjectHandle Fieldml_GetArgument( FmlSessionHandle handle, FmlObjectHandle objectHandle, int argumentIndex, FmlBoolean isUnbound, FmlBoolean isUsed );
+FmlObjectHandle Fieldml_GetArgument( FmlSessionHandle handle, FmlObjectHandle objectHandle, int argumentIndex, FmlBoolean isBound, FmlBoolean isUsed );
 
 
 /**
@@ -1086,7 +1086,7 @@ FmlObjectHandle Fieldml_GetBindByArgument( FmlSessionHandle handle, FmlObjectHan
  * \see Fieldml_SetEnsembleMembersDataSource
  * \see Fieldml_SetEnsembleMembersRange
  */
-EnsembleMembersType Fieldml_GetEnsembleMembersType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+FieldmlEnsembleMembersType Fieldml_GetEnsembleMembersType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
@@ -1097,7 +1097,7 @@ EnsembleMembersType Fieldml_GetEnsembleMembersType( FmlSessionHandle handle, Fml
  * \see Fieldml_GetEnsembleMembersType
  * \see Fieldml_CreateEnsembleType
  */
-FmlErrorNumber Fieldml_SetEnsembleMembersDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle, EnsembleMembersType type, int count, FmlObjectHandle dataSourceHandle );
+FmlErrorNumber Fieldml_SetEnsembleMembersDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle, FieldmlEnsembleMembersType type, int count, FmlObjectHandle dataSourceHandle );
 
 /**
  * Sets the given ensemble's member list directly via a minimum, maximum and stride triple (the maximum is inclusive).
@@ -1276,7 +1276,7 @@ FmlObjectHandle Fieldml_CreateInlineDataResource( FmlSessionHandle handle, const
  * \see Fieldml_CreateHrefDataResource
  * \see Fieldml_CreateInlineDataResource
  */
-DataResourceType Fieldml_GetDataResourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+FieldmlDataResourceType Fieldml_GetDataResourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
@@ -1416,12 +1416,12 @@ FmlErrorNumber Fieldml_SetArrayDataSourceSizes( FmlSessionHandle handle, FmlObje
  * 
  * \see Fieldml_CreateArrayDataSource
  */
-DataSourceType Fieldml_GetDataSourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+FieldmlDataSourceType Fieldml_GetDataSourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 
 /**
  * Appends the given string to the given data resource's inline data. The data resource's type must be
- * DataResourceType::DATA_RESOURCE_INLINE.
+ * FieldmlDataResourceType::FML_DATA_RESOURCE_INLINE.
  * 
  * \see Fieldml_CreateInlineDataResource
  */
@@ -1430,7 +1430,7 @@ FmlErrorNumber Fieldml_AddInlineData( FmlSessionHandle handle, FmlObjectHandle o
 
 /**
  * Copies the given string to the given data resource's inline data. The data resource's type must be
- * DataResourceType::DATA_RESOURCE_INLINE.
+ * FieldmlDataResourceType::FML_DATA_RESOURCE_INLINE.
  * 
  * \see Fieldml_CreateInlineDataResource
  */
@@ -1468,7 +1468,7 @@ char * Fieldml_GetInlineData( FmlSessionHandle handle, FmlObjectHandle objectHan
 int Fieldml_CopyInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandle, char * buffer, int bufferLength, int offset );
 
 /**
- * \return The href of the data resource's file. The data resource's type must be DataResourceType::DATA_RESOURCE_HREF.
+ * \return The href of the data resource's file. The data resource's type must be FieldmlDataResourceType::FML_DATA_RESOURCE_HREF.
 
  * \see Fieldml_GetRegionName
  * \see Fieldml_FreeString
@@ -1478,7 +1478,7 @@ char * Fieldml_GetDataResourceHref( FmlSessionHandle handle, FmlObjectHandle obj
 
 
 /**
- * Copies the given data resource's href into the given buffer. The data resource's type must be DataResourceType::DATA_RESOURCE_HREF.
+ * Copies the given data resource's href into the given buffer. The data resource's type must be FieldmlDataResourceType::FML_DATA_RESOURCE_HREF.
  *  
  * \see Fieldml_CopyRegionName
  * \see Fieldml_CreateHrefDataResource
@@ -1486,7 +1486,7 @@ char * Fieldml_GetDataResourceHref( FmlSessionHandle handle, FmlObjectHandle obj
 int Fieldml_CopyDataResourceHref( FmlSessionHandle handle, FmlObjectHandle objectHandle, char * buffer, int bufferLength );
 
 /**
- * \return The data format of the given data resource's format into the given buffer. The data resource's type must be DataResourceType::DATA_RESOURCE_ARRAY.
+ * \return The data format of the given data resource's format into the given buffer. The data resource's type must be FieldmlDataResourceType::FML_DATA_RESOURCE_ARRAY.
  * 
  * \see Fieldml_CreateArrayDataResource
  */
@@ -1494,7 +1494,7 @@ char * Fieldml_GetDataResourceFormat( FmlSessionHandle handle, FmlObjectHandle o
 
 
 /**
- * Copies the given data resource's format into the given buffer. The data resource's type must be DataResourceType::DATA_RESOURCE_ARRAY.
+ * Copies the given data resource's format into the given buffer. The data resource's type must be FieldmlDataResourceType::FML_DATA_RESOURCE_ARRAY.
  * 
  * \see Fieldml_CreateArrayDataResource
  */

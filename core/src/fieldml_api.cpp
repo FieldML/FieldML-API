@@ -199,7 +199,7 @@ static SimpleMap<FmlObjectHandle, FmlObjectHandle> *getBindMap( FieldmlSession *
 }
 
 
-static vector<FmlObjectHandle> getArgumentList( FieldmlSession *session, FmlObjectHandle objectHandle, bool isUnbound, bool isUsed )
+static vector<FmlObjectHandle> getArgumentList( FieldmlSession *session, FmlObjectHandle objectHandle, bool isBound, bool isUsed )
 {
     vector<FmlObjectHandle> args;
 
@@ -219,12 +219,12 @@ static vector<FmlObjectHandle> getArgumentList( FieldmlSession *session, FmlObje
         return args;
     }
 
-    if ( !isUnbound && !isUsed )
+    if ( isBound && !isUsed )
     {
         //Always an empty set with the current algorithm, as it only tracks unbound or used arguments.
         return args;
     }
-    if( isUnbound && !isUsed )
+    if( !isBound && !isUsed )
     {
         //Always an empty set with the current algorithm, as it assumes that arguments of arguments are used.
         return args;
@@ -233,7 +233,7 @@ static vector<FmlObjectHandle> getArgumentList( FieldmlSession *session, FmlObje
     set<FmlObjectHandle> unbound, used;
     session->getArguments( objectHandle, unbound, used, false );
     
-    if( !isUnbound && isUsed )
+    if( isBound && isUsed )
     {
         used.erase( unbound.begin(), unbound.end() );
         for( set<FmlObjectHandle>::const_iterator i = used.begin(); i != used.end(); i++ )
@@ -242,7 +242,7 @@ static vector<FmlObjectHandle> getArgumentList( FieldmlSession *session, FmlObje
         }
         return args;
     }
-    else //if( isUnbound && isUsed )
+    else //if( !isBound && isUsed )
     {
         //In used, and in unbound. Unbound is always is a subset of used with the current algorithm.
         for( set<FmlObjectHandle>::const_iterator i = unbound.begin(); i != unbound.end(); i++ )
@@ -336,7 +336,7 @@ static ArrayDataSource *getArrayDataSource( FieldmlSession *session, FmlObjectHa
         return NULL;
     }
 
-    if( dataSource->sourceType != DATA_SOURCE_ARRAY )
+    if( dataSource->sourceType != FML_DATA_SOURCE_ARRAY )
     {
         session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be an array data source." );
         return NULL;
@@ -1035,21 +1035,21 @@ int Fieldml_GetEnsembleMembersStride( FmlSessionHandle handle, FmlObjectHandle o
 }
 
 
-EnsembleMembersType Fieldml_GetEnsembleMembersType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+FieldmlEnsembleMembersType Fieldml_GetEnsembleMembersType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     ERROR_AUTOSTACK( session );
 
     if( session == NULL )
     {
-        return MEMBER_UNKNOWN;
+        return FML_ENSEMBLE_MEMBER_UNKNOWN;
     }
         
     FieldmlObject *object = getObject( session, objectHandle );
 
     if( object == NULL ) 
     {
-        return MEMBER_UNKNOWN;
+        return FML_ENSEMBLE_MEMBER_UNKNOWN;
     }
     
     if( object->objectType == FHT_ENSEMBLE_TYPE )
@@ -1064,11 +1064,11 @@ EnsembleMembersType Fieldml_GetEnsembleMembersType( FmlSessionHandle handle, Fml
     }
     
     session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be an ensemble or mesh type." );  
-    return MEMBER_UNKNOWN;
+    return FML_ENSEMBLE_MEMBER_UNKNOWN;
 }
 
 
-FmlErrorNumber Fieldml_SetEnsembleMembersDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle, EnsembleMembersType type, int count, FmlObjectHandle dataSourceHandle )
+FmlErrorNumber Fieldml_SetEnsembleMembersDataSource( FmlSessionHandle handle, FmlObjectHandle objectHandle, FieldmlEnsembleMembersType type, int count, FmlObjectHandle dataSourceHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     ERROR_AUTOSTACK( session );
@@ -1098,7 +1098,7 @@ FmlErrorNumber Fieldml_SetEnsembleMembersDataSource( FmlSessionHandle handle, Fm
     {
         EnsembleType *ensembleType = (EnsembleType*)object;
 
-        if( ( type != MEMBER_LIST_DATA ) && ( type != MEMBER_RANGE_DATA ) && ( type != MEMBER_STRIDE_RANGE_DATA ) )
+        if( ( type != FML_ENSEMBLE_MEMBER_LIST_DATA ) && ( type != FML_ENSEMBLE_MEMBER_RANGE_DATA ) && ( type != FML_ENSEMBLE_MEMBER_STRIDE_RANGE_DATA ) )
         {
             return session->setError( FML_ERR_INVALID_PARAMETER_3, objectHandle, "Has a member type which cannot be used with a data source." );
         }
@@ -1554,7 +1554,7 @@ FmlObjectHandle Fieldml_CreateParameterEvaluator( FmlSessionHandle handle, const
 }
 
 
-FmlErrorNumber Fieldml_SetParameterDataDescription( FmlSessionHandle handle, FmlObjectHandle objectHandle, DataDescriptionType description )
+FmlErrorNumber Fieldml_SetParameterDataDescription( FmlSessionHandle handle, FmlObjectHandle objectHandle, FieldmlDataDescriptionType description )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     ERROR_AUTOSTACK( session );
@@ -1572,18 +1572,18 @@ FmlErrorNumber Fieldml_SetParameterDataDescription( FmlSessionHandle handle, Fml
     ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
     if( parameter != NULL )
     {
-        if( parameter->dataDescription->descriptionType != DESCRIPTION_UNKNOWN )
+        if( parameter->dataDescription->descriptionType != FML_DATA_DESCRIPTION_UNKNOWN )
         {
             return session->setError( FML_ERR_ACCESS_VIOLATION, objectHandle, "Parameter evaluator already has a data description." );
         }
 
-        if( description == DESCRIPTION_DOK_ARRAY )
+        if( description == FML_DATA_DESCRIPTION_DOK_ARRAY )
         {
             delete parameter->dataDescription;
             parameter->dataDescription = new DokArrayDataDescription();
             return session->getLastError();
         }
-        else if( description == DESCRIPTION_DENSE_ARRAY )
+        else if( description == FML_DATA_DESCRIPTION_DENSE_ARRAY )
         {
             delete parameter->dataDescription;
             parameter->dataDescription = new DenseArrayDataDescription();
@@ -1599,14 +1599,14 @@ FmlErrorNumber Fieldml_SetParameterDataDescription( FmlSessionHandle handle, Fml
 }
 
 
-DataDescriptionType Fieldml_GetParameterDataDescription( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+FieldmlDataDescriptionType Fieldml_GetParameterDataDescription( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     ERROR_AUTOSTACK( session );
 
     if( session == NULL )
     {
-        return DESCRIPTION_UNKNOWN;
+        return FML_DATA_DESCRIPTION_UNKNOWN;
     }
 
     ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
@@ -1616,7 +1616,7 @@ DataDescriptionType Fieldml_GetParameterDataDescription( FmlSessionHandle handle
     }
 
     session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Must be a parameter evaluator." );
-    return DESCRIPTION_UNKNOWN;
+    return FML_DATA_DESCRIPTION_UNKNOWN;
 }
 
 
@@ -1652,12 +1652,12 @@ FmlErrorNumber Fieldml_SetDataSource( FmlSessionHandle handle, FmlObjectHandle o
     ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
     if( parameter != NULL )
     {
-        if( parameter->dataDescription->descriptionType == DESCRIPTION_DENSE_ARRAY )
+        if( parameter->dataDescription->descriptionType == FML_DATA_DESCRIPTION_DENSE_ARRAY )
         {
             DenseArrayDataDescription *denseArray = (DenseArrayDataDescription*)parameter->dataDescription;
             denseArray->dataSource = dataSource;
         }
-        else if( parameter->dataDescription->descriptionType == DESCRIPTION_DOK_ARRAY )
+        else if( parameter->dataDescription->descriptionType == FML_DATA_DESCRIPTION_DOK_ARRAY )
         {
             DokArrayDataDescription *dokArray = (DokArrayDataDescription*)parameter->dataDescription;
             dokArray->valueSource = dataSource;
@@ -1672,9 +1672,9 @@ FmlErrorNumber Fieldml_SetDataSource( FmlSessionHandle handle, FmlObjectHandle o
     if( object->objectType == FHT_ENSEMBLE_TYPE )
     {
         EnsembleType *ensembleType = (EnsembleType*)object;
-        EnsembleMembersType type = ensembleType->membersType;
+        FieldmlEnsembleMembersType type = ensembleType->membersType;
         
-        if( ( type != MEMBER_LIST_DATA ) && ( type != MEMBER_RANGE_DATA ) && ( type != MEMBER_STRIDE_RANGE_DATA ) )
+        if( ( type != FML_ENSEMBLE_MEMBER_LIST_DATA ) && ( type != FML_ENSEMBLE_MEMBER_RANGE_DATA ) && ( type != FML_ENSEMBLE_MEMBER_STRIDE_RANGE_DATA ) )
         {
             return session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Ensemble type does not require a data source." );
         }
@@ -1732,7 +1732,7 @@ FmlErrorNumber Fieldml_SetKeyDataSource( FmlSessionHandle handle, FmlObjectHandl
     ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
     if( parameter != NULL )
     {
-        if( parameter->dataDescription->descriptionType == DESCRIPTION_DOK_ARRAY )
+        if( parameter->dataDescription->descriptionType == FML_DATA_DESCRIPTION_DOK_ARRAY )
         {
             DokArrayDataDescription *dokArray = (DokArrayDataDescription*)parameter->dataDescription;
             dokArray->keySource = dataSource;
@@ -2225,7 +2225,7 @@ FmlObjectHandle Fieldml_GetReferenceSourceEvaluator( FmlSessionHandle handle, Fm
 }
 
 
-int Fieldml_GetArgumentCount( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlBoolean isUnbound, FmlBoolean isUsed )
+int Fieldml_GetArgumentCount( FmlSessionHandle handle, FmlObjectHandle objectHandle, FmlBoolean isBound, FmlBoolean isUsed )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     ERROR_AUTOSTACK( session );
@@ -2235,7 +2235,7 @@ int Fieldml_GetArgumentCount( FmlSessionHandle handle, FmlObjectHandle objectHan
         return -1;
     }
     
-    vector<FmlObjectHandle> args = getArgumentList( session, objectHandle, isUnbound != 0, isUsed != 0 );
+    vector<FmlObjectHandle> args = getArgumentList( session, objectHandle, isBound != 0, isUsed != 0 );
     if( session->getLastError() != FML_ERR_NO_ERROR )
     {
         return -1;
@@ -2244,7 +2244,7 @@ int Fieldml_GetArgumentCount( FmlSessionHandle handle, FmlObjectHandle objectHan
 }
 
 
-FmlObjectHandle Fieldml_GetArgument( FmlSessionHandle handle, FmlObjectHandle objectHandle, int argumentIndex, FmlBoolean isUnbound, FmlBoolean isUsed )
+FmlObjectHandle Fieldml_GetArgument( FmlSessionHandle handle, FmlObjectHandle objectHandle, int argumentIndex, FmlBoolean isBound, FmlBoolean isUsed )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     ERROR_AUTOSTACK( session );
@@ -2254,7 +2254,7 @@ FmlObjectHandle Fieldml_GetArgument( FmlSessionHandle handle, FmlObjectHandle ob
         return FML_INVALID_HANDLE;
     }
 
-    vector<FmlObjectHandle> args = getArgumentList( session, objectHandle, isUnbound != 0, isUsed != 0 );
+    vector<FmlObjectHandle> args = getArgumentList( session, objectHandle, isBound != 0, isUsed != 0 );
     if( session->getLastError() != FML_ERR_NO_ERROR )
     {
         return FML_INVALID_HANDLE;
@@ -2958,7 +2958,7 @@ FmlErrorNumber Fieldml_SetEnsembleMembersRange( FmlSessionHandle handle, FmlObje
     {
         EnsembleType *ensemble = (EnsembleType*)object;
 
-        ensemble->membersType = MEMBER_RANGE;
+        ensemble->membersType = FML_ENSEMBLE_MEMBER_RANGE;
         ensemble->min = minElement;
         ensemble->max = maxElement;
         ensemble->stride = stride;
@@ -3268,7 +3268,7 @@ FmlObjectHandle Fieldml_CreateHrefDataResource( FmlSessionHandle handle, const c
         return FML_INVALID_HANDLE;
     }
 
-    DataResource *dataResource = new DataResource( name, DATA_RESOURCE_HREF, format, href );
+    DataResource *dataResource = new DataResource( name, FML_DATA_RESOURCE_HREF, format, href );
     
     session->setError( FML_ERR_NO_ERROR, "" );
     return addObject( session, dataResource );
@@ -3290,27 +3290,27 @@ FmlObjectHandle Fieldml_CreateInlineDataResource( FmlSessionHandle handle, const
         return FML_INVALID_HANDLE;
     }
 
-    DataResource *dataResource = new DataResource( name, DATA_RESOURCE_INLINE, PLAIN_TEXT_NAME, "" );
+    DataResource *dataResource = new DataResource( name, FML_DATA_RESOURCE_INLINE, PLAIN_TEXT_NAME, "" );
     session->setError( FML_ERR_NO_ERROR, "" );
     return addObject( session, dataResource );
 }
 
 
-DataResourceType Fieldml_GetDataResourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+FieldmlDataResourceType Fieldml_GetDataResourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     ERROR_AUTOSTACK( session );
 
     if( session == NULL )
     {
-        return DATA_RESOURCE_UNKNOWN;
+        return FML_DATA_RESOURCE_UNKNOWN;
     }
     
     FieldmlObject *object = getObject( session, objectHandle );
     if( object->objectType != FHT_DATA_RESOURCE )
     {
         session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot get data resource type. Must be a data resource." );
-        return DATA_RESOURCE_UNKNOWN;
+        return FML_DATA_RESOURCE_UNKNOWN;
     }
     
     DataResource *resource = (DataResource*)object;
@@ -3342,7 +3342,7 @@ FmlErrorNumber Fieldml_AddInlineData( FmlSessionHandle handle, FmlObjectHandle o
     {
         return session->getLastError();
     }
-    if( resource->resourceType != DATA_RESOURCE_INLINE )
+    if( resource->resourceType != FML_DATA_RESOURCE_INLINE )
     {
         return session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot add inline data. Must be inline data resource." );
     }
@@ -3377,7 +3377,7 @@ FmlErrorNumber Fieldml_SetInlineData( FmlSessionHandle handle, FmlObjectHandle o
     {
         return session->getLastError();
     }
-    if( resource->resourceType != DATA_RESOURCE_INLINE )
+    if( resource->resourceType != FML_DATA_RESOURCE_INLINE )
     {
         return session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot set inline data. Must be inline data resource." );
     }
@@ -3403,7 +3403,7 @@ int Fieldml_GetInlineDataLength( FmlSessionHandle handle, FmlObjectHandle object
     {
         return -1;
     }
-    if( resource->resourceType != DATA_RESOURCE_INLINE )
+    if( resource->resourceType != FML_DATA_RESOURCE_INLINE )
     {
         session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot get inline data length. Must be inline data resource." );
         return -1;
@@ -3428,7 +3428,7 @@ char * Fieldml_GetInlineData( FmlSessionHandle handle, FmlObjectHandle objectHan
     {
         return NULL;
     }
-    if( resource->resourceType != DATA_RESOURCE_INLINE )
+    if( resource->resourceType != FML_DATA_RESOURCE_INLINE )
     {
         session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot get inline data. Must be inline data resource." );
         return NULL;
@@ -3453,7 +3453,7 @@ int Fieldml_CopyInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandl
     {
         return -1;
     }
-    if( resource->resourceType != DATA_RESOURCE_INLINE )
+    if( resource->resourceType != FML_DATA_RESOURCE_INLINE )
     {
         session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot copy inline data. Must be inline data resource." );
         return -1;
@@ -3469,20 +3469,20 @@ int Fieldml_CopyInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandl
 }
 
 
-DataSourceType Fieldml_GetDataSourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+FieldmlDataSourceType Fieldml_GetDataSourceType( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     ERROR_AUTOSTACK( session );
 
     if( session == NULL )
     {
-        return DATA_SOURCE_UNKNOWN;
+        return FML_DATA_SOURCE_UNKNOWN;
     }
     
     DataSource *dataSource = objectAsDataSource( session, objectHandle );
     if( dataSource == NULL )
     {
-        return DATA_SOURCE_UNKNOWN;
+        return FML_DATA_SOURCE_UNKNOWN;
     }
     
     return dataSource->sourceType;
@@ -3505,7 +3505,7 @@ char * Fieldml_GetDataResourceHref( FmlSessionHandle handle, FmlObjectHandle obj
         return NULL;
     }
     
-    if( dataResource->resourceType == DATA_RESOURCE_HREF )
+    if( dataResource->resourceType == FML_DATA_RESOURCE_HREF )
     {
         return cstrCopy( dataResource->description );
     }
@@ -3562,12 +3562,12 @@ FmlObjectHandle Fieldml_GetDataSource( FmlSessionHandle handle, FmlObjectHandle 
     ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
     if( parameter != NULL )
     {
-        if( parameter->dataDescription->descriptionType == DESCRIPTION_DENSE_ARRAY )
+        if( parameter->dataDescription->descriptionType == FML_DATA_DESCRIPTION_DENSE_ARRAY )
         {
             DenseArrayDataDescription *denseArray = (DenseArrayDataDescription*)parameter->dataDescription;
             return denseArray->dataSource;
         }
-        else if( parameter->dataDescription->descriptionType == DESCRIPTION_DOK_ARRAY )
+        else if( parameter->dataDescription->descriptionType == FML_DATA_DESCRIPTION_DOK_ARRAY )
         {
             DokArrayDataDescription *dokArray = (DokArrayDataDescription*)parameter->dataDescription;
             return dokArray->valueSource;
@@ -3588,9 +3588,9 @@ FmlObjectHandle Fieldml_GetDataSource( FmlSessionHandle handle, FmlObjectHandle 
     else if( object->objectType == FHT_ENSEMBLE_TYPE )
     {
         EnsembleType *ensembleType = (EnsembleType*)object;
-        EnsembleMembersType type = ensembleType->membersType;
+        FieldmlEnsembleMembersType type = ensembleType->membersType;
         
-        if( ( type != MEMBER_LIST_DATA ) && ( type != MEMBER_RANGE_DATA ) && ( type != MEMBER_STRIDE_RANGE_DATA ) )
+        if( ( type != FML_ENSEMBLE_MEMBER_LIST_DATA ) && ( type != FML_ENSEMBLE_MEMBER_RANGE_DATA ) && ( type != FML_ENSEMBLE_MEMBER_STRIDE_RANGE_DATA ) )
         {
             session->setError( FML_ERR_INVALID_OBJECT, objectHandle, "Cannot get data source. Invalid member description." );
             return FML_INVALID_HANDLE;
@@ -3626,7 +3626,7 @@ FmlObjectHandle Fieldml_GetKeyDataSource( FmlSessionHandle handle, FmlObjectHand
     ParameterEvaluator *parameter = ParameterEvaluator::checkedCast( session, objectHandle );
     if( parameter != NULL )
     {
-        if( parameter->dataDescription->descriptionType == DESCRIPTION_DOK_ARRAY )
+        if( parameter->dataDescription->descriptionType == FML_DATA_DESCRIPTION_DOK_ARRAY )
         {
             DokArrayDataDescription *dokArray = (DokArrayDataDescription*)parameter->dataDescription;
             return dokArray->keySource;
@@ -3766,7 +3766,7 @@ int Fieldml_GetArrayDataSourceRank( FmlSessionHandle handle, FmlObjectHandle obj
     }
     
     DataSource *source = (DataSource*)object;
-    if( source->sourceType == DATA_SOURCE_ARRAY )
+    if( source->sourceType == FML_DATA_SOURCE_ARRAY )
     {
         ArrayDataSource *arraySource = (ArrayDataSource*)source;
         return arraySource->rank;

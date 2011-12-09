@@ -75,7 +75,7 @@ EnsembleType::EnsembleType( const string _name, bool _isComponentEnsemble, bool 
     FieldmlObject( _name, FHT_ENSEMBLE_TYPE, _isVirtual ),
     isComponentEnsemble( _isComponentEnsemble )
 {
-    membersType = MEMBER_UNKNOWN;
+    membersType = FML_ENSEMBLE_MEMBER_UNKNOWN;
     count = 0;
     min = 0;
     max = 0;
@@ -105,7 +105,7 @@ MeshType::MeshType( const string _name, bool _isVirtual ) :
 }
 
 
-DataResource::DataResource( const string _name, DataResourceType _resourceType, const string _format, const string _description ) : 
+DataResource::DataResource( const string _name, FieldmlDataResourceType _resourceType, const string _format, const string _description ) : 
     FieldmlObject( _name, FHT_DATA_RESOURCE, false ),
     resourceType( _resourceType ),
     format( _format ),
@@ -119,7 +119,7 @@ DataResource::~DataResource()
 }
 
     
-BaseDataDescription::BaseDataDescription( DataDescriptionType _descriptionType ) :
+BaseDataDescription::BaseDataDescription( FieldmlDataDescriptionType _descriptionType ) :
     descriptionType( _descriptionType )
 {
 }
@@ -131,7 +131,7 @@ BaseDataDescription::~BaseDataDescription()
 
 
 UnknownDataDescription::UnknownDataDescription() :
-    BaseDataDescription( DESCRIPTION_UNKNOWN )
+    BaseDataDescription( FML_DATA_DESCRIPTION_UNKNOWN )
 {
 }
 
@@ -189,7 +189,7 @@ UnknownDataDescription::~UnknownDataDescription()
 
 
 DenseArrayDataDescription::DenseArrayDataDescription() :
-    BaseDataDescription( DESCRIPTION_DENSE_ARRAY )
+    BaseDataDescription( FML_DATA_DESCRIPTION_DENSE_ARRAY )
 {
 }
 
@@ -296,7 +296,7 @@ DenseArrayDataDescription::~DenseArrayDataDescription()
 
 
 DokArrayDataDescription::DokArrayDataDescription() :
-    BaseDataDescription( DESCRIPTION_DOK_ARRAY )
+    BaseDataDescription( FML_DATA_DESCRIPTION_DOK_ARRAY )
 {
 }
 
@@ -455,7 +455,7 @@ DokArrayDataDescription::~DokArrayDataDescription()
 }
 
 
-DataSource::DataSource( const std::string _name, DataResource *_resource, DataSourceType _type ) :
+DataSource::DataSource( const std::string _name, DataResource *_resource, FieldmlDataSourceType _type ) :
     FieldmlObject( _name, FHT_DATA_SOURCE, false ),
     resource( _resource ),
     sourceType( _type )
@@ -464,7 +464,7 @@ DataSource::DataSource( const std::string _name, DataResource *_resource, DataSo
 
 
 ArrayDataSource:: ArrayDataSource( const string _name, DataResource *_resource, const string _location, int _rank ) :
-    DataSource( _name, _resource, DATA_SOURCE_ARRAY ),
+    DataSource( _name, _resource, FML_DATA_SOURCE_ARRAY ),
     rank( _rank ),
     location( _location )
 {

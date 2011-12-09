@@ -220,9 +220,9 @@ TextArrayDataWriter::TextArrayDataWriter( FieldmlIoContext *_context, const stri
     Fieldml_GetArrayDataSourceSizes( context->getSession(), source, sourceSizes );
     
     FmlObjectHandle resource = Fieldml_GetDataSourceResource( context->getSession(), source );
-    DataResourceType type = Fieldml_GetDataResourceType( context->getSession(), resource );
+    FieldmlDataResourceType type = Fieldml_GetDataResourceType( context->getSession(), resource );
     
-    if( type == DATA_RESOURCE_HREF )
+    if( type == FML_DATA_RESOURCE_HREF )
     {
         string href;
         string path;
@@ -237,7 +237,7 @@ TextArrayDataWriter::TextArrayDataWriter( FieldmlIoContext *_context, const stri
             stream = FieldmlOutputStream::createTextFileStream( path, append );
         }
     }
-    else if( type == DATA_RESOURCE_INLINE )
+    else if( type == FML_DATA_RESOURCE_INLINE )
     {
         StreamCloseTask *task = new SetStringResourceTask( context->getSession(), resource, append );
         stream = FieldmlOutputStream::createStringStream( task );

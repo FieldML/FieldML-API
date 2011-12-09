@@ -82,7 +82,7 @@ FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle obj
     }
 
     ArrayDataReader *reader = NULL;
-    if( Fieldml_GetDataSourceType( handle, objectHandle ) == DATA_SOURCE_ARRAY )
+    if( Fieldml_GetDataSourceType( handle, objectHandle ) == FML_DATA_SOURCE_ARRAY )
     {
         string root;
         if( !StringUtil::safeString( Fieldml_GetRegionRoot( handle ), root ) )
@@ -203,7 +203,7 @@ FmlWriterHandle Fieldml_OpenArrayWriter( FmlSessionHandle handle, FmlObjectHandl
 
     ArrayDataWriter *writer = NULL;
 
-    if( Fieldml_GetDataSourceType( handle, objectHandle ) == DATA_SOURCE_ARRAY )
+    if( Fieldml_GetDataSourceType( handle, objectHandle ) == FML_DATA_SOURCE_ARRAY )
     {
         FieldmlIoContext *context = FieldmlIoSession::getSession().createContext( handle );
         string root;

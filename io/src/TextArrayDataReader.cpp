@@ -142,7 +142,7 @@ TextArrayDataReader *TextArrayDataReader::create( FieldmlIoContext *context, con
         return NULL;
     }
 
-    DataResourceType type = Fieldml_GetDataResourceType( context->getSession(), resource );
+    FieldmlDataResourceType type = Fieldml_GetDataResourceType( context->getSession(), resource );
     
     int rank = Fieldml_GetArrayDataSourceRank( context->getSession(), source );
     if( rank <= 0 )
@@ -157,7 +157,7 @@ TextArrayDataReader *TextArrayDataReader::create( FieldmlIoContext *context, con
         return NULL;
     }
 
-    if( type == DATA_RESOURCE_HREF )
+    if( type == FML_DATA_RESOURCE_HREF )
     {
         string href;
         if( !StringUtil::safeString( Fieldml_GetDataResourceHref( context->getSession(), resource ), href ) )
@@ -167,7 +167,7 @@ TextArrayDataReader *TextArrayDataReader::create( FieldmlIoContext *context, con
         }
         stream = FieldmlInputStream::createTextFileStream( StringUtil::makeFilename( root, href ) );
     }
-    else if( type == DATA_RESOURCE_INLINE )
+    else if( type == FML_DATA_RESOURCE_INLINE )
     {
         string data;
         if( !StringUtil::safeString( Fieldml_GetInlineData( context->getSession(), resource ), data ) )

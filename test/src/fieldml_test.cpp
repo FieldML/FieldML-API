@@ -342,7 +342,7 @@ void testMisc()
     Fieldml_SetArrayDataSourceSizes( handle, parametersData, sizes );
     
     FmlObjectHandle parameters = Fieldml_CreateParameterEvaluator( handle, "test.ensemble_parameters", realType );
-    Fieldml_SetParameterDataDescription( handle, parameters, DESCRIPTION_DENSE_ARRAY );
+    Fieldml_SetParameterDataDescription( handle, parameters, FML_DATA_DESCRIPTION_DENSE_ARRAY );
     Fieldml_SetDataSource( handle, parameters, parametersData );
     
     FmlObjectHandle rc3Index = Fieldml_CreateArgumentEvaluator( handle, "test.rc_3d.argument", rc3Ensemble );
@@ -383,7 +383,7 @@ void testMisc()
     Fieldml_SetArrayDataSourceSizes( handle, parameters2ValueData, sizes );
     
     FmlObjectHandle parameters2 = Fieldml_CreateParameterEvaluator( handle, "test.ensemble_parameters.2", realType );
-    Fieldml_SetParameterDataDescription( handle, parameters2, DESCRIPTION_DOK_ARRAY );
+    Fieldml_SetParameterDataDescription( handle, parameters2, FML_DATA_DESCRIPTION_DOK_ARRAY );
     Fieldml_SetKeyDataSource( handle, parameters2, parameters2KeyData );
     Fieldml_SetDataSource( handle, parameters2, parameters2ValueData );
     
@@ -529,7 +529,7 @@ int testCycles()
     }
     
     FmlObjectHandle param = Fieldml_CreateParameterEvaluator( session, "test.parameter", ensemble );
-    Fieldml_SetParameterDataDescription( session, param, DESCRIPTION_DOK_ARRAY );
+    Fieldml_SetParameterDataDescription( session, param, FML_DATA_DESCRIPTION_DOK_ARRAY );
     
     FmlObjectHandle ref3 = Fieldml_CreateReferenceEvaluator( session, "test.reference3", param );
     

@@ -222,8 +222,8 @@ static void writeElements( xmlTextWriterPtr writer, FmlSessionHandle handle, Fml
 {
     xmlTextWriterStartElement( writer, tagName );
 
-    EnsembleMembersType type = Fieldml_GetEnsembleMembersType( handle, object );
-    if( type == MEMBER_RANGE )
+    FieldmlEnsembleMembersType type = Fieldml_GetEnsembleMembersType( handle, object );
+    if( type == FML_ENSEMBLE_MEMBER_RANGE )
     {
         FmlEnsembleValue min = Fieldml_GetEnsembleMembersMin( handle, object );
         FmlEnsembleValue max = Fieldml_GetEnsembleMembersMax( handle, object );
@@ -238,17 +238,17 @@ static void writeElements( xmlTextWriterPtr writer, FmlSessionHandle handle, Fml
         }
         xmlTextWriterEndElement( writer );
     }
-    else if( ( type == MEMBER_LIST_DATA ) || ( type == MEMBER_RANGE_DATA ) || ( type == MEMBER_STRIDE_RANGE_DATA ) )
+    else if( ( type == FML_ENSEMBLE_MEMBER_LIST_DATA ) || ( type == FML_ENSEMBLE_MEMBER_RANGE_DATA ) || ( type == FML_ENSEMBLE_MEMBER_STRIDE_RANGE_DATA ) )
     {
-        if( type == MEMBER_LIST_DATA )
+        if( type == FML_ENSEMBLE_MEMBER_LIST_DATA )
         {
             xmlTextWriterStartElement( writer, MEMBER_LIST_DATA_TAG );
         }
-        else if( type == MEMBER_RANGE_DATA )
+        else if( type == FML_ENSEMBLE_MEMBER_RANGE_DATA )
         {
             xmlTextWriterStartElement( writer, MEMBER_RANGE_DATA_TAG );
         }
-        else if( type == MEMBER_STRIDE_RANGE_DATA )
+        else if( type == FML_ENSEMBLE_MEMBER_STRIDE_RANGE_DATA )
         {
             xmlTextWriterStartElement( writer, MEMBER_STRIDE_RANGE_DATA_TAG );
         }
@@ -335,9 +335,9 @@ static int writeMeshType( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlO
 
 static int writeDataSource( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObjectHandle object )
 {
-    DataSourceType type = Fieldml_GetDataSourceType( handle, object );
+    FieldmlDataSourceType type = Fieldml_GetDataSourceType( handle, object );
     
-    if( type == DATA_SOURCE_ARRAY )
+    if( type == FML_DATA_SOURCE_ARRAY )
     {
         xmlTextWriterStartElement( writer, ARRAY_DATA_SOURCE_TAG );
         
@@ -385,16 +385,16 @@ static int writeDataResource( xmlTextWriterPtr writer, FmlSessionHandle handle, 
 
     xmlTextWriterStartElement( writer, DATA_RESOURCE_DESCRIPTION_TAG );
 
-    DataResourceType type = Fieldml_GetDataResourceType( handle, object );
+    FieldmlDataResourceType type = Fieldml_GetDataResourceType( handle, object );
 
-    if( type == DATA_RESOURCE_HREF )
+    if( type == FML_DATA_RESOURCE_HREF )
     {
         xmlTextWriterStartElement( writer, DATA_RESOURCE_HREF_TAG );
         xmlTextWriterWriteAttribute( writer, QUALIFIED_HREF_ATTRIB, (const xmlChar*)Fieldml_GetDataResourceHref( handle, object ) );
         xmlTextWriterWriteAttribute( writer, FORMAT_ATTRIB, (const xmlChar*)Fieldml_GetDataResourceFormat( handle, object ) );
         xmlTextWriterEndElement( writer );
     }
-    else if( type == DATA_RESOURCE_INLINE )
+    else if( type == FML_DATA_RESOURCE_INLINE )
     {
         xmlTextWriterStartElement( writer, DATA_RESOURCE_STRING_TAG );
 
@@ -632,12 +632,12 @@ static int writeParameterEvaluator( xmlTextWriterPtr writer, FmlSessionHandle ha
     writeObjectName( writer, NAME_ATTRIB, handle, object );
     writeObjectName( writer, VALUE_TYPE_ATTRIB, handle, Fieldml_GetValueType( handle, object ) );
 
-    DataDescriptionType description = Fieldml_GetParameterDataDescription( handle, object );
-    if( description == DESCRIPTION_DENSE_ARRAY )
+    FieldmlDataDescriptionType description = Fieldml_GetParameterDataDescription( handle, object );
+    if( description == FML_DATA_DESCRIPTION_DENSE_ARRAY )
     {
         writeDenseArrayData( writer, handle, object );
     }
-    else if( description == DESCRIPTION_DOK_ARRAY )
+    else if( description == FML_DATA_DESCRIPTION_DOK_ARRAY )
     {
         writeDOKArrayData( writer, handle, object );
     }
