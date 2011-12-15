@@ -258,7 +258,8 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
       <Argument name=\"parameters.3d.unit.triquadraticLagrange.argument\"/> \
     </Arguments> \
   </ExternalEvaluator> \
- \
+ "
+ "\
   <EnsembleType name=\"localNodes.3d.cube4x4x4\"> \
    <Members> \
     <MemberRange min=\"1\" max=\"64\"/> \
