@@ -38,6 +38,7 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  */
+#include <cstdlib>
 
 #include "fieldml_api.h"
 

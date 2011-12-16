@@ -39,8 +39,9 @@
  *
  */
 
-#include <string>
+#include <cstring>
 #include <sstream>
+#include <cstdlib>
 
 #include "fieldml_api.h"
 #include "FieldmlIoApi.h"
