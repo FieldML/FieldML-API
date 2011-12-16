@@ -222,7 +222,7 @@ SIMPLE_TEST( FieldmlDataHdf5ArrayReadTest )
     Fieldml_SetDebug( session, 0 );
     SIMPLE_ASSERT( session != FML_INVALID_HANDLE );
     
-    FmlObjectHandle resource = Fieldml_CreateHrefDataResource( session, "test.resource", "HDF5", ".\\input\\I16BE.h5" );
+    FmlObjectHandle resource = Fieldml_CreateHrefDataResource( session, "test.resource", "HDF5", "./input/I16BE.h5" );
 
     const int rank = 3;
     const int totalSize = 60;

@@ -94,20 +94,8 @@ public:
         message << "Assert failed on " << actualName << ". Expected " << expected << ", got " << actual << ".";
         checkAndThrow( expected == actual, message.str(), _file, _line );
     }
-
-
-    template<> void assertEquals<char *>( char *const&expected, char *const&actual, const std::string &actualName, const char *_file, const int _line )
-    {
-        assertEquals( std::string( expected ), std::string( actual ), actualName, _file, _line );
-    }
-
-
-    template<> void assertEquals<const char *>( const char *const&expected, const char *const&actual, const std::string &actualName, const char *_file, const int _line )
-    {
-        assertEquals( std::string( expected ), std::string( actual ), actualName, _file, _line );
-    }
-
     
+
     void assertEquals( const char *const &expected, char *const &actual, const std::string &actualName, const char *_file, const int _line );
     
     

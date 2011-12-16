@@ -85,6 +85,17 @@ void SimpleTestRecorder::checkAndThrow( int expr, const string &message, const c
     }
 }
 
+template<> void SimpleTestRecorder::assertEquals<char *>( char *const&expected, char *const&actual, const std::string &actualName, const char *_file, const int _line )
+{
+    assertEquals( std::string( expected ), std::string( actual ), actualName, _file, _line );
+}
+
+
+template<> void SimpleTestRecorder::assertEquals<const char *>( const char *const&expected, const char *const&actual, const std::string &actualName, const char *_file, const int _line )
+{
+    assertEquals( std::string( expected ), std::string( actual ), actualName, _file, _line );
+}
+
 
 void SimpleTestRecorder::assert( int expr, const string &exprString, const char *_file, const int _line )
 {
