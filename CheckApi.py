@@ -65,6 +65,6 @@ def processFiles( sourceFilename, headerFilename ):
     
   print "Done."
 
-processFiles( "core\\src\\fieldml_api.cpp", "core\\src\\fieldml_api.h" )
+processFiles( "core/src/fieldml_api.cpp", "core/src/fieldml_api.h" )
 
-processFiles( "io\\src\\FieldmlIoApi.cpp", "io\\src\\FieldmlIoApi.h" )
+processFiles( "io/src/FieldmlIoApi.cpp", "io/src/FieldmlIoApi.h" )

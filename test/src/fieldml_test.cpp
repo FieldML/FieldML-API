@@ -330,7 +330,7 @@ void testMisc()
     
     handle = Fieldml_Create( "", "test" );
     
-    int importHandle = Fieldml_AddImportSource( handle, "http://www.fieldml.org/resources/xml/0.4/FieldML_Library_0.4.xml", "library" );
+    int importHandle = Fieldml_AddImportSource( handle, "http://www.fieldml.org/resources/xml/0.5/FieldML_Library_0.5.xml", "library" );
     FmlObjectHandle rc3Ensemble = Fieldml_AddImport( handle, importHandle, "chart.3d.component", "chart.3d.component" );
     FmlObjectHandle realType = Fieldml_AddImport( handle, importHandle, "real.1d", "real.1d" );
     

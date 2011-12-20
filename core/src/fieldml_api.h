@@ -1162,7 +1162,7 @@ int Fieldml_GetEnsembleMembersStride( FmlSessionHandle handle, FmlObjectHandle o
  * \note Attempting to add the same import source more than once will succeed, but will result
  * in the same index being returned each time.
  * 
- * \note The string 'http://www.fieldml.org/resources/xml/0.4/fieldml_library.xml' will direct
+ * \note The string 'http://www.fieldml.org/resources/xml/0.5/fieldml_library.xml' will direct
  * the API to use an internally-cached version of fieldml_library.xml.
  * 
  * \note At the moment, only filenames are supported.

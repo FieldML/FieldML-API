@@ -41,11 +41,11 @@
 
 #include "String_InternalLibrary.h"
 
-const char * const FML_INTERNAL_LIBRARY_NAME = "http://www.fieldml.org/resources/xml/0.4/FieldML_Library_0.4.xml";
+const char * const FML_INTERNAL_LIBRARY_NAME = "http://www.fieldml.org/resources/xml/0.5/FieldML_Library_0.5.xml";
 
 const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?> \
-<Fieldml version=\"0.4.1\" \
-  xsi:noNamespaceSchemaLocation=\"http://www.fieldml.org/resources/xml/0.4/FieldML_0.4.xsd\" \
+<Fieldml version=\"0.5.0\" \
+  xsi:noNamespaceSchemaLocation=\"http://www.fieldml.org/resources/xml/0.5/FieldML_0.5.xsd\" \
   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"> \
  <Region name=\"library\"> \
   <BooleanType name=\"boolean\"/> \
@@ -391,6 +391,27 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     </Arguments> \
   </ExternalEvaluator> \
  \
+  <!-- Biquadratic Simplex: vtk and Zienkiewicz winding --> \
+  <EnsembleType name=\"localNodes.2d.triangle6.vtk\"> \
+   <Members> \
+    <MemberRange min=\"1\" max=\"6\"/> \
+   </Members> \
+  </EnsembleType> \
+  <ArgumentEvaluator name=\"localNodes.2d.triangle6.vtk.argument\" valueType=\"localNodes.2d.triangle6.vtk\"/> \
+ \
+  <ContinuousType name=\"parameters.2d.unit.biquadraticSimplex.vtk\"> \
+    <Components name=\"parameters.2d.unit.biquadraticSimplex.vtk.component\" count=\"6\"/> \
+  </ContinuousType> \
+  <ArgumentEvaluator name=\"parameters.2d.unit.biquadraticSimplex.vtk.argument\" valueType=\"parameters.2d.unit.biquadraticSimplex.vtk\"/> \
+  <ArgumentEvaluator name=\"parameters.2d.unit.biquadraticSimplex.vtk.component.argument\" valueType=\"parameters.2d.unit.biquadraticSimplex.vtk.component\"/> \
+ \
+  <ExternalEvaluator name=\"interpolator.2d.unit.biquadraticSimplex.vtk\" valueType=\"real.1d\"> \
+    <Arguments> \
+      <Argument name=\"chart.2d.argument\"/> \
+      <Argument name=\"parameters.2d.unit.biquadraticSimplex.vtk.argument\"/> \
+    </Arguments> \
+  </ExternalEvaluator> \
+ \
   <!-- Trilinear Simplex --> \
   <EnsembleType name=\"localNodes.3d.tetrahedron4\"> \
    <Members> \
@@ -409,6 +430,27 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     <Arguments> \
       <Argument name=\"chart.3d.argument\"/> \
       <Argument name=\"parameters.3d.unit.trilinearSimplex.argument\"/> \
+    </Arguments> \
+  </ExternalEvaluator> \
+ \
+  <!-- Trilinear Wedge 1-2, 6 nodes --> \
+  <EnsembleType name=\"localNodes.3d.wedge12_6\"> \
+   <Members> \
+    <MemberRange min=\"1\" max=\"6\"/> \
+   </Members> \
+  </EnsembleType> \
+  <ArgumentEvaluator name=\"localNodes.3d.wedge12_6.argument\" valueType=\"localNodes.3d.wedge12_6\"/> \
+ \
+  <ContinuousType name=\"parameters.3d.unit.trilinearWedge12\"> \
+    <Components name=\"parameters.3d.unit.trilinearWedge12.component\" count=\"6\"/> \
+  </ContinuousType> \
+  <ArgumentEvaluator name=\"parameters.3d.unit.trilinearWedge12.argument\" valueType=\"parameters.3d.unit.trilinearWedge12\"/> \
+  <ArgumentEvaluator name=\"parameters.3d.unit.trilinearWedge12.component.argument\" valueType=\"parameters.3d.unit.trilinearWedge12.component\"/> \
+ \
+  <ExternalEvaluator name=\"interpolator.3d.unit.trilinearWedge12\" valueType=\"real.1d\"> \
+    <Arguments> \
+      <Argument name=\"chart.3d.argument\"/> \
+      <Argument name=\"parameters.3d.unit.trilinearWedge12.argument\"/> \
     </Arguments> \
   </ExternalEvaluator> \
  \
@@ -433,6 +475,34 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
     </Arguments> \
   </ExternalEvaluator> \
  \
+  <!-- Triquadratic Simplex: vtk winding --> \
+  <EnsembleType name=\"localNodes.3d.tetrahedron10.vtk\"> \
+   <Members> \
+    <MemberRange min=\"1\" max=\"10\"/> \
+   </Members> \
+  </EnsembleType> \
+  <ArgumentEvaluator name=\"localNodes.3d.tetrahedron10.vtk.argument\" valueType=\"localNodes.3d.tetrahedron10.vtk\"/> \
+ \
+  <ContinuousType name=\"parameters.3d.unit.triquadraticSimplex.vtk\"> \
+    <Components name=\"parameters.3d.unit.triquadraticSimplex.vtk.component\" count=\"10\"/> \
+  </ContinuousType> \
+  <ArgumentEvaluator name=\"parameters.3d.unit.triquadraticSimplex.vtk.argument\" valueType=\"parameters.3d.unit.triquadraticSimplex.vtk\"/> \
+  <ArgumentEvaluator name=\"parameters.3d.unit.triquadraticSimplex.vtk.component.argument\" valueType=\"parameters.3d.unit.triquadraticSimplex.vtk.component\"/> \
+ \
+  <ExternalEvaluator name=\"interpolator.3d.unit.triquadraticSimplex.vtk\" valueType=\"real.1d\"> \
+    <Arguments> \
+      <Argument name=\"chart.3d.argument\"/> \
+      <Argument name=\"parameters.3d.unit.triquadraticSimplex.vtk.argument\"/> \
+    </Arguments> \
+  </ExternalEvaluator> \
+  <!-- Triquadratic Simplex: Zienkiewicz winding --> \
+  <EnsembleType name=\"localNodes.3d.tetrahedron10.zienkiewicz\"> \
+   <Members> \
+    <MemberRange min=\"1\" max=\"10\"/> \
+   </Members> \
+  </EnsembleType> \
+  <ArgumentEvaluator name=\"localNodes.3d.tetrahedron10.zienkiewicz.argument\" valueType=\"localNodes.3d.tetrahedron10.zienkiewicz\"/> \
+ \
   <ContinuousType name=\"parameters.3d.unit.triquadraticSimplex.zienkiewicz\"> \
     <Components name=\"parameters.3d.unit.triquadraticSimplex.zienkiewicz.component\" count=\"10\"/> \
   </ContinuousType> \
@@ -445,6 +515,29 @@ const char * const FML_STRING_INTERNAL_LIBRARY = "<?xml version=\"1.0\" encoding
       <Argument name=\"parameters.3d.unit.triquadraticSimplex.zienkiewicz.argument\"/> \
     </Arguments> \
   </ExternalEvaluator> \
+ \
+  <!-- Triquadratic Wedge 1-2, 18 nodes --> \
+  <EnsembleType name=\"localNodes.3d.wedge12_18\"> \
+   <Members> \
+    <MemberRange min=\"1\" max=\"18\"/> \
+   </Members> \
+  </EnsembleType> \
+  <ArgumentEvaluator name=\"localNodes.3d.wedge12_18.argument\" valueType=\"localNodes.3d.wedge12_18\"/> \
+ \
+  <ContinuousType name=\"parameters.3d.unit.triquadraticWedge12\"> \
+    <Components name=\"parameters.3d.unit.triquadraticWedge12.component\" count=\"18\"/> \
+  </ContinuousType> \
+  <ArgumentEvaluator name=\"parameters.3d.unit.triquadraticWedge12.argument\" valueType=\"parameters.3d.unit.triquadraticWedge12\"/> \
+  <ArgumentEvaluator name=\"parameters.3d.unit.triquadraticWedge12.component.argument\" valueType=\"parameters.3d.unit.triquadraticWedge12.component\"/> \
+ \
+  <ExternalEvaluator name=\"interpolator.3d.unit.triquadraticWedge12\" valueType=\"real.1d\"> \
+    <Arguments> \
+      <Argument name=\"chart.3d.argument\"/> \
+      <Argument name=\"parameters.3d.unit.triquadraticWedge12.argument\"/> \
+    </Arguments> \
+  </ExternalEvaluator> \
+ \
+<!-- Element Shape Bounds Functions --> \
  \
   <ExternalEvaluator name=\"shape.unit.line\" valueType=\"boolean\"> \
     <Arguments> \

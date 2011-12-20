@@ -55,7 +55,7 @@ const char NIX_PATH_SEP = '/';
 
 namespace StringUtil
 {
-    const std::string FMLIO_VERSION_STRING                  = "0.4.1";
+    const std::string FMLIO_VERSION_STRING                  = "0.5.0";
     
     const std::string PLAIN_TEXT_NAME                     = "PLAIN_TEXT";
     const std::string HDF5_NAME                           = "HDF5";
