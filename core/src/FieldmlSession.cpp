@@ -299,7 +299,7 @@ void FieldmlSession::logError( const string error )
     addError( error );
     if( debug )
     {
-        fprintf( stderr, "FIELDML %s (%s): Error %s at %s:%d\n", FML_VERSION_STRING, __DATE__, error.c_str(), contextStack.back().first, contextStack.back().second );
+        fprintf( stderr, "FIELDML %s (%s): Error %s at %s:%d\n", FML_VERSION_STRING, __DATE__, error.c_str(), contextStack.back().first.c_str(), contextStack.back().second );
     }
         
 }
