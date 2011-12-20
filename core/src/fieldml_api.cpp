@@ -235,10 +235,12 @@ static vector<FmlObjectHandle> getArgumentList( FieldmlSession *session, FmlObje
     
     if( isBound && isUsed )
     {
-        used.erase( unbound.begin(), unbound.end() );
         for( set<FmlObjectHandle>::const_iterator i = used.begin(); i != used.end(); i++ )
         {
-            args.push_back( *i );
+						//	Performance wise, I am not sure I should remove all elems from
+						//	unbound in used or using find as shown below.
+						if (unbound.end() == unbound.find(*i))
+								args.push_back( *i );
         }
         return args;
     }
