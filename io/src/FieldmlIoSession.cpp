@@ -161,7 +161,7 @@ FieldmlIoContext *FieldmlIoSession::createContext( FmlSessionHandle session )
 
 ArrayDataReader *FieldmlIoSession::handleToReader( FmlReaderHandle handle )
 {
-    if( ( handle < 0 ) || ( handle >= readers.size() ) )
+    if( ( handle < 0 ) || ( (unsigned int)handle >= readers.size() ) )
     {
         return NULL;
     }
@@ -185,7 +185,7 @@ void FieldmlIoSession::removeReader( FmlReaderHandle handle )
 
 ArrayDataWriter *FieldmlIoSession::handleToWriter( FmlWriterHandle handle )
 {
-    if( ( handle < 0 ) || ( handle >= writers.size() ) )
+    if( ( handle < 0 ) || ( (unsigned int)handle >= writers.size() ) )
     {
         return NULL;
     }

@@ -221,7 +221,7 @@ FmlErrorNumber DenseArrayDataDescription::setIndexEvaluator( int index, bool isS
         return FML_ERR_INVALID_OBJECT;
     }
 
-    if( ( index < 0 ) || ( index >= denseIndexes.size() ) )
+    if( ( index < 0 ) || ( (unsigned int)index >= denseIndexes.size() ) )
     {
         return FML_ERR_INVALID_INDEX;
     }
@@ -241,7 +241,7 @@ FmlErrorNumber DenseArrayDataDescription::getIndexEvaluator( int index, bool isS
         return FML_ERR_INVALID_OBJECT;
     }
 
-    if( ( index < 0 ) || ( index >= denseIndexes.size() ) )
+    if( ( index < 0 ) || ( (unsigned int)index >= denseIndexes.size() ) )
     {
         evaluator = FML_INVALID_HANDLE;
         return FML_ERR_INVALID_INDEX;
@@ -266,7 +266,7 @@ FmlErrorNumber DenseArrayDataDescription::getIndexEvaluator( int index, FmlObjec
 
 FmlErrorNumber DenseArrayDataDescription::getIndexOrder( int index, FmlObjectHandle &order )
 {
-    if( ( index < 0 ) || ( index >= denseOrders.size() ) )
+    if( ( index < 0 ) || ( (unsigned int)index >= denseOrders.size() ) )
     {
         order = FML_INVALID_HANDLE;
         return FML_ERR_INVALID_INDEX;
@@ -333,7 +333,7 @@ FmlErrorNumber DokArrayDataDescription::setIndexEvaluator( int index, bool isSpa
     
     if( isSparse )
     {
-        if( index >= sparseIndexes.size() )
+        if( (unsigned int)index >= sparseIndexes.size() )
         {
             return FML_ERR_INVALID_INDEX;
         }
@@ -344,7 +344,7 @@ FmlErrorNumber DokArrayDataDescription::setIndexEvaluator( int index, bool isSpa
     }
     else
     {
-        if( index >= denseIndexes.size() )
+        if( (unsigned int)index >= denseIndexes.size() )
         {
             return FML_ERR_INVALID_INDEX;
         }
@@ -367,7 +367,7 @@ FmlErrorNumber DokArrayDataDescription::getIndexEvaluator( int index, bool isSpa
     
     if( isSparse )
     {
-        if( index >= sparseIndexes.size() )
+        if( (unsigned int)index >= sparseIndexes.size() )
         {
             evaluator = FML_INVALID_HANDLE;
             return FML_ERR_INVALID_INDEX;
@@ -378,7 +378,7 @@ FmlErrorNumber DokArrayDataDescription::getIndexEvaluator( int index, bool isSpa
     }
     else
     {
-        if( index >= denseIndexes.size() )
+        if( (unsigned int)index >= denseIndexes.size() )
         {
             evaluator = FML_INVALID_HANDLE;
             return FML_ERR_INVALID_INDEX;
@@ -398,7 +398,7 @@ FmlErrorNumber DokArrayDataDescription::getIndexOrder( int index, FmlObjectHandl
         return FML_ERR_INVALID_INDEX;
     }
     
-    if( index >= denseIndexes.size() )
+    if( (unsigned int)index >= denseIndexes.size() )
     {
         order = FML_INVALID_HANDLE;
         return FML_ERR_INVALID_INDEX;
@@ -411,7 +411,7 @@ FmlErrorNumber DokArrayDataDescription::getIndexOrder( int index, FmlObjectHandl
 
 FmlErrorNumber DokArrayDataDescription::setIndexEvaluator( int index, FmlObjectHandle evaluator, FmlObjectHandle orderEvaluator )
 {
-    if( index >= sparseIndexes.size() )
+    if( index >= (int)sparseIndexes.size() )
     {
         index -= sparseIndexes.size();
         return setIndexEvaluator( index, false, evaluator );
@@ -425,7 +425,7 @@ FmlErrorNumber DokArrayDataDescription::setIndexEvaluator( int index, FmlObjectH
 
 FmlErrorNumber DokArrayDataDescription::getIndexEvaluator( int index, FmlObjectHandle &evaluator )
 {
-    if( index >= sparseIndexes.size() )
+    if( index >= (int)sparseIndexes.size() )
     {
         index -= sparseIndexes.size();
         return getIndexEvaluator( index, false, evaluator );

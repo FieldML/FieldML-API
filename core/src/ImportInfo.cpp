@@ -153,7 +153,7 @@ int ImportInfo::getImportCount()
 
 const string ImportInfo::getLocalNameByIndex( int index )
 {
-    if( ( index <= 0 ) || ( index > imports.size() ) )
+    if( ( index <= 0 ) || ( (unsigned int)index > imports.size() ) )
     {
         return "";
     }
@@ -164,7 +164,7 @@ const string ImportInfo::getLocalNameByIndex( int index )
 
 const string ImportInfo::getRemoteNameByIndex( int index )
 {
-    if( ( index <= 0 ) || ( index > imports.size() ) )
+    if( ( index <= 0 ) || ( (unsigned int)index > imports.size() ) )
     {
         return "";
     }
@@ -175,7 +175,7 @@ const string ImportInfo::getRemoteNameByIndex( int index )
 
 FmlObjectHandle ImportInfo::getObjectByIndex( int index )
 {
-    if( ( index <= 0 ) || ( index > imports.size() ) )
+    if( ( index <= 0 ) || ( (unsigned int)index > imports.size() ) )
     {
         return FML_INVALID_HANDLE;
     }

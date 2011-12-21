@@ -55,7 +55,7 @@ static vector<FieldmlSession *> sessions;
 
 FieldmlSession *FieldmlSession::handleToSession( FmlSessionHandle handle )
 {
-    if( ( handle < 0 ) || ( handle >= sessions.size() ) )
+    if( ( handle < 0 ) || ( (unsigned int)handle >= sessions.size() ) )
     {
         return NULL;
     }
@@ -73,7 +73,7 @@ FmlSessionHandle FieldmlSession::addSession( FieldmlSession *session )
 
 void FieldmlSession::removeSession( FmlSessionHandle handle )
 {
-    if( ( handle < 0 ) || ( handle >= sessions.size() ) )
+    if( ( handle < 0 ) || ( (unsigned int)handle >= sessions.size() ) )
     {
         return;
     }
@@ -127,7 +127,7 @@ FieldmlRegion *FieldmlSession::addNewRegion( string href, string name )
 
 int FieldmlSession::getRegionIndex( string href, string name )
 {
-    for( int i = 0; i < regions.size(); i++ )
+    for( unsigned int i = 0; i < regions.size(); i++ )
     {
         FieldmlRegion *r = regions[i];
         if( ( r->getHref() == href ) && ( r->getName() == name ) )
@@ -142,7 +142,7 @@ int FieldmlSession::getRegionIndex( string href, string name )
 
 FieldmlRegion *FieldmlSession::getRegion( int index )
 {
-    if( ( index < 0 ) || ( index >= regions.size() ) )
+    if( ( index < 0 ) || ( (unsigned int)index >= regions.size() ) )
     {
         return NULL;
     }
@@ -223,7 +223,7 @@ FmlErrorNumber FieldmlSession::setError( const FmlErrorNumber error, const strin
         if( debug )
         {
             fprintf( stderr, "FIELDML %s (%s): Error %d: %s\n", FML_VERSION_STRING, __DATE__, error, description.c_str() );
-            for( int i = 0; i < contextStack.size(); i++ )
+            for( unsigned int i = 0; i < contextStack.size(); i++ )
             {
                 printf( "   at %s:%d\n", contextStack[i].first.c_str(), contextStack[i].second );
             }
@@ -267,7 +267,7 @@ const int FieldmlSession::getErrorCount()
 
 const string FieldmlSession::getError( const int index )
 {
-    if( ( index < 0 ) || ( index >= errors.size() ) )
+    if( ( index < 0 ) || ( (unsigned int)index >= errors.size() ) )
     {
         return NULL;
     }
@@ -299,7 +299,7 @@ void FieldmlSession::logError( const string error )
     addError( error );
     if( debug )
     {
-        fprintf( stderr, "FIELDML %s (%s): Error %s at %s:%d\n", FML_VERSION_STRING, __DATE__, error.c_str(), contextStack.back().first.c_str(), contextStack.back().second );
+			fprintf( stderr, "FIELDML %s (%s): Error %s at %s:%d\n", FML_VERSION_STRING, __DATE__, error.c_str(), contextStack.back().first.c_str(), contextStack.back().second );
     }
         
 }

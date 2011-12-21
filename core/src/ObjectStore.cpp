@@ -59,7 +59,7 @@ ObjectStore::~ObjectStore()
 
 FieldmlObject *ObjectStore::getObject( FmlObjectHandle handle )
 {
-    if( ( handle < 0 ) || ( handle >= objects.size() ) )
+    if( ( handle < 0 ) || ( handle >= (int)objects.size() ) )
     {
         return NULL;
     }
@@ -101,7 +101,7 @@ int ObjectStore::getCount( FieldmlHandleType type )
 
 FmlObjectHandle ObjectStore::getObjectByIndex( int index )
 {
-    if( ( index <= 0 ) || ( index > objects.size() ) )
+    if( ( index <= 0 ) || ( (unsigned int)index > objects.size() ) )
     {
         return FML_INVALID_HANDLE;
     }
@@ -119,7 +119,7 @@ FmlObjectHandle ObjectStore::getObjectByIndex( int index, FieldmlHandleType type
     
     int count = 0;
     
-    for( int i = 0; i < objects.size(); i++ )
+    for( unsigned int i = 0; i < objects.size(); i++ )
     {
         FieldmlObject *object = objects[i];
         if( object->objectType == type )
@@ -138,7 +138,7 @@ FmlObjectHandle ObjectStore::getObjectByIndex( int index, FieldmlHandleType type
 
 FmlObjectHandle ObjectStore::getObjectByName( const string name )
 {
-    for( int i = 0; i < objects.size(); i++ )
+    for( unsigned int i = 0; i < objects.size(); i++ )
     {
         FieldmlObject *object = objects[i];
         if( object->name == name )

@@ -2264,7 +2264,7 @@ FmlObjectHandle Fieldml_GetArgument( FmlSessionHandle handle, FmlObjectHandle ob
         return FML_INVALID_HANDLE;
     }
     
-    if( ( argumentIndex < 1 ) || ( argumentIndex > args.size() ) )
+    if( ( argumentIndex < 1 ) || ( argumentIndex > (int)args.size() ) )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_3, objectHandle, "Invalid index number." );
         return FML_INVALID_HANDLE;
@@ -3463,7 +3463,7 @@ int Fieldml_CopyInlineData( FmlSessionHandle handle, FmlObjectHandle objectHandl
         return -1;
     }
     
-    if( offset >= resource->description.length() )
+    if( offset >= (int)resource->description.length() )
     {
         return 0;
     }
@@ -3682,7 +3682,7 @@ FmlObjectHandle Fieldml_GetDataSourceByIndex( FmlSessionHandle handle, FmlObject
         return FML_INVALID_HANDLE;
     }
     
-    if( ( index < 0 ) || ( index >= resource->dataSources.size() ) )
+    if( ( index < 0 ) || (  (unsigned int)index >= resource->dataSources.size() ) )
     {
         session->setError( FML_ERR_INVALID_PARAMETER_3, objectHandle, "Cannot get data source. Invalid index." );
         return FML_INVALID_HANDLE;

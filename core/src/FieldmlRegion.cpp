@@ -71,7 +71,7 @@ FieldmlRegion::~FieldmlRegion()
 
 ImportInfo *FieldmlRegion::getImportInfo( int importSourceIndex )
 {
-    if( ( importSourceIndex < 0 ) || ( importSourceIndex >= imports.size() ) )
+    if( ( importSourceIndex < 0 ) || ( (unsigned int)importSourceIndex >= imports.size() ) )
     {
         return NULL;
     }
@@ -221,7 +221,8 @@ const string FieldmlRegion::getObjectName( FmlObjectHandle handle )
 
 void FieldmlRegion::addImportSource( int importSourceIndex, string href, string name )
 {
-    while( imports.size() <= importSourceIndex )
+	 int imports_size = (int)imports.size();
+    while( imports_size <= importSourceIndex )
     {
         imports.push_back( NULL );
     }
