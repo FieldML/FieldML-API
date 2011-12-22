@@ -152,7 +152,7 @@ char *strdupN( const char *str, unsigned int len )
         return NULL;
     }
 
-    const int srclen = strlen( str );
+    const unsigned int srclen = strlen( str );
     if( srclen < len )
     {
         len = srclen;
@@ -180,7 +180,7 @@ char *strdupS( const char *str )
 
 const string getDirectory( const string filename )
 {
-    int index;
+    unsigned int index;
     
     index = filename.rfind( NIX_PATH_SEP );
 #ifdef WIN32
