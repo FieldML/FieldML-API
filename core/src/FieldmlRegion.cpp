@@ -221,8 +221,7 @@ const string FieldmlRegion::getObjectName( FmlObjectHandle handle )
 
 void FieldmlRegion::addImportSource( int importSourceIndex, string href, string name )
 {
-	 int imports_size = (int)imports.size();
-    while( imports_size <= importSourceIndex )
+    while( (int)imports.size() <= importSourceIndex )
     {
         imports.push_back( NULL );
     }
