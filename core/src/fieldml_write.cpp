@@ -343,7 +343,7 @@ static int writeDataSource( xmlTextWriterPtr writer, FmlSessionHandle handle, Fm
         
         writeObjectName( writer, NAME_ATTRIB, handle, object );
 
-        const char *location = Fieldml_GetArrayDataSourceLocation( handle, object );
+        char *location = Fieldml_GetArrayDataSourceLocation( handle, object );
         int rank = Fieldml_GetArrayDataSourceRank( handle, object );
         
         xmlTextWriterWriteFormatAttribute( writer, LOCATION_ATTRIB, "%s", location );
@@ -365,7 +365,7 @@ static int writeDataSource( xmlTextWriterPtr writer, FmlSessionHandle handle, Fm
         {
             writeValues( writer, ARRAY_DATA_SIZE_TAG, values, rank, true );
         }
-        
+        Fieldml_FreeString(location);
         delete[] values;
         
         xmlTextWriterEndElement( writer );
@@ -389,10 +389,14 @@ static int writeDataResource( xmlTextWriterPtr writer, FmlSessionHandle handle, 
 
     if( type == FML_DATA_RESOURCE_HREF )
     {
+				char *href = Fieldml_GetDataResourceHref( handle, object );
+				char *resourceFormat = Fieldml_GetDataResourceFormat( handle, object );
         xmlTextWriterStartElement( writer, DATA_RESOURCE_HREF_TAG );
-        xmlTextWriterWriteAttribute( writer, QUALIFIED_HREF_ATTRIB, (const xmlChar*)Fieldml_GetDataResourceHref( handle, object ) );
-        xmlTextWriterWriteAttribute( writer, FORMAT_ATTRIB, (const xmlChar*)Fieldml_GetDataResourceFormat( handle, object ) );
+        xmlTextWriterWriteAttribute( writer, QUALIFIED_HREF_ATTRIB, (const xmlChar*)href );
+        xmlTextWriterWriteAttribute( writer, FORMAT_ATTRIB, (const xmlChar*)resourceFormat );
         xmlTextWriterEndElement( writer );
+        Fieldml_FreeString(href);
+        Fieldml_FreeString(resourceFormat);
     }
     else if( type == FML_DATA_RESOURCE_INLINE )
     {

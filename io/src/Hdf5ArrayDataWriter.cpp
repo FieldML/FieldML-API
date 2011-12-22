@@ -54,9 +54,10 @@ Hdf5ArrayDataWriter *Hdf5ArrayDataWriter::create( FieldmlIoContext *context, con
     Hdf5ArrayDataWriter *writer = NULL;
     
     FmlObjectHandle resource = Fieldml_GetDataSourceResource( context->getSession(), source );
+    char *temp_string = Fieldml_GetDataResourceFormat( context->getSession(), resource );
     string format;
 
-    if( !StringUtil::safeString( Fieldml_GetDataResourceFormat( context->getSession(), resource ), format ) )
+    if( !StringUtil::safeString( temp_string, format ) )
     {
         context->setError( FML_IOERR_CORE_ERROR );
     }
@@ -93,6 +94,7 @@ Hdf5ArrayDataWriter *Hdf5ArrayDataWriter::create( FieldmlIoContext *context, con
         H5Pclose( accessProperties );
 #endif //FIELDML_PHDF5_ARRAY
     }
+    Fieldml_FreeString(temp_string);
     
     return writer;
 }
@@ -118,16 +120,20 @@ Hdf5ArrayDataWriter::Hdf5ArrayDataWriter( FieldmlIoContext *_context, const stri
     while( true )
     {
         string description;
+        char *temp_href = Fieldml_GetDataResourceHref( context->getSession(), resource );
         if( !StringUtil::safeString( Fieldml_GetDataResourceHref( context->getSession(), resource ), description ) )
         {
             break;
         }
-            
+        Fieldml_FreeString(temp_href);
+
         string location;
-        if( !StringUtil::safeString( Fieldml_GetArrayDataSourceLocation( context->getSession(), source ), location ) )
+        char *temp_string = Fieldml_GetArrayDataSourceLocation( context->getSession(), source );
+        if( !StringUtil::safeString( temp_string, location ) )
         {
             break;
         }
+        Fieldml_FreeString(temp_string);
 
         const string filename = StringUtil::makeFilename( root, description );
         //TODO Add an API-level enum to allow the user to append data, nuke any existing file, or fail if the file already exists. 

@@ -176,12 +176,14 @@ TextArrayDataWriter *TextArrayDataWriter::create( FieldmlIoContext *context, str
     
     FmlObjectHandle resource = Fieldml_GetDataSourceResource( context->getSession(), source );
     string format;
+    char *temp_string = Fieldml_GetDataResourceFormat( context->getSession(), resource );
     
-    if( !StringUtil::safeString( Fieldml_GetDataResourceFormat( context->getSession(), resource ), format ) )
+    if( !StringUtil::safeString( temp_string, format ) )
     {
         context->setError( FML_IOERR_CORE_ERROR );
         return NULL;
     }
+    Fieldml_FreeString(temp_string);
     
     if( format != StringUtil::PLAIN_TEXT_NAME )
     {
@@ -226,8 +228,8 @@ TextArrayDataWriter::TextArrayDataWriter( FieldmlIoContext *_context, const stri
     {
         string href;
         string path;
-        
-        if( !StringUtil::safeString( Fieldml_GetDataResourceHref( context->getSession(), resource ), href ) )
+        char *temp_href = Fieldml_GetDataResourceHref( context->getSession(), resource );
+        if( !StringUtil::safeString( temp_href, href ) )
         {
             context->setError( FML_IOERR_CORE_ERROR );
         }
@@ -236,6 +238,7 @@ TextArrayDataWriter::TextArrayDataWriter( FieldmlIoContext *_context, const stri
             string path = StringUtil::makeFilename( root, href );
             stream = FieldmlOutputStream::createTextFileStream( path, append );
         }
+        Fieldml_FreeString(temp_href);
     }
     else if( type == FML_DATA_RESOURCE_INLINE )
     {

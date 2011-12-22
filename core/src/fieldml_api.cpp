@@ -3722,7 +3722,7 @@ FmlObjectHandle Fieldml_GetDataSourceResource( FmlSessionHandle handle, FmlObjec
 }
 
 
-const char * Fieldml_GetArrayDataSourceLocation( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+char * Fieldml_GetArrayDataSourceLocation( FmlSessionHandle handle, FmlObjectHandle objectHandle )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     ERROR_AUTOSTACK( session );

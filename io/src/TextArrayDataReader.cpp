@@ -136,12 +136,13 @@ TextArrayDataReader *TextArrayDataReader::create( FieldmlIoContext *context, con
     
     FmlObjectHandle resource = Fieldml_GetDataSourceResource( context->getSession(), source );
     string format;
-    if( !StringUtil::safeString( Fieldml_GetDataResourceFormat( context->getSession(), resource ), format ) )
+    char *temp_string = Fieldml_GetDataResourceFormat( context->getSession(), resource );
+    if( !StringUtil::safeString( temp_string, format ) )
     {
         context->setError( FML_IOERR_CORE_ERROR );
         return NULL;
     }
-
+    Fieldml_FreeString(temp_string);
     FieldmlDataResourceType type = Fieldml_GetDataResourceType( context->getSession(), resource );
     
     int rank = Fieldml_GetArrayDataSourceRank( context->getSession(), source );
@@ -160,20 +161,24 @@ TextArrayDataReader *TextArrayDataReader::create( FieldmlIoContext *context, con
     if( type == FML_DATA_RESOURCE_HREF )
     {
         string href;
-        if( !StringUtil::safeString( Fieldml_GetDataResourceHref( context->getSession(), resource ), href ) )
+        char *temp_href = Fieldml_GetDataResourceHref( context->getSession(), resource );
+        if( !StringUtil::safeString( temp_href, href ) )
         {
             context->setError( FML_IOERR_CORE_ERROR );
             return NULL;
         }
+        Fieldml_FreeString(temp_href);
         stream = FieldmlInputStream::createTextFileStream( StringUtil::makeFilename( root, href ) );
     }
     else if( type == FML_DATA_RESOURCE_INLINE )
     {
         string data;
-        if( !StringUtil::safeString( Fieldml_GetInlineData( context->getSession(), resource ), data ) )
+        char *temp_inline_data = Fieldml_GetInlineData( context->getSession(), resource );
+        if( !StringUtil::safeString( temp_inline_data, data ) )
         {
             return NULL;
         }
+        Fieldml_FreeString(temp_inline_data);
         stream = FieldmlInputStream::createStringStream( data );
     }
     
@@ -208,7 +213,9 @@ TextArrayDataReader::TextArrayDataReader( FieldmlIoContext *_context, FieldmlInp
     Fieldml_GetArrayDataSourceRawSizes( context->getSession(), source, sourceRawSizes );
     Fieldml_GetArrayDataSourceOffsets( context->getSession(), source, sourceOffsets );
     
-    StringUtil::safeString( Fieldml_GetArrayDataSourceLocation( context->getSession(), source ), sourceLocation );
+    char *temp_string = Fieldml_GetArrayDataSourceLocation( context->getSession(), source );
+    StringUtil::safeString( temp_string, sourceLocation );
+    Fieldml_FreeString(temp_string);
 }
 
 

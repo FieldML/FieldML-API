@@ -1333,7 +1333,7 @@ FmlObjectHandle Fieldml_GetDataSourceResource( FmlSessionHandle handle, FmlObjec
  * \see Fieldml_CreateArrayDataSource
  * \see Fieldml_FreeString
  */
-const char * Fieldml_GetArrayDataSourceLocation( FmlSessionHandle handle, FmlObjectHandle objectHandle );
+char * Fieldml_GetArrayDataSourceLocation( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
 /**
  * Copies the location of the given array data source into the given buffer.

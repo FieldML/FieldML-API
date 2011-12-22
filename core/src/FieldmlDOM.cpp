@@ -187,8 +187,9 @@ const char *getStringAttribute( xmlNodePtr node, const xmlChar *attribute, const
 int getIntAttribute( xmlNodePtr node, const xmlChar *attribute, int defaultValue, const xmlChar *ns = NULL )
 {
     const char *rawAttribute = getStringAttribute( node, attribute, ns );
-
-    return ( rawAttribute != NULL ) ? atoi( rawAttribute ) : defaultValue;
+    int return_value = ( rawAttribute != NULL ) ? atoi( rawAttribute ) : defaultValue;
+    xmlFree(const_cast<char *>(rawAttribute));
+    return return_value;
 }
 
 
@@ -210,9 +211,14 @@ FmlObjectHandle getObjectAttribute( xmlNodePtr node, const xmlChar *attribute, P
             parseObjectNode( *i, state );
             break;
         }
+        if (nodeObjectName)
+        	xmlFree(const_cast<char *>(nodeObjectName));
     }
 
-    return Fieldml_GetObjectByName( state.session, objectName );
+    FmlObjectHandle objectHandle = Fieldml_GetObjectByName( state.session, objectName );
+    xmlFree(const_cast<char *>(objectName));
+
+    return objectHandle;
 }
 
 
@@ -276,7 +282,8 @@ public:
         const char *remoteName = getStringAttribute( node, REMOTE_NAME_ATTRIB );
         
         FmlObjectHandle handle = Fieldml_AddImport( state.session, index, localName, remoteName );
-        
+        xmlFree(const_cast<char *>(localName));
+        xmlFree(const_cast<char *>(remoteName));
         if( handle == FML_INVALID_HANDLE )
         {
             state.errorHandler->logError( "Invalid import specification" );
@@ -306,6 +313,9 @@ public:
             state.errorHandler->logError( "Invalid import source specification", location );
             return 1;
         }
+
+        xmlFree(const_cast<char *>(location));
+        xmlFree(const_cast<char *>(region));
         
         ImportEntryParser importEntryParser( index );
         
@@ -367,10 +377,11 @@ public:
             if( ! ( sstr >> values[i] ) )
             {
                 state.errorHandler->logError( "Error reading integer" );
+                xmlFree(content);
                 return 1;
             }
         }
-        
+        xmlFree(content);
         return 0;
     }
     
@@ -396,6 +407,7 @@ public:
         char *content = (char *)xmlNodeGetContent( node );
         
         FmlErrorNumber err = Fieldml_AddInlineData( state.session, resource, content, strlen( content ) );
+        xmlFree(content);
         if( err != FML_ERR_NO_ERROR )
         {
             state.errorHandler->logError( "Error adding text to text inline data resource" );
@@ -425,9 +437,11 @@ public:
         int err;
         
         FmlObjectHandle dataSource = Fieldml_CreateArrayDataSource( state.session, name, resource, location, rank );
+				xmlFree(const_cast<char *>(location));
         if( dataSource == FML_INVALID_HANDLE )
         {
             state.errorHandler->logError( "Malformed ArrayDataSource" );
+            xmlFree(const_cast<char *>(name));
             return 1;
         }
         
@@ -440,6 +454,7 @@ public:
             if( err != 0 )
             {
                 state.errorHandler->logError( "Malformed ArrayDataSource offset data" );
+                xmlFree(const_cast<char *>(name));
                 return err;
             }
             if( Fieldml_SetArrayDataSourceOffsets( state.session, dataSource, vectorParser.values ) != FML_ERR_NO_ERROR )
@@ -455,6 +470,7 @@ public:
             if( err != 0 )
             {
                 state.errorHandler->logError( "Malformed ArrayDataSource size data" );
+                xmlFree(const_cast<char *>(name));
                 return err;
             }
             if( Fieldml_SetArrayDataSourceSizes( state.session, dataSource, vectorParser.values ) != FML_ERR_NO_ERROR )
@@ -470,6 +486,7 @@ public:
             if( err != 0 )
             {
                 state.errorHandler->logError( "Malformed raw array size data" );
+                xmlFree(const_cast<char *>(name));
                 return err;
             }
             if( Fieldml_SetArrayDataSourceRawSizes( state.session, dataSource, vectorParser.values ) != FML_ERR_NO_ERROR )
@@ -477,7 +494,7 @@ public:
                 state.errorHandler->logError( "ArrayDataSource has invalid raw size specification", name );
             }
         }
-
+        xmlFree(const_cast<char *>(name));
         return 0;
     }
 };
@@ -504,8 +521,10 @@ public:
         {
             const char *href = getStringAttribute( hrefDescription, HREF_ATTRIB, XLINK_NAMESPACE_STRING );
             const char *format = getStringAttribute( hrefDescription, FORMAT_ATTRIB );
-            
+
             resource = Fieldml_CreateHrefDataResource( state.session, name, format, href );
+            xmlFree(const_cast<char *>(href));
+            xmlFree(const_cast<char *>(format));
         }
         else if( stringDescription != NULL )
         {
@@ -514,6 +533,7 @@ public:
             int err = textStringParser.parseNode( stringDescription, state );
             if( err != 0 )
             {
+								xmlFree(const_cast<char *>(name));
                 return err;
             }
         }
@@ -521,6 +541,7 @@ public:
         if( resource == FML_INVALID_HANDLE )
         {
             state.errorHandler->logError( "Invalid array data resource specification", name );
+						xmlFree(const_cast<char *>(name));
             return 1;
         }
         
@@ -528,9 +549,10 @@ public:
         int err = processChildren( node, ARRAY_DATA_SOURCE_TAG, state, arrayDataSourceParser );
         if( err != 0 )
         {
+						xmlFree(const_cast<char *>(name));
             return err;
         }
-        
+				xmlFree(const_cast<char *>(name));
         return 0;
     }
 };
@@ -553,9 +575,11 @@ public:
         
         if( Fieldml_SetBind( state.session, object, argument, source ) != FML_ERR_NO_ERROR )
         {
-            state.errorHandler->logError( "Incompatible bind",
-                getStringAttribute( objectNode, ARGUMENT_ATTRIB ),
-                getStringAttribute( objectNode, SOURCE_ATTRIB ) );
+						const char* argsAttrib = getStringAttribute( objectNode, ARGUMENT_ATTRIB );
+						const char* sourceAttrib = getStringAttribute( objectNode, SOURCE_ATTRIB );
+            state.errorHandler->logError( "Incompatible bind", argsAttrib, sourceAttrib );
+            xmlFree(const_cast<char *>(argsAttrib));
+            xmlFree(const_cast<char *>(sourceAttrib));
             return 1;
         }
         
@@ -581,7 +605,9 @@ public:
         
         if( Fieldml_SetIndexEvaluator( state.session, object, indexNumber, argument ) != FML_ERR_NO_ERROR )
         {
-            state.errorHandler->logError( "Incompatible index bind", getStringAttribute( objectNode, ARGUMENT_ATTRIB ) );
+						const char* argsAttrib = getStringAttribute( objectNode, ARGUMENT_ATTRIB );
+            state.errorHandler->logError( "Incompatible index bind", argsAttrib );
+            xmlFree(const_cast<char *>(argsAttrib));
             return 1;
         }
         
@@ -630,6 +656,7 @@ public:
         if( evaluator == FML_INVALID_HANDLE )
         {
             state.errorHandler->logError( "ReferenceEvaluator creation failed", name );
+            xmlFree(const_cast<char *>(name));
             return 1;
         }
         
@@ -639,7 +666,7 @@ public:
         {
             return err;
         }
-        
+        xmlFree(const_cast<char *>(name));
         return 0;
     }
 };
@@ -658,12 +685,15 @@ public:
         FmlObjectHandle valueType = getObjectAttribute( objectNode, VALUE_TYPE_ATTRIB, state );
         
         FmlObjectHandle evaluator = Fieldml_CreateConstantEvaluator( state.session, name, value, valueType );
+        xmlFree(const_cast<char *>(value));
+
         if( evaluator == FML_INVALID_HANDLE )
         {
             state.errorHandler->logError( "ConstantEvaluator creation failed", name );
+            xmlFree(const_cast<char *>(name));
             return 1;
         }
-        
+        xmlFree(const_cast<char *>(name));
         return 0;
     }
 };
@@ -699,6 +729,7 @@ public:
         if( handle == FML_INVALID_HANDLE )
         {
             state.errorHandler->logError( "ContinuousType creation failed", name );
+            xmlFree(const_cast<char *>(name));
             return 1;
         }
     
@@ -709,13 +740,15 @@ public:
             int count = getIntAttribute( componentsNode, COUNT_ATTRIB, 0 );
             
             FmlObjectHandle components = Fieldml_CreateContinuousTypeComponents( state.session, handle, componentName, count );
+            xmlFree(const_cast<char *>(componentName));
             if( components == FML_INVALID_HANDLE )
             {
                 state.errorHandler->logError( "ContinuousType has invalid component specification", name );
+                xmlFree(const_cast<char *>(name));
                 return 1;
             }
         }
-        
+        xmlFree(const_cast<char *>(name));
         return 0;
     }
 };
@@ -734,10 +767,11 @@ public:
         FmlObjectHandle handle = Fieldml_CreateBooleanType( state.session, name );
         if( handle == FML_INVALID_HANDLE )
         {
+						xmlFree(const_cast<char *>(name));
             state.errorHandler->logError( "BooleanType creation failed", name );
             return 1;
         }
-        
+        xmlFree(const_cast<char *>(name));
         return 0;
     }
 };
@@ -773,6 +807,7 @@ public:
         if( handle == FML_INVALID_HANDLE )
         {
             state.errorHandler->logError( "EnsembleType creation failed", name );
+            xmlFree(const_cast<char *>(name));
             return 1;
         }
         
@@ -780,6 +815,7 @@ public:
         if( membersNode == NULL )
         {
             state.errorHandler->logError( "EnsembleType must have members", name );
+            xmlFree(const_cast<char *>(name));
             return 1;
         }
         
@@ -787,6 +823,7 @@ public:
         if( membersSpecNode == NULL )
         {
             state.errorHandler->logError( "EnsembleType must have members", name );
+            xmlFree(const_cast<char *>(name));
             return 1;
         }
     
@@ -799,6 +836,7 @@ public:
             if( Fieldml_SetEnsembleMembersRange( state.session, handle, min, max, stride ) != FML_ERR_NO_ERROR )
             {
                 state.errorHandler->logError( "EnsembleType has invalid range specification", name );
+                xmlFree(const_cast<char *>(name));
                 return 1;
             }
         }
@@ -823,6 +861,7 @@ public:
             else
             {
                 state.errorHandler->logError( "EnsembleType has invalid member specification", name );
+                xmlFree(const_cast<char *>(name));
                 return 1;
             }
     
@@ -832,15 +871,17 @@ public:
             if( Fieldml_SetEnsembleMembersDataSource( state.session, handle, type, count, dataObject ) != FML_ERR_NO_ERROR )
             {
                 state.errorHandler->logError( "EnsembleType has invalid data specification", name );
+                xmlFree(const_cast<char *>(name));
                 return 1;
             }
         }
         else
         {
             state.errorHandler->logError( "EnsembleType has unknown member specification", (char*)membersSpecNode->name );
+            xmlFree(const_cast<char *>(name));
             return 1;
         }
-        
+        xmlFree(const_cast<char *>(name));
         return 0;
     }
 };
@@ -860,6 +901,7 @@ public:
         if( handle == FML_INVALID_HANDLE )
         {
             state.errorHandler->logError( "MeshType creation failed", name );
+            xmlFree(const_cast<char *>(name));
             return 1;
         }
         
@@ -867,6 +909,7 @@ public:
         if( elementsNode == NULL )
         {
             state.errorHandler->logError( "MeshType must have elements", name );
+            xmlFree(const_cast<char *>(name));
             return 1;
         }
         
@@ -881,6 +924,7 @@ public:
         if( chartNode == NULL )
         {
             state.errorHandler->logError( "MeshType must have chart specification", name );
+            xmlFree(const_cast<char *>(name));
             return 1;
         }
         
@@ -888,6 +932,7 @@ public:
         err = chartParser.parseNode( chartNode, state );
         if( err != 0 )
         {
+						xmlFree(const_cast<char *>(name));
             return err;
         }
         
@@ -895,6 +940,7 @@ public:
         if( shapesNode == NULL )
         {
             state.errorHandler->logError( "MeshType must have shape specification", name );
+            xmlFree(const_cast<char *>(name));
             return 1;
         }
 
@@ -902,10 +948,13 @@ public:
         if( shapesName == NULL )
         {
             state.errorHandler->logError( "MeshType must have valid shape specification" );
+            xmlFree(const_cast<char *>(name));
             return 1;
         }
         
         state.shapesHACK.push_back( pair<FmlObjectHandle,string>( handle, shapesName ) );
+        xmlFree(const_cast<char *>(shapesName));
+        xmlFree(const_cast<char *>(name));
        
         return 0;
     }
@@ -927,10 +976,12 @@ public:
         if( evaluator == FML_INVALID_HANDLE )
         {
             state.errorHandler->logError( "Cannot create ArgumentEvaluator with given type", name);
+            xmlFree(const_cast<char *>(name));
             return 1;
         }
         
         ArgumentParser argumentParser( evaluator );
+        xmlFree(const_cast<char *>(name));
         return processChildren( getFirstChild( objectNode, ARGUMENTS_TAG ), ARGUMENT_TAG, state, argumentParser );
     }
 };
@@ -951,10 +1002,12 @@ public:
         if( evaluator == FML_INVALID_HANDLE )
         {
             state.errorHandler->logError( "ExternalEvaluator creation failed", name );
+            xmlFree(const_cast<char *>(name));
             return 1;
         }
         
         ArgumentParser argumentParser( evaluator );
+        xmlFree(const_cast<char *>(name));
         return processChildren( getFirstChild( objectNode, ARGUMENTS_TAG ), ARGUMENT_TAG, state, argumentParser );
     }
 };
@@ -1027,6 +1080,7 @@ public:
         if( evaluator == FML_INVALID_HANDLE )
         {
             state.errorHandler->logError( "PiecewiseEvaluator creation failed", name );
+            xmlFree(const_cast<char *>(name));
             return 1;
         }
         
@@ -1034,6 +1088,7 @@ public:
         if( evaluatorsNode == NULL )
         {
             state.errorHandler->logError( "PiecewiseEvaluator must have an evaluator map", name );
+            xmlFree(const_cast<char *>(name));
             return 1;
         }
     
@@ -1043,6 +1098,7 @@ public:
             if( Fieldml_SetDefaultEvaluator( state.session, evaluator, defaultHandle ) != FML_ERR_NO_ERROR )
             {
                 state.errorHandler->logError( "PiecewiseEvaluator has an invalid default", name );
+                xmlFree(const_cast<char *>(name));
                 return 1;
             }
         }
@@ -1051,6 +1107,7 @@ public:
         int err = processChildren( evaluatorsNode, EVALUATOR_MAP_ENTRY_TAG, state, piecewiseMapParser );
         if( err != 0 )
         {
+						xmlFree(const_cast<char *>(name));
             return err;
         }
     
@@ -1058,6 +1115,7 @@ public:
         err = processChildren( getFirstChild( objectNode, BINDINGS_TAG ), BIND_TAG, state, bindParser );
         if( err != 0 )
         {
+						xmlFree(const_cast<char *>(name));
             return err;
         }
     
@@ -1065,9 +1123,10 @@ public:
         err = processChildren( getFirstChild( objectNode, INDEX_EVALUATORS_TAG ), INDEX_EVALUATOR_TAG, state, indexEvaluatorParser );
         if( err != 0 )
         {
+						xmlFree(const_cast<char *>(name));
             return err;
         }
-        
+        xmlFree(const_cast<char *>(name));
         return 0;
     }
 };
@@ -1114,6 +1173,7 @@ public:
         if( evaluator == FML_INVALID_HANDLE )
         {
             state.errorHandler->logError( "AggregateEvaluator creation failed", name );
+            xmlFree(const_cast<char *>(name));
             return 1;
         }
         
@@ -1121,6 +1181,7 @@ public:
         if( evaluatorsNode == NULL )
         {
             state.errorHandler->logError( "AggregateEvaluator must have component evaluators", name );
+            xmlFree(const_cast<char *>(name));
             return 1;
         }
     
@@ -1130,6 +1191,7 @@ public:
             if( Fieldml_SetDefaultEvaluator( state.session, evaluator, defaultHandle ) != FML_ERR_NO_ERROR )
             {
                 state.errorHandler->logError( "AggregateEvaluator has an invalid default", name );
+                xmlFree(const_cast<char *>(name));
                 return 1;
             }
         }
@@ -1138,6 +1200,7 @@ public:
         int err = processChildren( evaluatorsNode, COMPONENT_EVALUATOR_TAG, state, aggregateMapParser );
         if( err != 0 )
         {
+						xmlFree(const_cast<char *>(name));
             return err;
         }
     
@@ -1145,6 +1208,7 @@ public:
         err = processChildren( getFirstChild( objectNode, BINDINGS_TAG ), BIND_TAG, state, bindParser );
         if( err != 0 )
         {
+						xmlFree(const_cast<char *>(name));
             return err;
         }
         
@@ -1152,9 +1216,10 @@ public:
         err = processChildren( getFirstChild( objectNode, BINDINGS_TAG ), BIND_INDEX_TAG, state, bindIndexParser );
         if( err != 0 )
         {
+						xmlFree(const_cast<char *>(name));
             return err;
         }
-        
+        xmlFree(const_cast<char *>(name));
         return 0;
     }
 };
@@ -1213,6 +1278,7 @@ public:
         if( evaluator == FML_INVALID_HANDLE )
         {
             state.errorHandler->logError( "ParameterEvaluator creation failed", name );
+            xmlFree(const_cast<char *>(name));
             return 1;
         }
 
@@ -1223,6 +1289,7 @@ public:
             if( Fieldml_SetParameterDataDescription( state.session, evaluator, FML_DATA_DESCRIPTION_DENSE_ARRAY ) != FML_ERR_NO_ERROR )
             {
                 state.errorHandler->logError( "ParameterEvaluator must have a valid data description", name );
+                xmlFree(const_cast<char *>(name));
                 return 1;
             }
             
@@ -1231,6 +1298,7 @@ public:
             if( Fieldml_SetDataSource( state.session, evaluator, dataObject ) != FML_ERR_NO_ERROR )
             {
                 state.errorHandler->logError( "ParameterEvaluator must have a valid data source", name );
+                xmlFree(const_cast<char *>(name));
                 return 1;
             }
 
@@ -1238,6 +1306,7 @@ public:
             int err = processChildren( getFirstChild( denseNode, DENSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, parameterIndexEvaluatorParser );
             if( err != 0 )
             {
+								xmlFree(const_cast<char *>(name));
                 return err;
             }
         }
@@ -1246,6 +1315,7 @@ public:
             if( Fieldml_SetParameterDataDescription( state.session, evaluator, FML_DATA_DESCRIPTION_DOK_ARRAY ) != FML_ERR_NO_ERROR )
             {
                 state.errorHandler->logError( "ParameterEvaluator must have a valid data description", name );
+                xmlFree(const_cast<char *>(name));
                 return 1;
             }
             
@@ -1255,11 +1325,13 @@ public:
             if( Fieldml_SetKeyDataSource( state.session, evaluator, keyDataObject ) != FML_ERR_NO_ERROR )
             {
                 state.errorHandler->logError( "ParameterEvaluator must have a valid key data source", name );
+                xmlFree(const_cast<char *>(name));
                 return 1;
             }
             if( Fieldml_SetDataSource( state.session, evaluator, valueDataObject ) != FML_ERR_NO_ERROR )
             {
                 state.errorHandler->logError( "ParameterEvaluator must have a valid value data source", name );
+                xmlFree(const_cast<char *>(name));
                 return 1;
             }
 
@@ -1267,6 +1339,7 @@ public:
             int err = processChildren( getFirstChild( dokNode, SPARSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, denseIndexEvaluatorParser );
             if( err != 0 )
             {
+								xmlFree(const_cast<char *>(name));
                 return err;
             }
             
@@ -1274,15 +1347,17 @@ public:
             err = processChildren( getFirstChild( dokNode, DENSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, sparseIndexEvaluatorParser );
             if( err != 0 )
             {
+								xmlFree(const_cast<char *>(name));
                 return err;
             }
         }
         else
         {
             state.errorHandler->logError( "ParameterEvaluator must have a description", name );
+            xmlFree(const_cast<char *>(name));
             return 1;
         }
-
+        xmlFree(const_cast<char *>(name));
         return 0;
     }
 };
@@ -1294,6 +1369,7 @@ static int parseObjectNode( xmlNodePtr objectNode, ParseState &state )
     {
         const char *name = getStringAttribute( objectNode, NAME_ATTRIB );
         state.errorHandler->logError( "Recursive object definition", name );
+        xmlFree(const_cast<char *>(name));
         return 1;
     }
     

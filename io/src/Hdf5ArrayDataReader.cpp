@@ -53,9 +53,10 @@ Hdf5ArrayDataReader *Hdf5ArrayDataReader::create( FieldmlIoContext *context, con
     Hdf5ArrayDataReader *reader = NULL;
 
     FmlObjectHandle resource = Fieldml_GetDataSourceResource( context->getSession(), source );
+    char *temp_string = Fieldml_GetDataResourceFormat( context->getSession(), resource );
     string format;
 
-    if( !StringUtil::safeString( Fieldml_GetDataResourceFormat( context->getSession(), resource ), format ) )
+    if( !StringUtil::safeString( temp_string, format ) )
     {
         context->setError( FML_IOERR_CORE_ERROR );
     }
@@ -92,6 +93,7 @@ Hdf5ArrayDataReader *Hdf5ArrayDataReader::create( FieldmlIoContext *context, con
         H5Pclose( accessProperties );
 #endif //FIELDML_PHDF5_ARRAY
     }
+    Fieldml_FreeString(temp_string);
     
     return reader;
 }
@@ -114,16 +116,20 @@ Hdf5ArrayDataReader::Hdf5ArrayDataReader( FieldmlIoContext *_context, const stri
         FmlObjectHandle resource = Fieldml_GetDataSourceResource( context->getSession(), source );
 
         string description;
-        if( !StringUtil::safeString( Fieldml_GetDataResourceHref( context->getSession(), resource ), description ) )
+        char *temp_href = Fieldml_GetDataResourceHref( context->getSession(), resource );
+        if( !StringUtil::safeString( temp_href, description ) )
         {
             break;
         }
-            
+        Fieldml_FreeString(temp_href);
+
         string location;
-        if( !StringUtil::safeString( Fieldml_GetArrayDataSourceLocation( context->getSession(), source ), location ) )
+        char *temp_string = Fieldml_GetArrayDataSourceLocation( context->getSession(), source );
+        if( !StringUtil::safeString( temp_string, location ) )
         {
             break;
         }
+        Fieldml_FreeString(temp_string);
 
         const string filename = StringUtil::makeFilename( root, description );
 

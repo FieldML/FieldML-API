@@ -85,7 +85,8 @@ FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle obj
     if( Fieldml_GetDataSourceType( handle, objectHandle ) == FML_DATA_SOURCE_ARRAY )
     {
         string root;
-        if( !StringUtil::safeString( Fieldml_GetRegionRoot( handle ), root ) )
+        char *region_string = Fieldml_GetRegionRoot( handle );
+        if( !StringUtil::safeString( region_string, root ) )
         {
             FieldmlIoSession::getSession().setError( FML_IOERR_CORE_ERROR );
         }
@@ -93,6 +94,7 @@ FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle obj
         {
             reader = ArrayDataReader::create( FieldmlIoSession::getSession().createContext( handle ), root, objectHandle );
         }
+        Fieldml_FreeString(region_string);
     }
     else
     {

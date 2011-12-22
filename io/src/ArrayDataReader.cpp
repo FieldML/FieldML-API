@@ -54,8 +54,8 @@ ArrayDataReader * ArrayDataReader::create( FieldmlIoContext *context, const stri
 
     FmlObjectHandle resource = Fieldml_GetDataSourceResource( context->getSession(), source );
     string format;
-    
-    if( !StringUtil::safeString( Fieldml_GetDataResourceFormat( context->getSession(), resource ), format ) )
+    char *temp_string = Fieldml_GetDataResourceFormat( context->getSession(), resource );
+    if( !StringUtil::safeString( temp_string, format ) )
     {
         context->setError( FML_IOERR_CORE_ERROR );
     }
@@ -79,7 +79,7 @@ ArrayDataReader * ArrayDataReader::create( FieldmlIoContext *context, const stri
     {
         context->setError( FML_IOERR_UNSUPPORTED );
     }
-    
+    Fieldml_FreeString(temp_string);
     return reader;
 }
 

@@ -51,9 +51,10 @@ ArrayDataWriter *ArrayDataWriter::create( FieldmlIoContext *context, const strin
     ArrayDataWriter *writer = NULL;
     
     FmlObjectHandle resource = Fieldml_GetDataSourceResource( context->getSession(), source );
+    char *temp_string = Fieldml_GetDataResourceFormat( context->getSession(), resource );
     string format;
     
-    if( !StringUtil::safeString( Fieldml_GetDataResourceFormat( context->getSession(), resource ), format ) )
+    if( !StringUtil::safeString( temp_string, format ) )
     {
         context->setError( FML_IOERR_CORE_ERROR );
     }
@@ -77,6 +78,7 @@ ArrayDataWriter *ArrayDataWriter::create( FieldmlIoContext *context, const strin
     {
         context->setError( FML_IOERR_UNSUPPORTED );
     }
+    Fieldml_FreeString(temp_string);
     
     return writer;
 }
