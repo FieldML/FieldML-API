@@ -1182,7 +1182,7 @@ FmlObjectHandle Fieldml_GetMeshShapes( FmlSessionHandle handle, FmlObjectHandle 
 
     if( session == NULL )
     {
-        return NULL;
+        return FML_INVALID_HANDLE;
     }
     FieldmlObject *object = getObject( session, meshHandle );
 

@@ -180,7 +180,7 @@ char *strdupS( const char *str )
 
 const string getDirectory( const string filename )
 {
-    unsigned int index;
+		size_t index;
     
     index = filename.rfind( NIX_PATH_SEP );
 #ifdef WIN32
