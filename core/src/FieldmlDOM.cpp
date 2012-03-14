@@ -533,7 +533,7 @@ public:
             int err = textStringParser.parseNode( stringDescription, state );
             if( err != 0 )
             {
-								xmlFree(const_cast<char *>(name));
+				xmlFree(const_cast<char *>(name));
                 return err;
             }
         }
@@ -549,10 +549,10 @@ public:
         int err = processChildren( node, ARRAY_DATA_SOURCE_TAG, state, arrayDataSourceParser );
         if( err != 0 )
         {
-						xmlFree(const_cast<char *>(name));
+			xmlFree(const_cast<char *>(name));
             return err;
         }
-				xmlFree(const_cast<char *>(name));
+		xmlFree(const_cast<char *>(name));
         return 0;
     }
 };
@@ -1362,7 +1362,6 @@ public:
     }
 };
     
-    
 static int parseObjectNode( xmlNodePtr objectNode, ParseState &state )
 {
     if( FmlUtil::contains( state.parseStack, objectNode ) )
@@ -1372,7 +1371,7 @@ static int parseObjectNode( xmlNodePtr objectNode, ParseState &state )
         xmlFree(const_cast<char *>(name));
         return 1;
     }
-    
+
     state.parseStack.push_back( objectNode );
 
     int err = 0;
@@ -1424,9 +1423,9 @@ static int parseObjectNode( xmlNodePtr objectNode, ParseState &state )
     {
         err = ParameterEvaluatorParser().parseNode( objectNode, state );
     }
-    
+
     state.parseStack.pop_back();
-    
+
     vector<xmlNodePtr>::iterator loc = find( state.unparsedNodes.begin(), state.unparsedNodes.end(), objectNode );
 
     state.unparsedNodes.erase( loc );
@@ -1434,6 +1433,34 @@ static int parseObjectNode( xmlNodePtr objectNode, ParseState &state )
     return err;
 }
 
+// Work around of the current bug that data resource need to be defined beofre parameter evaluator uses it
+static int parseDataNode( xmlNodePtr objectNode, ParseState &state )
+{
+    if( FmlUtil::contains( state.parseStack, objectNode ) )
+    {
+        const char *name = getStringAttribute( objectNode, NAME_ATTRIB );
+        state.errorHandler->logError( "Recursive object definition", name );
+        xmlFree(const_cast<char *>(name));
+        return 1;
+    }
+    
+    int err = 0;
+    if( checkName( objectNode, DATA_RESOURCE_TAG ) )
+    {
+        state.parseStack.push_back( objectNode );
+
+        err = DataResourceParser().parseNode( objectNode, state );
+
+        state.parseStack.pop_back();
+
+        vector<xmlNodePtr>::iterator loc = find( state.unparsedNodes.begin(), state.unparsedNodes.end(), objectNode );
+
+        state.unparsedNodes.erase( loc );
+
+    }
+
+    return err;
+}
 
 static int parseDoc( xmlDocPtr doc, ParseState &state )
 {
@@ -1459,6 +1486,15 @@ static int parseDoc( xmlDocPtr doc, ParseState &state )
             state.unparsedNodes.insert( state.unparsedNodes.begin(), cur );
         }
         cur = xmlNextElementSibling( cur );
+    }
+
+    // To be improved: Required the following "for" loop to loop through all the top level elements and
+    // parse the data resources before anything using them.
+    for( vector<xmlNodePtr>::iterator j = state.unparsedNodes.begin(); j != state.unparsedNodes.end();)
+    {
+    	xmlNodePtr temp_node = *j;
+    	j++;
+    	parseDataNode( temp_node, state );
     }
 
     while( state.unparsedNodes.size() != 0 )
