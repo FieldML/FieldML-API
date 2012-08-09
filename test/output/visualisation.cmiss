@@ -1,5 +1,5 @@
 gfx create region activation;
-gfx read region myTest.xml region activation;
+gfx read region ../phdf5_test.xml region activation;
 gfx define face egroup activation;
 
 # Create some graphics
