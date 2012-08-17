@@ -101,7 +101,7 @@ typedef int32_t FmlEnsembleValue;               ///< An integer-valued ensemble 
 #define FML_INVALID_HANDLE -1                   ///< The valid used to indicate a missing object or failed object instantiation.
 
 #define FML_MAJOR_VERSION               0
-#define FML_MINOR_VERSION               4
+#define FML_MINOR_VERSION               5
 #define FML_DOT_VERSION                 0
 
 #define FML_ERR_NO_ERROR                0       ///< The API call was successful.
