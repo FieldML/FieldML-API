@@ -203,8 +203,39 @@ def processLine( line, state ):
   return state
 
 
-def processFile():
+def processFiles():
   headerFile = open( "../core/src/fieldml_api.h" )
+
+  state = ParseState.InHeader
+  inComment = False
+
+  for line in headerFile:
+    startSegment = 0
+
+    if( inComment ):
+      pos = line.find( "*/" )
+      if( pos == -1 ):
+        continue
+      inComment = False
+      startSegment = pos + 2
+
+    #Does not cope with mixing line and block comments.
+    endSegment = line.find( "/*", startSegment )
+    while( endSegment != -1 ):
+      state = processLine( line[ startSegment : endSegment ], state )
+      startSegment = line.find( "*/", endSegment + 2 )
+      if( startSegment == -1 ):
+        break
+      endSegment = line.find( "/*", startSegment )
+
+    if( startSegment == -1 ):
+      inComment = True
+    else:
+      state = processLine( line[ startSegment : ], state )
+
+  headerFile.close()
+
+  headerFile = open( "../io/src/FieldmlIoApi.h" )
 
   state = ParseState.InHeader
   inComment = False
@@ -261,4 +292,4 @@ def processFile():
 
   writeFooter()
 
-processFile()
+processFiles()
