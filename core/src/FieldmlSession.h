@@ -117,6 +117,8 @@ public:
     
     FieldmlRegion *addResourceRegion( std::string location, std::string name );
     
+    FieldmlRegion *addResourceRegionFromBuffer( const void *buffer, unsigned int buffer_length, std::string name );
+
     FieldmlRegion *addNewRegion( std::string location, std::string name );
     
     FieldmlRegion *getRegion( std::string location, std::string name );

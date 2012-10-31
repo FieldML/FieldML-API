@@ -59,11 +59,14 @@ public:
     //TODO Provide options for reading into 32/64 bit packed boolean arrays?
     virtual FmlIoErrorNumber readBooleanSlab( const int *offsets, const int *sizes, FmlBoolean *valueBuffer ) = 0;
     
+    virtual FmlIoErrorNumber setStreamRequestCallback( Fieldml_StreamRequestCallbackFunction function, void *user_data_in ) = 0;
+
     virtual FmlIoErrorNumber close() = 0;
     
     virtual ~ArrayDataReader();
 
-    static ArrayDataReader *create( FieldmlIoContext *context, const std::string root, FmlObjectHandle source );
+    static ArrayDataReader *create( FieldmlIoContext *context, const std::string root, FmlObjectHandle source,
+    	int externalReadEnabled);
 };
 
 

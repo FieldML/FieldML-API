@@ -48,7 +48,8 @@
 
 using namespace std;
 
-ArrayDataReader * ArrayDataReader::create( FieldmlIoContext *context, const string root, FmlObjectHandle source )
+ArrayDataReader * ArrayDataReader::create( FieldmlIoContext *context, const string root, FmlObjectHandle source,
+	int externalReadEnabled)
 {
     ArrayDataReader *reader = NULL;
 
@@ -73,7 +74,7 @@ ArrayDataReader * ArrayDataReader::create( FieldmlIoContext *context, const stri
     }
     else if( format == StringUtil::PLAIN_TEXT_NAME )
     {
-        reader = TextArrayDataReader::create( context, root, source );
+        reader = TextArrayDataReader::create( context, root, source, externalReadEnabled );
     }
     else
     {

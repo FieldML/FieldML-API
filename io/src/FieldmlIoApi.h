@@ -77,7 +77,6 @@ typedef int32_t FmlWriterHandle;                ///< A handle to a data writer.
 
 typedef int32_t FmlIoErrorNumber;               ///< A FieldML IO library error code.
 
-
 /*
 
  Constants
@@ -104,6 +103,15 @@ typedef int32_t FmlIoErrorNumber;               ///< A FieldML IO library error 
 
 */
 
+enum FieldmlStreamRequestStatus
+{
+    FML_STREAM_REQUEST_STATUS_UNKNOWN,
+    FML_STREAM_REQUEST_STATUS_OK,
+    FML_STREAM_REQUEST_STATUS_START,
+    FML_STREAM_REQUEST_STATUS_REQUESTED,
+    FML_STREAM_REQUEST_STATUS_ERROR,
+    FML_STREAM_REQUEST_STATUS_END,
+};
 
 /*
 
@@ -124,6 +132,23 @@ extern "C" {
  */
 FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle objectHandle );
 
+/**
+ * Creates a new reader for the given data source's raw data. Fieldml_CloseReader() should be called
+ * when the caller no longer needs to use it. Reader created using this function will use an
+ * external callback function user set later to read the required data in.
+ *
+ * \see Fieldml_ReadIntSlab
+ * \see Fieldml_ReadDoubleSlab
+ * \see Fieldml_CloseReader
+ * \see Fieldml_SetStreamRequestCallback
+ */
+FmlReaderHandle Fieldml_OpenReaderWithExternalCallback( FmlSessionHandle handle, FmlObjectHandle objectHandle);
+
+typedef FmlIoErrorNumber (*Fieldml_StreamRequestCallbackFunction)( const char *href, void **buffer,
+	unsigned int *bufferSize, enum FieldmlStreamRequestStatus status, void *client_data);
+
+FmlIoErrorNumber Fieldml_SetStreamRequestCallback( FmlReaderHandle handle,
+	Fieldml_StreamRequestCallbackFunction function, void *user_data_in );
 
 /**
  * Reads data from the multi-dimensional array specified by the given offsets and sizes into the given buffer. The first

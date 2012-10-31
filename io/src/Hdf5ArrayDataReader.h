@@ -77,6 +77,11 @@ public:
     
     virtual FmlIoErrorNumber readBooleanSlab( const int *offsets, const int *sizes, FmlBoolean *valueBuffer );
     
+    virtual FmlIoErrorNumber setStreamRequestCallback( Fieldml_StreamRequestCallbackFunction function, void *user_data_in )
+    {
+   	 return 0;
+    }
+
     virtual FmlIoErrorNumber close();
     
     virtual ~Hdf5ArrayDataReader();

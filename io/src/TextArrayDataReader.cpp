@@ -40,7 +40,7 @@
  */
 
 #include <sstream>
-
+#include <stdio.h>
 #include "StringUtil.h"
 #include "FieldmlIoApi.h"
 
@@ -130,7 +130,8 @@ public:
 };
 
     
-TextArrayDataReader *TextArrayDataReader::create( FieldmlIoContext *context, const string root, FmlObjectHandle source )
+TextArrayDataReader *TextArrayDataReader::create( FieldmlIoContext *context, const string root, FmlObjectHandle source,
+	int externalReadEnabled)
 {
     FieldmlInputStream *stream = NULL;
     
@@ -168,7 +169,14 @@ TextArrayDataReader *TextArrayDataReader::create( FieldmlIoContext *context, con
             return NULL;
         }
         Fieldml_FreeString(temp_href);
-        stream = FieldmlInputStream::createTextFileStream( StringUtil::makeFilename( root, href ) );
+        if ( externalReadEnabled == 0)
+        {
+        	stream = FieldmlInputStream::createTextFileStream( StringUtil::makeFilename( root, href ) );
+        }
+        else
+        {
+        	stream = FieldmlInputStream::createCallbackStream( StringUtil::makeFilename( root, href ) );
+        }
     }
     else if( type == FML_DATA_RESOURCE_INLINE )
     {
@@ -434,6 +442,16 @@ FmlIoErrorNumber TextArrayDataReader::readBooleanSlab( const int *offsets, const
     BooleanBufferReader reader( stream, valueBuffer );
     
     return readSlab( offsets, sizes, reader );
+}
+
+FmlIoErrorNumber TextArrayDataReader::setStreamRequestCallback( Fieldml_StreamRequestCallbackFunction function, void *user_data_in )
+{
+    if( closed )
+    {
+        return FML_IOERR_RESOURCE_CLOSED;
+    }
+
+    return stream->setStreamRequestCallback( function, user_data_in );
 }
 
 

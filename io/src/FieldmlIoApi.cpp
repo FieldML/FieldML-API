@@ -72,8 +72,7 @@ FmlIoErrorNumber FieldmlIo_GetLastError()
     return FieldmlIoSession::getSession().getLastError();
 }
 
-
-FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle objectHandle )
+FmlReaderHandle Fieldml_OpenReaderInternal( FmlSessionHandle handle, FmlObjectHandle objectHandle, int externalReadEnabled )
 {
     if( Fieldml_IsObjectLocal( handle, objectHandle, 0 ) != 1 )
     {
@@ -92,7 +91,7 @@ FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle obj
         }
         else
         {
-            reader = ArrayDataReader::create( FieldmlIoSession::getSession().createContext( handle ), root, objectHandle );
+            reader = ArrayDataReader::create( FieldmlIoSession::getSession().createContext( handle ), root, objectHandle, externalReadEnabled);
         }
         Fieldml_FreeString(region_string);
     }
@@ -110,6 +109,16 @@ FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle obj
     return FieldmlIoSession::getSession().addReader( reader );
 }
 
+
+FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle objectHandle)
+{
+    return Fieldml_OpenReaderInternal(handle, objectHandle, 0);
+}
+
+FmlReaderHandle Fieldml_OpenReaderWithExternalCallback( FmlSessionHandle handle, FmlObjectHandle objectHandle)
+{
+    return Fieldml_OpenReaderInternal(handle, objectHandle, 1);
+}
 
 FmlIoErrorNumber Fieldml_ReadIntSlab( FmlReaderHandle readerHandle, const int *offsets, const int *sizes, int *valueBuffer )
 {
@@ -144,6 +153,18 @@ FmlIoErrorNumber Fieldml_ReadBooleanSlab( FmlReaderHandle readerHandle, const in
     }
 
     return reader->readBooleanSlab( offsets, sizes, valueBuffer );
+}
+
+FmlIoErrorNumber Fieldml_SetStreamRequestCallback( FmlReaderHandle readerHandle,
+	Fieldml_StreamRequestCallbackFunction function, void *user_data_in )
+{
+    ArrayDataReader *reader = FieldmlIoSession::getSession().handleToReader( readerHandle );
+    if( reader == NULL )
+    {
+        return FieldmlIoSession::getSession().setError( FML_IOERR_UNKNOWN_OBJECT );
+    }
+
+    return reader->setStreamRequestCallback( function, user_data_in );
 }
 
 

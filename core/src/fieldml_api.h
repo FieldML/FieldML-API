@@ -273,6 +273,8 @@ extern "C" {
  */
 FmlSessionHandle Fieldml_CreateFromFile( const char * filename );
 
+FmlSessionHandle Fieldml_CreateFromBuffer( const void *buffer, unsigned int buffer_length, const char * name );
+
 
 /**
  * Creates an empty FieldML handle.
