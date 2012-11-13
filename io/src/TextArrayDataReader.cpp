@@ -131,7 +131,7 @@ public:
 
     
 TextArrayDataReader *TextArrayDataReader::create( FieldmlIoContext *context, const string root, FmlObjectHandle source,
-	int externalReadEnabled)
+	void *buffer)
 {
     FieldmlInputStream *stream = NULL;
     
@@ -159,35 +159,41 @@ TextArrayDataReader *TextArrayDataReader::create( FieldmlIoContext *context, con
         return NULL;
     }
 
-    if( type == FML_DATA_RESOURCE_HREF )
+    if (buffer == 0)
     {
-        string href;
-        char *temp_href = Fieldml_GetDataResourceHref( context->getSession(), resource );
-        if( !StringUtil::safeString( temp_href, href ) )
-        {
-            context->setError( FML_IOERR_CORE_ERROR );
-            return NULL;
-        }
-        Fieldml_FreeString(temp_href);
-        if ( externalReadEnabled == 0)
-        {
-        	stream = FieldmlInputStream::createTextFileStream( StringUtil::makeFilename( root, href ) );
-        }
-        else
-        {
-        	stream = FieldmlInputStream::createCallbackStream( StringUtil::makeFilename( root, href ) );
-        }
+    	if( type == FML_DATA_RESOURCE_HREF )
+    	{
+    		string href;
+    		char *temp_href = Fieldml_GetDataResourceHref( context->getSession(), resource );
+    		if( !StringUtil::safeString( temp_href, href ) )
+    		{
+    			context->setError( FML_IOERR_CORE_ERROR );
+    			return NULL;
+    		}
+    		Fieldml_FreeString(temp_href);
+    		stream = FieldmlInputStream::createTextFileStream( StringUtil::makeFilename( root, href ) );
+    	}
+    	else if( type == FML_DATA_RESOURCE_INLINE )
+    	{
+    		string data;
+    		char *temp_inline_data = Fieldml_GetInlineData( context->getSession(), resource );
+    		if( !StringUtil::safeString( temp_inline_data, data ) )
+    		{
+    			return NULL;
+    		}
+    		Fieldml_FreeString(temp_inline_data);
+    		stream = FieldmlInputStream::createStringStream( data );
+    	}
     }
-    else if( type == FML_DATA_RESOURCE_INLINE )
+    else
     {
-        string data;
-        char *temp_inline_data = Fieldml_GetInlineData( context->getSession(), resource );
-        if( !StringUtil::safeString( temp_inline_data, data ) )
-        {
-            return NULL;
-        }
-        Fieldml_FreeString(temp_inline_data);
-        stream = FieldmlInputStream::createStringStream( data );
+    	string data;
+    	char *temp_data = (char *)buffer;
+		if( !StringUtil::safeString( temp_data, data ) )
+		{
+			return NULL;
+		}
+		stream = FieldmlInputStream::createStringStream( data );
     }
     
     if( stream == NULL )
@@ -442,16 +448,6 @@ FmlIoErrorNumber TextArrayDataReader::readBooleanSlab( const int *offsets, const
     BooleanBufferReader reader( stream, valueBuffer );
     
     return readSlab( offsets, sizes, reader );
-}
-
-FmlIoErrorNumber TextArrayDataReader::setStreamRequestCallback( Fieldml_StreamRequestCallbackFunction function, void *user_data_in )
-{
-    if( closed )
-    {
-        return FML_IOERR_RESOURCE_CLOSED;
-    }
-
-    return stream->setStreamRequestCallback( function, user_data_in );
 }
 
 

@@ -44,6 +44,13 @@
 
 #include "FieldmlIoContext.h"
 
+enum ArrayDataSourceType
+{
+    ARRAY_DATA_SOURCE_UNKNOWN,
+    ARRAY_DATA_SOURCE_DEFAULT,
+    ARRAY_DATA_SOURCE_BUFFER,
+};
+
 class ArrayDataReader
 {
 protected:
@@ -51,6 +58,9 @@ protected:
 
     ArrayDataReader( FieldmlIoContext *_context );
     
+    static ArrayDataReader *createInternal( FieldmlIoContext *context, const std::string root,
+    	FmlObjectHandle source, void *buffer );
+
 public:
     virtual FmlIoErrorNumber readIntSlab( const int *offsets, const int *sizes, int *valueBuffer ) = 0;
     
@@ -59,14 +69,14 @@ public:
     //TODO Provide options for reading into 32/64 bit packed boolean arrays?
     virtual FmlIoErrorNumber readBooleanSlab( const int *offsets, const int *sizes, FmlBoolean *valueBuffer ) = 0;
     
-    virtual FmlIoErrorNumber setStreamRequestCallback( Fieldml_StreamRequestCallbackFunction function, void *user_data_in ) = 0;
-
     virtual FmlIoErrorNumber close() = 0;
     
     virtual ~ArrayDataReader();
 
-    static ArrayDataReader *create( FieldmlIoContext *context, const std::string root, FmlObjectHandle source,
-    	int externalReadEnabled);
+    static ArrayDataReader *create( FieldmlIoContext *context, const std::string root, FmlObjectHandle source);
+
+    static ArrayDataReader *createWithBuffer( FieldmlIoContext *context, const std::string root,
+    	FmlObjectHandle source, void *buffer );
 };
 
 

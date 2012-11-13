@@ -72,7 +72,8 @@ FmlIoErrorNumber FieldmlIo_GetLastError()
     return FieldmlIoSession::getSession().getLastError();
 }
 
-FmlReaderHandle Fieldml_OpenReaderInternal( FmlSessionHandle handle, FmlObjectHandle objectHandle, int externalReadEnabled )
+FmlReaderHandle Fieldml_OpenReaderInternal( FmlSessionHandle handle, FmlObjectHandle objectHandle,
+	ArrayDataSourceType sourceType, void *buffer)
 {
     if( Fieldml_IsObjectLocal( handle, objectHandle, 0 ) != 1 )
     {
@@ -91,7 +92,11 @@ FmlReaderHandle Fieldml_OpenReaderInternal( FmlSessionHandle handle, FmlObjectHa
         }
         else
         {
-            reader = ArrayDataReader::create( FieldmlIoSession::getSession().createContext( handle ), root, objectHandle, externalReadEnabled);
+        	if (sourceType == ARRAY_DATA_SOURCE_DEFAULT)
+        		reader = ArrayDataReader::create( FieldmlIoSession::getSession().createContext( handle ), root, objectHandle);
+        	else
+        		reader = ArrayDataReader::createWithBuffer( FieldmlIoSession::getSession().createContext( handle ),
+        			root, objectHandle, buffer);
         }
         Fieldml_FreeString(region_string);
     }
@@ -112,12 +117,12 @@ FmlReaderHandle Fieldml_OpenReaderInternal( FmlSessionHandle handle, FmlObjectHa
 
 FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle objectHandle)
 {
-    return Fieldml_OpenReaderInternal(handle, objectHandle, 0);
+    return Fieldml_OpenReaderInternal(handle, objectHandle, ARRAY_DATA_SOURCE_DEFAULT, 0);
 }
 
-FmlReaderHandle Fieldml_OpenReaderWithExternalCallback( FmlSessionHandle handle, FmlObjectHandle objectHandle)
+FmlReaderHandle Fieldml_OpenReaderWithBuffer( FmlSessionHandle handle, FmlObjectHandle objectHandle, void *buffer)
 {
-    return Fieldml_OpenReaderInternal(handle, objectHandle, 1);
+	return Fieldml_OpenReaderInternal(handle, objectHandle, ARRAY_DATA_SOURCE_BUFFER, buffer);
 }
 
 FmlIoErrorNumber Fieldml_ReadIntSlab( FmlReaderHandle readerHandle, const int *offsets, const int *sizes, int *valueBuffer )
@@ -153,18 +158,6 @@ FmlIoErrorNumber Fieldml_ReadBooleanSlab( FmlReaderHandle readerHandle, const in
     }
 
     return reader->readBooleanSlab( offsets, sizes, valueBuffer );
-}
-
-FmlIoErrorNumber Fieldml_SetStreamRequestCallback( FmlReaderHandle readerHandle,
-	Fieldml_StreamRequestCallbackFunction function, void *user_data_in )
-{
-    ArrayDataReader *reader = FieldmlIoSession::getSession().handleToReader( readerHandle );
-    if( reader == NULL )
-    {
-        return FieldmlIoSession::getSession().setError( FML_IOERR_UNKNOWN_OBJECT );
-    }
-
-    return reader->setStreamRequestCallback( function, user_data_in );
 }
 
 

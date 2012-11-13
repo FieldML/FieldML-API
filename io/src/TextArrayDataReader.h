@@ -93,15 +93,13 @@ public:
     virtual FmlIoErrorNumber readDoubleSlab( const int *offsets, const int *sizes, double *valueBuffer );
     
     virtual FmlIoErrorNumber readBooleanSlab( const int *offsets, const int *sizes, FmlBoolean *valueBuffer );
-    
-    virtual FmlIoErrorNumber setStreamRequestCallback( Fieldml_StreamRequestCallbackFunction function, void *user_data_in );
 
     virtual FmlIoErrorNumber close();
     
     virtual ~TextArrayDataReader();
     
     static TextArrayDataReader *create( FieldmlIoContext *_context, const std::string root, FmlObjectHandle source,
-    	int externalReadEnabled);
+    	void *buffer);
 };
 
 

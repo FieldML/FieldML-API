@@ -71,14 +71,8 @@ public:
     virtual long tell() = 0;
     virtual bool seek( long pos ) = 0;
     
-    virtual FmlIoErrorNumber setStreamRequestCallback( Fieldml_StreamRequestCallbackFunction function, void *user_data_in )
-    {
-   	 return 0;
-    }
-
     static FieldmlInputStream *createTextFileStream( const std::string filename );
     static FieldmlInputStream *createStringStream( const std::string string );
-    static FieldmlInputStream *createCallbackStream( const std::string filename );
 };
 
 #endif //H_FIELDML_INPUT_STREAM

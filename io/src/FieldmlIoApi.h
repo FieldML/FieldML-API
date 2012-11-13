@@ -142,13 +142,7 @@ FmlReaderHandle Fieldml_OpenReader( FmlSessionHandle handle, FmlObjectHandle obj
  * \see Fieldml_CloseReader
  * \see Fieldml_SetStreamRequestCallback
  */
-FmlReaderHandle Fieldml_OpenReaderWithExternalCallback( FmlSessionHandle handle, FmlObjectHandle objectHandle);
-
-typedef FmlIoErrorNumber (*Fieldml_StreamRequestCallbackFunction)( const char *href, void **buffer,
-	unsigned int *bufferSize, enum FieldmlStreamRequestStatus status, void *client_data);
-
-FmlIoErrorNumber Fieldml_SetStreamRequestCallback( FmlReaderHandle handle,
-	Fieldml_StreamRequestCallbackFunction function, void *user_data_in );
+FmlReaderHandle Fieldml_OpenReaderWithBuffer( FmlSessionHandle handle, FmlObjectHandle objectHandle, void *buffer);
 
 /**
  * Reads data from the multi-dimensional array specified by the given offsets and sizes into the given buffer. The first

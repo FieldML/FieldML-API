@@ -90,7 +90,6 @@ public:
 	  public FieldmlInputStream
  {
  private:
-	  Fieldml_StreamRequestCallbackFunction callbackFunction;
 	  const std::string href;
 	  int requested;
 	  int requestedBufferPos;
@@ -106,10 +105,7 @@ public:
 
 	  virtual long tell();
 	  virtual bool seek( long pos );
-	  virtual FmlIoErrorNumber setStreamRequestCallback( Fieldml_StreamRequestCallbackFunction function, void *user_data_in );
 
-	  CallbackStream( const std::string filename );
-	  virtual ~CallbackStream();
  };
 
 static const int BUFFER_SIZE = 1024;
@@ -310,12 +306,6 @@ FieldmlInputStream *FieldmlInputStream::createStringStream( const string sourceS
     return new StringInputStream( sourceString );
 }
 
-FieldmlInputStream *FieldmlInputStream::createCallbackStream( const string filename )
-{
-    return new CallbackStream( filename );
-}
-
-
 bool FieldmlInputStream::eof()
 {
     return isEof;
@@ -429,100 +419,4 @@ bool StringInputStream::seek( long pos )
 
 StringInputStream::~StringInputStream()
 {
-}
-
-CallbackStream::CallbackStream( const std::string filename ) :
-	href( filename ),
-	requested( 0 ),
-	requestedBufferPos( 0 ),
-	user_data( NULL ),
-	requestedBuffer( NULL ),
-	memoryBufferSize( 0 ),
-	status( FML_STREAM_REQUEST_STATUS_OK )
-{
-    callbackFunction = NULL;
-}
-
-int CallbackStream::loadBuffer()
-{
-	if (status == FML_STREAM_REQUEST_STATUS_OK)
-	{
-		if (callbackFunction)
-		{
-			status = FML_STREAM_REQUEST_STATUS_START;
-			FmlIoErrorNumber err = callbackFunction(href.c_str(), &requestedBuffer, &memoryBufferSize, status, user_data);
-			requested = 1;
-			if ((err == FML_IOERR_NO_ERROR) && (memoryBufferSize > 0) && (requestedBuffer != NULL))
-			{
-				status = FML_STREAM_REQUEST_STATUS_REQUESTED;
-			}
-			else
-			{
-				status = FML_STREAM_REQUEST_STATUS_ERROR;
-				return 0;
-			}
-		}
-		else
-		{
-			return 0;
-		}
-	}
-	if (status == FML_STREAM_REQUEST_STATUS_REQUESTED)
-	{
-	    int len;
-	    bufferPos = 0;
-	    len = BUFFER_SIZE;
-	    if( len + requestedBufferPos > memoryBufferSize )
-	    {
-	        len = memoryBufferSize - requestedBufferPos;
-	    }
-	    memcpy( buffer, (char *)requestedBuffer + requestedBufferPos, len );
-	    requestedBufferPos += len;
-	    bufferCount = len;
-
-	    if( bufferCount <= 0 )
-	    {
-	        isEof = true;
-	        return 0;
-	    }
-	}
-	else
-	{
-		return 0;
-	}
-	return 1;
-}
-
-long CallbackStream::tell()
-{
-    return requestedBufferPos - ( bufferCount - bufferPos );
-}
-
-bool CallbackStream::seek( long pos )
-{
-    if( ( pos < 0 ) || ( pos >= memoryBufferSize ) )
-    {
-        return false;
-    }
-
-    requestedBufferPos = pos;
-    bufferPos = bufferCount;
-    return true;
-}
-
-FmlIoErrorNumber CallbackStream::setStreamRequestCallback( Fieldml_StreamRequestCallbackFunction function, void *user_data_in )
-{
-	callbackFunction = function;
-	user_data = user_data_in;
-	printf("\nCallbackStream::setStreamRequestCallback\n");
-	return FML_IOERR_NO_ERROR;
-}
-
-CallbackStream::~CallbackStream()
-{
-	if (callbackFunction && status == FML_STREAM_REQUEST_STATUS_REQUESTED)
-	{
-		status = FML_STREAM_REQUEST_STATUS_END;
-		callbackFunction(href.c_str(), &requestedBuffer, &memoryBufferSize, status, NULL);
-	}
 }
