@@ -81,7 +81,7 @@
 %pragma(java) jniclasscode=%{
     static
     {
-        System.loadLibrary("fieldml_jni_0.4");
+        System.loadLibrary("fieldml_jni_0.5");
     }
 %}
 
