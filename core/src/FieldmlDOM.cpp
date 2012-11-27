@@ -1434,8 +1434,9 @@ static int parseObjectNode( xmlNodePtr objectNode, ParseState &state )
 }
 
 // Work around of the current bug that data resource need to be defined beofre parameter evaluator uses it
-static int parseDataNode( xmlNodePtr objectNode, ParseState &state )
+static int parseDataNode( xmlNodePtr objectNode, ParseState &state , bool& isParsed)
 {
+    isParsed = false;
     if( FmlUtil::contains( state.parseStack, objectNode ) )
     {
         const char *name = getStringAttribute( objectNode, NAME_ATTRIB );
@@ -1453,10 +1454,7 @@ static int parseDataNode( xmlNodePtr objectNode, ParseState &state )
 
         state.parseStack.pop_back();
 
-        vector<xmlNodePtr>::iterator loc = find( state.unparsedNodes.begin(), state.unparsedNodes.end(), objectNode );
-
-        state.unparsedNodes.erase( loc );
-
+    isParsed = !err;
     }
 
     return err;
@@ -1490,11 +1488,21 @@ static int parseDoc( xmlDocPtr doc, ParseState &state )
 
     // To be improved: Required the following "for" loop to loop through all the top level elements and
     // parse the data resources before anything using them.
-    for( vector<xmlNodePtr>::iterator j = state.unparsedNodes.begin(); j != state.unparsedNodes.end();)
+    for( unsigned int index = 0; index < state.unparsedNodes.size(); )
     {
-    	xmlNodePtr temp_node = *j;
-    	j++;
-    	parseDataNode( temp_node, state );
+      bool isParsed = false;
+      xmlNodePtr objectNode = state.unparsedNodes[index];
+      parseDataNode( objectNode, state, isParsed );
+      if (isParsed)
+      {
+        // remove from unparsedNodes
+        vector<xmlNodePtr>::iterator loc = find( state.unparsedNodes.begin(), state.unparsedNodes.end(), objectNode );
+        state.unparsedNodes.erase( loc );
+      }
+      else
+      {
+        ++index;
+      }
     }
 
     while( state.unparsedNodes.size() != 0 )
