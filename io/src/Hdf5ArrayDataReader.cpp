@@ -80,7 +80,7 @@ Hdf5ArrayDataReader *Hdf5ArrayDataReader::create( FieldmlIoContext *context, con
         hid_t accessProperties = H5Pcreate( H5P_FILE_ACCESS );
         if( H5Pset_fapl_mpio( accessProperties, MPI_COMM_WORLD, MPI_INFO_NULL ) >= 0 )
         {
-            Hdf5ArrayDataReader *hdf5reader = new Hdf5ArrayDataReader( _session, root, source, accessProperties );
+            Hdf5ArrayDataReader *hdf5reader = new Hdf5ArrayDataReader( context, root, source, accessProperties );
             if( !hdf5reader->ok )
             {
                 delete hdf5reader;
