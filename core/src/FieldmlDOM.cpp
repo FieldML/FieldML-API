@@ -1454,7 +1454,7 @@ static int parseDataNode( xmlNodePtr objectNode, ParseState &state , bool& isPar
 
         state.parseStack.pop_back();
 
-    isParsed = !err;
+        isParsed = !err;
     }
 
     return err;
@@ -1490,19 +1490,19 @@ static int parseDoc( xmlDocPtr doc, ParseState &state )
     // parse the data resources before anything using them.
     for( unsigned int index = 0; index < state.unparsedNodes.size(); )
     {
-      bool isParsed = false;
-      xmlNodePtr objectNode = state.unparsedNodes[index];
-      parseDataNode( objectNode, state, isParsed );
-      if (isParsed)
-      {
-        // remove from unparsedNodes
-        vector<xmlNodePtr>::iterator loc = find( state.unparsedNodes.begin(), state.unparsedNodes.end(), objectNode );
-        state.unparsedNodes.erase( loc );
-      }
-      else
-      {
-        ++index;
-      }
+        bool isParsed = false;
+        xmlNodePtr objectNode = state.unparsedNodes[index];
+        parseDataNode( objectNode, state, isParsed );
+        if (isParsed)
+        {
+            // remove from unparsedNodes
+            vector<xmlNodePtr>::iterator loc = find( state.unparsedNodes.begin(), state.unparsedNodes.end(), objectNode );
+            state.unparsedNodes.erase( loc );
+        }
+        else
+        {
+            ++index;
+        }
     }
 
     while( state.unparsedNodes.size() != 0 )
