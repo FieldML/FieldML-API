@@ -200,6 +200,46 @@ FieldmlRegion *FieldmlSession::addResourceRegion( string href, string name )
     return resourceRegion;
 }
 
+FieldmlRegion *FieldmlSession::addResourceRegionFromBuffer( const void *buffer, unsigned int buffer_length, string name )
+{
+    if((buffer == 0) || (1 > buffer_length))
+    {
+        return 0;
+    }
+
+    //NOTE: This will be insufficient when the region name starts being used.
+    if( FmlUtil::contains( importHrefStack, name ) )
+    {
+        addError( "Recursive import involving " + name );
+        return NULL;
+    }
+
+    importHrefStack.push_back( name );
+
+    FieldmlRegion *resourceRegion = new FieldmlRegion( name, name, "", objects );
+    FieldmlRegion *currentRegion = region;
+    region = resourceRegion;
+
+    int result = 0;
+
+    result = FieldmlDOM::parseFieldmlString( (const char *)buffer, "memory buffer", "memory", this, getSessionHandle() );
+
+    importHrefStack.pop_back();
+
+    region = currentRegion;
+
+    if( ( result != 0 ) || ( getErrorCount() != 0 ) )
+    {
+        delete resourceRegion;
+        resourceRegion = NULL;
+    }
+    else
+    {
+        regions.push_back( resourceRegion );
+    }
+
+    return resourceRegion;
+}
 
 void FieldmlSession::pushErrorContext( const char *file, const int line, const char *function )
 {

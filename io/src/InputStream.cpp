@@ -61,30 +61,52 @@ protected:
 public:
     virtual long tell();
     virtual bool seek( long pos );
-    
+
     FileInputStream( FILE *_file );
     virtual ~FileInputStream();
 };
-
 
 class StringInputStream :
     public FieldmlInputStream
 {
 private:
-    const std::string string;
     int stringPos;
     int stringMaxLen;
+    const std::string string;
 
 protected:
     int loadBuffer();
+
     
 public:
     virtual long tell();
     virtual bool seek( long pos );
-    
+
     StringInputStream( const std::string _string );
     virtual ~StringInputStream();
 };
+
+ class CallbackStream :
+	  public FieldmlInputStream
+ {
+ private:
+	  const std::string href;
+	  int requested;
+	  int requestedBufferPos;
+	  void *user_data;
+	  void *requestedBuffer;
+	  unsigned int memoryBufferSize;
+	  FieldmlStreamRequestStatus status;
+
+ protected:
+	  int loadBuffer();
+
+ public:
+
+	  virtual long tell();
+	  virtual bool seek( long pos );
+
+ };
 
 static const int BUFFER_SIZE = 1024;
 
@@ -284,7 +306,6 @@ FieldmlInputStream *FieldmlInputStream::createStringStream( const string sourceS
     return new StringInputStream( sourceString );
 }
 
-
 bool FieldmlInputStream::eof()
 {
     return isEof;
@@ -352,7 +373,6 @@ StringInputStream::StringInputStream( const std::string _string ) :
     stringMaxLen = string.length();
 }
 
-
 int StringInputStream::loadBuffer()
 {
     int len;
@@ -396,7 +416,6 @@ bool StringInputStream::seek( long pos )
     bufferPos = bufferCount;
     return true;
 }
-
 
 StringInputStream::~StringInputStream()
 {

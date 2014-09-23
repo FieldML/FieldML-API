@@ -93,12 +93,13 @@ public:
     virtual FmlIoErrorNumber readDoubleSlab( const int *offsets, const int *sizes, double *valueBuffer );
     
     virtual FmlIoErrorNumber readBooleanSlab( const int *offsets, const int *sizes, FmlBoolean *valueBuffer );
-    
+
     virtual FmlIoErrorNumber close();
     
     virtual ~TextArrayDataReader();
     
-    static TextArrayDataReader *create( FieldmlIoContext *_context, const std::string root, FmlObjectHandle source );
+    static TextArrayDataReader *create( FieldmlIoContext *_context, const std::string root, FmlObjectHandle source,
+    	void *buffer);
 };
 
 
