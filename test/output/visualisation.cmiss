@@ -1,0 +1,21 @@
+gfx create region activation;
+gfx read region ../phdf5_test.xml region activation;
+gfx define face egroup activation;
+
+# Create some graphics
+
+
+gfx modify g_element activation lines coordinate cube.geometric.parameters select_on invisible material default selected_material default_selected;
+gfx modify g_element activation surfaces coordinate cube.geometric.parameters select_on invisible material default data cube.activationTime.source spectrum default selected_material default_selected render_shaded;
+
+gfx timekeeper default maximum 40 speed 5
+gfx define field activation/time time_value
+gfx define field activation/propagation add fields time cube.activationTime.source scale_factors 1 -1;
+gfx modify g_element /activation/ iso_surfaces coordinate cube.geometric.parameters tessellation default LOCAL iso_scalar propagation iso_values 0 use_elements select_on material default data cube.activationTime.source spectrum default selected_material default_selected render_shaded;
+gfx modify spectrum default clear overwrite_colour;
+gfx modify spectrum default linear reverse range -4.44089e-16 40 extend_above extend_below rainbow colour_range 0 1 component 1;
+
+
+gfx create window 1;
+gfx modify window 1 view parallel eye_point 107.251 60.8674 123.396 interest_point 20 20 20 up_vector -0.729654 -0.137133 0.669925 view_angle 40 near_clipping_plane 1.41328 far_clipping_plane 505.059 relative_viewport ndc_placement -1 1 2 2 viewport_coordinates 0 0 1 1;
+gfx timekeeper default play;
