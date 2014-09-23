@@ -514,6 +514,31 @@ FmlSessionHandle Fieldml_CreateFromFile( const char * filename )
     return session->getSessionHandle();
 }
 
+FmlSessionHandle Fieldml_CreateFromBuffer( const void *buffer, unsigned int buffer_length, const char * name )
+{
+    FieldmlSession *session = new FieldmlSession();
+    ErrorContextAutostack bob( session, __FILE__, __LINE__, __ECA_FUNC__ );
+
+    if( buffer == NULL || 1 > buffer_length )
+    {
+        session->setError( FML_ERR_INVALID_PARAMETER_1, "Cannot create FieldML session. Invalid buffer." );
+    }
+    else
+    {
+        session->region = session->addResourceRegionFromBuffer( buffer, buffer_length, name );
+        if( session->region == NULL )
+        {
+            session->setError( FML_ERR_READ_ERR, "Cannot create FieldML session. Invalid document or read error." );
+        }
+        else
+        {
+            session->region->finalize();
+        }
+    }
+
+    return session->getSessionHandle();
+}
+
 
 FmlSessionHandle Fieldml_Create( const char * location, const char * name )
 {

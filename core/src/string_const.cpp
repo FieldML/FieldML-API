@@ -180,16 +180,17 @@ char *strdupS( const char *str )
 
 const string getDirectory( const string filename )
 {
-		size_t index;
-    
-    index = filename.rfind( NIX_PATH_SEP );
+    size_t index = filename.rfind( NIX_PATH_SEP );
+
 #ifdef WIN32
-    if( ( filename.rfind( WIN_PATH_SEP ) > index ) || ( index == string::npos ) )
+    size_t winIndex = filename.rfind( WIN_PATH_SEP );
+    if( ( winIndex != string::npos ) &&
+        (( index == string::npos ) || (winIndex > index)))
     {
-        index = filename.rfind( WIN_PATH_SEP );
+        index = winIndex;
     }
 #endif
-    
+
     if( index == string::npos )
     {
         return string();
