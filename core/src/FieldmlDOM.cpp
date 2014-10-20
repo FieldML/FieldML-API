@@ -198,6 +198,7 @@ static int parseObjectNode( xmlNodePtr objectNode, ParseState &state );
 FmlObjectHandle getObjectAttribute( xmlNodePtr node, const xmlChar *attribute, ParseState &state )
 {
     const char *objectName = getStringAttribute( node, attribute );
+
     if( objectName == NULL )
     {
         return FML_INVALID_HANDLE;
@@ -216,6 +217,9 @@ FmlObjectHandle getObjectAttribute( xmlNodePtr node, const xmlChar *attribute, P
     }
 
     FmlObjectHandle objectHandle = Fieldml_GetObjectByName( state.session, objectName );
+    if (objectHandle == FML_INVALID_HANDLE)
+    	state.errorHandler->logError( "FieldML Object attribute not found", objectName );
+
     xmlFree(const_cast<char *>(objectName));
 
     return objectHandle;
@@ -573,10 +577,24 @@ public:
         FmlObjectHandle argument = getObjectAttribute( objectNode, ARGUMENT_ATTRIB, state );
         FmlObjectHandle source = getObjectAttribute( objectNode, SOURCE_ATTRIB, state );
         
-        if( Fieldml_SetBind( state.session, object, argument, source ) != FML_ERR_NO_ERROR )
+        if (FML_INVALID_HANDLE == argument)
         {
-						const char* argsAttrib = getStringAttribute( objectNode, ARGUMENT_ATTRIB );
-						const char* sourceAttrib = getStringAttribute( objectNode, SOURCE_ATTRIB );
+        	const char* argsAttrib = getStringAttribute( objectNode, ARGUMENT_ATTRIB );
+        	state.errorHandler->logError( "Incompatible bind", argsAttrib);
+        	xmlFree(const_cast<char *>(argsAttrib));
+        	return 1;
+        }
+        else if (FML_INVALID_HANDLE == source)
+        {
+        	const char* sourceAttrib = getStringAttribute( objectNode, SOURCE_ATTRIB );
+        	state.errorHandler->logError( "Incompatible bind", sourceAttrib);
+        	xmlFree(const_cast<char *>(sourceAttrib));
+        	return 1;
+        }
+        else if( Fieldml_SetBind( state.session, object, argument, source ) != FML_ERR_NO_ERROR )
+        {
+			const char* argsAttrib = getStringAttribute( objectNode, ARGUMENT_ATTRIB );
+			const char* sourceAttrib = getStringAttribute( objectNode, SOURCE_ATTRIB );
             state.errorHandler->logError( "Incompatible bind", argsAttrib, sourceAttrib );
             xmlFree(const_cast<char *>(argsAttrib));
             xmlFree(const_cast<char *>(sourceAttrib));
