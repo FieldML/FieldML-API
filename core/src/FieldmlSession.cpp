@@ -246,7 +246,6 @@ void FieldmlSession::pushErrorContext( const char *file, const int line, const c
     contextStack.push_back( pair<string, int>( string( function ) + string( ":" ) + string( file ), line ) );
 }
 
-
 void FieldmlSession::popErrorContext()
 {
     contextStack.pop_back();
