@@ -156,6 +156,8 @@ static int validate( FieldmlErrorHandler *errorHandler, xmlParserInputBufferPtr 
         errorHandler->logError( errorMessage );
     }
     
+    xmlResetLastError();
+
     return result;
 }
 
