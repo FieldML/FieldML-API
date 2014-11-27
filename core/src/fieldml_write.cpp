@@ -617,8 +617,8 @@ static void writeDOKArrayData( xmlTextWriterPtr writer, FmlSessionHandle handle,
     xmlTextWriterWriteAttribute( writer,KEY_DATA_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, keyDataObject ) );
     xmlTextWriterWriteAttribute( writer, VALUE_DATA_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, dataObject ) );
     
-    writeParameterIndexes( writer, handle, object, 1 );
     writeParameterIndexes( writer, handle, object, 0 );
+    writeParameterIndexes( writer, handle, object, 1 );
 
     xmlTextWriterEndElement( writer );
 }
