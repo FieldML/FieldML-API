@@ -393,7 +393,7 @@ public:
     
     ~IntVectorParser()
     {
-        delete values;
+        delete [] values;
     }
 };
 
