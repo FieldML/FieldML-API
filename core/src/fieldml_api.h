@@ -991,11 +991,11 @@ FmlObjectHandle Fieldml_GetIndexEvaluator( FmlSessionHandle handle, FmlObjectHan
  * Creates a reference evaluator. Reference evaluators delegate their evaluation directly to another evaluator, but can bind
  * argument evaluators before doing so.
  * 
- * \note A reference evaluator's value type is the same as the value type of its source evaluator.
+ * \note Currently, the value type must be a scalar continuous type.
  * 
  * \see Fieldml_GetReferenceSourceEvaluator
  */
-FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlSessionHandle handle, const char * name, FmlObjectHandle sourceEvaluator );
+FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlSessionHandle handle, const char * name, FmlObjectHandle sourceEvaluator, FmlObjectHandle valueType );
 
 
 /**
@@ -1057,7 +1057,8 @@ int Fieldml_GetBindCount( FmlSessionHandle handle, FmlObjectHandle objectHandle 
 
 
 /**
- * \return The argument evaulator used by the nth bind in the given evaluator.
+ * \return The argument evaulator used by the nth bind in the given evaluator. FML_INVALID_HANDLE will be returned
+ * 	if object at bind index cannot be found.
  * 
  * \see Fieldml_GetBindCount
  * \see Fieldml_SetBind

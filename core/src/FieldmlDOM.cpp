@@ -671,8 +671,9 @@ public:
     {
         const char *name = getStringAttribute( objectNode, NAME_ATTRIB );
         FmlObjectHandle sourceEvaluator = getObjectAttribute( objectNode, EVALUATOR_ATTRIB, state );
+        FmlObjectHandle valueType = getObjectAttribute( objectNode, VALUE_TYPE_ATTRIB, state );
         
-        FmlObjectHandle evaluator = Fieldml_CreateReferenceEvaluator( state.session, name, sourceEvaluator );
+        FmlObjectHandle evaluator = Fieldml_CreateReferenceEvaluator( state.session, name, sourceEvaluator, valueType );
         if( evaluator == FML_INVALID_HANDLE )
         {
             state.errorHandler->logError( "ReferenceEvaluator creation failed", name );
