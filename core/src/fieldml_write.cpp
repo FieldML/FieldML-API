@@ -581,10 +581,13 @@ static void writeParameterIndexes( xmlTextWriterPtr writer, FmlSessionHandle han
             xmlTextWriterStartElement( writer, INDEX_EVALUATOR_TAG );
             xmlTextWriterWriteAttribute( writer, EVALUATOR_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, index ) );
 
-            FmlObjectHandle order = Fieldml_GetParameterIndexOrder( handle, object, i );
-            if( order != FML_INVALID_HANDLE )
+            if( !isSparse )
             {
-                xmlTextWriterWriteAttribute( writer, ORDER_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, order ) );
+            	FmlObjectHandle order = Fieldml_GetParameterIndexOrder( handle, object, i );
+            	if( order != FML_INVALID_HANDLE )
+            	{
+            		xmlTextWriterWriteAttribute( writer, ORDER_ATTRIB, (const xmlChar*)Fieldml_GetObjectName( handle, order ) );
+            	}
             }
 
             xmlTextWriterEndElement( writer );
