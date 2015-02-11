@@ -41,6 +41,21 @@
 
 #include "String_InternalXSD.h"
 
+const char * const HREF_STRING_XSD = "<schema targetNamespace=\"http://www.w3.org/1999/xlink\" \ 
+        xmlns:xlink=\"http://www.w3.org/1999/xlink\" \
+        xmlns=\"http://www.w3.org/2001/XMLSchema\"> \
+  <annotation> \
+    <documentation xml:lang=\"en\"> \
+      This schema provides the XLink href attribute for use in the MathML2 \ 
+      schema. Written by Max Froumentin, W3C. \
+    </documentation> \
+  </annotation> \
+\
+  <attribute name=\"href\" type=\"anyURI\"/>\
+</schema> \
+";
+
+
 const char * const FML_STRING_FIELDML_XSD_LOCATION = "http://www.fieldml.org/resources/xml/0.5/FieldML_0.5.xsd";
 
 const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"utf-8\"?> \
@@ -49,8 +64,8 @@ const char * const FML_STRING_FIELDML_XSD = "<?xml version=\"1.0\" encoding=\"ut
     xmlns:xlink=\"http://www.w3.org/1999/xlink\" \
     > \
  \
-    <xs:import namespace=\"http://www.w3.org/1999/xlink\" \
-            schemaLocation=\"http://www.cellml.org/tools/cellml_1_1_schema/common/xlink-href.xsd\" /> \
+	<xs:import namespace=\"http://www.w3.org/1999/xlink\" \
+	schemaLocation=\"http://www.cellml.org/tools/cellml_1_1_schema/common/xlink-href.xsd\" /> \
  \
     <xs:complexType name=\"FieldmlRdfTargetType\"> \
         <xs:attribute name=\"id\" type=\"xs:string\" form=\"qualified\" use=\"optional\"/> \
