@@ -97,7 +97,7 @@ public:
 
     int size()
     {
-        return pairs.size();
+        return static_cast<int>(pairs.size());
     }
     
 

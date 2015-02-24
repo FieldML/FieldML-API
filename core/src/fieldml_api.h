@@ -991,7 +991,7 @@ FmlObjectHandle Fieldml_GetIndexEvaluator( FmlSessionHandle handle, FmlObjectHan
  * Creates a reference evaluator. Reference evaluators delegate their evaluation directly to another evaluator, but can bind
  * argument evaluators before doing so.
  * 
- * \note Currently, the value type must be a scalar continuous type.
+ * \note The value type may be either that of the source evaluator, OR for a scalar continuous source evaluator, it may be 'cast' to any scalar continuous type.
  * 
  * \see Fieldml_GetReferenceSourceEvaluator
  */
