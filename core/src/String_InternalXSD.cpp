@@ -41,12 +41,12 @@
 
 #include "String_InternalXSD.h"
 
-const char * const HREF_STRING_XSD = "<schema targetNamespace=\"http://www.w3.org/1999/xlink\" \ 
+const char * const HREF_STRING_XSD = "<schema targetNamespace=\"http://www.w3.org/1999/xlink\" \
         xmlns:xlink=\"http://www.w3.org/1999/xlink\" \
         xmlns=\"http://www.w3.org/2001/XMLSchema\"> \
   <annotation> \
     <documentation xml:lang=\"en\"> \
-      This schema provides the XLink href attribute for use in the MathML2 \ 
+      This schema provides the XLink href attribute for use in the MathML2 \
       schema. Written by Max Froumentin, W3C. \
     </documentation> \
   </annotation> \
