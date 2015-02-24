@@ -167,7 +167,7 @@ static int writeBinds( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObje
 
 static int writeArguments( xmlTextWriterPtr writer, FmlSessionHandle handle, FmlObjectHandle object )
 {
-    int count = Fieldml_GetArgumentCount( handle, object, 0, 0 );
+    int count = Fieldml_GetArgumentCount( handle, object, /*isBound*/0, /*isUsed*/1 );
     if( count <= 0 )
     {
         return 0;
@@ -177,7 +177,7 @@ static int writeArguments( xmlTextWriterPtr writer, FmlSessionHandle handle, Fml
     
     for( int i = 1; i <= count; i++ )
     {
-        FmlObjectHandle argument = Fieldml_GetArgument( handle, object, i, 0, 0 );
+        FmlObjectHandle argument = Fieldml_GetArgument( handle, object, i, /*isBound*/0, /*isUsed*/1 );
         if( argument == FML_INVALID_HANDLE )
         {
             continue;
@@ -478,6 +478,7 @@ static int writeReferenceEvaluator( xmlTextWriterPtr writer, FmlSessionHandle ha
     
     writeObjectName( writer, NAME_ATTRIB, handle, object );
     writeObjectName( writer, EVALUATOR_ATTRIB, handle, Fieldml_GetReferenceSourceEvaluator( handle, object ) );
+    writeObjectName( writer, VALUE_TYPE_ATTRIB, handle, Fieldml_GetValueType( handle, object ) );
 
     writeBinds( writer, handle, object );
 
