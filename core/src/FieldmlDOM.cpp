@@ -696,7 +696,9 @@ public:
         const char *name = getStringAttribute( objectNode, NAME_ATTRIB );
         FmlObjectHandle sourceEvaluator = getObjectAttribute( objectNode, EVALUATOR_ATTRIB, state );
         FmlObjectHandle valueType = getObjectAttribute( objectNode, VALUE_TYPE_ATTRIB, state );
-        
+        if (valueType == FML_INVALID_HANDLE)
+            valueType = Fieldml_GetValueType( state.session, sourceEvaluator );
+
         FmlObjectHandle evaluator = Fieldml_CreateReferenceEvaluator( state.session, name, sourceEvaluator, valueType );
         if( evaluator == FML_INVALID_HANDLE )
         {
