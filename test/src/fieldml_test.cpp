@@ -512,6 +512,8 @@ int testCycles()
     
     FmlObjectHandle type = Fieldml_CreateContinuousType( session, "test.type" );
     
+    FmlObjectHandle type2 = Fieldml_CreateContinuousType( session, "test.type.2" );
+
     FmlObjectHandle ensemble = Fieldml_CreateEnsembleType( session, "test.ensemble" );
     Fieldml_SetEnsembleMembersRange( session, ensemble, 1, 20, 1 );
     
@@ -519,8 +521,8 @@ int testCycles()
     
     FmlObjectHandle external = Fieldml_CreateExternalEvaluator( session, "test.external", type );
     
-    FmlObjectHandle ref1 = Fieldml_CreateReferenceEvaluator( session, "test.reference1", external );
-    FmlObjectHandle ref2 = Fieldml_CreateReferenceEvaluator( session, "test.reference2", ref1 );
+    FmlObjectHandle ref1 = Fieldml_CreateReferenceEvaluator( session, "test.reference1", external , type);
+    FmlObjectHandle ref2 = Fieldml_CreateReferenceEvaluator( session, "test.reference2", ref1 , type2);
 
     if( Fieldml_SetBind( session, ref1, arg1, ref2 ) != FML_ERR_CYCLIC_DEPENDENCY )
     {
@@ -531,7 +533,7 @@ int testCycles()
     FmlObjectHandle param = Fieldml_CreateParameterEvaluator( session, "test.parameter", ensemble );
     Fieldml_SetParameterDataDescription( session, param, FML_DATA_DESCRIPTION_DOK_ARRAY );
     
-    FmlObjectHandle ref3 = Fieldml_CreateReferenceEvaluator( session, "test.reference3", param );
+    FmlObjectHandle ref3 = Fieldml_CreateReferenceEvaluator( session, "test.reference3", param , type);
     
     if( Fieldml_AddDenseIndexEvaluator( session, param, ref3, FML_INVALID_HANDLE ) != FML_ERR_CYCLIC_DEPENDENCY )
     {

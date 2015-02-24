@@ -237,10 +237,10 @@ static vector<FmlObjectHandle> getArgumentList( FieldmlSession *session, FmlObje
     {
         for( set<FmlObjectHandle>::const_iterator i = used.begin(); i != used.end(); i++ )
         {
-						//	Performance wise, I am not sure I should remove all elems from
-						//	unbound in used or using find as shown below.
-						if (unbound.end() == unbound.find(*i))
-								args.push_back( *i );
+            // Performance wise, I am not sure I should remove all elems from
+            // unbound in used or using find as shown below.
+            if (unbound.end() == unbound.find(*i))
+                args.push_back( *i );
         }
         return args;
     }
@@ -2158,6 +2158,11 @@ FmlEnsembleValue Fieldml_GetEvaluatorElement( FmlSessionHandle handle, FmlObject
         return -1;
     }
 
+    if ( ( evaluatorIndex < 1 ) || ( evaluatorIndex > map->size() ) )
+    {
+        return -1;
+    }
+
     return map->getKey( evaluatorIndex - 1 );
 }
 
@@ -2175,6 +2180,11 @@ FmlObjectHandle Fieldml_GetEvaluator( FmlSessionHandle handle, FmlObjectHandle o
     SimpleMap<FmlEnsembleValue, FmlObjectHandle> *map = getEvaluatorMap( session, objectHandle ); 
  
     if( map == NULL )
+    {
+        return FML_INVALID_HANDLE;
+    }
+
+    if ( ( evaluatorIndex < 1 ) || ( evaluatorIndex > map->size() ) )
     {
         return FML_INVALID_HANDLE;
     }
@@ -2204,7 +2214,7 @@ FmlObjectHandle Fieldml_GetElementEvaluator( FmlSessionHandle handle, FmlObjectH
 }
 
 
-FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlSessionHandle handle, const char * name, FmlObjectHandle sourceEvaluator )
+FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlSessionHandle handle, const char * name, FmlObjectHandle sourceEvaluator, FmlObjectHandle valueType )
 {
     FieldmlSession *session = FieldmlSession::handleToSession( handle );
     ERROR_AUTOSTACK( session );
@@ -2224,7 +2234,26 @@ FmlObjectHandle Fieldml_CreateReferenceEvaluator( FmlSessionHandle handle, const
         return session->getLastError();
     }
 
-    FmlObjectHandle valueType = Fieldml_GetValueType( handle, sourceEvaluator );
+    if( !checkLocal( session, valueType ) )
+    {
+        return session->getLastError();
+    }
+
+    FmlObjectHandle sourceEvaluatorValueType = Fieldml_GetValueType( handle, sourceEvaluator );
+    if( valueType != sourceEvaluatorValueType)
+    {
+        if( !checkIsValueType( session, valueType, true, false, false, false ) )
+        {
+            session->setError( FML_ERR_INVALID_PARAMETER_4, valueType, "Cannot create reference evaluator with value type cast to non-scalar non-continuous type." );
+            return FML_INVALID_HANDLE;
+        }
+
+        if ( Fieldml_GetTypeComponentCount( handle, valueType ) != 1 )
+        {
+            session->setError( FML_ERR_INVALID_PARAMETER_4, valueType, "Cannot create reference evaluator with value type cast to non-scalar continuous type." );
+            return FML_INVALID_HANDLE;
+        }
+    }
 
     ReferenceEvaluator *referenceEvaluator = new ReferenceEvaluator( name, sourceEvaluator, valueType, false );
     
@@ -2377,6 +2406,11 @@ FmlObjectHandle Fieldml_GetBindArgument( FmlSessionHandle handle, FmlObjectHandl
         return FML_INVALID_HANDLE;
     }
     
+    if ( ( bindIndex < 1 ) || ( bindIndex > map->size() ) )
+    {
+        return FML_INVALID_HANDLE;
+    }
+
     return map->getKey( bindIndex - 1 );
 }
 
@@ -2397,6 +2431,11 @@ FmlObjectHandle Fieldml_GetBindEvaluator( FmlSessionHandle handle, FmlObjectHand
         return FML_INVALID_HANDLE;
     }
     
+    if ( ( bindIndex < 1 ) || ( bindIndex > map->size() ) )
+    {
+        return FML_INVALID_HANDLE;
+    }
+
     return map->getValue( bindIndex - 1 );
 }
 

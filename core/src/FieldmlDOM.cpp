@@ -49,6 +49,7 @@
 #include <libxml/parser.h>
 #include <libxml/xmlmemory.h>
 #include <libxml/xmlschemas.h>
+#include <libxml/parserInternals.h>
 
 #include "ErrorContextAutostack.h"
 #include "Util.h"
@@ -113,6 +114,24 @@ static void addContextError( void *context, const char *msg, ... )
 
 //========================================================================
 
+xmlExternalEntityLoader defaultLoader = 0;
+
+
+xmlParserInputPtr
+xmlMyExternalEntityLoader(const char *URL, const char *ID,
+                          xmlParserCtxtPtr ctxt) {
+    xmlParserInputPtr ret = 0;
+
+    if (0 == strcmp(URL, "http://www.cellml.org/tools/cellml_1_1_schema/common/xlink-href.xsd"))
+   	 ret = xmlNewStringInputStream(ctxt, (const xmlChar *)HREF_STRING_XSD);
+    if (ret != NULL)
+        return(ret);
+    if (defaultLoader != NULL)
+        ret = defaultLoader(URL, ID, ctxt);
+    return(ret);
+}
+
+
 static int validate( FieldmlErrorHandler *errorHandler, xmlParserInputBufferPtr buffer, const char *resourceName )
 {
     xmlSchemaPtr schemas = NULL;
@@ -122,6 +141,11 @@ static int validate( FieldmlErrorHandler *errorHandler, xmlParserInputBufferPtr 
     LIBXML_TEST_VERSION
 
     xmlSubstituteEntitiesDefault( 1 );
+
+    if (!defaultLoader)
+   	 defaultLoader = xmlGetExternalEntityLoader();
+
+    xmlSetExternalEntityLoader(xmlMyExternalEntityLoader);
 
     if( buffer == NULL )
     {
@@ -671,8 +695,11 @@ public:
     {
         const char *name = getStringAttribute( objectNode, NAME_ATTRIB );
         FmlObjectHandle sourceEvaluator = getObjectAttribute( objectNode, EVALUATOR_ATTRIB, state );
-        
-        FmlObjectHandle evaluator = Fieldml_CreateReferenceEvaluator( state.session, name, sourceEvaluator );
+        FmlObjectHandle valueType = getObjectAttribute( objectNode, VALUE_TYPE_ATTRIB, state );
+        if (valueType == FML_INVALID_HANDLE)
+            valueType = Fieldml_GetValueType( state.session, sourceEvaluator );
+
+        FmlObjectHandle evaluator = Fieldml_CreateReferenceEvaluator( state.session, name, sourceEvaluator, valueType );
         if( evaluator == FML_INVALID_HANDLE )
         {
             state.errorHandler->logError( "ReferenceEvaluator creation failed", name );
