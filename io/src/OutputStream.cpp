@@ -174,7 +174,7 @@ FmlIoErrorNumber FileOutputStream::writeDouble( double value )
         return FML_IOERR_RESOURCE_CLOSED;
     }
 
-    int err = fprintf( file, "%.8g ", value );
+    int err = fprintf( file, "%.17g ", value );
 
     if( err < 0 )
     {
@@ -268,8 +268,9 @@ FmlIoErrorNumber StringOutputStream::writeDouble( double value )
     {
         return FML_IOERR_RESOURCE_CLOSED;
     }
-
-    buffer << value << " ";
+    char tmpValueString[50];
+    sprintf(tmpValueString, "%.17g ", value);
+    buffer << tmpValueString;
     
     return FML_IOERR_NO_ERROR;
 }
