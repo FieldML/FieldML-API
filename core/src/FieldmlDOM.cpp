@@ -123,7 +123,7 @@ xmlMyExternalEntityLoader(const char *URL, const char *ID,
     xmlParserInputPtr ret = 0;
 
     if (0 == strcmp(URL, "http://www.cellml.org/tools/cellml_1_1_schema/common/xlink-href.xsd"))
-   	 ret = xmlNewStringInputStream(ctxt, (const xmlChar *)HREF_STRING_XSD);
+        ret = xmlNewStringInputStream(ctxt, (const xmlChar *)HREF_STRING_XSD);
     if (ret != NULL)
         return(ret);
     if (defaultLoader != NULL)
@@ -143,7 +143,7 @@ static int validate( FieldmlErrorHandler *errorHandler, xmlParserInputBufferPtr 
     xmlSubstituteEntitiesDefault( 1 );
 
     if (!defaultLoader)
-   	 defaultLoader = xmlGetExternalEntityLoader();
+        defaultLoader = xmlGetExternalEntityLoader();
 
     xmlSetExternalEntityLoader(xmlMyExternalEntityLoader);
 
@@ -239,12 +239,12 @@ FmlObjectHandle getObjectAttribute( xmlNodePtr node, const xmlChar *attribute, P
             break;
         }
         if (nodeObjectName)
-        	xmlFree(const_cast<char *>(nodeObjectName));
+            xmlFree(const_cast<char *>(nodeObjectName));
     }
 
     FmlObjectHandle objectHandle = Fieldml_GetObjectByName( state.session, objectName );
     if (objectHandle == FML_INVALID_HANDLE)
-    	state.errorHandler->logError( "FieldML Object attribute not found", objectName );
+        state.errorHandler->logError( "FieldML Object attribute not found", objectName );
 
     xmlFree(const_cast<char *>(objectName));
 
@@ -467,7 +467,7 @@ public:
         int err;
         
         FmlObjectHandle dataSource = Fieldml_CreateArrayDataSource( state.session, name, resource, location, rank );
-				xmlFree(const_cast<char *>(location));
+        xmlFree(const_cast<char *>(location));
         if( dataSource == FML_INVALID_HANDLE )
         {
             state.errorHandler->logError( "Malformed ArrayDataSource" );
@@ -563,7 +563,7 @@ public:
             int err = textStringParser.parseNode( stringDescription, state );
             if( err != 0 )
             {
-				xmlFree(const_cast<char *>(name));
+                xmlFree(const_cast<char *>(name));
                 return err;
             }
         }
@@ -571,7 +571,7 @@ public:
         if( resource == FML_INVALID_HANDLE )
         {
             state.errorHandler->logError( "Invalid array data resource specification", name );
-						xmlFree(const_cast<char *>(name));
+            xmlFree(const_cast<char *>(name));
             return 1;
         }
         
@@ -579,10 +579,10 @@ public:
         int err = processChildren( node, ARRAY_DATA_SOURCE_TAG, state, arrayDataSourceParser );
         if( err != 0 )
         {
-			xmlFree(const_cast<char *>(name));
+            xmlFree(const_cast<char *>(name));
             return err;
         }
-		xmlFree(const_cast<char *>(name));
+        xmlFree(const_cast<char *>(name));
         return 0;
     }
 };
@@ -605,22 +605,22 @@ public:
         
         if (FML_INVALID_HANDLE == argument)
         {
-        	const char* argsAttrib = getStringAttribute( objectNode, ARGUMENT_ATTRIB );
-        	state.errorHandler->logError( "Incompatible bind", argsAttrib);
-        	xmlFree(const_cast<char *>(argsAttrib));
-        	return 1;
+            const char* argsAttrib = getStringAttribute( objectNode, ARGUMENT_ATTRIB );
+            state.errorHandler->logError( "Incompatible bind", argsAttrib);
+            xmlFree(const_cast<char *>(argsAttrib));
+            return 1;
         }
         else if (FML_INVALID_HANDLE == source)
         {
-        	const char* sourceAttrib = getStringAttribute( objectNode, SOURCE_ATTRIB );
-        	state.errorHandler->logError( "Incompatible bind", sourceAttrib);
-        	xmlFree(const_cast<char *>(sourceAttrib));
-        	return 1;
+            const char* sourceAttrib = getStringAttribute( objectNode, SOURCE_ATTRIB );
+            state.errorHandler->logError( "Incompatible bind", sourceAttrib);
+            xmlFree(const_cast<char *>(sourceAttrib));
+            return 1;
         }
         else if( Fieldml_SetBind( state.session, object, argument, source ) != FML_ERR_NO_ERROR )
         {
-			const char* argsAttrib = getStringAttribute( objectNode, ARGUMENT_ATTRIB );
-			const char* sourceAttrib = getStringAttribute( objectNode, SOURCE_ATTRIB );
+            const char* argsAttrib = getStringAttribute( objectNode, ARGUMENT_ATTRIB );
+            const char* sourceAttrib = getStringAttribute( objectNode, SOURCE_ATTRIB );
             state.errorHandler->logError( "Incompatible bind", argsAttrib, sourceAttrib );
             xmlFree(const_cast<char *>(argsAttrib));
             xmlFree(const_cast<char *>(sourceAttrib));
@@ -649,7 +649,7 @@ public:
         
         if( Fieldml_SetIndexEvaluator( state.session, object, indexNumber, argument ) != FML_ERR_NO_ERROR )
         {
-						const char* argsAttrib = getStringAttribute( objectNode, ARGUMENT_ATTRIB );
+            const char* argsAttrib = getStringAttribute( objectNode, ARGUMENT_ATTRIB );
             state.errorHandler->logError( "Incompatible index bind", argsAttrib );
             xmlFree(const_cast<char *>(argsAttrib));
             return 1;
@@ -814,7 +814,7 @@ public:
         FmlObjectHandle handle = Fieldml_CreateBooleanType( state.session, name );
         if( handle == FML_INVALID_HANDLE )
         {
-						xmlFree(const_cast<char *>(name));
+            xmlFree(const_cast<char *>(name));
             state.errorHandler->logError( "BooleanType creation failed", name );
             return 1;
         }
@@ -979,7 +979,7 @@ public:
         err = chartParser.parseNode( chartNode, state );
         if( err != 0 )
         {
-						xmlFree(const_cast<char *>(name));
+            xmlFree(const_cast<char *>(name));
             return err;
         }
         
@@ -1154,7 +1154,7 @@ public:
         int err = processChildren( evaluatorsNode, EVALUATOR_MAP_ENTRY_TAG, state, piecewiseMapParser );
         if( err != 0 )
         {
-						xmlFree(const_cast<char *>(name));
+            xmlFree(const_cast<char *>(name));
             return err;
         }
     
@@ -1162,7 +1162,7 @@ public:
         err = processChildren( getFirstChild( objectNode, BINDINGS_TAG ), BIND_TAG, state, bindParser );
         if( err != 0 )
         {
-						xmlFree(const_cast<char *>(name));
+            xmlFree(const_cast<char *>(name));
             return err;
         }
     
@@ -1170,7 +1170,7 @@ public:
         err = processChildren( getFirstChild( objectNode, INDEX_EVALUATORS_TAG ), INDEX_EVALUATOR_TAG, state, indexEvaluatorParser );
         if( err != 0 )
         {
-						xmlFree(const_cast<char *>(name));
+            xmlFree(const_cast<char *>(name));
             return err;
         }
         xmlFree(const_cast<char *>(name));
@@ -1247,7 +1247,7 @@ public:
         int err = processChildren( evaluatorsNode, COMPONENT_EVALUATOR_TAG, state, aggregateMapParser );
         if( err != 0 )
         {
-						xmlFree(const_cast<char *>(name));
+            xmlFree(const_cast<char *>(name));
             return err;
         }
     
@@ -1255,7 +1255,7 @@ public:
         err = processChildren( getFirstChild( objectNode, BINDINGS_TAG ), BIND_TAG, state, bindParser );
         if( err != 0 )
         {
-						xmlFree(const_cast<char *>(name));
+            xmlFree(const_cast<char *>(name));
             return err;
         }
         
@@ -1263,7 +1263,7 @@ public:
         err = processChildren( getFirstChild( objectNode, BINDINGS_TAG ), BIND_INDEX_TAG, state, bindIndexParser );
         if( err != 0 )
         {
-						xmlFree(const_cast<char *>(name));
+            xmlFree(const_cast<char *>(name));
             return err;
         }
         xmlFree(const_cast<char *>(name));
@@ -1353,7 +1353,7 @@ public:
             int err = processChildren( getFirstChild( denseNode, DENSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, parameterIndexEvaluatorParser );
             if( err != 0 )
             {
-								xmlFree(const_cast<char *>(name));
+                xmlFree(const_cast<char *>(name));
                 return err;
             }
         }
@@ -1386,7 +1386,7 @@ public:
             int err = processChildren( getFirstChild( dokNode, SPARSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, denseIndexEvaluatorParser );
             if( err != 0 )
             {
-								xmlFree(const_cast<char *>(name));
+                xmlFree(const_cast<char *>(name));
                 return err;
             }
             
@@ -1394,7 +1394,7 @@ public:
             err = processChildren( getFirstChild( dokNode, DENSE_INDEXES_TAG ), INDEX_EVALUATOR_TAG, state, sparseIndexEvaluatorParser );
             if( err != 0 )
             {
-								xmlFree(const_cast<char *>(name));
+                xmlFree(const_cast<char *>(name));
                 return err;
             }
         }
