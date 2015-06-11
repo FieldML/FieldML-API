@@ -753,10 +753,12 @@ int main( int argc, char **argv )
     testMisc();
     
     testCycles();
-    
+
+#ifdef FIELDML_HDF5_ARRAY
     testHdf5Read();
     
     testHdf5Write();
+#endif
     
     return 0;
 }

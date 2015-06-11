@@ -291,5 +291,14 @@ def processFiles():
   expose( ParseState.defines )
 
   writeFooter()
+  
+import sys
 
+if (len(sys.argv) < 2):
+    filename = 'fieldml_fortran.f90'
+else:
+    filename = sys.argv[1]
+f = file(filename, 'w')
+sys.stdout = f
 processFiles()
+f.close()

@@ -40,17 +40,30 @@ CMAKE_MINIMUM_REQUIRED( VERSION 3.0 )
 
 # Set this namespace to keep these options seperate from other project options
 SET( FIELDML_NAMESPACE_NAME FIELDML )
-PROJECT(fieldml VERSION 0.5.0 LANGUAGES CXX Fortran)
+PROJECT(fieldml VERSION 0.5.0 LANGUAGES CXX)
 
 option(USE_HDF5 "Do you want to use netgen (HDF5)?" NO)
 option(HDF5_WITH_MPI "Do you want to use MPI with HDF5?" NO)
 option(BUILD_TESTS "Build tests" ON)
+option(FORTRAN_BINDINGS "Do you want to build the Fortran bindings" YES)
 option(JAVA_BINDINGS "Do you want to build the Java bindings" NO)
 set(PACKAGE_CONFIG_DIR "lib/cmake" CACHE STRING "Directory for package config files (relative to CMAKE_INSTALL_PREFIX)")
 # Further options:
 # CMAKE_POSITION_INDEPENDENT_CODE=YES for -fPIC constant (is also passed in from OpenCMISS-main build script)
 
 FIND_PACKAGE(LibXml2 REQUIRED)
+if(USE_HDF5)
+    # See the FindHDF5 description
+    if (BUILD_SHARED_LIBS)
+        set(HDF5_USE_STATIC_LIBRARIES NO)
+    else()
+        set(HDF5_USE_STATIC_LIBRARIES YES)
+    endif()
+	find_package(HDF5 REQUIRED CXX)
+	if(HDF5_WITH_MPI)
+		find_package(MPI REQUIRED)
+    endif()
+endif()
 
 if (NOT CMAKE_DEBUG_POSTFIX)
     SET(CMAKE_DEBUG_POSTFIX d)
@@ -59,30 +72,30 @@ endif()
 # Add actual fieldml code and io
 add_subdirectory(core)
 add_subdirectory(io)
-#GET_DIRECTORY_PROPERTY(HDF5_INCLUDE_DIRS DIRECTORY io DEFINITION HDF5_INCLUDE_DIRS)
-#GET_DIRECTORY_PROPERTY(HDF5_MINE_LIBRARIES DIRECTORY io DEFINITION HDF5_MINE_LIBRARIES)
-#GET_DIRECTORY_PROPERTY(MPI_LIBRARIES DIRECTORY io DEFINITION MPI_MINE_LIBRARIES)
-#GET_DIRECTORY_PROPERTY(MPI_INCLUDE_DIRS DIRECTORY io DEFINITION MPI_INCLUDE_DIRS)
-#GET_DIRECTORY_PROPERTY(HDF5_USE_MPI DIRECTORY io DEFINITION HDF5_USE_MPI)
-if (BUILD_TESTS)
-    add_subdirectory(test)
-endif()
 
-#FOREACH(_ARG ${MPI_LIBRARIES})
-#	SET(MPI_MINE_LIBRARIES "${M#PI_MINE_LIBRARIES} ${_ARG}")
-#ENDFOREACH()
-
-if(JAVA_BINDINGS)
-  include(${CMAKE_CURRENT_SOURCE_DIR}/JavaBindings.cmake)
+if (FORTRAN_BINDINGS)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/FortranBindings.cmake)
 endif()
 
 # Create interface library for easy inclusion
 add_library(fieldml-api INTERFACE)
 target_link_libraries(fieldml-api INTERFACE fieldml-core fieldml-io)
+if (HAVE_Fortran_BINDINGS)
+    target_link_libraries(fieldml-api INTERFACE fieldml-fortran)
+endif()
 install(TARGETS fieldml-api EXPORT fieldml-api-config)
 
-INCLUDE(CMakePackageConfigHelpers)
-INSTALL(EXPORT fieldml-api-config
+# Tests
+if (BUILD_TESTS)
+    add_subdirectory(test)
+endif()
+
+if(JAVA_BINDINGS)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/JavaBindings.cmake)
+endif()
+
+include(CMakePackageConfigHelpers)
+install(EXPORT fieldml-api-config
 	DESTINATION ${PACKAGE_CONFIG_DIR})
 WRITE_BASIC_PACKAGE_VERSION_FILE(${CMAKE_CURRENT_BINARY_DIR}/fieldml-api-config-version.cmake
 	COMPATIBILITY AnyNewerVersion)
