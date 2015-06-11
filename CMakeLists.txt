@@ -83,7 +83,9 @@ target_link_libraries(fieldml-api INTERFACE fieldml-core fieldml-io)
 if (HAVE_Fortran_BINDINGS)
     target_link_libraries(fieldml-api INTERFACE fieldml-fortran)
 endif()
-install(TARGETS fieldml-api EXPORT fieldml-api-config)
+install(TARGETS fieldml-api
+    EXPORT fieldml-api-config
+    INCLUDES DESTINATION include)
 
 # Tests
 if (BUILD_TESTS)
