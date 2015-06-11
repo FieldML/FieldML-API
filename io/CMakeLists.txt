@@ -73,7 +73,9 @@ SET( FIELDML_API_PUBLIC_HDRS
 
 # Create library
 add_library(fieldml-io ${LIBRARY_BUILD_TYPE} ${FIELDML_IO_API_SRCS} ${FIELDML_IO_API_PUBLIC_HDRS} ${FIELDML_IO_API_PRIVATE_HDRS} ${LIBRARY_WIN32_XTRAS} )
-target_include_directories(fieldml-io PRIVATE ../core/src)
+target_include_directories(fieldml-io PUBLIC     
+    $<BUILD_INTERFACE:${fieldml_SOURCE_DIR}/core/src>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
 target_compile_definitions(fieldml-io PRIVATE $<$<CONFIG:Debug>:DEBUG>)
 if (WIN32)
     target_compile_definitions(fieldml-io PRIVATE _CRT_SECURE_NO_WARNINGS)
