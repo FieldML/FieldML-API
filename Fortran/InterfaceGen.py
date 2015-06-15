@@ -24,7 +24,7 @@ def expose( names ):
         enumCounter += 1
 
     print(line)
-    print()
+    print("")
 
 
 def declareFunction( name, types, names ):
@@ -55,8 +55,7 @@ def declareFunction( name, types, names ):
 
 
 def declareConstant( name, value ):
-    print("  INTEGER(C_INT), PARAMETER :: " + name + " =", end=' ')
-    print(value)
+    print("  INTEGER(C_INT), PARAMETER :: " + name + " = " + str(value))
 
 
 def writeHeader():
@@ -271,19 +270,19 @@ def processFiles():
 
     for d in ParseState.defines:
         declareConstant( d[0], d[1] )
-        print()
+        print("")
 
     for enum in ParseState.enums:
         for e in enum:
             declareConstant( e[0], e[1] )
-        print()
+        print("")
 
     print("  INTERFACE")
     for f in ParseState.functions:
         declareFunction( f[0], f[1], f[2] )
-        print()
+        print("")
     print("  END INTERFACE")
-    print()
+    print("")
 
     expose( ParseState.functions )
     for e in ParseState.enums:
@@ -298,7 +297,7 @@ if (len(sys.argv) < 2):
     filename = 'fieldml_fortran.f90'
 else:
     filename = sys.argv[1]
-f = file(filename, 'w')
+f = open(filename, 'w')
 sys.stdout = f
 processFiles()
 f.close()
