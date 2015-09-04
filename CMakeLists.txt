@@ -36,11 +36,11 @@
  # ***** END LICENSE BLOCK ***** */
 
 # Set the minimum version of cmake required to 3.0
-CMAKE_MINIMUM_REQUIRED( VERSION 3.0 )
+cmake_minimum_required( VERSION 3.0 )
 
 # Set this namespace to keep these options seperate from other project options
-SET( FIELDML_NAMESPACE_NAME FIELDML )
-PROJECT(fieldml VERSION 0.5.0 LANGUAGES CXX)
+set( FIELDML_NAMESPACE_NAME FIELDML )
+project(fieldml VERSION 0.5.0 LANGUAGES CXX)
 
 option(USE_HDF5 "Do you want to use netgen (HDF5)?" NO)
 option(HDF5_WITH_MPI "Do you want to use MPI with HDF5?" NO)
@@ -51,7 +51,7 @@ set(PACKAGE_CONFIG_DIR "lib/cmake" CACHE STRING "Directory for package config fi
 # Further options:
 # CMAKE_POSITION_INDEPENDENT_CODE=YES for -fPIC constant (is also passed in from OpenCMISS-main build script)
 
-FIND_PACKAGE(LibXml2 REQUIRED)
+find_package(LibXml2 REQUIRED)
 if(USE_HDF5)
     # See the FindHDF5 description
     if (BUILD_SHARED_LIBS)
