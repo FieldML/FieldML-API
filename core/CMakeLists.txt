@@ -71,7 +71,7 @@ SET( FIELDML_API_PUBLIC_HDRS
 	src/fieldml_api.h )
 
 # Create library
-add_library(fieldml-core ${LIBRARY_BUILD_TYPE} ${FIELDML_API_SRCS} ${FIELDML_API_PUBLIC_HDRS}
+add_library(fieldml-core ${FIELDML_API_SRCS} ${FIELDML_API_PUBLIC_HDRS}
     ${FIELDML_API_PRIVATE_HDRS} ${LIBRARY_WIN32_XTRAS})
 target_link_libraries(fieldml-core xml2)
 target_compile_definitions(fieldml-core PRIVATE $<$<CONFIG:Debug>:DEBUG>)
