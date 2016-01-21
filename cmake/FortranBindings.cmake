@@ -3,7 +3,6 @@ find_package(PythonInterp QUIET)
 set(HAVE_Fortran_BINDINGS FALSE)
 if (PYTHONINTERP_FOUND)
     set(HAVE_Fortran_BINDINGS TRUE)
-    enable_language(Fortran)
     set(FIELDML_FORTRAN ${CMAKE_CURRENT_BINARY_DIR}/fieldml_fortran.f90)
     
     # Generate the file

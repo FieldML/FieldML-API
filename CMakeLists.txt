@@ -41,11 +41,16 @@ cmake_minimum_required( VERSION 3.0 )
 # Set this namespace to keep these options seperate from other project options
 set( FIELDML_NAMESPACE_NAME FIELDML )
 project(fieldml VERSION 0.5.0 LANGUAGES CXX)
+enable_language(Fortran OPTIONAL)
 
 option(USE_HDF5 "Do you want to use netgen (HDF5)?" NO)
 option(HDF5_WITH_MPI "Do you want to use MPI with HDF5?" NO)
 option(BUILD_TESTS "Build tests" ON)
 option(FORTRAN_BINDINGS "Do you want to build the Fortran bindings" YES)
+if (FORTRAN_BINDINGS AND NOT CMAKE_Fortran_COMPILER)
+    set(FORTRAN_BINDINGS NO)
+    message(WARNING "No Fortran compiler found but FORTRAN_BINDINGS requested. Disabling.")
+endif()
 option(JAVA_BINDINGS "Do you want to build the Java bindings" NO)
 set(PACKAGE_CONFIG_DIR "lib/cmake" CACHE STRING "Directory for package config files (relative to CMAKE_INSTALL_PREFIX)")
 # Further options:
