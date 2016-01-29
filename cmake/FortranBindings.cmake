@@ -18,8 +18,10 @@ if (PYTHONINTERP_FOUND)
     install(TARGETS fieldml-fortran
         EXPORT fieldml-api-config
         DESTINATION lib)
-    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/fortran_modules/
-        DESTINATION include)
+    install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/
+        DESTINATION include
+        FILES_MATCHING PATTERN "fieldml_api.mod"
+    )
 else()
     message(WARNING "No Python interpreter found. Unable to generate Fortran bindings for FieldML.")
 endif()
